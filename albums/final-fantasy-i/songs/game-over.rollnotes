@@ -18,5 +18,16 @@ chord: F/C
 [3.3 - 3.4]
 chord: Bb
 
+[4.1 - 4.2]
+chord: E
+B in the root is not from the triangle, it’s from pulse2
+
+[4.3 - 4.4]
+chord: A5
+There’s a c# but it’s a passing tone for sure.
+
+[5.1 - 5.2]
+chord: A7/E
+
 [9.3]
 loop: 1.3
