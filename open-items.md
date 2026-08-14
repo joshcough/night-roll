@@ -170,6 +170,17 @@ his behalf.
   while everything else dims — zero hits reads as a confident zero.
   Matches by pitch class (Bb catches A#), respells per governing key,
   shows scale degree + count + channels in the strip.
+- **Asserted spelling should beat the auto-pick once a mode lands
+  (2026-08-12 spec's follow-on, not yet built):** when a partial like
+  `key: Bb?` gets its mode, keyNameFor currently re-picks the spelling
+  by smallest signature; Josh's asserted spelling should win unless it
+  exceeds six accidentals. Separate review from the shipped three-option
+  picker.
+- **Bare-key audit (2026-08-12 spec's cleanup rider):** six songs store
+  `key: F/D/G/C/Bb/Eb` with no mode — shorthand for major, or the old
+  picker's symptom? Now that the picker states what it writes, Josh can
+  settle them. Also key-sweep.md regeneration from rollnotes — awaiting
+  his go (his analysis doc).
 - **Sweep-vs-rollnotes drift check.** A check that flags any song whose
   rollnotes `key:` disagrees with or is missing from the key-sweep
   Tally — the drift is real (see data issues in the analysis queue).

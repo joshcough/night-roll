@@ -609,7 +609,7 @@
     <h3>EDITING &amp; SYNC</h3>
     <dl>
       <dt>Edit</dt><dd>Reveals Pencil (insert MIDI notes) and Erase. Tucked away so bedtime thumbs don't hit them.</dd>
-      <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab.</dd>
+      <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
       <dt>Load .mid</dt><dd>Open any MIDI file from your device.</dd>
     </dl>
 
@@ -654,6 +654,7 @@
       <button id="dlfile">Download</button>
       <a href="https://github.com/joshcough/night-roll" target="_blank" rel="noopener"
          style="text-decoration:none"><button>Repo ↗</button></a>
+      <button id="websess">⎘ Web session</button>
       <button id="synccancel">Close</button>
     </div>
     <div class="status" id="syncpending" style="max-height:38vh;overflow-y:auto;white-space:pre-wrap"></div>
@@ -2951,11 +2952,22 @@ function modeOfName(name) {
   return /m$/.test(name) && name.length > 1 ? "minor" : "major";
 }
 {
+  // black keys get THREE options (2026-08-12 spec): fused "A#/Bb" = spelling
+  // undetermined, plus each asserted spelling — Josh can know a tonic is Bb
+  // and not A# before knowing the mode, and the picker must let him say so.
+  // Option value = "pc:spelling", fused/naturals = "pc:".
   for (let pc = 0; pc < 12; pc++) {
-    const o = document.createElement("option");
-    o.value = String(pc);
-    o.textContent = tonicLabel(pc);
-    keysel.appendChild(o);
+    const add = (sp, label) => {
+      const o = document.createElement("option");
+      o.value = pc + ":" + sp;
+      o.textContent = label;
+      keysel.appendChild(o);
+    };
+    if (TONIC_SPELL[pc].length === 1) add("", TONIC_SPELL[pc][0]);
+    else {
+      add("", tonicLabel(pc)); // undecided
+      for (const sp of TONIC_SPELL[pc]) add(sp, "· " + sp);
+    }
   }
   const nk = document.getElementById("nkeysel"); // editor picker: same tonic list
   for (const opt of keysel.querySelectorAll("option")) {
@@ -2963,7 +2975,19 @@ function modeOfName(name) {
     nk.appendChild(opt.cloneNode(true));
   }
 }
-function chosenTonicPc() { return keysel.value === "" ? null : +keysel.value; }
+function chosenTonic() { // {pc, sp} — sp = "" when the spelling is undecided/unambiguous
+  if (keysel.value === "") return null;
+  const [pc, sp] = keysel.value.split(":");
+  return {pc: +pc, sp: sp || ""};
+}
+function chosenTonicPc() { const t = chosenTonic(); return t ? t.pc : null; }
+function partialNameOf(t) { return t.sp || tonicLabel(t.pc); } // "Bb" asserted vs "A#/Bb" fused
+function tonicOptionValue(name) { // stored name -> option value ("Bb"→"10:Bb", "A#/Bb"→"10:", "C"→"0:")
+  const pc = tonicPcOfName(name);
+  if (pc === null) return "";
+  const single = (name.match(/^([A-G][#b]?)$/) || [])[1];
+  return pc + ":" + (single && TONIC_SPELL[pc].length > 1 ? single : "");
+}
 function refreshKeyPreview() { // preview applies only when tonic AND mode are chosen
   const pc = chosenTonicPc(), mode = keymodeSel.value;
   const full = pc !== null && mode ? keyNameFor(pc, mode) : null;
@@ -2976,28 +3000,30 @@ function refreshKeyPreview() { // preview applies only when tonic AND mode are c
   draw();
 }
 function refreshKeysetLabel() {
-  if (!song || chosenTonicPc() === null) return;
-  const pc = chosenTonicPc(), mode = keymodeSel.value;
+  const t = chosenTonic();
+  if (!song || !t) return;
+  const mode = keymodeSel.value;
   const bar = Math.floor(playCursor / barTicks()) + 1;
   keysetBtn.textContent = mode
-    ? "Set " + keyNameFor(pc, mode).name + " @ bar " + bar
-    : "Store " + tonicLabel(pc) + "? @ bar " + bar;
+    ? "Set " + keyNameFor(t.pc, mode).name + " @ bar " + bar
+    : "Store " + partialNameOf(t) + "? @ bar " + bar;
 }
 keysel.addEventListener("change", refreshKeyPreview);
 keymodeSel.addEventListener("change", refreshKeyPreview);
 keysetBtn.addEventListener("click", () => {
-  const pc = chosenTonicPc(), mode = keymodeSel.value;
-  if (pc === null || !song || !songKey) return;
+  const t = chosenTonic(), mode = keymodeSel.value;
+  if (!t || !song || !songKey) return;
   const bar = Math.floor(playCursor / barTicks()) + 1;
   dropLocalKeyAt(bar);
   let name, fresh;
   if (mode) {
-    const full = keyNameFor(pc, mode);
+    const full = keyNameFor(t.pc, mode);
     name = full.name;
     fresh = {b1: bar, q1: 1, b2: null, q2: null, text: "key: " + name, keydir: full.sf, added: true};
-  } else { // tonic only: stored, NOT applied
-    name = tonicLabel(pc) + "?";
-    fresh = {b1: bar, q1: 1, b2: null, q2: null, text: "key: " + name, keypartial: tonicLabel(pc), added: true};
+  } else { // tonic only: stored, NOT applied — asserted spelling if Josh chose one
+    const tonic = partialNameOf(t);
+    name = tonic + "?";
+    fresh = {b1: bar, q1: 1, b2: null, q2: null, text: "key: " + name, keypartial: tonic, added: true};
   }
   rollnotes.push(resolveNote(fresh));
   previewSf = null;
@@ -3844,6 +3870,15 @@ instbtn.addEventListener("click", () => {
   applyInst();
   draw(); // closing the panel while Fall is active must restore the roll
 });
+// ⎘ Web session (Sync sheet): copies the WEB-SESSION.md raw URL — Josh
+// pastes it into a fresh Claude Web chat to bootstrap a from-bed tutoring
+// session with full project context.
+document.getElementById("websess").addEventListener("click", async e => {
+  const url = "https://raw.githubusercontent.com/joshcough/night-roll/main/WEB-SESSION.md";
+  try { await navigator.clipboard.writeText(url); e.target.textContent = "✓ copied — paste to Claude"; }
+  catch { e.target.textContent = "✗ copy failed"; }
+  setTimeout(() => { e.target.textContent = "⎘ Web session"; }, 1800);
+});
 const subbtn = document.getElementById("subbtn");
 subbtn.classList.toggle("active", subOn);
 subbtn.addEventListener("click", () => {
@@ -4088,7 +4123,8 @@ function openEditor(note, presetType) {
       q2 = snapBeat((last % bt) / beatTicks() + 1);
     }
   }
-  const type = note ? (note.chord ? "chord" : note.section ? "section" : note.keydir !== undefined ? "key"
+  const type = note ? (note.chord ? "chord" : note.section ? "section"
+                       : note.keydir !== undefined || note.keypartial ? "key"
                        : note.tsdir ? "timesig" : note.chopdir ? "chop"
                        : note.loopTo !== undefined ? "loop" : "note")
              : presetType ? presetType // a group's + button pre-picks its type
@@ -4127,10 +4163,10 @@ function openEditor(note, presetType) {
   if (type === "key" && note) {
     const nm = (note.text.match(/^key:\s*(\S+(?:\s+[a-z]+)?)/i) || [])[1] || "";
     if (note.keypartial) {
-      document.getElementById("nkeysel").value = String(tonicPcOfName(note.keypartial));
+      document.getElementById("nkeysel").value = tonicOptionValue(note.keypartial);
       document.getElementById("nkeymode").value = ""; // tonic stored, mode pending
     } else {
-      document.getElementById("nkeysel").value = String(tonicPcOfName(nm));
+      document.getElementById("nkeysel").value = tonicOptionValue((nm.match(/^([A-G][#b]?)/) || ["", "C"])[1]);
       document.getElementById("nkeymode").value = modeOfName(nm);
     }
   }
@@ -4204,16 +4240,18 @@ document.getElementById("nsave").addEventListener("click", () => {
   if (editingNote) rollnotes = rollnotes.filter(n => n !== editingNote);
   let fresh;
   if (type === "key") {
-    const pc = parseInt(document.getElementById("nkeysel").value, 10);
+    const [pcS, spS] = document.getElementById("nkeysel").value.split(":");
+    const pc = +pcS, sp = spS || "";
     const mode = document.getElementById("nkeymode").value;
     dropLocalKeyAt(b1);
     if (mode) {
       const full = keyNameFor(pc, mode);
       fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
                text: "key: " + full.name, keydir: full.sf, added: true};
-    } else { // tonic only: stored, not applied
+    } else { // tonic only: stored, not applied — asserted spelling if chosen
+      const tonic = sp || tonicLabel(pc);
       fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
-               text: "key: " + tonicLabel(pc) + "?", keypartial: tonicLabel(pc), added: true};
+               text: "key: " + tonic + "?", keypartial: tonic, added: true};
     }
   } else if (type === "timesig") {
     const num = +document.getElementById("ntsnum").value, den = +document.getElementById("ntsden").value;

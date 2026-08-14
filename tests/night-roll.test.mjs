@@ -482,3 +482,19 @@ test("partial keys: tonic stored, never applied — round-trips with the ? marke
   assert.match(run(`serializeRollnotes()`), /key: G#\/Ab\?\n/); // survives Sync
   run(`rollnotes = []; finalizeNotes();`);
 });
+
+test("asserted tonic spellings: Bb?, A#?, and fused A#/Bb? all round-trip as partials", () => {
+  installSong();
+  for (const form of ["Bb", "A#", "A#/Bb"]) {
+    run(`rollnotes = parseRollnotes(${JSON.stringify("[1.1]\nkey: " + form + "?\n")}).map(resolveNote); finalizeNotes();`);
+    assert.equal(run(`rollnotes[0].keypartial`), form, form);
+    assert.equal(run(`rollnotes[0].keydir`), undefined, form + " not applied");
+    assert.match(run(`serializeRollnotes()`), new RegExp("key: " + form.replace(/[#/]/g, m => "\\" + m) + "\\?\n"), form);
+  }
+  // option-value mapping: stored name -> the dropdown option that wrote it
+  assert.equal(run(`tonicOptionValue("Bb")`), "10:Bb");
+  assert.equal(run(`tonicOptionValue("A#")`), "10:A#");
+  assert.equal(run(`tonicOptionValue("A#/Bb")`), "10:");
+  assert.equal(run(`tonicOptionValue("C")`), "0:");
+  run(`rollnotes = []; finalizeNotes();`);
+});
