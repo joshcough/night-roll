@@ -1,6 +1,7 @@
 // Unit tests for Night Roll's pure logic (index.html inline script).
 // Run: node --test tests/
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createApp } from "./harness.mjs";
 
@@ -559,4 +560,21 @@ test("manifest placement: save adds, move relocates, albums resolve by dir", () 
   assert.deepEqual(mine.songs.map(s => s.path).sort(),
     ["albums/compositions/old.mid", "albums/compositions/test-tune.mid"]);
   assert.equal(mine.songs.find(s => s.path.includes("test-tune")).title, "Test Tune");
+});
+
+test("help sheet covers every shipped feature (drift guard — extend this list when you ship)", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const help = html.match(/id="helpsheet"[\s\S]*?helpclose/)[0];
+  // one recognizable keyword per shipped feature; a missing one means the
+  // help sheet silently drifted from the app (it happened to the key dial)
+  const FEATURES = [
+    "Metronome", "Speed slider", "Lasso", "Chord?", "Challenge?",
+    "find:", "Circle of fifths", "key: picker", "mode?", "Instrument panel",
+    "Fall", "💬", "Chop", "Loop points", "Sections", "Chords",
+    "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
+    "New song", "Save As", "Move to…", "Download .mid", "Open…",
+    "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
+  ];
+  const missing = FEATURES.filter(k => !help.includes(k));
+  assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
 });

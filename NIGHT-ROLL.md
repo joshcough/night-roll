@@ -15,6 +15,10 @@ and runs it in a vm with a stub DOM, so the app stays one file. Covers the
 pure logic: MIDI parse, rollnotes parse/serialize round-trip, key math,
 chord namer, duration decomposition, tempo maps, edit persistence. Run them
 before committing player changes; add cases when touching that logic.
+Shipping a feature means THREE writes: the code, its help-sheet entry,
+and a keyword in the help drift-guard test ("help sheet covers every
+shipped feature") — the guard fails the suite when help silently lags
+the app, which happened to the key dial (2026-08-15 audit).
 (2026-07-31 review verdict, second-opinioned: keep single-file until ~4–5k
 lines — splitting adds Pages cache-skew risk for no payoff at this size.)
 

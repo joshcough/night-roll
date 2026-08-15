@@ -609,7 +609,6 @@
       <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — and plays it.</dd>
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
       <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high.</dd>
-      <dt>key: picker</dt><dd>First dropdown is the tonic pitch only; the second is the mode. Setting both writes the key. Choosing "mode?" stores just the tonic ("key: G♯/A♭?") — recorded but NOT applied: no key signature, no respelling, the staff stays as-is until you come back with the mode. The dropdown label always says which state you're in.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
@@ -633,8 +632,8 @@
 
     <h3>KEYS</h3>
     <dl>
-      <dt>key? dial</dt><dd>Songs display in C until YOU set the key. Preview any signature live — the right one makes most accidentals vanish. Tap the major/minor toggle to record the true tonic (Gm, not Bb).</dd>
-      <dt>Set Gm @ bar N</dt><dd>Writes your key choice into the song's notes at the cursor's bar. Set a different key mid-song for key changes — the score draws the new signature there.</dd>
+      <dt>key: picker</dt><dd>Songs display in C until YOU set the key. First dropdown is the tonic pitch only; black keys offer three options — fused "A♯/B♭" (spelling undecided) or either asserted spelling. Second dropdown is the mode (major, minor, and the church modes). With both set, the signature previews live — the right key makes most accidentals vanish — and the button writes it ("Set Gm @ bar 1"). Set a different key mid-song for key changes; the score draws the new signature there.</dd>
+      <dt>mode? (partial keys)</dt><dd>Know the tonic but not the mode yet? Choose "mode?" and Store writes "key: B♭?" — recorded, listed under KEY in ☰ Notes, but NOT applied: no signature, no respelling, until you return with the mode. The dropdown label always says which state the song is in.</dd>
     </dl>
 
     <h3>NO SOUND ON iPAD?</h3>
@@ -647,7 +646,6 @@
       <dt>Edit</dt><dd>Reveals Pencil (insert notes: durations 16th–whole incl. dotted, p/mf/f velocity) and Erase, plus ⟲ undo. Tucked away so bedtime thumbs don't hit them.</dd>
       <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load .mid, Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
-      <dt>Load .mid</dt><dd>Open any MIDI file from your device.</dd>
     </dl>
 
     <div class="row"><button class="primary" id="helpclose">Close</button></div>
