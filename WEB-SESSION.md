@@ -88,7 +88,9 @@ chrome each.)
    with their derivation paths; anything for the repo (all items marked
    PROPOSED — Josh signs off before anything lands); tooling requests with
    the observed friction; quiz results; process notes. Claude Code applies
-   it later — nothing you write lands directly. Build the handoff as you
+   it later — nothing you write lands directly — and archives it verbatim
+   in `handoffs/` (past handoffs there are readable history, minus
+   anything quarantined). Build the handoff as you
    go, silently: do NOT show or link the file each time you add to it —
    say what was logged in one line and move on. Present the file only
    when Josh asks for it, normally at session end.
