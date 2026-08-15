@@ -214,6 +214,37 @@
   }
   #instwrap { position: relative; height: 168px; }
 
+  #filesheet {
+    display: none;
+    position: absolute;
+    z-index: 60;
+    background: var(--panel2);
+    border: 1px solid var(--grid);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 240px;
+    max-width: 92vw;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  }
+  #filesheet.on { display: block; }
+  #filesheet .fitem {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: none;
+    border-radius: 6px;
+    min-height: 42px;
+    padding: 9px 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  #filesheet .fitem:active { background: var(--panel); }
+  #filesheet .row { display: flex; gap: 8px; align-items: center; padding: 6px 8px; flex-wrap: wrap; }
+  #filesheet .status { font-family: var(--mono); font-size: 11px; color: var(--dim); padding: 4px 10px 6px; max-width: 300px; white-space: pre-wrap; }
+
   .metbeat {
     font-family: var(--mono);
     font-size: 12px;
@@ -677,42 +708,34 @@
   </div>
 </div>
 
-<div class="overlay" id="filesheet">
-  <div class="sheet">
-    <h2>FILE</h2>
+<div id="filesheet">
+  <button class="fitem" id="fileopen">Open…</button>
+  <button class="fitem" id="filenew">＋ New song…</button>
+  <button class="fitem" id="filesave">Save (commit)</button>
+  <button class="fitem" id="filesaveas">Save As…</button>
+  <label class="fitem" for="fileinput" style="display:block">Load .mid…</label>
+  <button class="fitem" id="filedlmid">Download .mid</button>
+  <div id="filenewform" style="display:none">
+    <div class="row"><input type="text" id="fnname" placeholder="song name" style="flex:1;min-height:40px"></div>
     <div class="row">
-      <button class="primary" id="fileopen">Open…</button>
-      <button id="filenew">＋ New song</button>
-      <button id="filesave">Save (commit)</button>
-      <button id="filesaveas">Save As…</button>
+      <input type="number" id="fnbpm" value="120" min="20" max="300" style="width:72px;min-height:40px" aria-label="Tempo">
+      <select id="fnnum"></select><span class="lbl">/</span>
+      <select id="fnden"><option>2</option><option selected>4</option><option>8</option><option>16</option></select>
+      <button class="primary" id="fncreate">Create</button>
     </div>
-    <div class="row">
-      <label class="filebtn" for="fileinput">Load .mid</label>
-      <button id="filedlmid">Download .mid</button>
-    </div>
-    <div id="filenewform" style="display:none">
-      <div class="row"><span class="lbl">name</span><input type="text" id="fnname" placeholder="my-song" style="flex:1;min-height:40px"></div>
-      <div class="row">
-        <span class="lbl">tempo</span><input type="number" id="fnbpm" value="120" min="20" max="300" style="width:80px;min-height:40px">
-        <span class="lbl">meter</span><select id="fnnum"></select><span class="lbl">/</span>
-        <select id="fnden"><option>2</option><option selected>4</option><option>8</option><option>16</option></select>
-        <button class="primary" id="fncreate">Create</button>
-      </div>
-    </div>
-    <div id="filesaveasform" style="display:none">
-      <div class="row">
-        <span class="lbl">fork as</span><input type="text" id="fsname" placeholder="town-counterline" style="flex:1;min-height:40px">
-        <button class="primary" id="fsgo">Fork</button>
-      </div>
-    </div>
-    <div class="row" id="filemoverow" style="display:none">
-      <span class="lbl">move to</span>
-      <select id="fmdest"></select>
-      <button id="fmgo">Move</button>
-    </div>
-    <div class="status" id="filestatus">Compositions live in albums/compositions/nightroll/. Chip captures are locked — Save As forks them there.</div>
-    <div class="row"><button id="fileclose" style="margin-left:auto">Close</button></div>
   </div>
+  <div id="filesaveasform" style="display:none">
+    <div class="row">
+      <input type="text" id="fsname" placeholder="fork name" style="flex:1;min-height:40px">
+      <button class="primary" id="fsgo">Fork</button>
+    </div>
+  </div>
+  <div class="row" id="filemoverow" style="display:none">
+    <span class="lbl">move to</span>
+    <select id="fmdest"></select>
+    <button id="fmgo">Move</button>
+  </div>
+  <div class="status" id="filestatus"></div>
 </div>
 
 <div class="overlay" id="metsheet">
@@ -4958,7 +4981,9 @@ function forkCurrentSong(name) {
   draw();
 }
 const fileStatus = s => { document.getElementById("filestatus").textContent = s; };
-document.getElementById("filesheetbtn").addEventListener("click", () => {
+const filesheet = document.getElementById("filesheet");
+document.getElementById("filesheetbtn").addEventListener("click", e => {
+  if (filesheet.classList.contains("on")) { filesheet.classList.remove("on"); return; }
   document.getElementById("filenewform").style.display = "none";
   document.getElementById("filesaveasform").style.display = "none";
   document.getElementById("filemoverow").style.display = isComposition() ? "" : "none";
@@ -4973,19 +4998,23 @@ document.getElementById("filesheetbtn").addEventListener("click", () => {
       sel.appendChild(o);
     }
   }
-  fileStatus(isComposition()
-    ? "Composition — Save commits .mid + .rollnotes; Move relocates it (repo + manifest)."
-    : "Chip captures are locked: Save refuses them, Save As forks into " + NR_DIR);
-  document.getElementById("filesheet").classList.add("on");
+  fileStatus(isComposition() ? "composition — editable" : "chip capture — locked; Save As forks it");
+  const r = e.currentTarget.getBoundingClientRect();
+  filesheet.style.left = Math.max(6, r.left) + "px";
+  filesheet.style.top = (r.bottom + 4) + "px";
+  filesheet.classList.add("on");
 });
+document.addEventListener("pointerdown", e => { // tap-away closes, like a real menu
+  if (!filesheet.classList.contains("on")) return;
+  if (filesheet.contains(e.target) || e.target.closest("#filesheetbtn")) return;
+  filesheet.classList.remove("on");
+}, {capture: true});
 document.getElementById("fmgo").addEventListener("click", e => {
   const dest = document.getElementById("fmdest").value;
   if (!dest || !isComposition()) return;
   e.currentTarget.disabled = true;
   moveComposition(dest).finally(() => { e.currentTarget.disabled = false; });
 });
-document.getElementById("fileclose").addEventListener("click", () =>
-  document.getElementById("filesheet").classList.remove("on"));
 document.getElementById("fileopen").addEventListener("click", () => {
   document.getElementById("filesheet").classList.remove("on");
   openSongPicker();
