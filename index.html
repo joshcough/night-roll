@@ -2954,7 +2954,21 @@ function songTitleOf(path) {
   }
   return path.split("/").pop();
 }
-function updateSongBtn() { songtitleEl.textContent = currentPath ? songTitleOf(currentPath) : ""; }
+function updateSongBtn() { // breadcrumb: Album › Title, with the real path dimmed after
+  songtitleEl.innerHTML = "";
+  if (!currentPath) return;
+  const group = Object.entries(CATALOG).find(([, songs]) => songs.some(([, p]) => p === currentPath));
+  const crumb = document.createElement("span");
+  crumb.style.color = "var(--dim)";
+  crumb.textContent = (group ? group[0]
+    : localStorage.getItem("ff1roll-draft-" + currentPath) ? "Night Roll drafts" : "Local") + " › ";
+  const title = document.createElement("span");
+  title.textContent = songTitleOf(currentPath);
+  const path = document.createElement("span");
+  path.style.cssText = "color:var(--dim);font-size:10px;margin-left:10px";
+  path.textContent = currentPath;
+  songtitleEl.append(crumb, title, path);
+}
 function songRow(label, onTap, dim) {
   const row = document.createElement("div");
   row.className = "noterow";
@@ -3771,7 +3785,7 @@ document.getElementById("fileinput").addEventListener("change", async e => {
   try {
     setSong(parseMidi(await f.arrayBuffer()), null);
     setInfo(f.name + " loaded (edits not saved for local files)");
-    songtitleEl.textContent = f.name;
+    songtitleEl.textContent = "Local › " + f.name;
   } catch (err) { setInfo("could not parse: " + err.message); }
 });
 document.getElementById("modeseg").addEventListener("click", e => {
