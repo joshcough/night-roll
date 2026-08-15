@@ -190,6 +190,21 @@
   }
   #instwrap { position: relative; height: 168px; }
 
+  .metbeat {
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 38px;
+    min-height: 44px;
+    border-radius: 6px;
+    border: 1px solid var(--grid);
+    background: var(--panel2);
+    color: var(--dim);
+  }
+  .metbeat.l1 { color: var(--text); background: var(--panel2); }
+  .metbeat.l2 { color: #111; background: var(--gold); border-color: var(--gold); font-weight: 700; }
+  .metbeat.l0 { opacity: 0.3; }
+  .metbeat.now { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   #cofdetail { font-family: var(--mono); font-size: 12px; line-height: 1.7; margin-top: 8px; white-space: pre-wrap; }
   #cofdetail b { color: var(--gold); }
 
@@ -377,6 +392,7 @@
   <button class="primary" id="playbtn">▶ Play</button>
   <button id="viewbtn" aria-label="Toggle score view">𝄞 Score</button>
   <button id="helpbtn" aria-label="Help">?</button>
+  <button id="metbtn" aria-label="Metronome">⏱</button>
   <label class="filebtn" for="fileinput">Load .mid</label>
   <input type="file" id="fileinput" accept=".mid,.midi">
   <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
@@ -556,6 +572,7 @@
     <h3>PLAYBACK</h3>
     <dl>
       <dt>▶ Play / ■ Stop</dt><dd>NES-style voices; drum tracks get a real kit. Songs loop at their final bar forever.</dd>
+      <dt>⏱ Metronome</dt><dd>Full-featured and standalone: any meter (1–12 over 2/4/8/16 — bpm counts the denominator beat, matching the app's counting), tap each beat cell to cycle accent → normal → silent, subdivisions in 2/3/4, slider or tap-tempo. Keeps clicking over a playing song, so you can audition a candidate meter against the music. Settings stick.</dd>
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
@@ -614,6 +631,34 @@
     </dl>
 
     <div class="row"><button class="primary" id="helpclose">Close</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="metsheet">
+  <div class="sheet">
+    <h2>METRONOME</h2>
+    <div class="row">
+      <button class="primary" id="metgo">▶ Start</button>
+      <button id="mettap">Tap tempo</button>
+      <span class="meta" id="metbpmlbl" style="margin-left:auto;font-size:15px;color:var(--gold)">120 bpm</span>
+    </div>
+    <div class="row"><input type="range" id="metbpm" min="30" max="260" value="120" style="flex:1;height:40px"></div>
+    <div class="row">
+      <span class="lbl">meter</span>
+      <select id="metnum"></select>
+      <span class="lbl">/</span>
+      <select id="metden">
+        <option>2</option><option selected>4</option><option>8</option><option>16</option>
+      </select>
+      <span class="lbl" style="margin-left:12px">subdivide</span>
+      <select id="metsub">
+        <option value="1">—</option><option value="2">in 2</option>
+        <option value="3">in 3</option><option value="4">in 4</option>
+      </select>
+    </div>
+    <div class="row" id="metbeats" style="gap:6px;flex-wrap:wrap"></div>
+    <div class="meta" style="margin:2px 0 0">tap a beat: accent → normal → silent · bpm counts the denominator beat</div>
+    <div class="row" style="margin-top:10px"><button id="metclose" style="margin-left:auto">Close</button></div>
   </div>
 </div>
 
@@ -3039,6 +3084,144 @@ keysetBtn.addEventListener("click", () => {
   draw();
   setInfo(mode ? "key set to " + name + " at bar " + bar + " (unsynced — Sync to commit)"
                : "tonic " + name + " stored at bar " + bar + " — NOT applied until a mode is set");
+});
+
+// ---------------------------------------------------------------- metronome (⏱)
+// Standalone and feature-rich: any meter, per-beat accent editing (tap a cell:
+// accent → normal → silent), subdivisions, tap tempo. Plays through its own
+// gain straight to the destination, so it survives song stop()'s master fade
+// and can click OVER a playing song — a poor man's meter audition.
+const met = Object.assign({bpm: 120, num: 4, den: 4, sub: 1, accents: [2, 1, 1, 1], on: false},
+                          JSON.parse(localStorage.getItem("ff1roll-met") || "{}"));
+met.on = false;
+let metGain = null, metTimer = 0, metNext = 0, metIdx = 0;
+const metSave = () => localStorage.setItem("ff1roll-met",
+  JSON.stringify({bpm: met.bpm, num: met.num, den: met.den, sub: met.sub, accents: met.accents}));
+function metDefaultAccents() { // beat 1 accented; compound meters accent each group of 3
+  return Array.from({length: met.num}, (_, i) =>
+    i === 0 ? 2 : (met.den >= 8 && met.num % 3 === 0 && i % 3 === 0) ? 2 : 1);
+}
+function metBuildCells() {
+  const row = document.getElementById("metbeats");
+  row.innerHTML = "";
+  met.accents.forEach((lv, i) => {
+    const b = document.createElement("button");
+    b.className = "metbeat l" + lv;
+    b.textContent = String(i + 1);
+    b.addEventListener("click", () => {
+      met.accents[i] = (met.accents[i] + 2) % 3; // 2 → 1 → 0 → 2
+      metSave();
+      metBuildCells();
+    });
+    row.appendChild(b);
+  });
+}
+function metClick(when, level) { // NES-flavored square blips
+  const o = makeOsc("square25");
+  o.frequency.value = level === 2 ? 1720 : level === 1 ? 1180 : 2100;
+  const g = audio.createGain();
+  const amp = level === 2 ? 0.55 : level === 1 ? 0.34 : 0.16;
+  g.gain.setValueAtTime(0, when);
+  g.gain.linearRampToValueAtTime(amp, when + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.001, when + (level === 2 ? 0.06 : 0.04));
+  o.connect(g);
+  g.connect(metGain);
+  o.start(when);
+  o.stop(when + 0.09);
+}
+function metPump() {
+  const spb = 60 / met.bpm; // seconds per counted (denominator) beat
+  while (metNext < audio.currentTime + 0.12) {
+    const i = metIdx % met.num;
+    const lv = met.accents[i];
+    if (lv > 0) metClick(metNext, lv);
+    for (let s = 1; s < met.sub; s++) metClick(metNext + spb * s / met.sub, 0); // sub-clicks, quiet
+    const delay = Math.max(0, (metNext - audio.currentTime) * 1000);
+    setTimeout(() => {
+      if (!met.on) return;
+      document.querySelectorAll("#metbeats .metbeat").forEach((el, k) =>
+        el.classList.toggle("now", k === i));
+    }, delay);
+    metIdx++;
+    metNext += spb;
+  }
+}
+async function metStart() {
+  ensureAudio();
+  await resumeAudio();
+  if (!metGain || metGain.context !== audio) {
+    metGain = audio.createGain();
+    metGain.gain.value = 1;
+    metGain.connect(audio.destination); // not master: song stop()'s fade can't silence the click
+  }
+  met.on = true;
+  metIdx = 0;
+  metNext = audio.currentTime + 0.08;
+  metTimer = setInterval(metPump, 30);
+  metPump();
+  document.getElementById("metgo").textContent = "■ Stop";
+}
+function metHalt() {
+  met.on = false;
+  clearInterval(metTimer);
+  document.getElementById("metgo").textContent = "▶ Start";
+  document.querySelectorAll("#metbeats .metbeat").forEach(el => el.classList.remove("now"));
+}
+{
+  const num = document.getElementById("metnum");
+  for (let n = 1; n <= 12; n++) {
+    const o = document.createElement("option");
+    o.textContent = String(n);
+    num.appendChild(o);
+  }
+  num.value = String(met.num);
+  document.getElementById("metden").value = String(met.den);
+  document.getElementById("metsub").value = String(met.sub);
+  document.getElementById("metbpm").value = String(met.bpm);
+  document.getElementById("metbpmlbl").textContent = met.bpm + " bpm";
+  metBuildCells();
+}
+document.getElementById("metbtn").addEventListener("click", () =>
+  document.getElementById("metsheet").classList.add("on"));
+document.getElementById("metclose").addEventListener("click", () => {
+  metHalt();
+  document.getElementById("metsheet").classList.remove("on");
+});
+document.getElementById("metgo").addEventListener("click", () => met.on ? metHalt() : metStart());
+document.getElementById("metbpm").addEventListener("input", e => {
+  met.bpm = +e.target.value;
+  document.getElementById("metbpmlbl").textContent = met.bpm + " bpm";
+  metSave();
+});
+document.getElementById("metnum").addEventListener("change", e => {
+  met.num = +e.target.value;
+  met.accents = metDefaultAccents();
+  metSave();
+  metBuildCells();
+});
+document.getElementById("metden").addEventListener("change", e => {
+  met.den = +e.target.value;
+  met.accents = metDefaultAccents();
+  metSave();
+  metBuildCells();
+});
+document.getElementById("metsub").addEventListener("change", e => {
+  met.sub = +e.target.value;
+  metSave();
+});
+let metTaps = [];
+document.getElementById("mettap").addEventListener("click", () => {
+  const now = performance.now();
+  metTaps = metTaps.filter(t => now - t < 3000);
+  metTaps.push(now);
+  if (metTaps.length >= 2) {
+    const gaps = metTaps.slice(1).map((t, i) => t - metTaps[i]);
+    const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+    met.bpm = Math.max(30, Math.min(260, Math.round(60000 / avg)));
+    document.getElementById("metbpm").value = String(met.bpm);
+    document.getElementById("metbpmlbl").textContent = met.bpm + " bpm";
+    metSave();
+  }
 });
 
 // ------------------------------------------- circle of fifths (◯5 in the footer)

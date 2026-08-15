@@ -50,6 +50,16 @@ suspends auto-follow until the playhead re-enters the view.
 **Tracks:** chips mute (= fully hide, roll and score) and solo. Score model
 rebuilds on toggle.
 
+**Metronome** (2026-08-14, ⏱ in the header): standalone, feature-rich —
+meter 1–12 over 2/4/8/16 (bpm counts the DENOMINATOR beat, matching the
+app's counting; compound meters default accents on each group of 3),
+per-beat accent cells (tap: accent → normal → silent), subdivisions in
+2/3/4, tempo slider + tap tempo, lookahead-scheduled NES square blips.
+Plays through its own gain node straight to the destination, so the
+song transport's master fade can't silence it — it clicks OVER a
+playing song, which doubles as a crude meter audition. Settings persist
+(ff1roll-met).
+
 **Inspection:** tap note → pitch (spelled per active key), bar, beat in
 1e&a counting, duration, velocity, track. Lasso mode (footer toggle):
 drag-select across notes in any view (roll, score, fall); pitch list
