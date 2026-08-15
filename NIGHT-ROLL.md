@@ -184,6 +184,27 @@ names: "key: not set (C)" vs "key: Gm ✓". Minor names map to the relative
 major's signature for engraving (keyNameToSf). MIDI files carry true key signatures (via
 tools/fix_keysigs.py) but the app deliberately ignores them for display.
 
+**Compositions** (2026-08-15, File in the header — Josh's rulings from
+the 08-14 handoff): New builds a blank 3-voice NES song (name/tempo/
+meter dialog; the chosen meter is written as HIS timesig directive) at
+`albums/compositions/nightroll/<slug>.mid` — his scratch space; promotion
+to compositions/ proper happens via Claude Code on request. A
+composition is the standard .mid + .rollnotes pair: writeMidi() (in-page
+format-1 SMF writer, round-trip tested against parseMidi) produces the
+.mid; File→Save PUTs both via the GitHub API. **Chip captures are
+locked** — Save refuses anything outside nightroll/ (regenerable
+pipeline output; a stray thumb must not corrupt the corpus) — but
+File→Save As forks ANY song into nightroll/ with rollnotes inherited
+verbatim plus a "forked from <path>" note (drift is Josh's to own, no
+app warnings — ruled). Unsaved work auto-drafts to localStorage
+(ff1roll-draft-<path>, full song JSON) on every edit; drafts win over
+repo fetches on load and are listed under "Night Roll drafts" in the
+picker. Pencil upgrades: dotted durations (8·, 4·, whole), p/mf/f
+velocity segment, ⟲ single-stack undo; compositions get a ＋ track chip
+(empty NES voice). Synced compositions appear in the dropdown after the
+next offline manifest rebuild. NEXT (promised 2026-08-15): score-side
+note entry.
+
 **Sync:** serializes the full current rollnotes state and commits it to
 this repo via the GitHub Contents API (fine-grained token, stored in
 browser localStorage, never in the repo). "Commit all changed" syncs every

@@ -498,3 +498,45 @@ test("asserted tonic spellings: Bb?, A#?, and fused A#/Bb? all round-trip as par
   assert.equal(run(`tonicOptionValue("C")`), "0:");
   run(`rollnotes = []; finalizeNotes();`);
 });
+
+test("composition: writeMidi round-trips through the app's own parser", () => {
+  installSong();
+  const back = val(`(() => {
+    const s = {ppq: 480, timesig: [6, 8],
+      tempos: [{tick: 0, usq: 500000, sec: 0}],
+      tracks: [
+        {name: "pulse1", notes: [{t: 0, d: 240, p: 70, v: 96}, {t: 240, d: 480, p: 74, v: 52}]},
+        {name: "triangle", notes: [{t: 0, d: 960, p: 46, v: 80}, {t: 960, d: 240, p: 53, v: 112, gone: true}]},
+      ]};
+    const parsed = parseMidi(writeMidi(s).buffer);
+    return {ppq: parsed.ppq, timesig: parsed.timesig, usq: parsed.tempos[0].usq,
+            names: parsed.tracks.map(t => t.name),
+            notes: parsed.tracks.map(t => t.notes.map(n => [n.t, n.d, n.p, n.v]))};
+  })()`);
+  assert.equal(back.ppq, 480);
+  assert.deepEqual(back.timesig, [6, 8]);
+  assert.equal(back.usq, 500000);
+  assert.deepEqual(back.names, ["pulse1", "triangle"]);
+  assert.deepEqual(back.notes[0], [[0, 240, 70, 96], [240, 480, 74, 52]]);
+  assert.deepEqual(back.notes[1], [[0, 960, 46, 80]]); // gone note not written
+});
+
+test("composition helpers: slugify, isComposition gate, draft store round-trip", () => {
+  installSong();
+  assert.equal(run(`slugify("  My New Song! ")`), "my-new-song");
+  assert.equal(run(`slugify("")`), "untitled");
+  run(`songKey = "albums/final-fantasy-i/songs/town.mid";`);
+  assert.equal(run(`isComposition()`), false); // chip capture: Save locked
+  run(`songKey = "albums/compositions/nightroll/test-tune.mid";`);
+  assert.equal(run(`isComposition()`), true);
+  run(`
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}],
+            tracks: [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80},
+                                              {t: 480, d: 480, p: 62, v: 80, gone: true}]}]};
+    saveDraft();
+  `);
+  const d = JSON.parse(app.store.get("ff1roll-draft-albums/compositions/nightroll/test-tune.mid"));
+  assert.deepEqual(d.tracks[0].notes, [{t: 0, d: 480, p: 60, v: 80}]); // gone filtered
+  assert.deepEqual(d.timesig, [4, 4]);
+  run(`songKey = null;`);
+});

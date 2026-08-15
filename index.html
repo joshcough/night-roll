@@ -393,7 +393,7 @@
   <button id="viewbtn" aria-label="Toggle score view">𝄞 Score</button>
   <button id="helpbtn" aria-label="Help">?</button>
   <button id="metbtn" aria-label="Metronome">⏱</button>
-  <label class="filebtn" for="fileinput">Load .mid</label>
+  <button id="filesheetbtn">File</button>
   <input type="file" id="fileinput" accept=".mid,.midi">
   <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
          aria-label="Playback speed" style="margin-left:auto">
@@ -425,9 +425,18 @@
   <div class="seg" id="durseg" style="display:none">
     <button data-dur="0.25">16th</button>
     <button data-dur="0.5" class="active">8th</button>
+    <button data-dur="0.75">8·</button>
     <button data-dur="1">1/4</button>
+    <button data-dur="1.5">4·</button>
     <button data-dur="2">1/2</button>
+    <button data-dur="4">1</button>
   </div>
+  <div class="seg" id="velseg" style="display:none">
+    <button data-vel="52">p</button>
+    <button data-vel="80" class="active">mf</button>
+    <button data-vel="112">f</button>
+  </div>
+  <button id="undobtn" style="display:none">⟲</button>
   <button id="lassobtn">⊞ Lasso</button>
   <button id="instbtn">🎹</button>
   <button id="subbtn">💬</button>
@@ -625,12 +634,45 @@
 
     <h3>EDITING &amp; SYNC</h3>
     <dl>
-      <dt>Edit</dt><dd>Reveals Pencil (insert MIDI notes) and Erase. Tucked away so bedtime thumbs don't hit them.</dd>
+      <dt>Edit</dt><dd>Reveals Pencil (insert notes: durations 16th–whole incl. dotted, p/mf/f velocity) and Erase, plus ⟲ undo. Tucked away so bedtime thumbs don't hit them.</dd>
+      <dt>File</dt><dd>New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load .mid, Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker; Save is what puts them in the repo. A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
       <dt>Load .mid</dt><dd>Open any MIDI file from your device.</dd>
     </dl>
 
     <div class="row"><button class="primary" id="helpclose">Close</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="filesheet">
+  <div class="sheet">
+    <h2>FILE</h2>
+    <div class="row">
+      <button class="primary" id="filenew">＋ New song</button>
+      <button id="filesave">Save (commit)</button>
+      <button id="filesaveas">Save As…</button>
+    </div>
+    <div class="row">
+      <label class="filebtn" for="fileinput">Load .mid</label>
+      <button id="filedlmid">Download .mid</button>
+    </div>
+    <div id="filenewform" style="display:none">
+      <div class="row"><span class="lbl">name</span><input type="text" id="fnname" placeholder="my-song" style="flex:1;min-height:40px"></div>
+      <div class="row">
+        <span class="lbl">tempo</span><input type="number" id="fnbpm" value="120" min="20" max="300" style="width:80px;min-height:40px">
+        <span class="lbl">meter</span><select id="fnnum"></select><span class="lbl">/</span>
+        <select id="fnden"><option>2</option><option selected>4</option><option>8</option><option>16</option></select>
+        <button class="primary" id="fncreate">Create</button>
+      </div>
+    </div>
+    <div id="filesaveasform" style="display:none">
+      <div class="row">
+        <span class="lbl">fork as</span><input type="text" id="fsname" placeholder="town-counterline" style="flex:1;min-height:40px">
+        <button class="primary" id="fsgo">Fork</button>
+      </div>
+    </div>
+    <div class="status" id="filestatus">Compositions live in albums/compositions/nightroll/. Chip captures are locked — Save As forks them there.</div>
+    <div class="row"><button id="fileclose" style="margin-left:auto">Close</button></div>
   </div>
 </div>
 
@@ -836,6 +878,8 @@ let selTrack = 0;
 let selNote = null;       // {ti, ni}
 let mode = "select";
 let pencilDur = 0.5;      // quarters
+let pencilVel = 80;       // p/mf/f from the velocity segment
+let editUndo = [];        // undo stack for pencil/erase: {kind, ti, ni}
 let view = { x: 0, y: 0, pxq: 56, rowH: 13 }; // x in px, pxq = px per quarter
 let playing = false, playT0 = 0, playOffset = 0, schedIdx = 0, schedEvents = [], raf = 0, schedTimer = 0;
 let loopSeg = null, loopPass = 0; // {start, end} secs — wrap at end back to start ("loop:" directive or whole song)
@@ -892,6 +936,12 @@ function loadEdits() {
   updateClearBtn();
 }
 function saveEdits() {
+  if (isComposition()) { // composition: the notes ARE the song — draft it whole
+    saveDraft();
+    computeSongEnd();
+    updateSongMeta();
+    return;
+  }
   if (!editsKey()) return;
   const removed = [], added = [];
   song.tracks.forEach((tr, ti) => tr.notes.forEach((n, ni) => {
@@ -1287,6 +1337,7 @@ function updateSubtitle() {
 let loadGen = 0; // bumps on every song switch; stale async loads check it and bail
 async function loadSong(path) {
   stop();
+  if (localStorage.getItem("ff1roll-draft-" + path)) { openDraft(path); return; } // local draft wins
   const gen = ++loadGen;
   const res = await fetch(path, {cache: "no-cache"});
   if (!res.ok) throw new Error("fetch failed: " + path);
@@ -1361,6 +1412,21 @@ function renderTrackbar() {
     });
     bar.appendChild(chip);
   });
+  if (isComposition()) { // compositions grow: + track appends an empty NES voice
+    const add = document.createElement("div");
+    add.className = "chip";
+    add.setAttribute("role", "button");
+    add.textContent = "＋ track";
+    add.addEventListener("click", () => {
+      song.tracks.push({name: "voice" + (song.tracks.length + 1), notes: []});
+      if (song.rawNotes) song.rawNotes.push([]);
+      trackState.push({muted: false, solo: false});
+      selTrack = song.tracks.length - 1;
+      saveDraft();
+      renderTrackbar(); buildScoreModel(); updateTrackGains(); draw();
+    });
+    bar.appendChild(add);
+  }
 }
 function trackAudible(ti) {
   const anySolo = trackState.some(s => s.solo);
@@ -2122,8 +2188,10 @@ function tap(pos) {
     const snap = song.ppq * pencilDur;
     const t = Math.round(tick / snap) * snap;
     const tr = song.tracks[selTrack];
-    tr.notes.push({t, d: song.ppq * pencilDur, p: pitch, v: 80, added: true});
-    if (song.rawNotes) song.rawNotes[selTrack].push({t: t + chopS, d: song.ppq * pencilDur, p: pitch, v: 80, added: true});
+    const added = !isComposition(); // in a composition the note IS the song, not an overlay
+    tr.notes.push({t, d: song.ppq * pencilDur, p: pitch, v: pencilVel, added});
+    if (song.rawNotes) song.rawNotes[selTrack].push({t: t + chopS, d: song.ppq * pencilDur, p: pitch, v: pencilVel, added});
+    editUndo.push({kind: "add", ti: selTrack, ni: tr.notes.length - 1});
     saveEdits();
     previewNote(selTrack, pitch);
     setInfo(noteLabel(selTrack, tr.notes.length - 1));
@@ -2137,6 +2205,7 @@ function tap(pos) {
       en.gone = true;
       if (song.rawNotes && en.ri !== undefined && song.rawNotes[hit.ti][en.ri]) song.rawNotes[hit.ti][en.ri].gone = true;
       if (selNote && selNote.ti === hit.ti && selNote.ni === hit.ni) selNote = null;
+      editUndo.push({kind: "erase", ti: hit.ti, ni: hit.ni});
       saveEdits(); draw();
     }
     return;
@@ -2888,6 +2957,21 @@ function renderSongGroups() {
   rows.innerHTML = "";
   for (const [group, songs] of Object.entries(CATALOG)) {
     rows.appendChild(songRow(group + "  (" + songs.length + ") ›", () => renderSongList(group)));
+  }
+  const drafts = draftKeys();
+  if (drafts.length) rows.appendChild(songRow("Night Roll drafts  (" + drafts.length + ") ›", renderDraftList));
+}
+function renderDraftList() {
+  document.getElementById("songsheettitle").textContent = "DRAFTS (THIS DEVICE)";
+  const rows = document.getElementById("songrows");
+  rows.innerHTML = "";
+  rows.appendChild(songRow("‹ Back", renderSongGroups, true));
+  for (const key of draftKeys()) {
+    const title = key.split("/").pop().replace(/\.mid$/, "");
+    rows.appendChild(songRow(title + (key === currentPath ? "   ✓" : ""), () => {
+      songsheet.classList.remove("on");
+      openDraft(key);
+    }));
   }
 }
 function renderSongList(group) {
@@ -3652,11 +3736,13 @@ document.getElementById("editbtn").addEventListener("click", e => {
   editOn = !editOn;
   e.currentTarget.classList.toggle("active", editOn);
   document.getElementById("modeseg").style.display = editOn ? "" : "none";
+  document.getElementById("undobtn").style.display = editOn ? "" : "none";
   if (!editOn) { // leaving edit mode: force safe Select
     mode = "select";
     for (const x of document.querySelectorAll("#modeseg button"))
       x.classList.toggle("active", x.dataset.mode === "select");
     document.getElementById("durseg").style.display = "none";
+    document.getElementById("velseg").style.display = "none";
     setInfo("tap a note");
   }
 });
@@ -3676,6 +3762,7 @@ document.getElementById("modeseg").addEventListener("click", e => {
   mode = b.dataset.mode;
   for (const x of document.querySelectorAll("#modeseg button")) x.classList.toggle("active", x === b);
   document.getElementById("durseg").style.display = mode === "pencil" ? "" : "none";
+  document.getElementById("velseg").style.display = mode === "pencil" ? "" : "none";
   setInfo(mode === "pencil" ? "pencil: tap grid to add to selected track" :
           mode === "erase" ? "erase: tap a note to remove" : "tap a note");
 });
@@ -4548,6 +4635,230 @@ document.getElementById("ndelete").addEventListener("click", () => {
 
 // ---------------------------------------------------------------- sync
 const syncsheet = document.getElementById("syncsheet");
+// -------------------------------------- compositions (File: New / Save / Save As)
+// A composition is a .mid + .rollnotes pair in albums/compositions/nightroll/ —
+// Josh's scratch space (2026-08-15 rulings). The .mid is written IN the page;
+// Save commits both via the GitHub API. Chip captures are locked: Save refuses
+// anything outside nightroll/, Save As forks it there (rollnotes inherited
+// verbatim + an origin note; drift is Josh's to own). Unsaved work lives in a
+// full-song localStorage draft, keyed by path, listed in the song picker.
+const NR_DIR = "albums/compositions/nightroll/";
+function isComposition() { return !!songKey && songKey.startsWith(NR_DIR); }
+function slugify(s) {
+  return (s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
+}
+function draftStoreKey(key) { return "ff1roll-draft-" + key; }
+function saveDraft() {
+  if (!isComposition()) return;
+  localStorage.setItem(draftStoreKey(songKey), JSON.stringify({
+    ppq: song.ppq, timesig: song.timesig || effTs(), tempos: song.tempos,
+    tracks: song.tracks.map(tr => ({name: tr.name,
+      notes: tr.notes.filter(n => !n.gone).map(n => ({t: n.t, d: n.d, p: n.p, v: n.v}))})),
+  }));
+}
+function draftKeys() {
+  return Object.keys(localStorage).filter(k => k.startsWith("ff1roll-draft-"))
+    .map(k => k.slice("ff1roll-draft-".length)).sort();
+}
+function openDraft(key) {
+  const d = JSON.parse(localStorage.getItem(draftStoreKey(key)));
+  const parsed = {ppq: d.ppq, timesig: d.timesig,
+    tempos: d.tempos.map(t => ({...t})),
+    tracks: d.tracks.map(tr => ({name: tr.name, notes: tr.notes.map(n => ({...n}))}))};
+  setSong(parsed, key); // rollnotes ride the normal sidecar + local-notes path
+  currentPath = key;
+  localStorage.setItem("ff1roll-lastsong", key);
+  updateSongBtn();
+}
+function writeMidi(s) { // format-1 SMF: meta track (tempo + meter) + one track per voice
+  const u32 = n => [n >>> 24 & 255, n >>> 16 & 255, n >>> 8 & 255, n & 255];
+  const u16 = n => [n >>> 8 & 255, n & 255];
+  const vlq = n => { const b = [n & 0x7F]; while ((n >>= 7) > 0) b.unshift((n & 0x7F) | 0x80); return b; };
+  const str = t => [...t].map(c => c.charCodeAt(0) & 255);
+  const track = body => [...str("MTrk"), ...u32(body.length), ...body];
+  const t0 = [];
+  t0.push(...vlq(0), 0xFF, 0x51, 0x03, ...u32(s.tempos[0].usq).slice(1));
+  const ts = s.timesig || [4, 4];
+  t0.push(...vlq(0), 0xFF, 0x58, 0x04, ts[0], Math.round(Math.log2(ts[1])), 24, 8);
+  t0.push(...vlq(0), 0xFF, 0x2F, 0x00);
+  const out = [track(t0)];
+  s.tracks.forEach((tr, ti) => {
+    const evs = [];
+    for (const n of tr.notes) {
+      if (n.gone) continue;
+      evs.push({t: n.t, on: 1, p: n.p, v: n.v || 80});
+      evs.push({t: n.t + n.d, on: 0, p: n.p, v: 0});
+    }
+    evs.sort((a, b) => a.t - b.t || a.on - b.on); // offs before ons at the same tick
+    const nm = tr.name || "track" + (ti + 1);
+    const body = [...vlq(0), 0xFF, 0x03, nm.length, ...str(nm)];
+    let last = 0;
+    const ch = ti & 15;
+    for (const e of evs) {
+      body.push(...vlq(e.t - last), (e.on ? 0x90 : 0x80) | ch, e.p & 127, e.on ? (e.v & 127) : 64);
+      last = e.t;
+    }
+    body.push(...vlq(0), 0xFF, 0x2F, 0x00);
+    out.push(track(body));
+  });
+  const head = [...str("MThd"), ...u32(6), ...u16(1), ...u16(out.length), ...u16(s.ppq)];
+  return new Uint8Array([...head, ...out.flat()]);
+}
+function midiBase64(bytes) { // btoa in chunks — big songs overflow the arg limit
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return btoa(bin);
+}
+function createComposition(name, bpm, num, den) {
+  const key = NR_DIR + slugify(name) + ".mid";
+  const parsed = {ppq: 480, timesig: [num, den],
+    tempos: [{tick: 0, usq: Math.round(60e6 / bpm), sec: 0}],
+    tracks: [{name: "pulse1", notes: []}, {name: "pulse2", notes: []}, {name: "triangle", notes: []}]};
+  setSong(parsed, key);
+  currentPath = key;
+  localStorage.setItem("ff1roll-lastsong", key);
+  updateSongBtn();
+  // the meter is HIS declaration (he chose it in the dialog) — record it
+  rollnotes.push(resolveNote({b1: 1, q1: 1, b2: null, q2: null,
+    text: "timesig: " + num + "/" + den, tsdir: [num, den], added: true}));
+  finalizeNotes();
+  saveLocalNotes(); // async loadNotes rebuild re-reads this stash
+  saveDraft();
+  draw();
+}
+function forkCurrentSong(name) {
+  const key = NR_DIR + slugify(name) + ".mid";
+  const notesText = serializeRollnotes(); // inherit — ruled 2026-08-14
+  const origin = songKey || "local file";
+  const parsed = {ppq: song.ppq, timesig: song.timesig || effTs(),
+    tempos: song.tempos.map(t => ({...t})),
+    tracks: song.tracks.map((tr, ti) => ({name: tr.name,
+      notes: (song.rawNotes ? song.rawNotes[ti] : tr.notes) // raw: chop stays a view
+        .filter(n => !n.gone).map(n => ({t: n.t, d: n.d, p: n.p, v: n.v}))}))};
+  setSong(parsed, key);
+  currentPath = key;
+  localStorage.setItem("ff1roll-lastsong", key);
+  updateSongBtn();
+  rollnotes = parseRollnotes(notesText).map(n => Object.assign(n, {added: true})).map(resolveNote);
+  rollnotes.push(resolveNote({b1: 1, q1: 1, b2: null, q2: null,
+    text: "forked from " + origin, added: true}));
+  finalizeNotes();
+  saveLocalNotes();
+  saveDraft();
+  draw();
+}
+const fileStatus = s => { document.getElementById("filestatus").textContent = s; };
+document.getElementById("filesheetbtn").addEventListener("click", () => {
+  document.getElementById("filenewform").style.display = "none";
+  document.getElementById("filesaveasform").style.display = "none";
+  fileStatus(isComposition()
+    ? "Composition — Save commits .mid + .rollnotes to " + NR_DIR
+    : "Chip captures are locked: Save refuses them, Save As forks into " + NR_DIR);
+  document.getElementById("filesheet").classList.add("on");
+});
+document.getElementById("fileclose").addEventListener("click", () =>
+  document.getElementById("filesheet").classList.remove("on"));
+document.getElementById("filenew").addEventListener("click", () => {
+  document.getElementById("filenewform").style.display = "";
+  document.getElementById("filesaveasform").style.display = "none";
+  document.getElementById("fnname").focus();
+});
+document.getElementById("fncreate").addEventListener("click", () => {
+  const name = document.getElementById("fnname").value;
+  if (!name.trim()) { fileStatus("Name it first."); return; }
+  const key = NR_DIR + slugify(name) + ".mid";
+  if (localStorage.getItem(draftStoreKey(key))) { fileStatus("A draft by that name exists — pick another."); return; }
+  stop();
+  createComposition(name, +document.getElementById("fnbpm").value || 120,
+                    +document.getElementById("fnnum").value, +document.getElementById("fnden").value);
+  document.getElementById("filesheet").classList.remove("on");
+  setInfo("new song — Edit → Pencil to write. Draft auto-saves on this device; File → Save commits.");
+});
+document.getElementById("filesaveas").addEventListener("click", () => {
+  if (!song) return;
+  document.getElementById("filesaveasform").style.display = "";
+  document.getElementById("filenewform").style.display = "none";
+  document.getElementById("fsname").focus();
+});
+document.getElementById("fsgo").addEventListener("click", () => {
+  const name = document.getElementById("fsname").value;
+  if (!name.trim()) { fileStatus("Name the fork first."); return; }
+  stop();
+  forkCurrentSong(name);
+  document.getElementById("filesheet").classList.remove("on");
+  setInfo("forked to " + songKey + " — fully editable; File → Save commits it.");
+});
+document.getElementById("filedlmid").addEventListener("click", () => {
+  if (!song) return;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([writeMidi(song)], {type: "audio/midi"}));
+  a.download = (songKey ? songKey.split("/").pop() : "song.mid");
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+document.getElementById("filesave").addEventListener("click", async e => {
+  if (!song) return;
+  if (!isComposition()) {
+    fileStatus("Locked — chip captures are regenerable pipeline output. Save As forks a free copy.");
+    return;
+  }
+  const token = localStorage.getItem("ff1roll-ghtoken");
+  if (!token) { fileStatus("No GitHub token stored yet — open Sync once and paste it there."); return; }
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  fileStatus("Committing " + songKey + "…");
+  try {
+    const h = ghHeaders(token);
+    const putBin = async path => {
+      const putOnce = async () => {
+        let sha = null;
+        const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+        if (g.ok) sha = (await g.json()).sha;
+        const body = {message: "Save " + path + " from Night Roll", branch: "main",
+                      content: midiBase64(writeMidi(song))};
+        if (sha) body.sha = sha;
+        return fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
+      };
+      let r = await putOnce();
+      if (r.status === 409) r = await putOnce();
+      return r;
+    };
+    const r1 = await putBin(songKey);
+    if (!r1.ok) throw new Error(".mid HTTP " + r1.status);
+    const r2 = await putRollnotes(songKey.replace(/\.mid$/, "") + ".rollnotes", serializeRollnotes(), h);
+    if (!r2.ok) throw new Error(".rollnotes HTTP " + r2.status);
+    markCurrentSongSynced();
+    fileStatus("Committed ✓ — it'll appear in the dropdown after the next manifest rebuild (ask Claude Code); the draft on this device keeps working meanwhile.");
+  } catch (err) { fileStatus("Save failed: " + err.message); }
+  finally { btn.disabled = false; }
+});
+document.getElementById("velseg").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  pencilVel = +b.dataset.vel;
+  for (const x of document.querySelectorAll("#velseg button")) x.classList.toggle("active", x === b);
+});
+document.getElementById("undobtn").addEventListener("click", () => {
+  const u = editUndo.pop();
+  if (!u || !song) return;
+  const n = song.tracks[u.ti] && song.tracks[u.ti].notes[u.ni];
+  if (!n) return;
+  n.gone = u.kind === "add"; // undo an add = remove it; undo an erase = restore it
+  if (song.rawNotes && n.ri !== undefined && song.rawNotes[u.ti][n.ri]) song.rawNotes[u.ti][n.ri].gone = n.gone;
+  saveEdits();
+  computeSongEnd();
+  draw();
+});
+{
+  const fn = document.getElementById("fnnum");
+  for (let n = 2; n <= 12; n++) {
+    const o = document.createElement("option");
+    o.textContent = String(n);
+    if (n === 4) o.selected = true;
+    fn.appendChild(o);
+  }
+}
+
 const REPO_API = "https://api.github.com/repos/joshcough/night-roll/contents/";
 let syncReturnToList = false; // sync opened from the notes list → return there after commit
 // review pane: every unsynced note on this device, grouped by song, so a
@@ -4714,7 +5025,9 @@ updateSyncBtn();
   catch (e) { setInfo("albums/manifest.json failed to load — open via a web server: " + e.message); return; }
   const all = Object.values(CATALOG).flat().map(([, p]) => p);
   const last = localStorage.getItem("ff1roll-lastsong");
-  currentPath = all.includes(last) ? last : "albums/final-fantasy-i/songs/overworld.mid";
+  // drafts aren't in the manifest but are perfectly loadable (draft-wins path)
+  currentPath = (all.includes(last) || (last && localStorage.getItem("ff1roll-draft-" + last)))
+    ? last : "albums/final-fantasy-i/songs/overworld.mid";
   updateSongBtn();
   loadSong(currentPath).catch(e => setInfo("load failed — open via a web server (GitHub Pages): " + e.message));
 })();
