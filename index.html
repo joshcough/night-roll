@@ -65,10 +65,7 @@
   }
   select { max-width: 44vw; }
   #songtitle {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 4px 12px 0;
+    padding: 5px 12px 0;
     background: var(--panel);
   }
   #songcrumb {
@@ -76,13 +73,20 @@
     font-size: 12px;
     letter-spacing: 0.06em;
     color: var(--gold);
-    flex: 1;
-    min-width: 0;
+    display: block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  #songtitle #metbtn { min-height: 34px; padding: 4px 10px; }
+  #trackrow {
+    display: flex;
+    align-items: center;
+    background: var(--panel);
+    border-bottom: 1px solid var(--grid);
+    flex-shrink: 0;
+  }
+  #timectl { display: flex; align-items: center; gap: 10px; padding-right: 12px; flex: none; }
+  #timectl #metbtn { min-height: 34px; padding: 4px 10px; }
   select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; min-width: 74px; }
   button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -124,10 +128,9 @@
     display: flex;
     gap: 8px;
     padding: 8px 12px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--grid);
     overflow-x: auto;
-    flex-shrink: 0;
+    flex: 1;
+    min-width: 0;
   }
   .chip {
     touch-action: manipulation; /* iOS ignores the viewport no-zoom meta; without this two quick taps zoom the page */
@@ -412,16 +415,18 @@
   <button id="helpbtn" aria-label="Help">?</button>
   <input type="file" id="fileinput" accept=".mid,.midi">
 </header>
-<div id="songtitle">
-  <span id="songcrumb"></span>
-  <button id="metbtn" aria-label="Metronome">⏱</button>
-  <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
-         aria-label="Playback speed">
-  <span class="meta" id="speedlbl" style="margin-left:0">100%</span>
-  <button id="speedreset" style="display:none;min-height:32px;padding:4px 9px">100%</button>
-  <div class="meta" id="songmeta" style="margin-left:0"></div>
+<div id="songtitle"><span id="songcrumb"></span></div>
+<div id="trackrow">
+  <div id="trackbar"></div>
+  <div id="timectl">
+    <button id="metbtn" aria-label="Metronome">⏱</button>
+    <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
+           aria-label="Playback speed">
+    <span class="meta" id="speedlbl" style="margin-left:0">100%</span>
+    <button id="speedreset" style="display:none;min-height:32px;padding:4px 9px">100%</button>
+    <div class="meta" id="songmeta" style="margin-left:0"></div>
+  </div>
 </div>
-<div id="trackbar"></div>
 <div id="rollwrap"><canvas id="roll"></canvas></div>
 <div id="instpanel">
   <div id="instwrap"><canvas id="instcanvas"></canvas></div>
