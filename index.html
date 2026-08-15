@@ -64,7 +64,17 @@
     cursor: pointer;
   }
   select { max-width: 44vw; }
-  #songbtn { max-width: 44vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #songtitle {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    padding: 5px 12px 0;
+    background: var(--panel);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; min-width: 74px; }
   button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -387,13 +397,12 @@
 <body>
 <header>
   <div class="brand">NIGHT <span>//</span> ROLL</div>
-  <button id="songbtn" aria-label="Song">Songs ▾</button>
+  <button id="filesheetbtn">File ▾</button>
   <button id="rwbtn" aria-label="Back to start">⏮</button>
   <button class="primary" id="playbtn">▶ Play</button>
   <button id="viewbtn" aria-label="Toggle score view">𝄞 Score</button>
   <button id="helpbtn" aria-label="Help">?</button>
   <button id="metbtn" aria-label="Metronome">⏱</button>
-  <button id="filesheetbtn">File</button>
   <input type="file" id="fileinput" accept=".mid,.midi">
   <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
          aria-label="Playback speed" style="margin-left:auto">
@@ -401,6 +410,7 @@
   <button id="speedreset" style="display:none;min-height:32px;padding:4px 9px">100%</button>
   <div class="meta" id="songmeta" style="margin-left:0"></div>
 </header>
+<div id="songtitle"></div>
 <div id="trackbar"></div>
 <div id="rollwrap"><canvas id="roll"></canvas></div>
 <div id="instpanel">
@@ -635,7 +645,7 @@
     <h3>EDITING &amp; SYNC</h3>
     <dl>
       <dt>Edit</dt><dd>Reveals Pencil (insert notes: durations 16th–whole incl. dotted, p/mf/f velocity) and Erase, plus ⟲ undo. Tucked away so bedtime thumbs don't hit them.</dd>
-      <dt>File</dt><dd>New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load .mid, Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load .mid, Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
       <dt>Load .mid</dt><dd>Open any MIDI file from your device.</dd>
     </dl>
@@ -648,7 +658,8 @@
   <div class="sheet">
     <h2>FILE</h2>
     <div class="row">
-      <button class="primary" id="filenew">＋ New song</button>
+      <button class="primary" id="fileopen">Open…</button>
+      <button id="filenew">＋ New song</button>
       <button id="filesave">Save (commit)</button>
       <button id="filesaveas">Save As…</button>
     </div>
@@ -2933,7 +2944,7 @@ function scoreTap(pos) {
 // ---------------------------------------------------------------- ui wiring
 // two-level song picker: groups first, then that group's songs — a flat
 // 43-entry dropdown got unusable once chip captures joined the catalog
-const songbtn = document.getElementById("songbtn");
+const songtitleEl = document.getElementById("songtitle");
 const songsheet = document.getElementById("songsheet");
 let currentPath = null; // resolved in boot() once the manifest is in
 function songTitleOf(path) {
@@ -2943,7 +2954,7 @@ function songTitleOf(path) {
   }
   return path.split("/").pop();
 }
-function updateSongBtn() { songbtn.textContent = songTitleOf(currentPath) + " ▾"; }
+function updateSongBtn() { songtitleEl.textContent = currentPath ? songTitleOf(currentPath) : ""; }
 function songRow(label, onTap, dim) {
   const row = document.createElement("div");
   row.className = "noterow";
@@ -2995,12 +3006,14 @@ function renderSongList(group) {
     rows.appendChild(row);
   }
 }
-songbtn.addEventListener("click", () => {
+function openSongPicker() {
   // open straight into the current song's group — one less tap for the sweep
   const group = Object.entries(CATALOG).find(([, songs]) => songs.some(([, p]) => p === currentPath));
-  if (group) renderSongList(group[0]); else renderSongGroups();
+  if (group) renderSongList(group[0]);
+  else if (currentPath && localStorage.getItem("ff1roll-draft-" + currentPath)) renderDraftList();
+  else renderSongGroups();
   songsheet.classList.add("on");
-});
+}
 document.getElementById("songsheetclose").addEventListener("click", () => songsheet.classList.remove("on"));
 document.getElementById("playbtn").addEventListener("click", () => {
   if (!song) return; // first song still fetching
@@ -3758,7 +3771,7 @@ document.getElementById("fileinput").addEventListener("change", async e => {
   try {
     setSong(parseMidi(await f.arrayBuffer()), null);
     setInfo(f.name + " loaded (edits not saved for local files)");
-    songbtn.textContent = f.name + " ▾";
+    songtitleEl.textContent = f.name;
   } catch (err) { setInfo("could not parse: " + err.message); }
 });
 document.getElementById("modeseg").addEventListener("click", e => {
@@ -4826,6 +4839,10 @@ document.getElementById("fmgo").addEventListener("click", e => {
 });
 document.getElementById("fileclose").addEventListener("click", () =>
   document.getElementById("filesheet").classList.remove("on"));
+document.getElementById("fileopen").addEventListener("click", () => {
+  document.getElementById("filesheet").classList.remove("on");
+  openSongPicker();
+});
 document.getElementById("filenew").addEventListener("click", () => {
   document.getElementById("filenewform").style.display = "";
   document.getElementById("filesaveasform").style.display = "none";
