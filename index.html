@@ -635,7 +635,7 @@
     <h3>EDITING &amp; SYNC</h3>
     <dl>
       <dt>Edit</dt><dd>Reveals Pencil (insert notes: durations 16th–whole incl. dotted, p/mf/f velocity) and Erase, plus ⟲ undo. Tucked away so bedtime thumbs don't hit them.</dd>
-      <dt>File</dt><dd>New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load .mid, Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker; Save is what puts them in the repo. A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load .mid, Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
       <dt>Load .mid</dt><dd>Open any MIDI file from your device.</dd>
     </dl>
@@ -670,6 +670,11 @@
         <span class="lbl">fork as</span><input type="text" id="fsname" placeholder="town-counterline" style="flex:1;min-height:40px">
         <button class="primary" id="fsgo">Fork</button>
       </div>
+    </div>
+    <div class="row" id="filemoverow" style="display:none">
+      <span class="lbl">move to</span>
+      <select id="fmdest"></select>
+      <button id="fmgo">Move</button>
     </div>
     <div class="status" id="filestatus">Compositions live in albums/compositions/nightroll/. Chip captures are locked — Save As forks them there.</div>
     <div class="row"><button id="fileclose" style="margin-left:auto">Close</button></div>
@@ -4643,7 +4648,52 @@ const syncsheet = document.getElementById("syncsheet");
 // verbatim + an origin note; drift is Josh's to own). Unsaved work lives in a
 // full-song localStorage draft, keyed by path, listed in the song picker.
 const NR_DIR = "albums/compositions/nightroll/";
-function isComposition() { return !!songKey && songKey.startsWith(NR_DIR); }
+const COMP_DIR = "albums/compositions/";
+// everything under compositions/ is Josh's own work and stays editable; the
+// 08-14 lock is specifically on NSF pipeline output (everything else)
+function isComposition() { return !!songKey && songKey.startsWith(COMP_DIR); }
+// Move targets (Josh 2026-08-15: only compositions move, between these two)
+const COMP_ALBUMS = [["Night Roll Sketches", NR_DIR], ["My Compositions", COMP_DIR]];
+function albumTitleFor(path) {
+  for (const [t, dir] of COMP_ALBUMS) if (path.startsWith(dir) && !(dir === COMP_DIR && path.startsWith(NR_DIR))) return t;
+  return null;
+}
+function titleCaseSlug(base) {
+  return base.split("-").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" ");
+}
+async function updateManifest(h, mutate) { // GET manifest.json, mutate, PUT — keeps the dropdown honest
+  const path = "albums/manifest.json";
+  const putOnce = async () => {
+    const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+    if (!g.ok) throw new Error("manifest GET " + g.status);
+    const j = await g.json();
+    const albums = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, "")))));
+    if (!mutate(albums)) return {ok: true};
+    return fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify({
+      message: "Update manifest from Night Roll", branch: "main", sha: j.sha,
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(albums, null, 1) + "\n"))),
+    })});
+  };
+  let r = await putOnce();
+  if (r.status === 409) r = await putOnce();
+  if (!r.ok) throw new Error("manifest PUT " + r.status);
+}
+function manifestPlace(albums, dropPath, addPath) { // remove one path, add another; returns changed
+  let changed = false;
+  for (const a of albums) {
+    const i = a.songs.findIndex(s => s.path === dropPath || s.path === addPath);
+    if (i >= 0) { a.songs.splice(i, 1); changed = true; }
+  }
+  if (addPath) {
+    const title = albumTitleFor(addPath);
+    let album = albums.find(a => a.title === title);
+    if (!album) { album = {title, songs: []}; albums.push(album); }
+    album.songs.push({title: titleCaseSlug(addPath.split("/").pop().replace(/\.mid$/, "")), path: addPath});
+    album.songs.sort((a, b) => a.title.localeCompare(b.title));
+    changed = true;
+  }
+  return changed;
+}
 function slugify(s) {
   return (s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
 }
@@ -4751,10 +4801,28 @@ const fileStatus = s => { document.getElementById("filestatus").textContent = s;
 document.getElementById("filesheetbtn").addEventListener("click", () => {
   document.getElementById("filenewform").style.display = "none";
   document.getElementById("filesaveasform").style.display = "none";
+  document.getElementById("filemoverow").style.display = isComposition() ? "" : "none";
+  if (isComposition()) { // move targets: the other compositions album(s)
+    const sel = document.getElementById("fmdest");
+    sel.innerHTML = "";
+    for (const [title, dir] of COMP_ALBUMS) {
+      if (songKey.startsWith(dir) && albumTitleFor(songKey) === title) continue; // already home
+      const o = document.createElement("option");
+      o.value = dir;
+      o.textContent = title;
+      sel.appendChild(o);
+    }
+  }
   fileStatus(isComposition()
-    ? "Composition — Save commits .mid + .rollnotes to " + NR_DIR
+    ? "Composition — Save commits .mid + .rollnotes; Move relocates it (repo + manifest)."
     : "Chip captures are locked: Save refuses them, Save As forks into " + NR_DIR);
   document.getElementById("filesheet").classList.add("on");
+});
+document.getElementById("fmgo").addEventListener("click", e => {
+  const dest = document.getElementById("fmdest").value;
+  if (!dest || !isComposition()) return;
+  e.currentTarget.disabled = true;
+  moveComposition(dest).finally(() => { e.currentTarget.disabled = false; });
 });
 document.getElementById("fileclose").addEventListener("click", () =>
   document.getElementById("filesheet").classList.remove("on"));
@@ -4809,29 +4877,76 @@ document.getElementById("filesave").addEventListener("click", async e => {
   fileStatus("Committing " + songKey + "…");
   try {
     const h = ghHeaders(token);
-    const putBin = async path => {
-      const putOnce = async () => {
-        let sha = null;
-        const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
-        if (g.ok) sha = (await g.json()).sha;
-        const body = {message: "Save " + path + " from Night Roll", branch: "main",
-                      content: midiBase64(writeMidi(song))};
-        if (sha) body.sha = sha;
-        return fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
-      };
-      let r = await putOnce();
-      if (r.status === 409) r = await putOnce();
-      return r;
-    };
-    const r1 = await putBin(songKey);
+    const r1 = await putMidAt(songKey, h);
     if (!r1.ok) throw new Error(".mid HTTP " + r1.status);
     const r2 = await putRollnotes(songKey.replace(/\.mid$/, "") + ".rollnotes", serializeRollnotes(), h);
     if (!r2.ok) throw new Error(".rollnotes HTTP " + r2.status);
+    await updateManifest(h, albums => manifestPlace(albums, null, songKey));
     markCurrentSongSynced();
-    fileStatus("Committed ✓ — it'll appear in the dropdown after the next manifest rebuild (ask Claude Code); the draft on this device keeps working meanwhile.");
+    await initCatalog().catch(() => {});
+    updateSongBtn();
+    fileStatus("Committed ✓ — in the dropdown now (Pages takes ~1 min to serve the files).");
   } catch (err) { fileStatus("Save failed: " + err.message); }
   finally { btn.disabled = false; }
 });
+async function putMidAt(path, h) { // PUT the current song's .mid, one stale-sha retry
+  const putOnce = async () => {
+    let sha = null;
+    const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+    if (g.ok) sha = (await g.json()).sha;
+    const body = {message: "Save " + path + " from Night Roll", branch: "main",
+                  content: midiBase64(writeMidi(song))};
+    if (sha) body.sha = sha;
+    return fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
+  };
+  let r = await putOnce();
+  if (r.status === 409) r = await putOnce();
+  return r;
+}
+async function deleteRepoFile(path, h) { // tolerate absence: never-synced drafts have no repo file
+  const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+  if (!g.ok) return;
+  const sha = (await g.json()).sha;
+  await fetch(REPO_API + path, {method: "DELETE", headers: h,
+    body: JSON.stringify({message: "Move " + path + " from Night Roll", sha, branch: "main"})});
+}
+async function moveComposition(destDir) {
+  const oldKey = songKey;
+  const newKey = destDir + oldKey.split("/").pop();
+  if (newKey === oldKey) { fileStatus("Already there."); return; }
+  const token = localStorage.getItem("ff1roll-ghtoken");
+  const renameLocal = () => { // every per-song localStorage key rides along
+    for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"]) {
+      const v = localStorage.getItem(pre + oldKey);
+      if (v !== null) { localStorage.setItem(pre + newKey, v); localStorage.removeItem(pre + oldKey); }
+    }
+    songKey = newKey;
+    currentPath = newKey;
+    localStorage.setItem("ff1roll-lastsong", newKey);
+    updateSongBtn();
+  };
+  if (!token) { // no token: draft-only move on this device
+    renameLocal();
+    fileStatus("Moved locally (draft only — no token stored; open Sync once to enable repo moves).");
+    return;
+  }
+  fileStatus("Moving to " + destDir + "…");
+  try {
+    const h = ghHeaders(token);
+    const r1 = await putMidAt(newKey, h);
+    if (!r1.ok) throw new Error(".mid HTTP " + r1.status);
+    const r2 = await putRollnotes(newKey.replace(/\.mid$/, "") + ".rollnotes", serializeRollnotes(), h);
+    if (!r2.ok) throw new Error(".rollnotes HTTP " + r2.status);
+    await deleteRepoFile(oldKey, h);
+    await deleteRepoFile(oldKey.replace(/\.mid$/, ".rollnotes"), h);
+    await updateManifest(h, albums => manifestPlace(albums, oldKey, newKey));
+    renameLocal();
+    markCurrentSongSynced();
+    await initCatalog().catch(() => {});
+    updateSongBtn();
+    fileStatus("Moved ✓ → " + newKey);
+  } catch (err) { fileStatus("Move failed: " + err.message); }
+}
 document.getElementById("velseg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;

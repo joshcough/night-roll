@@ -540,3 +540,23 @@ test("composition helpers: slugify, isComposition gate, draft store round-trip",
   assert.deepEqual(d.timesig, [4, 4]);
   run(`songKey = null;`);
 });
+
+test("manifest placement: save adds, move relocates, albums resolve by dir", () => {
+  installSong();
+  assert.equal(run(`albumTitleFor("albums/compositions/nightroll/x.mid")`), "Night Roll Sketches");
+  assert.equal(run(`albumTitleFor("albums/compositions/x.mid")`), "My Compositions");
+  assert.equal(run(`albumTitleFor("albums/final-fantasy-i/songs/town.mid")`), null);
+  const out = val(`(() => {
+    const albums = [{title: "My Compositions", songs: [{title: "Old", path: "albums/compositions/old.mid"}]}];
+    manifestPlace(albums, null, "albums/compositions/nightroll/test-tune.mid"); // first save
+    manifestPlace(albums, "albums/compositions/nightroll/test-tune.mid",
+                          "albums/compositions/test-tune.mid");                 // promote
+    return albums;
+  })()`);
+  const sketches = out.find(a => a.title === "Night Roll Sketches");
+  assert.deepEqual(sketches.songs, []); // moved out
+  const mine = out.find(a => a.title === "My Compositions");
+  assert.deepEqual(mine.songs.map(s => s.path).sort(),
+    ["albums/compositions/old.mid", "albums/compositions/test-tune.mid"]);
+  assert.equal(mine.songs.find(s => s.path.includes("test-tune")).title, "Test Tune");
+});

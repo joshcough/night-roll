@@ -14,9 +14,7 @@ const titleCase = base => base.split("-")
   .map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" ");
 
 const albums = [];
-for (const dir of readdirSync(ALBUMS).sort()) {
-  const full = path.join(ALBUMS, dir);
-  if (!statSync(full).isDirectory()) continue;
+function addAlbum(full, dirName) {
   const meta = existsSync(path.join(full, "album.json"))
     ? JSON.parse(readFileSync(path.join(full, "album.json"), "utf8")) : {};
   const songDir = existsSync(path.join(full, "songs")) ? path.join(full, "songs") : full;
@@ -25,8 +23,20 @@ for (const dir of readdirSync(ALBUMS).sort()) {
     const base = f.replace(/\.mid$/, "");
     return {title: (meta.songs || {})[base] || titleCase(base), path: rel + "/" + f};
   }).sort((a, b) => a.title.localeCompare(b.title));
-  if (songs.length) albums.push({title: meta.title || titleCase(dir),
+  if (songs.length) albums.push({title: meta.title || titleCase(dirName),
                                  order: meta.order ?? 99, songs});
+}
+for (const dir of readdirSync(ALBUMS).sort()) {
+  const full = path.join(ALBUMS, dir);
+  if (!statSync(full).isDirectory()) continue;
+  addAlbum(full, dir);
+  // a subdirectory with its own album.json is its own album (e.g.
+  // compositions/nightroll — the in-app scratch space)
+  for (const sub of readdirSync(full).sort()) {
+    const subFull = path.join(full, sub);
+    if (statSync(subFull).isDirectory() && existsSync(path.join(subFull, "album.json")))
+      addAlbum(subFull, sub);
+  }
 }
 albums.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
 for (const a of albums) delete a.order;

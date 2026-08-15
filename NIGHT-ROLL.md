@@ -201,9 +201,17 @@ app warnings — ruled). Unsaved work auto-drafts to localStorage
 repo fetches on load and are listed under "Night Roll drafts" in the
 picker. Pencil upgrades: dotted durations (8·, 4·, whole), p/mf/f
 velocity segment, ⟲ single-stack undo; compositions get a ＋ track chip
-(empty NES voice). Synced compositions appear in the dropdown after the
-next offline manifest rebuild. NEXT (promised 2026-08-15): score-side
-note entry.
+(empty NES voice). The app maintains albums/manifest.json itself
+(2026-08-15): Save inserts the song's catalog entry via the API and
+refreshes the dropdown; File→Move to… relocates a composition between
+Night Roll Sketches and My Compositions — PUT at the new path, DELETE
+the old, manifest updated, every per-song localStorage key renamed
+(tokenless fallback: draft-only local move). nightroll/ is its own
+album via a nested album.json; build_manifest.mjs now scans one level
+of subdirectories for album.json, so offline rebuilds agree with what
+the app writes. The editable/locked line is albums/compositions/ as a
+whole (the 08-14 lock is on NSF pipeline output, and moved sketches
+must stay saveable). NEXT (promised 2026-08-15): score-side note entry.
 
 **Sync:** serializes the full current rollnotes state and commits it to
 this repo via the GitHub Contents API (fine-grained token, stored in
