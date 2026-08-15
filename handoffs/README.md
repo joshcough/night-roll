@@ -12,3 +12,10 @@ albums/final-fantasy-i/reference/ with its own rules.
 
 Claude Code: when Josh hands you a new handoff, apply it AND copy it
 here in the same session.
+
+Recovered 2026-08-15 from Desktop/Music: the two town handoffs from
+2026-08-02 (the short verdict file and the extended "copy", both kept —
+they show the thinking at the time) and the 08-02 session-notes
+ADDENDUM. The base session-notes-2026-08-02.md it amends was applied
+and discarded before this archive existed — the addendum is what
+survives of it.
