@@ -204,7 +204,23 @@ his behalf.
   rollnotes `key:` disagrees with or is missing from the key-sweep
   Tally — the drift is real (see data issues in the analysis queue).
 
-### Composition mode + File menu — from the 08-14 handoff (design open)
+### Composition mode + File menu — v1 SHIPPED 2026-08-15
+
+Josh's design rulings: setup dialog for New; roll entry v1 with
+**score-side note entry as the PROMISED immediate next project** (he
+accepted roll-first reluctantly); scratch home albums/compositions/
+nightroll/ (flat .mid+.rollnotes pairs; promotion to compositions/
+proper happens via Claude Code on his word — no in-app move). Shipped:
+File sheet (New/Save/Save As/Load/Download .mid), in-page MIDI writer,
+Save locked outside nightroll/, Save As forks any song with rollnotes
+inherited + origin note, localStorage drafts (picker group, reload
+restore), dotted durations, p/mf/f velocity, ⟲ undo, ＋ track chip.
+Still open from the original spec: score entry (NEXT), tempo changes
+after creation, rests/ties as first-class, multi-level undo, manifest
+auto-pickup for synced compositions (currently needs an offline
+manifest rebuild — ask Claude Code after first Save).
+
+### Composition mode + File menu — original 08-14 spec (design open)
 
 - **Composition mode (Josh, 2026-08-14):** flip from analysis straight
   into writing — new files, note entry on roll AND score, tempo,
