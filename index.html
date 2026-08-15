@@ -65,16 +65,24 @@
   }
   select { max-width: 44vw; }
   #songtitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 12px 0;
+    background: var(--panel);
+  }
+  #songcrumb {
     font-family: var(--mono);
     font-size: 12px;
     letter-spacing: 0.06em;
     color: var(--gold);
-    padding: 5px 12px 0;
-    background: var(--panel);
+    flex: 1;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  #songtitle #metbtn { min-height: 34px; padding: 4px 10px; }
   select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; min-width: 74px; }
   button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -402,15 +410,17 @@
   <button class="primary" id="playbtn">▶ Play</button>
   <button id="viewbtn" aria-label="Toggle score view">𝄞 Score</button>
   <button id="helpbtn" aria-label="Help">?</button>
-  <button id="metbtn" aria-label="Metronome">⏱</button>
   <input type="file" id="fileinput" accept=".mid,.midi">
+</header>
+<div id="songtitle">
+  <span id="songcrumb"></span>
+  <button id="metbtn" aria-label="Metronome">⏱</button>
   <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
-         aria-label="Playback speed" style="margin-left:auto">
+         aria-label="Playback speed">
   <span class="meta" id="speedlbl" style="margin-left:0">100%</span>
   <button id="speedreset" style="display:none;min-height:32px;padding:4px 9px">100%</button>
   <div class="meta" id="songmeta" style="margin-left:0"></div>
-</header>
-<div id="songtitle"></div>
+</div>
 <div id="trackbar"></div>
 <div id="rollwrap"><canvas id="roll"></canvas></div>
 <div id="instpanel">
@@ -2942,7 +2952,7 @@ function scoreTap(pos) {
 // ---------------------------------------------------------------- ui wiring
 // two-level song picker: groups first, then that group's songs — a flat
 // 43-entry dropdown got unusable once chip captures joined the catalog
-const songtitleEl = document.getElementById("songtitle");
+const songtitleEl = document.getElementById("songcrumb");
 const songsheet = document.getElementById("songsheet");
 let currentPath = null; // resolved in boot() once the manifest is in
 function songTitleOf(path) {
