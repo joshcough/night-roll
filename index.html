@@ -227,6 +227,23 @@
     box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
   }
   #filesheet.on { display: block; }
+  #filesub {
+    display: none;
+    position: absolute;
+    z-index: 61;
+    background: var(--panel2);
+    border: 1px solid var(--grid);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 220px;
+    max-width: 80vw;
+    max-height: 70vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  }
+  #filesub.on { display: block; }
+  #filesub .fitem { display: block; width: 100%; text-align: left; border: 0; background: none; border-radius: 6px; min-height: 42px; padding: 9px 12px; font-family: var(--mono); font-size: 13px; color: var(--text); cursor: pointer; }
+  #filesub .fitem:active { background: var(--panel); }
   #filesheet .fitem {
     display: block;
     width: 100%;
@@ -737,6 +754,7 @@
   </div>
   <div class="status" id="filestatus"></div>
 </div>
+<div id="filesub"></div>
 
 <div class="overlay" id="metsheet">
   <div class="sheet">
@@ -4983,7 +5001,8 @@ function forkCurrentSong(name) {
 const fileStatus = s => { document.getElementById("filestatus").textContent = s; };
 const filesheet = document.getElementById("filesheet");
 document.getElementById("filesheetbtn").addEventListener("click", e => {
-  if (filesheet.classList.contains("on")) { filesheet.classList.remove("on"); return; }
+  if (filesheet.classList.contains("on")) { closeFileMenus(); return; }
+  filesub.classList.remove("on");
   document.getElementById("filenewform").style.display = "none";
   document.getElementById("filesaveasform").style.display = "none";
   document.getElementById("filemoverow").style.display = isComposition() ? "" : "none";
@@ -5005,9 +5024,9 @@ document.getElementById("filesheetbtn").addEventListener("click", e => {
   filesheet.classList.add("on");
 });
 document.addEventListener("pointerdown", e => { // tap-away closes, like a real menu
-  if (!filesheet.classList.contains("on")) return;
-  if (filesheet.contains(e.target) || e.target.closest("#filesheetbtn")) return;
-  filesheet.classList.remove("on");
+  if (!filesheet.classList.contains("on") && !filesub.classList.contains("on")) return;
+  if (filesheet.contains(e.target) || filesub.contains(e.target) || e.target.closest("#filesheetbtn")) return;
+  closeFileMenus();
 }, {capture: true});
 document.getElementById("fmgo").addEventListener("click", e => {
   const dest = document.getElementById("fmdest").value;
@@ -5015,9 +5034,56 @@ document.getElementById("fmgo").addEventListener("click", e => {
   e.currentTarget.disabled = true;
   moveComposition(dest).finally(() => { e.currentTarget.disabled = false; });
 });
-document.getElementById("fileopen").addEventListener("click", () => {
-  document.getElementById("filesheet").classList.remove("on");
-  openSongPicker();
+// Open › is a cascading submenu: albums fly out beside the File menu,
+// drill into a group, tap a song. Opens straight into the current group.
+const filesub = document.getElementById("filesub");
+function closeFileMenus() {
+  filesheet.classList.remove("on");
+  filesub.classList.remove("on");
+}
+function fsubItem(label, onTap, dim) {
+  const b = document.createElement("button");
+  b.className = "fitem";
+  if (dim) b.style.color = "var(--dim)";
+  b.textContent = label;
+  b.addEventListener("click", onTap);
+  filesub.appendChild(b);
+}
+function fsubAlbums() {
+  filesub.innerHTML = "";
+  for (const group of Object.keys(CATALOG))
+    fsubItem(group + "  ›", () => fsubSongs(group));
+  if (draftKeys().length) fsubItem("Night Roll drafts  ›", fsubDrafts);
+}
+function fsubSongs(group) {
+  filesub.innerHTML = "";
+  fsubItem("‹ " + group, fsubAlbums, true);
+  for (const [title, path] of CATALOG[group])
+    fsubItem(title + (path === currentPath ? "   ✓" : ""), () => {
+      closeFileMenus();
+      currentPath = path;
+      localStorage.setItem("ff1roll-lastsong", path);
+      updateSongBtn();
+      loadSong(path).catch(err => setInfo(err.message));
+    });
+}
+function fsubDrafts() {
+  filesub.innerHTML = "";
+  fsubItem("‹ drafts", fsubAlbums, true);
+  for (const key of draftKeys())
+    fsubItem(key.split("/").pop().replace(/\.mid$/, "") + (key === currentPath ? "   ✓" : ""),
+      () => { closeFileMenus(); openDraft(key); });
+}
+document.getElementById("fileopen").addEventListener("click", e => {
+  const group = Object.entries(CATALOG).find(([, songs]) => songs.some(([, p]) => p === currentPath));
+  if (group) fsubSongs(group[0]);
+  else if (currentPath && localStorage.getItem("ff1roll-draft-" + currentPath)) fsubDrafts();
+  else fsubAlbums();
+  const mr = filesheet.getBoundingClientRect();
+  const ir = e.currentTarget.getBoundingClientRect();
+  filesub.style.left = Math.min(mr.right + 4, window.innerWidth - 240) + "px";
+  filesub.style.top = ir.top + "px";
+  filesub.classList.add("on");
 });
 document.getElementById("filenew").addEventListener("click", () => {
   document.getElementById("filenewform").style.display = "";
