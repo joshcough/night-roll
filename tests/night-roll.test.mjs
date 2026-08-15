@@ -572,7 +572,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "find:", "Circle of fifths", "key: picker", "mode?", "Instrument panel",
     "Fall", "💬", "Chop", "Loop points", "Sections", "Chords",
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
-    "New song", "Save As", "Move to…", "Download .mid", "Open…",
+    "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));

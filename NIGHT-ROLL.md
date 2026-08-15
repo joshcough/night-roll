@@ -215,7 +215,16 @@ album via a nested album.json; build_manifest.mjs now scans one level
 of subdirectories for album.json, so offline rebuilds agree with what
 the app writes. The editable/locked line is albums/compositions/ as a
 whole (the 08-14 lock is on NSF pipeline output, and moved sketches
-must stay saveable). NEXT (promised 2026-08-15): score-side note entry.
+must stay saveable). **Score-side entry SHIPPED same day** (the promised
+follow-up): Pencil/Erase work in score view — the tapped stave picks the
+track, the vertical position picks the diatonic step (calibrated at
+runtime from VexFlow's own getYForLine, no magic constants; ledger lines
+±4), the key signature supplies accidentals with a key/♮/♯/♭ override
+segment, and x snaps to the pencil-duration grid through scoreXToTick
+(coarse mid-measure on near-empty bars — its linear-within-measure
+interpolation has few anchors there). Empty tracks keep staves on
+compositions (clef guessed from the voice name) so a blank song is
+enterable; erase hit-tests the engraved notehead boxes.
 
 **Sync:** serializes the full current rollnotes state and commits it to
 this repo via the GitHub Contents API (fine-grained token, stored in
