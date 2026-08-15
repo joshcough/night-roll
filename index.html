@@ -632,7 +632,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
-      <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd notes light gold on it; sounding notes light live during playback in their track's color. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets; a pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
+      <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd notes light gold on it; sounding notes light live during playback in their track's color. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
 
@@ -4005,6 +4005,28 @@ function drawGuitar(W, H, lit) {
   lit.live.forEach((ti, p) => add(p, TRACK_COLORS[ti % TRACK_COLORS.length]));
   lit.sel.forEach(p => add(p, css("--gold"))); // lasso wins where both apply
   if (instFlash && instFlash.si !== undefined) dots.push({...instFlash, color: css("--accent")});
+  // pitch-class echoes (lasso only): EVERY same-named note on the neck gets a
+  // hollow ring — select an F# and all the F#s light, not just that octave
+  const selPcs = new Set([...lit.sel].map(p => p % 12));
+  if (selPcs.size) {
+    const taken = new Set(dots.map(d => d.si + ":" + d.f));
+    GTR_TUNING.forEach((open, si) => {
+      for (let f = 0; f <= GTR_FRETS; f++) {
+        const pc = (open + f) % 12;
+        if (!selPcs.has(pc) || taken.has(si + ":" + f)) continue;
+        const cx = g.nutX + (f === 0 ? 2 : (f - 0.5) * g.fw), cy = g.top + si * g.sh;
+        ictx.strokeStyle = css("--gold");
+        ictx.globalAlpha = 0.7;
+        ictx.beginPath();
+        ictx.arc(cx, cy, 9, 0, 7);
+        ictx.stroke();
+        ictx.fillStyle = css("--dim");
+        ictx.font = "8px " + css("--mono");
+        ictx.fillText(spellPc(pc, sf), cx, cy + 3);
+        ictx.globalAlpha = 1;
+      }
+    });
+  }
   for (const d of dots) {
     const cx = g.nutX + (d.f === 0 ? 2 : (d.f - 0.5) * g.fw), cy = g.top + d.si * g.sh;
     ictx.fillStyle = d.color;
