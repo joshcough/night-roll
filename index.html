@@ -64,19 +64,22 @@
     cursor: pointer;
   }
   select { max-width: 44vw; }
-  #songtitle {
-    padding: 5px 12px 0;
-    background: var(--panel);
-  }
+  header { position: relative; }
   #songcrumb {
     font-family: var(--mono);
     font-size: 12px;
     letter-spacing: 0.06em;
     color: var(--gold);
-    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 42vw;
+    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    pointer-events: none;
   }
   #trackrow {
     display: flex;
@@ -413,9 +416,9 @@
   <button class="primary" id="playbtn">▶ Play</button>
   <button id="viewbtn" aria-label="Toggle score view">𝄞 Score</button>
   <button id="helpbtn" aria-label="Help">?</button>
+  <span id="songcrumb"></span>
   <input type="file" id="fileinput" accept=".mid,.midi">
 </header>
-<div id="songtitle"><span id="songcrumb"></span></div>
 <div id="trackrow">
   <div id="trackbar"></div>
   <div id="timectl">
