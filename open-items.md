@@ -4,6 +4,22 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## RESTART CONTEXT — updated 2026-08-15 (after the 08-14 web session)
+
+**Prologue is the live thread.** 6.3 determined: F#(♭5), root position,
+A as passing motion — full derivation path in Josh's
+handoff-2026-08-14.md (not yet transcribed to analysis/prologue.md;
+needs his go). Pulse-2 independence hypothesis tested bars 1–5 and
+FAILED — it's a harmonic voice and testifies at 6.3. Rollnotes already
+fixed by Josh himself: 5.3 = chord: D/A, 2.3 = Am7/C. **THE NEXT MOVE,
+untouched by his choice: the F#–C tritone thread** (one tritone → two
+dominant sevenths; likely bears on 6.1 Gm-vs-C7, which is still open —
+new evidence since he wrote Gm: 5.3 is D/A). Key of prologue: F
+suspected, untested. He ended the session frustrated the tritone wasn't
+resolved — it's fully recorded, nothing lost by having stopped.
+
+Older context below still applies where not superseded.
+
 ## RESTART CONTEXT — state as of 2026-08-05, late night
 
 Read this first in a fresh session. Also read the memory files —
@@ -121,9 +137,12 @@ his behalf.
   (matoyas-cave B minor, menu Bb) and 8 songs total are recorded but not
   swept; gurgu-volcano carries two key lines (D dorian, F dorian) and
   the sweep only records the first — should it capture section-level
-  changes at all?; floating-castle has a sweep entry but no .rollnotes;
-  prologue line 38 has a chord in a section field ("section: F#m or
-  Gbm") — and worth checking whether the app makes that mistake easy.
+  changes at all?; floating-castle has a sweep entry but no .rollnotes
+  (partial key: A#/Bb? added 2026-08-12). RESOLVED 2026-08-14: the
+  prologue chord-in-a-section-field entry ("section: F#m or Gbm") was
+  both mis-fielded AND stale — Josh fixed it himself via Sync (now
+  chord: D/A). It cost session time exactly as the drift-check tooling
+  request predicted; that request stands, evidenced.
 
 ## Tooling to-do
 
@@ -184,6 +203,29 @@ his behalf.
 - **Sweep-vs-rollnotes drift check.** A check that flags any song whose
   rollnotes `key:` disagrees with or is missing from the key-sweep
   Tally — the drift is real (see data issues in the analysis queue).
+
+### Composition mode + File menu — from the 08-14 handoff (design open)
+
+- **Composition mode (Josh, 2026-08-14):** flip from analysis straight
+  into writing — new files, note entry on roll AND score, tempo,
+  new tracks/instruments, finger entry accepted. Today: Pencil/Erase
+  exist (roll only, selected track, velocity 80, four durations,
+  localStorage-only persistence). Gaps: no score entry, no new-song or
+  new-track creation, no MIDI export (penciled notes can't leave the
+  device), no tempo control, no undo. Design questions for Josh in the
+  handoff (score entry model, new-song defaults, where compositions
+  live, MIDI export vs native format).
+- **File menu New / Save / Save As (Josh, 2026-08-14):** all three
+  wanted. RULED by Josh: Save is BLOCKED on chip-derived songs (they're
+  regenerable pipeline output with provenance — a stray thumb must not
+  corrupt the corpus); Save As from a locked song is WANTED (fork into
+  albums/compositions/ to write e.g. a counter-line over Town — block
+  overwrites, never branching); the fork inherits the source's
+  .rollnotes verbatim, drift is Josh's to own, no app warnings.
+  Open: record fork origin (source + commit hash)?; new track vs pencil
+  into existing; what New asks up front. Proposed format: .mid +
+  .rollnotes pair like everything else (tools/nsf has a pure-JS MIDI
+  writer that could run in the page).
 
 ### Backlog — from the 2026-08-07 web-session sketch (recorded, not approved)
 

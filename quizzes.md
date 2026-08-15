@@ -86,3 +86,25 @@ Status marks: `[ ]` not yet asked · `[x]` answered well · `[~]` shaky, re-ask.
 - [ ] Your G7♭9: why is the ninth spelled Ab by construction, regardless
       of melodic direction?
 - [ ] Why does a dominant with a ♭9 NOT mean the key has changed?
+
+## From 2026-08-05/07 material (asked 2026-08-14, web session)
+
+- [x] The barline test: why can a figure with a period of three quarters
+      never land the same way twice under 4/4? (Answered from the bass
+      figure itself — realigns only every three bars; correctly noted it
+      doesn't settle 3/4 vs 6/8.)
+- [x] Under 6/8, where do onsets pile up and why 1/4, not 1/3/5?
+      (Answered after vocabulary friction — had 3+3 grouping correct
+      throughout; added the duration evidence himself: a quarter filling
+      eighths 1–2 completes a two-eighth group where 6/8 would break
+      mid-group.)
+- [~] Full-span chord reading: what are its two halves? (Gave the
+      bass-walk half; rest was revealed on request — RE-ASK FRESH. Then
+      produced unprompted the part not in the doc: a full-quarter D counts
+      because duration disqualifies it as a passing tone, which is what
+      stops any stray eighth from voting.)
+- [ ] The three passing-tone tests.
+- [ ] The two key-finding tools a symmetric scale removes.
+- Bank candidate (2026-08-14): major third vs minor third over a ♭5 —
+  F#(♭5) [F#–A#–C] vs F#ø7 [F#–A–C–E]. Josh reached for ø7 with the
+  degree and ♭5 right, missing only the third quality.

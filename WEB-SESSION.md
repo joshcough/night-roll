@@ -39,12 +39,27 @@ a destroyed exercise.
 7. **Spoiler quarantine:** never fetch, quote, or summarize anything in
    `albums/final-fantasy-i/reference/` whose header marks it quarantined
    (currently `floating-castle-parked.md`) unless Josh explicitly says he
-   is picking that song back up.
+   is picking that song back up. Cloning puts quarantined files within
+   easy reach; the rule is entirely on you to honor.
+   `floating-castle-parked.md` is on disk. Do not open it.
 
 ## Where everything lives
 
-Raw file URL pattern (fetchable):
-`https://raw.githubusercontent.com/joshcough/night-roll/main/<path>`
+**Clone the repo first — do not fetch files one at a time.**
+
+    cd /home/claude && git clone --depth 1 https://github.com/joshcough/night-roll.git
+
+Everything below is then a local path under `night-roll/`, and `grep`
+across all rollnotes/notes.txt works. Re-run `git pull` mid-session after
+Josh syncs from the iPad — annotations change under you, so pull rather
+than trusting an earlier read. The container resets between sessions:
+fresh clone every time; nothing persists except what's pushed to the repo
+and what Josh carries in.
+
+(Do NOT use `raw.githubusercontent.com` URLs: the web fetcher rejects any
+URL it hasn't already seen in a prior result, so constructed raw URLs
+always fail. Blob pages on github.com work but cost ~2k tokens of nav
+chrome each.)
 
 - `open-items.md` — **start here**: restart context, open questions, queues.
 - `albums/final-fantasy-i/songs/<song>.notes.txt` — the note data Josh reads
@@ -62,7 +77,8 @@ Raw file URL pattern (fetchable):
 
 ## Session shape
 
-1. Fetch `open-items.md`; orient from its restart context.
+1. Clone the repo (above); read `open-items.md` and orient from its
+   restart context.
 2. Opening quiz: a few questions from the last session's concepts (see
    `quizzes.md` protocol). Mark results.
 3. Work whatever he brings — usually one song's next stretch. He reads the
@@ -72,7 +88,10 @@ Raw file URL pattern (fetchable):
    with their derivation paths; anything for the repo (all items marked
    PROPOSED — Josh signs off before anything lands); tooling requests with
    the observed friction; quiz results; process notes. Claude Code applies
-   it later — nothing you write lands directly.
+   it later — nothing you write lands directly. Build the handoff as you
+   go, silently: do NOT show or link the file each time you add to it —
+   say what was logged in one line and move on. Present the file only
+   when Josh asks for it, normally at session end.
 
 ## The app, if he references it
 
