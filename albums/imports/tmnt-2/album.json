@@ -1,0 +1,53 @@
+{
+ "title": "Tmnt 2",
+ "order": 50,
+ "songs": {
+  "scene-2a": "Scene 2A",
+  "scene-2b": "Scene 2B",
+  "scene-3a": "Scene 3A",
+  "scene-3b-5": "Scene 3B & 5",
+  "scene-4a": "Scene 4A",
+  "scene-4b": "Scene 4B"
+ },
+ "nsf": {
+  "vault": "tmnt-2.nsf",
+  "tracks": {
+   "cutscene-a": {
+    "n": 118,
+    "secs": 26.91559
+   },
+   "cutscene-b": {
+    "n": 103,
+    "secs": 21.982454
+   },
+   "cutscene-c": {
+    "n": 107,
+    "secs": 3.599856
+   },
+   "cutscene-f": {
+    "n": 105,
+    "secs": 19.982534
+   },
+   "epilogue": {
+    "n": 119,
+    "secs": 51.964588
+   },
+   "game-over": {
+    "n": 104,
+    "secs": 13.449462
+   },
+   "scene-1": {
+    "n": 109,
+    "secs": 44.798208
+   },
+   "scene-4a": {
+    "n": 114,
+    "secs": 40.381718
+   },
+   "scene-cleared-a": {
+    "n": 101,
+    "secs": 11.982854
+   }
+  }
+ }
+}
