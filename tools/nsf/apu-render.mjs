@@ -162,13 +162,20 @@ export function renderApu(apuLog, frames, frameSec, opts = {}) {
   const triOut = lvl => 159.79 / (1 / (lvl / 8227) + 100);
   const noiOut = lvl => lvl ? 159.79 / (1 / (lvl / 12241) + 100) : 0;
 
-  const cpuPerSample = CPU / sampleRate;
-  const samplesPerFrame = frameSec * sampleRate;
-  const qfSamples = sampleRate / 240; // quarter-frame cadence
+  // 4x internal oversampling: fast pitch zaps (MM2 title sweeps the triangle
+  // to period 0 = 56kHz — 40 sequencer steps per 44.1k sample) alias into
+  // harsh garbage at 1x; rendered at 4x, the ultrasonic content exists
+  // honestly and the output lowpass removes it, like the hardware chain
+  const OS = 4;
+  const iRate = sampleRate * OS;
+  const cpuPerSample = CPU / iRate;
+  const samplesPerFrame = frameSec * iRate;
+  const qfSamples = iRate / 240; // quarter-frame cadence
   let nextQF = qfSamples, qfCount = 0;
-  const chunk = opts.chunk || 65536;
+  const chunk = (opts.chunk || 65536) * OS;
+  const acc = {pulse1: 0, pulse2: 0, triangle: 0, noise: 0};
 
-  const run = (from, to) => {
+  const run = (from, to) => { // from/to in INTERNAL samples
     for (let s = from; s < to; s++) {
       const frameNow = s / samplesPerFrame;
       while (wi < writes.length && writes[wi].frame <= frameNow) {
@@ -191,14 +198,14 @@ export function renderApu(apuLog, frames, frameSec, opts = {}) {
           if (ch.phase >= 1) { ch.seq = (ch.seq + Math.floor(ch.phase)) & 7; ch.phase %= 1; }
           if (DUTY[ch.duty][ch.seq]) lvl = envOut(ch.env);
         }
-        (i === 0 ? out.pulse1 : out.pulse2)[s] = pulseOut(lvl) * 2;
+        acc[i === 0 ? "pulse1" : "pulse2"] += pulseOut(lvl) * 2;
       }
       // triangle: sequencer at CPU / (timer+1); holds last value when gated
       if (tri.enabled && tri.length > 0 && tri.linear > 0 && tri.timer >= 2) {
         tri.phase += cpuPerSample / (tri.timer + 1);
         if (tri.phase >= 1) { tri.seq = (tri.seq + Math.floor(tri.phase)) & 31; tri.phase %= 1; }
       }
-      out.triangle[s] = triOut(TRI_SEQ[tri.seq]) * 2;
+      acc.triangle += triOut(TRI_SEQ[tri.seq]) * 2;
       // noise: LFSR clocks every noi.period CPU cycles
       if (noi.enabled && noi.length > 0) {
         noi.phase += cpuPerSample / noi.period;
@@ -207,8 +214,16 @@ export function renderApu(apuLog, frames, frameSec, opts = {}) {
           noi.lfsr = (noi.lfsr >> 1) | (fb << 14);
           noi.phase--;
         }
-        out.noise[s] = (noi.lfsr & 1) ? 0 : noiOut(envOut(noi.env)) * 2;
-      } else out.noise[s] = 0;
+        acc.noise += (noi.lfsr & 1) ? 0 : noiOut(envOut(noi.env)) * 2;
+      }
+      if ((s + 1) % OS === 0) { // decimate: mean of the OS internal samples
+        const o = ((s + 1) / OS) - 1;
+        if (o < N) {
+          out.pulse1[o] = acc.pulse1 / OS; out.pulse2[o] = acc.pulse2 / OS;
+          out.triangle[o] = acc.triangle / OS; out.noise[o] = acc.noise / OS;
+        }
+        acc.pulse1 = acc.pulse2 = acc.triangle = acc.noise = 0;
+      }
     }
   };
 
@@ -229,16 +244,17 @@ export function renderApu(apuLog, frames, frameSec, opts = {}) {
   };
   const finish = () => { filter(out.pulse1); filter(out.pulse2); filter(out.triangle); filter(out.noise); return out; };
 
+  const Ni = N * OS;
   if (opts.onProgress) { // chunked async
     return (async () => {
-      for (let s = 0; s < N; s += chunk) {
-        run(s, Math.min(N, s + chunk));
-        opts.onProgress(Math.min(1, (s + chunk) / N));
+      for (let s = 0; s < Ni; s += chunk) {
+        run(s, Math.min(Ni, s + chunk));
+        opts.onProgress(Math.min(1, (s + chunk) / Ni));
         await microYield();
       }
       return finish();
     })();
   }
-  run(0, N);
+  run(0, Ni);
   return finish();
 }
