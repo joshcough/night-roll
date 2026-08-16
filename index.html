@@ -1008,7 +1008,7 @@
 <div class="overlay" id="errsheet">
   <div class="sheet">
     <h2>MESSAGES</h2>
-    <div class="status" id="errlist" style="max-height:55vh;overflow-y:auto;white-space:pre-wrap"></div>
+    <div class="status" id="errlist" style="max-height:55vh;overflow-y:auto;white-space:pre-wrap;user-select:text;-webkit-user-select:text;cursor:text"></div>
     <div class="row" style="margin-top:10px">
       <button id="errclear">Clear</button>
       <button id="errclose" style="margin-left:auto">Close</button>
@@ -7144,7 +7144,15 @@ function idbOpen() {
     rq.onerror = () => rej(rq.error);
   });
 }
-async function idbNsfPut(slug, bytes, trackPatch) {
+let _idbQueue = Promise.resolve();
+function idbNsfPut(slug, bytes, trackPatch) {
+  // serialized: rapid captures fired concurrent read-modify-writes and lost
+  // track entries — only 9 of TMNT's 24 songs reached the committed chip map
+  const p = _idbQueue.then(() => idbNsfPutNow(slug, bytes, trackPatch));
+  _idbQueue = p.catch(() => { /* keep the queue alive */ });
+  return p;
+}
+async function idbNsfPutNow(slug, bytes, trackPatch) {
   try {
     const db = await idbOpen();
     const cur = await new Promise(res => {
