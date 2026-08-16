@@ -376,6 +376,7 @@
     cursor: pointer;
   }
   #filesheet .fitem:active { background: var(--panel); }
+  #filesheet .fdiv { border-top: 1px solid var(--grid); margin: 4px 6px; }
   #filesheet .row { display: flex; gap: 8px; align-items: center; padding: 6px 8px; flex-wrap: wrap; }
   #filesheet .status { font-family: var(--mono); font-size: 11px; color: var(--dim); padding: 4px 10px 6px; max-width: 300px; white-space: pre-wrap; }
 
@@ -595,7 +596,6 @@
   <div id="transport">
     <button id="rwbtn" aria-label="Back to start">⏮</button>
     <button class="primary" id="playbtn">▶ Play</button>
-    <button id="chipbtn" style="display:none" aria-label="Authentic chip audio">chip</button>
     <div id="lcd">
       <div class="lcdseg"><span class="lcdbig" id="lcdbar">1</span><span class="lcdlbl">bar</span></div>
       <div class="lcdseg"><span class="lcdbig" id="lcdbeat">1</span><span class="lcdlbl">beat</span></div>
@@ -883,7 +883,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; while the import session is open, a <b>chip</b> button appears in the transport: it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the Chip audio is the console's own voice, not our oscillator approximation) and ▶ then plays that, with mute/solo still live per track and the speed slider acting tape-style; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
@@ -893,14 +893,18 @@
 </div>
 
 <div id="filesheet">
+  <button class="fitem" id="filesettings">Settings…</button>
+  <div class="fdiv"></div>
   <button class="fitem" id="fileopen">Open…</button>
   <button class="fitem" id="filenew">＋ New song…</button>
+  <label class="fitem" for="fileinput" style="display:block">Import… (.mid / .nsf)</label>
+  <div class="fdiv"></div>
   <button class="fitem" id="filesave">Save (commit)</button>
   <button class="fitem" id="filesaveas">Save As…</button>
-  <label class="fitem" for="fileinput" style="display:block">Import… (.mid / .nsf)</label>
+  <button class="fitem" id="filerename">Rename…</button>
   <button class="fitem" id="fileimpcommit" style="display:none">Commit import</button>
+  <div class="fdiv"></div>
   <button class="fitem" id="filedlmid">Download .mid</button>
-  <button class="fitem" id="filesettings">Settings…</button>
   <button class="fitem" id="filehelp">Help</button>
   <button class="fitem" id="fileabout">About</button>
   <div id="filenewform" style="display:none">
@@ -918,7 +922,6 @@
       <button class="primary" id="fsgo">Fork</button>
     </div>
   </div>
-  <button class="fitem" id="filerename">Rename…</button>
   <div id="filerenameform" style="display:none">
     <div class="row">
       <input type="text" id="frname" placeholder="new name" style="flex:1;min-height:40px">
@@ -3234,8 +3237,9 @@ function scheduleNote(ti, n, when, durSec) {
   // never start an envelope in the past — WebAudio would skip the attack
   // ramp and slam the oscillator on at full amplitude (audible click)
   when = Math.max(when, audio.currentTime + 0.003);
-  // chip-audio mode: the buffer IS these tracks' sound — no oscillator doubles
-  if (chipActive() && song.tracks[ti] && chip.buffers[song.tracks[ti].name]) return;
+  // chip audio: the buffer IS this track's sound (auto voice only) — no oscillator doubles
+  if (chipActive() && song.tracks[ti] && chip.buffers[song.tracks[ti].name] &&
+      (!song.tracks[ti].voice || song.tracks[ti].voice === "auto")) return;
   if (n.ch === 9 || trackIsDrums(ti)) { drumHit(ti, n.p, when, n.v); return; }
   let v = trackVoice(ti);
   // per-note chip timbre: NSF captures carry each pulse note's duty (the
@@ -3388,8 +3392,7 @@ function currentLoop() { // "loop: B.Q" = at the anchor (jump point), return to 
 // (tools/nsf/apu-render.mjs) — one pulse wave changing pitch instead of an
 // oscillator per note, hardware envelopes, real noise. Available while the
 // import session that captured the current draft is still open.
-let chipOn = false;
-const chip = {key: null, buffers: null, lead: 0, srcs: []};
+const chip = {key: null, buffers: null, lead: 0, srcs: []}; // no toggle: chip audio is automatic wherever a source resolves
 function chipTrackNo() { // NSF track number from the LIVE import session
   if (!songKey || !nsfSess) return null;
   for (let n = 1; n < nsfSess.rows.length; n++)
@@ -3462,22 +3465,16 @@ async function chipSource() { // {bytes, n, secs} for the current song, or null
   if (!bytes) return null;
   return {bytes, n: tr.n, secs: tr.secs || 75};
 }
-let chipMaybe = false; // last async availability answer, drives the button
-async function updateChipBtn() {
-  const b = document.getElementById("chipbtn");
-  chipMaybe = chipTrackNo() !== null || (await chipSource()) !== null;
-  b.style.display = chipMaybe ? "" : "none";
-  b.classList.toggle("active", chipOn && chip.key === songKey);
-  if (!chipMaybe && chipOn) chipOn = false;
-  // "always use this if possible" (Josh, 2026-08-17): the authentic sound is
-  // the default — auto-render when a source exists, unless he switched it off
-  if (chipMaybe && localStorage.getItem("ff1roll-chip") !== "0" &&
-      chip.key !== songKey && chip.rendering !== songKey) {
+async function updateChipBtn() { // name kept for call sites; now just the auto-render kick
+  // "the chip button should not even have to exist" (Josh, 2026-08-17): chip
+  // audio simply plays when a source resolves. Per-track override lives in
+  // the voice menu — auto = the console own sound, an explicit instrument
+  // swaps that track to synthesis.
+  const available = chipTrackNo() !== null || (await chipSource()) !== null;
+  if (available && chip.key !== songKey && chip.rendering !== songKey) {
     chip.rendering = songKey;
     const forKey = songKey;
-    chipRender().then(ok => {
-      if (ok && songKey === forKey) { chipOn = true; updateChipBtn(); }
-    }).catch(() => { /* render failed: button stays manual */ })
+    chipRender().catch(() => { /* not renderable: synth carries the song */ })
       .finally(() => { if (chip.rendering === forKey) chip.rendering = null; });
   }
 }
@@ -3503,10 +3500,10 @@ async function chipRender() {
   }
   chip.lead = t0 * frameSec;
   chip.key = songKey;
-  setInfo("chip audio ready — ▶ plays the 2A03's own sound (mute/solo still work)");
+  setInfo("chip audio ready — playing the console's own sound (pick a voice on a track to override)");
   return true;
 }
-function chipActive() { return chipOn && chip.key === songKey && !!chip.buffers; }
+function chipActive() { return chip.key === songKey && !!chip.buffers; }
 function chipStopSrcs() {
   for (const s of chip.srcs) { try { s.stop(); } catch (err) { /* already done */ } }
   chip.srcs = [];
@@ -3516,6 +3513,8 @@ function chipStart(fromSec) {
   for (const [name, buffer] of Object.entries(chip.buffers)) {
     const ti = song.tracks.findIndex(tr => (tr.name || "") === name);
     if (ti < 0) continue;
+    const vv = song.tracks[ti].voice;
+    if (vv && vv !== "auto") continue; // explicit instrument choice overrides the chip for this track
     const src = audio.createBufferSource();
     src.buffer = buffer;
     src.playbackRate.value = playRate; // speed slider = tape-style on chip audio
@@ -3529,25 +3528,6 @@ function chipStart(fromSec) {
     chip.srcs.push(src);
   }
 }
-document.getElementById("chipbtn").addEventListener("click", async e => {
-  const btn = e.currentTarget;
-  if (chipOn) { // opt out — remembered until toggled back
-    chipOn = false;
-    localStorage.setItem("ff1roll-chip", "0");
-    updateChipBtn();
-    if (playing) stop();
-    setInfo("chip audio off — synthesized voices (tap chip to switch back)");
-    return;
-  }
-  btn.disabled = true;
-  localStorage.setItem("ff1roll-chip", "1");
-  try {
-    if (chip.key !== songKey) await chipRender();
-    chipOn = chip.key === songKey;
-    if (playing) stop();
-  } catch (err) { setInfo("chip audio failed: " + err.message); }
-  finally { btn.disabled = false; updateChipBtn(); }
-});
 async function play(fromSec = 0) {
   ensureAudio();
   await resumeAudio(); // await: scheduling against a frozen clock builds a stale time base
@@ -6397,6 +6377,11 @@ document.getElementById("filesheetbtn").addEventListener("click", e => {
   const impBtn = document.getElementById("fileimpcommit");
   impBtn.style.display = impN ? "" : "none";
   impBtn.textContent = "Commit import (" + impN + ")";
+  { // the rename item names its victim: Rename "Overworld"…
+    const t = currentPath ? songTitleOf(currentPath) : "";
+    document.getElementById("filerename").textContent =
+      t ? "Rename “" + (t.length > 18 ? t.slice(0, 17) + "…" : t) + "”…" : "Rename…";
+  }
   fileStatus(isComposition() ? "composition — editable" : "locked (not an app-made song) — Save As forks an editable copy");
   const r = e.currentTarget.getBoundingClientRect();
   filesheet.style.left = Math.max(6, r.left) + "px";
@@ -6906,7 +6891,7 @@ async function impCapture(n) {
         {b1: cap.loopAnchor[0], q1: cap.loopAnchor[1], b2: null, q2: null,
          text: "loop: " + cap.loopTarget[0] + "." + cap.loopTarget[1]}]));
     row.secs = cap.secs; // chip-audio render length for this track
-    if (chip.key === key) { chip.key = null; chipOn = false; updateChipBtn(); } // re-capture invalidates rendered audio
+    if (chip.key === key) { chip.key = null; updateChipBtn(); } // re-capture invalidates rendered audio
     // NSF bytes + track number persist on this device so chip audio outlives
     // the session (never the repo — *.nsf is gitignored ROM music)
     idbNsfPut(slug, nsfSess.bytes, {[base]: {n, secs: cap.secs}});
