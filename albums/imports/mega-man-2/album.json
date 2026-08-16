@@ -1,0 +1,103 @@
+{
+ "title": "Mega Man 2",
+ "order": 50,
+ "songs": {
+  "dr-wily-defeated": "Dr. Wily Defeated!",
+  "dr-wily-s-castle-ii": "Dr. Wily's Castle II",
+  "dr-wily-s-castle": "Dr. Wily's Castle",
+  "dr-wily-s-map": "Dr. Wily's Map"
+ },
+ "nsf": {
+  "vault": "mega-man-2.nsf",
+  "tracks": {
+   "air-man": {
+    "n": 7,
+    "secs": 45.33152
+   },
+   "boss-battle": {
+    "n": 18,
+    "secs": 19.182566
+   },
+   "bubble-man": {
+    "n": 10,
+    "secs": 42.648294
+   },
+   "crash-man": {
+    "n": 5,
+    "secs": 75.980294
+   },
+   "credits": {
+    "n": 24,
+    "secs": 299.971334
+   },
+   "dr-wily-defeated": {
+    "n": 21,
+    "secs": 299.971334
+   },
+   "dr-wily-s-castle-ii": {
+    "n": 12,
+    "secs": 76.79692800000001
+   },
+   "dr-wily-s-castle": {
+    "n": 11,
+    "secs": 74.66368
+   },
+   "enemy-chosen": {
+    "n": 16,
+    "secs": 299.988
+   },
+   "epilogue": {
+    "n": 22,
+    "secs": 299.971334
+   },
+   "flash-man": {
+    "n": 3,
+    "secs": 51.181286
+   },
+   "heat-man": {
+    "n": 6,
+    "secs": 25.682306
+   },
+   "introduction": {
+    "n": 1,
+    "secs": 299.971334
+   },
+   "metal-man": {
+    "n": 8,
+    "secs": 38.398464000000004
+   },
+   "password-screen": {
+    "n": 14,
+    "secs": 6.399744
+   },
+   "quick-man": {
+    "n": 9,
+    "secs": 38.781782
+   },
+   "stage-select": {
+    "n": 15,
+    "secs": 6.816394
+   },
+   "title-screen": {
+    "n": 2,
+    "secs": 42.648294
+   },
+   "track-20": {
+    "n": 20,
+    "secs": 299.971334
+   },
+   "track-23": {
+    "n": 23,
+    "secs": 42.648294
+   },
+   "victory": {
+    "n": 19,
+    "secs": 299.971334
+   },
+   "wood-man": {
+    "n": 4,
+    "secs": 39.815074
+   }
+  }
+ }
+}
