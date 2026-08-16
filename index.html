@@ -7173,7 +7173,7 @@ async function moveComposition(destDir) {
   };
   if (!token) { // no token: draft-only move on this device
     renameLocal();
-    fileStatus("Moved locally (draft only — no token stored; open Sync once to enable repo moves).");
+    fileStatus("Moved locally (draft only — no token stored; add one in File → Settings to enable repo moves).");
     return;
   }
   fileStatus("Moving to " + destDir + "…");
