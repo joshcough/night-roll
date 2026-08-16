@@ -277,8 +277,11 @@ an NSF (NESM magic) opens the capture panel instead. NSF capture runs
 the browser through the SAME pipeline that dumped the FF1 album —
 tools/nsf/{nsf,notes,midi-write}.mjs dynamically imported off Pages, so
 there is exactly one 6502/APU/loop-detect/tempo-fit code path — per
-track: run N seconds (panel field, default 75; needs intro + 2 loop
-passes), reconstruct, loop-detect + trim to intro + one pass, grid-fit
+track: run N seconds (panel field, default 75; the detector needs
+intro + 2 full passes in frame, so on "no loop" the window auto-doubles
+up to 300s before conceding — 2026-08-16, after MM2's ~35s stage loops
+made half the tracks read "no loop" at 75), reconstruct, loop-detect +
+trim to intro + one pass, grid-fit
 bpm (4/4 seed 120 — meter/tempo stay re-derivable by annotation like
 any capture), makeMidi → parseMidi → stored as a LOCAL draft under
 `albums/imports/<album-slug>/track-NN.mid`, with a hardware `loop:`

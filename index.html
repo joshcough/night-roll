@@ -882,7 +882,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -6399,13 +6399,23 @@ function renameImportDraft(oldKey, raw) { // returns the new key; null = name co
 async function impCapture(n) {
   if (!nsfSess) return;
   const slug = slugify(document.getElementById("impslug").value) || "import";
-  const secs = Math.max(10, Math.min(300, +document.getElementById("impsecs").value || 75));
+  let secs = Math.max(10, Math.min(300, +document.getElementById("impsecs").value || 75));
   const row = nsfSess.rows[n];
   row.st.textContent = "capturing…";
   row.open.style.display = "none";
   await new Promise(r => setTimeout(r)); // let the label paint before the CPU burn
   try {
-    const cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
+    let cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
+    // the detector needs intro + TWO full passes in frame — a 35s loop with an
+    // intro already busts 75s. No loop found? double the window and re-run
+    // (emulation is ~50x realtime; this costs seconds, not minutes)
+    while (cap && !cap.looped && secs < 300) {
+      const next = Math.min(300, secs * 2);
+      row.st.textContent = "no loop in " + secs + "s — retrying at " + next + "s…";
+      await new Promise(r => setTimeout(r));
+      secs = next;
+      cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
+    }
     if (!cap) { row.st.textContent = "silent — nothing to keep"; return; }
     const raw = row.name.value.trim() || "track-" + String(n).padStart(2, "0");
     const base = slugify(raw) || "track-" + String(n).padStart(2, "0");
@@ -6426,7 +6436,7 @@ async function impCapture(n) {
         {b1: cap.loopAnchor[0], q1: cap.loopAnchor[1], b2: null, q2: null,
          text: "loop: " + cap.loopTarget[0] + "." + cap.loopTarget[1]}]));
     row.st.textContent = cap.secs.toFixed(1) + "s · " + cap.bpm + "bpm · " +
-                         (cap.looped ? "loop found" : "no loop (through-composed or capture too short)");
+                         (cap.looped ? "loop found" : "no loop even at " + secs + "s (through-composed?)");
     row.open.style.display = "";
   } catch (err) { row.st.textContent = "failed: " + err.message; }
 }
