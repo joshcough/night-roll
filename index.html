@@ -834,7 +834,7 @@
 
     <h3>TRACKS</h3>
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu: pick the track's instrument — the NES set (pulses, triangle, sine, saw; auto = the classic assignment) plus synthesized piano, guitar (a Karplus-Strong plucked string), strings (bowed saw with vibrato), organ, and bell — and its color, from the swatches or the rainbow chip at the end (a full color picker, any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu: pick the track's instrument — the NES set (pulses, triangle, sine, saw; auto = the classic assignment) plus synthesized piano, guitar (a Karplus-Strong plucked string), strings (bowed saw with vibrato), organ, and bell — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -2978,24 +2978,14 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
     menu.appendChild(b);
   }
   const sw = document.createElement("div");
-  sw.style.cssText = "display:flex;flex-wrap:wrap;gap:7px;padding:8px 10px";
-  for (const c of TRACK_COLORS) {
-    const d = document.createElement("button");
-    d.style.cssText = "width:26px;height:26px;border-radius:7px;border:2px solid " +
-      (trackColor(ti) === c ? "#fff" : "transparent") + ";background:" + c + ";padding:0";
-    d.addEventListener("click", () => {
-      tr.color = c === TRACK_COLORS[ti % TRACK_COLORS.length] ? undefined : c;
-      saveVoices();
-      renderTrackbar(); buildScoreModel(); draw();
-      buildVoiceMenu(ti);
-    });
-    sw.appendChild(d);
-  }
-  const custom = document.createElement("input"); // any color at all — the swatches are just shortcuts
+  sw.style.cssText = "padding:8px 10px";
+  // ONE color control (Josh 2026-08-15: swatch shortcuts were noise) — a
+  // full-width picker showing the track's current color as its face
+  const custom = document.createElement("input");
   custom.type = "color";
   custom.value = /^#[0-9a-fA-F]{6}$/.test(trackColor(ti)) ? trackColor(ti) : "#888888";
-  custom.style.cssText = "width:34px;height:26px;padding:0;border:2px solid var(--grid);border-radius:7px;background:none";
-  custom.setAttribute("aria-label", "Custom color");
+  custom.style.cssText = "display:block;width:100%;height:38px;padding:0;border:2px solid var(--grid);border-radius:7px;background:none";
+  custom.setAttribute("aria-label", "Track color");
   custom.addEventListener("input", () => { // no rebuild: it would kill the picker mid-drag
     tr.color = custom.value;
     saveVoices();

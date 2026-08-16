@@ -56,9 +56,10 @@ rebuilds on toggle. Second tap on the selected chip opens the voice &
 color menu: NES waves plus synthesized piano (detuned struck pair),
 guitar (Karplus-Strong plucked string, rendered per pitch and cached),
 strings (bowed saw + lowpass + easing vibrato), organ (drawbar
-harmonics), bell (FM strike); color from swatches or a full
-`<input type=color>` picker (any hex — stored in the track: directive
-as color=#rrggbb). The chips hug their content: ▾ sits beside the last
+harmonics), bell (FM strike); color via one full-width `<input type=color>` picker
+(swatch shortcuts removed same day per Josh — any hex, stored in the
+track: directive as color=#rrggbb; TRACK_COLORS remains the default
+palette for unannotated tracks). The chips hug their content: ▾ sits beside the last
 chip, and the transport/LCD cluster stays pinned to the top row when
 chips wrap (2026-08-15 iPad fixes). `darkreader-lock` meta keeps the
 Dark Reader extension from repainting swatches gray.
