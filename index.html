@@ -787,7 +787,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
-      <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch). Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
+      <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); the note being played RIGHT NOW gets a white ring on top — so a lasso'd note visibly fires when the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
 
@@ -4441,6 +4441,12 @@ function drawPiano(W, H, lit) {
     ictx.fillRect(x + 0.5, 0, g.wW - 1, H - 1);
     ictx.strokeStyle = "#333";
     ictx.strokeRect(x + 0.5, 0.5, g.wW - 1, H - 2);
+    if (lit.live.has(p)) { // sounding NOW: white ring over whatever color it wears
+      ictx.strokeStyle = "#fff";
+      ictx.lineWidth = 2.5;
+      ictx.strokeRect(x + 2.5, 2, g.wW - 5, H - 5);
+      ictx.lineWidth = 1;
+    }
     if (c) {
       ictx.fillStyle = "#111";
       ictx.font = "bold 10px " + css("--mono");
@@ -4461,6 +4467,12 @@ function drawPiano(W, H, lit) {
     ictx.fillRect(x, 0, bw, bh);
     ictx.strokeStyle = "#000";
     ictx.strokeRect(x + 0.5, 0.5, bw - 1, bh - 1);
+    if (lit.live.has(p)) {
+      ictx.strokeStyle = "#fff";
+      ictx.lineWidth = 2.5;
+      ictx.strokeRect(x + 2, 1.5, bw - 4, bh - 4);
+      ictx.lineWidth = 1;
+    }
     if (c) {
       ictx.fillStyle = "#111";
       ictx.font = "bold 9px " + css("--mono");
@@ -4520,7 +4532,7 @@ function drawGuitar(W, H, lit) {
     const {p, shift} = gtrFold(p0); // off-the-neck pitches fold to a playable octave
     GTR_TUNING.forEach((open, si) => {
       const f = p - open;
-      if (f >= 0 && f <= GTR_FRETS) dots.push({si, f, p, shift, color});
+      if (f >= 0 && f <= GTR_FRETS) dots.push({si, f, p, p0, shift, color});
     });
   };
   lit.live.forEach((ti, p) => add(p, TRACK_COLORS[ti % TRACK_COLORS.length]));
@@ -4558,6 +4570,14 @@ function drawGuitar(W, H, lit) {
     ictx.beginPath();
     ictx.arc(cx, cy, 11, 0, 7);
     ictx.fill();
+    if (d.p0 !== undefined && lit.live.has(d.p0)) { // sounding NOW: white ring on top
+      ictx.strokeStyle = "#fff";
+      ictx.lineWidth = 2;
+      ictx.beginPath();
+      ictx.arc(cx, cy, 11.5, 0, 7);
+      ictx.stroke();
+      ictx.lineWidth = 1;
+    }
     if (d.shift) { // folded octave: dashed ring + arrow toward the true pitch
       ictx.setLineDash([3, 2.5]);
       ictx.strokeStyle = d.color;
