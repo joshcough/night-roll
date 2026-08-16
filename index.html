@@ -484,7 +484,6 @@
   <button id="rwbtn" aria-label="Back to start">⏮</button>
   <button class="primary" id="playbtn">▶ Play</button>
   <button id="viewbtn" aria-label="Toggle score view">𝄞 Score</button>
-  <button id="helpbtn" aria-label="Help">?</button>
   <span id="songcrumb"></span>
   <input type="file" id="fileinput" accept=".mid,.midi">
 </header>
@@ -669,6 +668,29 @@
   </div>
 </div>
 
+<div class="overlay" id="aboutsheet">
+  <div class="sheet">
+    <h2>NIGHT // ROLL</h2>
+    <p style="font-family:var(--mono);font-size:13px;line-height:1.7;margin:8px 0">
+      A piano-roll and engraved-score player for studying game soundtracks —
+      built for learning music theory by analyzing the Final Fantasy I OST,
+      captured note-for-note from the actual NES sound chip.
+    </p>
+    <p style="font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--dim);margin:8px 0">
+      House rule: keys, meters, and chords are the analyst's discoveries.
+      The app displays evidence and records verdicts — it never decides
+      them for you.
+    </p>
+    <p class="meta" id="aboutstats" style="margin:8px 0"></p>
+    <p style="font-family:var(--mono);font-size:12px;margin:8px 0">
+      Josh Cough &amp; Claude, 2026 ·
+      <a href="https://github.com/joshcough/night-roll" target="_blank" rel="noopener"
+         style="color:var(--gold)">github.com/joshcough/night-roll</a>
+    </p>
+    <div class="row"><button class="primary" id="aboutclose">Close</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="helpsheet">
   <div class="sheet help">
     <h2>NIGHT ROLL — WHAT YOU CAN DO</h2>
@@ -754,6 +776,8 @@
   <button class="fitem" id="filesaveas">Save As…</button>
   <label class="fitem" for="fileinput" style="display:block">Load .mid…</label>
   <button class="fitem" id="filedlmid">Download .mid</button>
+  <button class="fitem" id="filehelp">Help</button>
+  <button class="fitem" id="fileabout">About</button>
   <div id="filenewform" style="display:none">
     <div class="row"><input type="text" id="fnname" placeholder="song name" style="flex:1;min-height:40px"></div>
     <div class="row">
@@ -3941,10 +3965,21 @@ document.getElementById("notelistAdd").addEventListener("click", () => {
   openEditor(null);
 });
 
-document.getElementById("helpbtn").addEventListener("click", () =>
-  document.getElementById("helpsheet").classList.add("on"));
+document.getElementById("filehelp").addEventListener("click", () => {
+  closeFileMenus();
+  document.getElementById("helpsheet").classList.add("on");
+});
 document.getElementById("helpclose").addEventListener("click", () =>
   document.getElementById("helpsheet").classList.remove("on"));
+document.getElementById("fileabout").addEventListener("click", () => {
+  closeFileMenus();
+  const n = Object.values(CATALOG).reduce((k, s) => k + s.length, 0);
+  document.getElementById("aboutstats").textContent =
+    Object.keys(CATALOG).length + " albums · " + n + " songs · " + draftKeys().length + " local drafts";
+  document.getElementById("aboutsheet").classList.add("on");
+});
+document.getElementById("aboutclose").addEventListener("click", () =>
+  document.getElementById("aboutsheet").classList.remove("on"));
 
 // ---------------------------------------------------------------- pitch-class finder
 // The sweep's most repeated operation (Josh, 2026-08-07): pick a pitch class,
