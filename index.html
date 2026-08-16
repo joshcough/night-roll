@@ -214,6 +214,27 @@
   }
   #instwrap { position: relative; height: 168px; }
 
+  #metsheet {
+    display: none;
+    position: absolute;
+    z-index: 58;
+    max-width: 94vw;
+    width: 520px;
+  }
+  #metsheet.on { display: block; }
+  #metsheet .metpanel {
+    background: var(--panel2);
+    border: 1px solid var(--grid);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #metsheet .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #metsheet .lbl { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+
   #filesheet {
     display: none;
     position: absolute;
@@ -757,9 +778,12 @@
 </div>
 <div id="filesub"></div>
 
-<div class="overlay" id="metsheet">
-  <div class="sheet">
-    <h2>METRONOME</h2>
+<div id="metsheet">
+  <div class="metpanel">
+    <div class="row" style="align-items:center">
+      <h2 style="margin:0;font-size:13px;letter-spacing:.1em">METRONOME</h2>
+      <button id="metclose" style="margin-left:auto;min-height:32px;padding:4px 10px">✕</button>
+    </div>
     <div class="row">
       <button class="primary" id="metgo">▶ Start</button>
       <button id="mettap">Tap tempo</button>
@@ -799,8 +823,7 @@
       </label>
     </div>
     <div class="row" id="metbeats" style="gap:6px;flex-wrap:wrap"></div>
-    <div class="meta" style="margin:2px 0 0">tap a beat: accent → normal → silent · bpm counts the denominator beat</div>
-    <div class="row" style="margin-top:10px"><button id="metclose" style="margin-left:auto">Close</button></div>
+    <div class="meta" style="margin:2px 0 0">tap a beat: accent → normal → silent · closing this panel does NOT stop the click</div>
   </div>
 </div>
 
@@ -3555,11 +3578,13 @@ async function metStart() {
   metTimer = setInterval(metPump, 30);
   metPump();
   document.getElementById("metgo").textContent = "■ Stop";
+  document.getElementById("metbtn").classList.add("active"); // ⏱ shows it's running even with the panel closed
 }
 function metHalt() {
   met.on = false;
   clearInterval(metTimer);
   document.getElementById("metgo").textContent = "▶ Start";
+  document.getElementById("metbtn").classList.remove("active");
   document.querySelectorAll("#metbeats .metbeat").forEach(el => el.classList.remove("now"));
 }
 {
@@ -3579,12 +3604,20 @@ function metHalt() {
   metBuildCells();
   applyMetMode();
 }
-document.getElementById("metbtn").addEventListener("click", () =>
-  document.getElementById("metsheet").classList.add("on"));
-document.getElementById("metclose").addEventListener("click", () => {
-  metHalt();
-  document.getElementById("metsheet").classList.remove("on");
+document.getElementById("metbtn").addEventListener("click", e => {
+  const sheet = document.getElementById("metsheet");
+  if (sheet.classList.contains("on")) { sheet.classList.remove("on"); return; }
+  const r = e.currentTarget.getBoundingClientRect();
+  sheet.style.top = (r.bottom + 6) + "px";
+  sheet.classList.add("on");
+  // right-anchor near the button, clamped on-screen
+  requestAnimationFrame(() => {
+    const w = sheet.offsetWidth;
+    sheet.style.left = Math.max(6, Math.min(r.right - w, window.innerWidth - w - 6)) + "px";
+  });
 });
+document.getElementById("metclose").addEventListener("click", () =>
+  document.getElementById("metsheet").classList.remove("on")); // panel closes; the click keeps going
 document.getElementById("metgo").addEventListener("click", () => met.on ? metHalt() : metStart());
 document.getElementById("metbpm").addEventListener("input", e => {
   met.bpm = +e.target.value;
