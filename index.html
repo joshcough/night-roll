@@ -6462,8 +6462,9 @@ async function openNsfImport(bytes, name) {
     });
     row.append(lbl, st, cap, open);
     list.appendChild(row);
-    nsfSess.rows[n] = {name: lbl, st, open};
+    nsfSess.rows[n] = {name: lbl, st, open, cap};
   }
+  document.getElementById("impall").textContent = "Capture all"; // fresh import, fresh verb
   const sheet = document.getElementById("importsheet");
   sheet.classList.add("on");
   requestAnimationFrame(() => {
@@ -6516,13 +6517,12 @@ async function impCapture(n) {
   try {
     let cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
     // the detector needs intro + TWO full passes in frame — a 35s loop with an
-    // intro already busts 75s. No loop found? double the window and re-run
-    // (emulation is ~50x realtime; this costs seconds, not minutes)
-    while (cap && !cap.looped && secs < 300) {
-      const next = Math.min(300, secs * 2);
-      row.st.textContent = "no loop @" + secs + "s — trying " + next + "s…";
+    // intro already busts 75s. No loop found? ONE retry straight at the 300s
+    // ceiling (a doubling ladder just re-emulates the same song extra times)
+    if (cap && !cap.looped && secs < 300) {
+      row.st.textContent = "no loop @" + secs + "s — trying 300s…";
       await new Promise(r => setTimeout(r));
-      secs = next;
+      secs = 300;
       cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
     }
     if (!cap) { row.st.textContent = "silent — nothing to keep"; return; }
@@ -6549,10 +6549,14 @@ async function impCapture(n) {
       localStorage.setItem("ff1roll-notes-" + key, JSON.stringify([
         {b1: cap.loopAnchor[0], q1: cap.loopAnchor[1], b2: null, q2: null,
          text: "loop: " + cap.loopTarget[0] + "." + cap.loopTarget[1]}]));
-    row.st.textContent = cap.secs.toFixed(1) + "s · " + cap.bpm + "bpm · " +
+    row.st.textContent = "✓ saved · " + cap.secs.toFixed(1) + "s · " + cap.bpm + "bpm · " +
                          (cap.looped ? "loop" : "no loop ≤" + secs + "s");
     row.open.style.display = "";
+    row.cap.textContent = "↻"; // captured: tapping again re-runs and overwrites this draft
+    row.cap.setAttribute("aria-label", "Re-capture this track");
+    return true;
   } catch (err) { row.st.textContent = "failed: " + err.message; }
+  return false;
 }
 function impRename(n) { // typed a name in a row: rename its captured draft in place
   const row = nsfSess && nsfSess.rows[n];
@@ -6573,11 +6577,15 @@ document.getElementById("impall").addEventListener("click", async e => {
   const btn = e.currentTarget; // currentTarget nulls once the dispatch ends — grab it pre-await
   btn.disabled = true;
   try {
+    let saved = 0;
     for (let n = 1; n <= nsfSess.nsf.songs; n++) {
       impStatus("capturing " + n + "/" + nsfSess.nsf.songs + "…");
-      await impCapture(n);
+      if (await impCapture(n)) saved++;
     }
-    impStatus("done — audition via open, ✕ duds in Open → drafts, then commit.");
+    const slug = slugify(document.getElementById("impslug").value) || "import";
+    impStatus(saved + " track" + (saved === 1 ? "" : "s") + " saved as local drafts — folder \"" +
+              titleCaseSlug(slug) + "\" in Open → drafts. Re-capturing overwrites them.");
+    btn.textContent = "↻ Re-capture all";
   } finally { btn.disabled = false; }
 });
 document.getElementById("impclose").addEventListener("click", () =>
