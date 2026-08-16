@@ -3370,10 +3370,12 @@ async function albumMetaFor(key) {
 }
 async function vaultFetch(file) { // private repo needs the API + token
   const token = localStorage.getItem("ff1roll-ghtoken");
-  if (!token) return null;
+  if (!token) throw new Error("no GitHub token on this device — open Sync once and paste it");
   const r = await fetch("https://api.github.com/repos/" + NSF_VAULT + "/contents/" + file + "?ref=main",
     {headers: ghHeaders(token)});
-  if (!r.ok) return null;
+  if (r.status === 404 || r.status === 403) // fine-grained tokens are per-repo: night-roll-only can't see the archive
+    throw new Error("token can't see " + NSF_VAULT + " (HTTP " + r.status + ") — edit the token on GitHub and add the nsf-archive repo to it");
+  if (!r.ok) throw new Error(NSF_VAULT + " HTTP " + r.status);
   const j = await r.json();
   const bin = atob(j.content.replace(/\n/g, ""));
   const bytes = new Uint8Array(bin.length);
@@ -3400,8 +3402,13 @@ async function chipSource() { // {bytes, n, secs} for the current song, or null
   let bytes = rec && rec.bytes;
   if (!bytes && meta && meta.nsf && meta.nsf.vault) { // fall back to the vault, then cache
     setInfo("chip audio: fetching NSF from the vault…");
-    bytes = await vaultFetch(meta.nsf.vault);
-    if (bytes) idbNsfPut(slug, bytes, meta.nsf.tracks || {});
+    try {
+      bytes = await vaultFetch(meta.nsf.vault);
+      if (bytes) idbNsfPut(slug, bytes, meta.nsf.tracks || {});
+    } catch (err) { // say WHY and stand down to synthesized voices — never a stuck banner
+      setInfo("⚠ chip audio unavailable: " + err.message + " (synthesized voices for now)");
+      return null;
+    }
   }
   if (!bytes) return null;
   return {bytes, n: tr.n, secs: tr.secs || 75};
