@@ -292,6 +292,16 @@ timesig: 6/8       ← meter directive. Until one exists the app runs on a
                      first half-bar chord is [1.1 - 1.3].
 
 [3.1]
+tempo: 90          ← tempo directive, TWO meanings by song kind (Josh's
+                     ruling, 2026-08-15): on an app-created song it
+                     AUTHORS — the tempo map rebuilds from the song's
+                     base plus every directive, and playback/LCD/Save
+                     follow. On an analyzed song it is an OBSERVATION —
+                     records that the music changes tempo here and
+                     leaves playback untouched (capture timing is
+                     measured fact).
+
+[3.1]
 chop: start        ← non-destructive trim, RAW capture coordinates (the one
                      annotation type that is): hides everything before raw
                      3.1 and renumbers — raw 3.1 becomes displayed 1.1.
