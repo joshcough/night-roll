@@ -92,5 +92,106 @@
     "path": "albums/compositions/KeyChangeTest-07-26.mid"
    }
   ]
+ },
+ {
+  "title": "Mega Man 2",
+  "songs": [
+   {
+    "title": "Air Man",
+    "path": "albums/imports/mega-man-2/air-man.mid"
+   },
+   {
+    "title": "Boss Battle",
+    "path": "albums/imports/mega-man-2/boss-battle.mid"
+   },
+   {
+    "title": "Bubble Man",
+    "path": "albums/imports/mega-man-2/bubble-man.mid"
+   },
+   {
+    "title": "Crash Man",
+    "path": "albums/imports/mega-man-2/crash-man.mid"
+   },
+   {
+    "title": "Credits",
+    "path": "albums/imports/mega-man-2/credits.mid"
+   },
+   {
+    "title": "Dr. Wily Defeated!",
+    "path": "albums/imports/mega-man-2/dr-wily-defeated.mid"
+   },
+   {
+    "title": "Dr. Wily's Castle",
+    "path": "albums/imports/mega-man-2/dr-wily-s-castle.mid"
+   },
+   {
+    "title": "Dr. Wily's Castle II",
+    "path": "albums/imports/mega-man-2/dr-wily-s-castle-ii.mid"
+   },
+   {
+    "title": "Dr. Wily's Map",
+    "path": "albums/imports/mega-man-2/dr-wily-s-map.mid"
+   },
+   {
+    "title": "Enemy Chosen",
+    "path": "albums/imports/mega-man-2/enemy-chosen.mid"
+   },
+   {
+    "title": "Epilogue",
+    "path": "albums/imports/mega-man-2/epilogue.mid"
+   },
+   {
+    "title": "Flash Man",
+    "path": "albums/imports/mega-man-2/flash-man.mid"
+   },
+   {
+    "title": "Get Your Weapons Ready",
+    "path": "albums/imports/mega-man-2/get-your-weapons-ready.mid"
+   },
+   {
+    "title": "Heat Man",
+    "path": "albums/imports/mega-man-2/heat-man.mid"
+   },
+   {
+    "title": "Introduction",
+    "path": "albums/imports/mega-man-2/introduction.mid"
+   },
+   {
+    "title": "Metal Man",
+    "path": "albums/imports/mega-man-2/metal-man.mid"
+   },
+   {
+    "title": "Password Screen",
+    "path": "albums/imports/mega-man-2/password-screen.mid"
+   },
+   {
+    "title": "Quick Man",
+    "path": "albums/imports/mega-man-2/quick-man.mid"
+   },
+   {
+    "title": "Stage Select",
+    "path": "albums/imports/mega-man-2/stage-select.mid"
+   },
+   {
+    "title": "Title Screen",
+    "path": "albums/imports/mega-man-2/title-screen.mid"
+   },
+   {
+    "title": "Track 20",
+    "path": "albums/imports/mega-man-2/track-20.mid"
+   },
+   {
+    "title": "Track 23",
+    "path": "albums/imports/mega-man-2/track-23.mid"
+   },
+   {
+    "title": "Victory",
+    "path": "albums/imports/mega-man-2/victory.mid"
+   },
+   {
+    "title": "Wood Man",
+    "path": "albums/imports/mega-man-2/wood-man.mid"
+   }
+  ]
  }
 ]
