@@ -834,7 +834,7 @@
 
     <h3>TRACKS</h3>
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu: pick the track's instrument — the NES set (pulses, triangle, sine, saw; auto = the classic assignment) plus synthesized piano, guitar (a Karplus-Strong plucked string), strings (bowed saw with vibrato), organ, and bell — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu: pick the track's instrument — the NES set (pulses, triangle, sine, saw; auto = the classic assignment) plus real sampled instruments (piano, nylon and steel guitar, violin, cello, strings, flute, church organ — FluidR3 soundfont recordings, fetched only when a track uses one and cached after) — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -1539,6 +1539,7 @@ function finalizeNotes() {
       if (n.trackdir.color) song.tracks[ti].color = n.trackdir.color;
     }
     renderTrackbar();
+    sfPreloadForSong(); // sampled voices: fetch + decode this song's pitches now, not at first note
   }
   if (song) { updateSongMeta(); computeSongEnd(); } // grid may have changed
   if (chopChanged) { playCursor = Math.min(playCursor, songEndTick); if (typeof fitView === "function") fitView(); }
@@ -2856,12 +2857,69 @@ function voiceType(ti) {
 }
 // per-track voice override (Josh, 2026-08-15): tap the selected chip again to
 // pick. "auto" = the classic NES assignment above. Persists per song+device.
+// Sampled voices: FluidR3_GM per-note MP3s (vendor/soundfonts/*.json, MIT —
+// see LICENSE.md there). Fetched ONLY when a track uses one (~2MB each,
+// browser-cached); only the pitches the song actually plays get decoded.
+const SF_VOICES = [ // [voice id, menu label, soundfont file]
+  ["sf-piano", "piano", "acoustic_grand_piano"],
+  ["sf-guitar", "guitar (nylon)", "acoustic_guitar_nylon"],
+  ["sf-steel", "guitar (steel)", "acoustic_guitar_steel"],
+  ["sf-violin", "violin", "violin"],
+  ["sf-cello", "cello", "cello"],
+  ["sf-strings", "strings", "string_ensemble_1"],
+  ["sf-flute", "flute", "flute"],
+  ["sf-organ", "church organ", "church_organ"],
+];
 const VOICES = [["auto", "auto (NES)"], ["square", "pulse 50%"], ["square25", "pulse 25%"],
                 ["square12", "pulse 12.5%"], ["triangle", "triangle"], ["sine", "sine"], ["sawtooth", "saw"],
-                ["piano", "piano"], ["pluck", "guitar (pluck)"], ["strings", "strings (bow)"],
-                ["organ", "organ"], ["bell", "bell"]];
+                ...SF_VOICES.map(([id, label]) => [id, label])];
+// the 2026-08-15 synth patches (piano/pluck/strings/organ/bell) stay playable
+// for any annotation that saved them, but the menu now offers samples instead
 const VOICE_AMP = {square: 0.5, square25: 0.5, square12: 0.5, triangle: 0.9, sine: 0.85, sawtooth: 0.33,
                    piano: 0.8, pluck: 0.9, strings: 0.42, organ: 0.5, bell: 0.6};
+const SF_NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+function sfNoteName(p) { return SF_NOTE_NAMES[p % 12] + (Math.floor(p / 12) - 1); }
+function sfFileFor(v) {
+  const e = SF_VOICES.find(x => x[0] === v);
+  return e ? e[2] : null;
+}
+const sfBank = {}; // file -> {raw: name->dataURI, buffers: {midi->AudioBuffer}, pending: {midi->Promise}}
+function sfEnsure(file) {
+  if (!sfBank[file]) {
+    const bank = sfBank[file] = {raw: null, buffers: {}, pending: {}};
+    bank.load = fetch("vendor/soundfonts/" + file + ".json")
+      .then(r => { if (!r.ok) throw new Error("soundfont HTTP " + r.status); return r.json(); })
+      .then(m => { bank.raw = m; });
+  }
+  return sfBank[file];
+}
+function sfDecode(file, p) { // idempotent: one async decode per (instrument, pitch)
+  const bank = sfEnsure(file);
+  if (bank.buffers[p] || bank.pending[p]) return bank.pending[p] || Promise.resolve();
+  bank.pending[p] = bank.load.then(() => {
+    const uri = bank.raw[sfNoteName(p)];
+    if (!uri) return;
+    const b64 = uri.slice(uri.indexOf(",") + 1);
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Promise((res, rej) =>
+      audio.decodeAudioData(arr.buffer, b => { bank.buffers[p] = b; res(); }, rej));
+  }).catch(() => { /* missing note or bad fetch: the triangle fallback carries it */ });
+  return bank.pending[p];
+}
+function sfPreloadForSong() { // warm every pitch a sampled track actually plays
+  if (!song) return;
+  song.tracks.forEach((tr, ti) => {
+    const file = sfFileFor(trackVoice(ti));
+    if (!file) return;
+    ensureAudio(); // decode works on a suspended context; playback still waits for a gesture
+    const ps = new Set();
+    for (const n of tr.notes) if (!n.gone) ps.add(n.p);
+    ps.add(69); // the preview pitch
+    ps.forEach(p => sfDecode(file, p));
+  });
+}
 function trackVoice(ti) {
   const v = song.tracks[ti] && song.tracks[ti].voice;
   return v && v !== "auto" ? v : voiceType(ti);
@@ -2972,7 +3030,11 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
     b.addEventListener("click", () => {
       tr.voice = v === "auto" ? undefined : v;
       saveVoices();
-      previewNote(ti, 69); // hear it immediately
+      const file = sfFileFor(v);
+      if (file) { // sampled: preview once its A4 is actually decoded
+        ensureAudio();
+        sfDecode(file, 69).then(() => previewNote(ti, 69));
+      } else previewNote(ti, 69); // synth voices are instant
       buildVoiceMenu(ti); // refresh the ✓ — the menu stays where it is
     });
     menu.appendChild(b);
@@ -3038,12 +3100,30 @@ function scheduleNote(ti, n, when, durSec) {
   // ramp and slam the oscillator on at full amplitude (audible click)
   when = Math.max(when, audio.currentTime + 0.003);
   if (n.ch === 9 || trackIsDrums(ti)) { drumHit(ti, n.p, when, n.v); return; }
-  const v = trackVoice(ti);
-  const amp = (0.25 + 0.75 * (n.v / 127)) * (VOICE_AMP[v] || 0.5);
-  const f0 = 440 * Math.pow(2, (n.p - 69) / 12);
+  let v = trackVoice(ti);
   const g = audio.createGain();
   g.connect(trackGain(ti));
   const end = when + durSec;
+  const file = sfFileFor(v);
+  if (file) { // sampled instrument: the exact recorded pitch, gated to the note length
+    const buf = sfEnsure(file).buffers[n.p];
+    if (buf) {
+      const src = audio.createBufferSource();
+      src.buffer = buf;
+      const vel = 0.25 + 0.75 * (n.v / 127);
+      g.gain.setValueAtTime(vel, when);
+      g.gain.setValueAtTime(vel, Math.max(when + 0.01, end - 0.04));
+      g.gain.linearRampToValueAtTime(0, end + 0.09); // release past the gate
+      src.connect(g);
+      src.start(when);
+      src.stop(end + 0.12);
+      return;
+    }
+    sfDecode(file, n.p); // not decoded yet: ready by the next loop pass —
+    v = "triangle";      // meanwhile a quiet triangle holds the line
+  }
+  const amp = (0.25 + 0.75 * (n.v / 127)) * (VOICE_AMP[v] || 0.5);
+  const f0 = 440 * Math.pow(2, (n.p - 69) / 12);
   if (v === "pluck") { // a real vibrating string, not an oscillator
     const src = audio.createBufferSource();
     src.buffer = pluckBuffer(n.p);

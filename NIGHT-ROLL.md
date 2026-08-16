@@ -53,10 +53,19 @@ suspends auto-follow until the playhead re-enters the view.
 
 **Tracks:** chips mute (= fully hide, roll and score) and solo. Score model
 rebuilds on toggle. Second tap on the selected chip opens the voice &
-color menu: NES waves plus synthesized piano (detuned struck pair),
-guitar (Karplus-Strong plucked string, rendered per pitch and cached),
-strings (bowed saw + lowpass + easing vibrato), organ (drawbar
-harmonics), bell (FM strike); color via one full-width `<input type=color>` picker
+color menu: NES waves plus SAMPLED instruments (2026-08-15, Josh's
+call after the synth patches sounded "just okay") — piano, nylon and
+steel guitar, violin, cello, string ensemble, flute, church organ, as
+per-note FluidR3_GM MP3s in vendor/soundfonts/*.json (MIT, see
+LICENSE.md there; ~2MB per instrument). Lazy at every level: nothing
+fetches at page load; a track using voice=sf-* fetches its instrument
+once (browser-cached) and decodes ONLY the pitches the song actually
+plays (a full 88-key decode would cost ~60MB RAM per instrument on the
+iPad). finalizeNotes warms the pitch set; an undecoded note falls back
+to a quiet triangle for that pass and is sampled by the next loop. The
+2026-08-15 synth patches (voice=piano/pluck/strings/organ/bell) still
+play for annotations that saved them but left the menu. Color via one
+full-width `<input type=color>` picker
 (swatch shortcuts removed same day per Josh — any hex, stored in the
 track: directive as color=#rrggbb; TRACK_COLORS remains the default
 palette for unannotated tracks). The chips hug their content: ▾ sits beside the last

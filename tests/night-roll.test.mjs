@@ -590,6 +590,27 @@ test("NSF import helpers: track keys, album titles, manifest, Sync exclusion", (
   assert.deepEqual(out[0].songs, [{title: "Track 07", path: "albums/imports/solstice/track-07.mid"}]);
 });
 
+test("sampled voices: every menu entry has its soundfont file; pitch names map to sample keys", () => {
+  const sf = val(`SF_VOICES`);
+  assert.ok(sf.length >= 8);
+  for (const [id, , file] of sf) {
+    assert.ok(id.startsWith("sf-"), id);
+    const path = new URL("../vendor/soundfonts/" + file + ".json", import.meta.url);
+    const map = JSON.parse(readFileSync(path, "utf8")); // missing/corrupt file throws
+    assert.ok(map.A4 && map.A4.startsWith("data:audio"), file + " has A4");
+    assert.equal(Object.keys(map).length, 88, file + " covers the 88 keys");
+  }
+  assert.equal(run(`sfNoteName(69)`), "A4");
+  assert.equal(run(`sfNoteName(60)`), "C4");
+  assert.equal(run(`sfNoteName(61)`), "Db4"); // FluidR3 names use flats
+  assert.equal(run(`sfNoteName(21)`), "A0");
+  assert.equal(run(`sfNoteName(108)`), "C8");
+  // menu carries the sampled set; the retired synth patches are gone from it
+  const voices = val(`VOICES`).map(v => v[0]);
+  assert.ok(voices.includes("sf-piano") && voices.includes("sf-violin"));
+  assert.ok(!voices.includes("pluck") && !voices.includes("bell"));
+});
+
 test("local MIDI imports persist as device drafts: editable, drums intact, never synced", () => {
   installSong();
   run(`
@@ -673,7 +694,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "Karplus",
+    "Import…", "NSF", "Commit import", "color picker", "sampled",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
