@@ -2937,15 +2937,33 @@ function pluckBuffer(p) {
   return buf;
 }
 let voiceMenuTi = -1;
-function openVoiceMenu(ti, anchor) {
+function openVoiceMenu(ti, anchor) { // position ONCE from the chip, then show
   const menu = document.getElementById("voicemenu");
   voiceMenuTi = ti;
+  buildVoiceMenu(ti);
+  const r = anchor.getBoundingClientRect();
+  menu.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 240)) + "px";
+  menu.style.top = (r.bottom + 6) + "px";
+  menu.classList.add("on");
+}
+function buildVoiceMenu(ti) { // content only — picks refresh in place; every
+  // pick rebuilds the chip bar (finalizeNotes → renderTrackbar), so the
+  // anchor chip is detached by then and repositioning from it jumped the
+  // menu to the corner (Josh's iPad report 2026-08-15)
+  const menu = document.getElementById("voicemenu");
   menu.innerHTML = "";
   const tr = song.tracks[ti];
   const head = document.createElement("div");
-  head.className = "lbl";
-  head.style.cssText = "font-family:var(--mono);font-size:11px;color:var(--dim);padding:4px 10px";
-  head.textContent = (tr.name || "track " + (ti + 1)) + " — voice & color";
+  head.style.cssText = "display:flex;align-items:center;gap:6px;padding:2px 4px 2px 10px";
+  const hlbl = document.createElement("span");
+  hlbl.style.cssText = "font-family:var(--mono);font-size:11px;color:var(--dim);flex:1";
+  hlbl.textContent = (tr.name || "track " + (ti + 1)) + " — voice & color";
+  const close = document.createElement("button");
+  close.style.cssText = "min-height:32px;padding:2px 10px;flex:none";
+  close.textContent = "✕";
+  close.setAttribute("aria-label", "Close voice menu");
+  close.addEventListener("click", () => menu.classList.remove("on"));
+  head.append(hlbl, close);
   menu.appendChild(head);
   for (const [v, label] of VOICES) {
     const b = document.createElement("button");
@@ -2955,7 +2973,7 @@ function openVoiceMenu(ti, anchor) {
       tr.voice = v === "auto" ? undefined : v;
       saveVoices();
       previewNote(ti, 69); // hear it immediately
-      openVoiceMenu(ti, anchor); // stay open, refresh the ✓
+      buildVoiceMenu(ti); // refresh the ✓ — the menu stays where it is
     });
     menu.appendChild(b);
   }
@@ -2969,7 +2987,7 @@ function openVoiceMenu(ti, anchor) {
       tr.color = c === TRACK_COLORS[ti % TRACK_COLORS.length] ? undefined : c;
       saveVoices();
       renderTrackbar(); buildScoreModel(); draw();
-      openVoiceMenu(ti, anchor);
+      buildVoiceMenu(ti);
     });
     sw.appendChild(d);
   }
@@ -2978,17 +2996,13 @@ function openVoiceMenu(ti, anchor) {
   custom.value = /^#[0-9a-fA-F]{6}$/.test(trackColor(ti)) ? trackColor(ti) : "#888888";
   custom.style.cssText = "width:34px;height:26px;padding:0;border:2px solid var(--grid);border-radius:7px;background:none";
   custom.setAttribute("aria-label", "Custom color");
-  custom.addEventListener("input", () => {
+  custom.addEventListener("input", () => { // no rebuild: it would kill the picker mid-drag
     tr.color = custom.value;
     saveVoices();
     renderTrackbar(); buildScoreModel(); draw();
   });
   sw.appendChild(custom);
   menu.appendChild(sw);
-  const r = anchor.getBoundingClientRect();
-  menu.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 240)) + "px";
-  menu.style.top = (r.bottom + 6) + "px";
-  menu.classList.add("on");
 }
 document.addEventListener("pointerdown", e => { // tap-away closes the voice menu
   const menu = document.getElementById("voicemenu");
