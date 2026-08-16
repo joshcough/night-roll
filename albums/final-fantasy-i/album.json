@@ -1,41 +1,98 @@
 {
-  "note": "'songs' lists display-name OVERRIDES only — the full song list comes from scanning *.mid here (see albums/manifest.json, built by tools/build_manifest.mjs). A song absent below is titled from its filename automatically.",
-  "title": "Final Fantasy I",
-  "order": 1,
-  "songs": {
-    "prologue": "Opening Theme",
-    "overworld": "Main Theme",
-    "cave": "Dungeon",
-    "chaos-temple": "Temple of Chaos",
-    "underwater-palace": "Undersea Shrine",
-    "battle": "Battle Scene",
-    "menu": "Menu Screen",
-    "epilogue": "Ending Theme",
-    "game-over": "Dead Music",
-    "matoyas-cave": "Matoya's Cave"
-  },
-  "nsf": {
-    "vault": "ff1.nsf",
-    "tracks": {
-      "prelude": {"n": 1, "secs": 170},
-      "prologue": {"n": 2, "secs": 85},
-      "epilogue": {"n": 3, "secs": 270},
-      "overworld": {"n": 4, "secs": 60},
-      "ship": {"n": 5, "secs": 90},
-      "airship": {"n": 6, "secs": 45},
-      "town": {"n": 7, "secs": 45},
-      "cornelia-castle": {"n": 8, "secs": 40},
-      "gurgu-volcano": {"n": 9, "secs": 65},
-      "matoyas-cave": {"n": 10, "secs": 65},
-      "cave": {"n": 11, "secs": 50},
-      "chaos-temple": {"n": 12, "secs": 55},
-      "floating-castle": {"n": 13, "secs": 65},
-      "underwater-palace": {"n": 14, "secs": 55},
-      "shop": {"n": 15, "secs": 55},
-      "battle": {"n": 16, "secs": 90},
-      "menu": {"n": 17, "secs": 35},
-      "game-over": {"n": 18, "secs": 45},
-      "victory": {"n": 19, "secs": 30}
-    }
+ "note": "'songs' lists display-name OVERRIDES only — the full song list comes from scanning *.mid here (see albums/manifest.json, built by tools/build_manifest.mjs). A song absent below is titled from its filename automatically.",
+ "title": "Final Fantasy I",
+ "order": 1,
+ "songs": {
+  "prologue": "Opening Theme",
+  "overworld": "Overworld",
+  "cave": "Dungeon",
+  "chaos-temple": "Temple of Chaos",
+  "underwater-palace": "Undersea Shrine",
+  "battle": "Battle Scene",
+  "menu": "Menu Screen",
+  "epilogue": "Ending Theme",
+  "game-over": "Dead Music",
+  "matoyas-cave": "Matoya's Cave"
+ },
+ "nsf": {
+  "vault": "ff1.nsf",
+  "tracks": {
+   "prelude": {
+    "n": 1,
+    "secs": 170
+   },
+   "prologue": {
+    "n": 2,
+    "secs": 85
+   },
+   "epilogue": {
+    "n": 3,
+    "secs": 270
+   },
+   "overworld": {
+    "n": 4,
+    "secs": 60
+   },
+   "ship": {
+    "n": 5,
+    "secs": 90
+   },
+   "airship": {
+    "n": 6,
+    "secs": 45
+   },
+   "town": {
+    "n": 7,
+    "secs": 45
+   },
+   "cornelia-castle": {
+    "n": 8,
+    "secs": 40
+   },
+   "gurgu-volcano": {
+    "n": 9,
+    "secs": 65
+   },
+   "matoyas-cave": {
+    "n": 10,
+    "secs": 65
+   },
+   "cave": {
+    "n": 11,
+    "secs": 50
+   },
+   "chaos-temple": {
+    "n": 12,
+    "secs": 55
+   },
+   "floating-castle": {
+    "n": 13,
+    "secs": 65
+   },
+   "underwater-palace": {
+    "n": 14,
+    "secs": 55
+   },
+   "shop": {
+    "n": 15,
+    "secs": 55
+   },
+   "battle": {
+    "n": 16,
+    "secs": 90
+   },
+   "menu": {
+    "n": 17,
+    "secs": 35
+   },
+   "game-over": {
+    "n": 18,
+    "secs": 45
+   },
+   "victory": {
+    "n": 19,
+    "secs": 30
+   }
   }
+ }
 }
