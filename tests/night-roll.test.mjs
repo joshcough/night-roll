@@ -611,6 +611,30 @@ test("sampled voices: every menu entry has its soundfont file; pitch names map t
   assert.ok(!voices.includes("pluck") && !voices.includes("bell"));
 });
 
+test("data-location config: defaults are legacy-identical; bases and repos route", () => {
+  // defaults: relative reads (today's behavior), night-roll writes
+  run(`localStorage.removeItem("ff1roll-cfg"); cfg.c = null;`);
+  assert.equal(run(`songsURL("albums/manifest.json")`), "albums/manifest.json");
+  assert.equal(run(`analysisURL("albums/x/songs/y.rollnotes.json")`), "albums/x/songs/y.rollnotes.json");
+  assert.equal(run(`repoApi("songs")`), "https://api.github.com/repos/joshcough/night-roll/contents/");
+  assert.equal(run(`repoApi("analysis")`), "https://api.github.com/repos/joshcough/night-roll/contents/");
+  assert.equal(run(`repoName("nsf")`), "joshcough/nsf-archive");
+  assert.equal(run(`nsfURL("ff1.nsf")`), "https://raw.githubusercontent.com/joshcough/nsf-archive/main/ff1.nsf");
+  // configured: any base URL prepends (trailing slashes normalized); writes retarget
+  run(`saveCfg({songsBase: "https://raw.githubusercontent.com/other/corpus/main/",
+                analysisBase: "http://localhost:8001",
+                analysisRepo: "other/my-analysis"});`);
+  assert.equal(run(`songsURL("albums/a.mid")`), "https://raw.githubusercontent.com/other/corpus/main/albums/a.mid");
+  assert.equal(run(`analysisURL("albums/a.rollnotes.json")`), "http://localhost:8001/albums/a.rollnotes.json");
+  assert.equal(run(`repoApi("analysis")`), "https://api.github.com/repos/other/my-analysis/contents/");
+  assert.equal(run(`repoApi("songs")`), "https://api.github.com/repos/joshcough/night-roll/contents/"); // unset field keeps default
+  // scope-shaped API failures name the repo and the fix
+  const msg = run(`apiError("analysis", {status: 404}, "x.rollnotes.json").message`);
+  assert.match(msg, /other\/my-analysis/);
+  assert.match(msg, /token can't see/);
+  run(`localStorage.removeItem("ff1roll-cfg"); cfg.c = null;`); // restore defaults for later tests
+});
+
 test("local MIDI imports persist as device drafts: editable, drums intact, never synced", () => {
   installSong();
   run(`
@@ -697,7 +721,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));

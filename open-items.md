@@ -20,6 +20,21 @@ full-width color picker (swatches removed), track-row layout fixes
 (▾ hugs chips, transport pinned top), voice menu holds position + ✕.
 Tests 45/45. Details in NIGHT-ROLL.md.
 
+**DATA-LOCATION CONFIG SHIPPED (2026-08-17 afternoon; physical split
+DEFERRED):** Night Roll is now configured with where songs, analysis,
+and NSFs live (Sync → Data locations; cfg()/songsURL/analysisURL/
+nsfURL/repoApi in index.html; spec in NIGHT-ROLL.md). nsf-archive is
+PUBLIC (Josh's considered reversal of never-publish; chip audio is
+tokenless everywhere; archive default branch renamed master→main).
+Advisor-reviewed plan incl. the deferred ost-songs/ost-analysis
+physical split lives at
+~/.claude/plans/velvety-shimmying-quail.md — execute it when a second
+analyst is real, with its baked-in ordering fixes: git filter-repo for
+history, extend the token BEFORE verification, DROP night-roll from
+the token at prune time (stale cached tabs must fail loudly, not sync
+into a pruned repo). Leftover for Josh: delete the empty duplicate
+repo joshcough/nsf-vault (needs delete_repo scope I don't have).
+
 **MM2 STATUS AFTER THE ALL-NIGHTER (2026-08-17 ~3am):** Flash Man (t3)
 "sounds really good"; Wily 1 (t11) "pretty great"; title (t1) "really
 really close" after the snap-residual raw-timing gate. Shipped in the

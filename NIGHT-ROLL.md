@@ -262,6 +262,27 @@ interpolation has few anchors there). Empty tracks keep staves on
 compositions (clef guessed from the voice name) so a blank song is
 enterable; erase hit-tests the engraved notehead boxes.
 
+**Data locations** (2026-08-17, Josh's architecture, advisor-reviewed):
+the app is CONFIGURED with where its data lives — `ff1roll-cfg` in
+localStorage, edited via Sync → "Data locations ▾". Three rows: songs
+(.mid/album.json/manifest), analysis (.rollnotes + docs), NSF. Each has
+a read BASE URL ("" = this origin/relative — the default, i.e. today's
+fused behavior; or any raw.githubusercontent.com/owner/repo/branch or
+local server) and an owner/repo write target for the Contents API.
+Helpers: `cfg()/songsURL()/analysisURL()/nsfURL()/repoApi(which)`;
+every write failure names its repo, and 404 is reported as
+"token can't see <repo>" (fine-grained tokens make unlisted repos look
+nonexistent). The Sync sheet opens without a loaded song so a broken
+config can always be fixed; loadNotes warns instead of rendering
+silently empty when this device previously synced annotations for a
+path the analysis location now lacks. NSFs read raw-first from the
+PUBLIC joshcough/nsf-archive (Josh's considered call, 2026-08-17 —
+reversing the earlier never-publish stance; chip audio is tokenless
+everywhere), API+token fallback for private forks. The PHYSICAL split
+into ost-songs/ost-analysis is designed and deferred until a second
+analyst exists — see the plan in open-items; the mirror-tree layout
+(rollnotes at identical relative paths) makes it a pure git move.
+
 **Sync:** serializes the full current rollnotes state and commits it to
 this repo via the GitHub Contents API (fine-grained token, stored in
 browser localStorage, never in the repo). "Commit all changed" syncs every

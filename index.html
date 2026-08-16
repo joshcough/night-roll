@@ -884,6 +884,7 @@
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; while the import session is open, a <b>chip</b> button appears in the transport: it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the Chip audio is the console's own voice, not our oscillator approximation) and ▶ then plays that, with mute/solo still live per track and the speed slider acting tape-style; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -1040,13 +1041,27 @@
       <button id="ghsaveall">Commit all changed</button>
       <button id="copyfile">Copy file</button>
       <button id="dlfile">Download</button>
-      <a href="https://github.com/joshcough/night-roll" target="_blank" rel="noopener"
+      <a id="repolink" href="https://github.com/joshcough/night-roll" target="_blank" rel="noopener"
          style="text-decoration:none"><button>Repo ↗</button></a>
       <button id="websess">⎘ Web session</button>
+      <button id="cfgtoggle">Data locations ▾</button>
       <button id="synccancel">Close</button>
     </div>
+    <div id="cfgform" style="display:none">
+      <div class="row"><span class="lbl" style="width:70px">songs</span>
+        <input type="text" id="cfgsongsbase" placeholder="read base URL (blank = this site)" style="flex:1;min-height:36px">
+        <input type="text" id="cfgsongsrepo" placeholder="owner/repo (writes)" style="width:200px;min-height:36px"></div>
+      <div class="row"><span class="lbl" style="width:70px">analysis</span>
+        <input type="text" id="cfganalysisbase" placeholder="read base URL (blank = this site)" style="flex:1;min-height:36px">
+        <input type="text" id="cfganalysisrepo" placeholder="owner/repo (writes)" style="width:200px;min-height:36px"></div>
+      <div class="row"><span class="lbl" style="width:70px">nsf</span>
+        <input type="text" id="cfgnsfbase" placeholder="read base URL" style="flex:1;min-height:36px">
+        <input type="text" id="cfgnsfrepo" placeholder="owner/repo (writes)" style="width:200px;min-height:36px"></div>
+      <div class="row"><button class="primary" id="cfgsave">Save locations</button>
+        <span class="lbl">blank bases read from this site; one token below must be granted to every owner/repo you write to</span></div>
+    </div>
     <div class="status" id="syncpending" style="max-height:38vh;overflow-y:auto;white-space:pre-wrap"></div>
-    <div class="status" id="syncstatus">Token: Settings → Developer settings → Fine-grained tokens → this repo only, Contents read/write.</div>
+    <div class="status" id="syncstatus">Token: Settings → Developer settings → Fine-grained tokens → grant the repos configured above, Contents read/write.</div>
   </div>
 </div>
 
@@ -1060,7 +1075,7 @@
 let CATALOG = {}; // built from albums/manifest.json at boot — the dropdown
 // mirrors the albums/ directory; run tools/build_manifest.mjs after adding music
 async function initCatalog() {
-  const res = await fetch("albums/manifest.json?t=" + Date.now(), {cache: "no-cache"});
+  const res = await fetch(songsURL("albums/manifest.json") + "?t=" + Date.now(), {cache: "no-cache"});
   if (!res.ok) throw new Error("manifest fetch failed");
   CATALOG = {};
   for (const a of await res.json()) CATALOG[a.title] = a.songs.map(x => [x.title, x.path]);
@@ -1603,8 +1618,8 @@ async function loadNotes() {
     try {
       // ?t= busts the Pages CDN (it caches ~10 min; a reload right after
       // Sync otherwise shows pre-sync annotations and looks like data loss)
-      let res = await fetch(notesBase() + ".rollnotes.json?t=" + Date.now(), {cache: "no-cache"});
-      if (!res.ok) res = await fetch(notesBase() + ".rollnotes?t=" + Date.now(), {cache: "no-cache"}); // legacy
+      let res = await fetch(analysisURL(notesBase() + ".rollnotes.json") + "?t=" + Date.now(), {cache: "no-cache"});
+      if (!res.ok) res = await fetch(analysisURL(notesBase() + ".rollnotes") + "?t=" + Date.now(), {cache: "no-cache"}); // legacy
       let text = res.ok ? await res.text() : null;
       if (gen !== loadGen) return;
       // deploy-lag bridge: a Sync younger than 10 min beats a disagreeing CDN
@@ -1617,6 +1632,13 @@ async function loadNotes() {
         }
       } catch (err) { /* corrupt bridge: ignore */ }
       if (text !== null) rollnotes = parseRollnotes(text).map(resolveNote);
+      else if (localStorage.getItem("ff1roll-lastsync-" + songKey)) {
+        // this device SYNCED annotations for this path before, yet the analysis
+        // location now has none — likely repo/path drift, not "no notes yet".
+        // Never render silently empty over that (advisor, 2026-08-17).
+        setInfo("⚠ annotations were synced for this song before, but " +
+                (cfg().analysisBase || "this site") + " has none at " + notesBase() + ".rollnotes.json — check Data locations");
+      }
     } catch (err) { /* no sidecar */ }
     if (gen !== loadGen) return;
     try {
@@ -1680,8 +1702,8 @@ async function buildRollnotesFor(key) {
   const base = key.replace(/\.midi?$/i, "");
   let notes = [];
   try {
-    let res = await fetch(base + ".rollnotes.json", {cache: "no-cache"});
-    if (!res.ok) res = await fetch(base + ".rollnotes", {cache: "no-cache"}); // legacy
+    let res = await fetch(analysisURL(base + ".rollnotes.json"), {cache: "no-cache"});
+    if (!res.ok) res = await fetch(analysisURL(base + ".rollnotes"), {cache: "no-cache"}); // legacy
     if (res.ok) notes = parseRollnotes(await res.text());
   } catch (err) { /* no sidecar yet */ }
   let local = [];
@@ -1846,7 +1868,7 @@ async function loadSong(path) {
     try { d = JSON.parse(draftRaw); } catch (err) {}
     let repoStamp = 0;
     try {
-      const r = await fetch(path.replace(/\.mid$/, "") + ".rollnotes.json?t=" + Date.now(), {cache: "no-cache"});
+      const r = await fetch(analysisURL(path.replace(/\.mid$/, "") + ".rollnotes.json") + "?t=" + Date.now(), {cache: "no-cache"});
       if (r.ok) repoStamp = (JSON.parse(await r.text()).saved || 0);
     } catch (err) { /* offline / not yet saved: draft wins */ }
     if (d && repoStamp > (d.savedStamp || 0)) {
@@ -1861,7 +1883,7 @@ async function loadSong(path) {
     } else if (d) { openDraftDoc(d, path); return; } // draft is the newest known state
   }
   const gen = ++loadGen;
-  const res = await fetch(path, {cache: "no-cache"});
+  const res = await fetch(songsURL(path), {cache: "no-cache"});
   if (!res.ok) throw new Error("fetch failed: " + path);
   const buf = await res.arrayBuffer();
   if (gen !== loadGen) return; // a newer song load superseded this one
@@ -3354,7 +3376,7 @@ function chipTrackNo() { // NSF track number from the LIVE import session
 // public repo must not — album.json links to it (vault file + track map, pure
 // metadata) and the app fetches with the same token Sync uses. Chain:
 // live import session → this device's IndexedDB cache → vault fetch (cached).
-const NSF_VAULT = "joshcough/nsf-archive"; // Josh's pre-existing private NSF repo
+// NSF repo config lives in cfg() (nsfBase for reads, nsfRepo for writes)
 const albumMetaCache = {}; // album dir -> album.json contents (or null)
 async function albumMetaFor(key) {
   const m = key && key.match(/^(albums\/.+?)\/(?:songs\/)?[^/]+\.mid$/); // lazy: don't swallow /songs/
@@ -3362,20 +3384,23 @@ async function albumMetaFor(key) {
   const dir = m[1];
   if (!(dir in albumMetaCache)) {
     try {
-      const r = await fetch(dir + "/album.json?t=" + Date.now(), {cache: "no-cache"});
+      const r = await fetch(songsURL(dir + "/album.json") + "?t=" + Date.now(), {cache: "no-cache"});
       albumMetaCache[dir] = r.ok ? await r.json() : null;
     } catch (err) { albumMetaCache[dir] = null; }
   }
   return albumMetaCache[dir];
 }
-async function vaultFetch(file) { // private repo needs the API + token
+async function vaultFetch(file) {
+  // raw-first: a PUBLIC archive serves tokenless with open CORS — chip audio
+  // needs zero setup. Private forks fall back to the API + token.
+  try {
+    const raw = await fetch(nsfURL(file) + "?t=" + Date.now(), {cache: "no-cache"});
+    if (raw.ok) return new Uint8Array(await raw.arrayBuffer());
+  } catch (err) { /* offline or blocked: try the API */ }
   const token = localStorage.getItem("ff1roll-ghtoken");
-  if (!token) throw new Error("no GitHub token on this device — open Sync once and paste it");
-  const r = await fetch("https://api.github.com/repos/" + NSF_VAULT + "/contents/" + file + "?ref=main",
-    {headers: ghHeaders(token)});
-  if (r.status === 404 || r.status === 403) // fine-grained tokens are per-repo: night-roll-only can't see the archive
-    throw new Error("token can't see " + NSF_VAULT + " (HTTP " + r.status + ") — edit the token on GitHub and add the nsf-archive repo to it");
-  if (!r.ok) throw new Error(NSF_VAULT + " HTTP " + r.status);
+  if (!token) throw new Error("NSF not publicly reachable and no GitHub token on this device — open Sync once and paste it");
+  const r = await fetch(repoApi("nsf") + file + "?ref=main", {headers: ghHeaders(token)});
+  if (!r.ok) throw apiError("nsf", r, file);
   const j = await r.json();
   const bin = atob(j.content.replace(/\n/g, ""));
   const bytes = new Uint8Array(bin.length);
@@ -5583,7 +5608,7 @@ instbtn.addEventListener("click", () => {
 // pastes it into a fresh Claude Web chat to bootstrap a from-bed tutoring
 // session with full project context.
 document.getElementById("websess").addEventListener("click", async e => {
-  const url = "https://raw.githubusercontent.com/joshcough/night-roll/main/WEB-SESSION.md";
+  const url = "https://raw.githubusercontent.com/" + repoName("analysis") + "/main/WEB-SESSION.md";
   try { await navigator.clipboard.writeText(url); e.target.textContent = "✓ copied — paste to Claude"; }
   catch { e.target.textContent = "✗ copy failed"; }
   setTimeout(() => { e.target.textContent = "⎘ Web session"; }, 1800);
@@ -6121,12 +6146,12 @@ function titleCaseSlug(base) {
 async function updateManifest(h, mutate) { // GET manifest.json, mutate, PUT — keeps the dropdown honest
   const path = "albums/manifest.json";
   const putOnce = async () => {
-    const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
-    if (!g.ok) throw new Error("manifest GET " + g.status);
+    const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
+    if (!g.ok) throw apiError("songs", g, "manifest GET");
     const j = await g.json();
     const albums = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, "")))));
     if (!mutate(albums)) return {ok: true};
-    return fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify({
+    return fetch(repoApi("songs") + path, {method: "PUT", headers: h, body: JSON.stringify({
       message: "Update manifest from Night Roll", branch: "main", sha: j.sha,
       content: btoa(unescape(encodeURIComponent(JSON.stringify(albums, null, 1) + "\n"))),
     })});
@@ -6548,7 +6573,7 @@ async function renameRepoTitle(key, title, h) { // album.json songs override + m
   if (parts[parts.length - 1] === "songs") parts.pop(); // FF1-style albums keep songs/ nested
   const path = parts.join("/") + "/album.json";
   const base = file.replace(/\.midi?$/i, "");
-  const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+  const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
   let meta = {title: titleCaseSlug(parts[parts.length - 1]), songs: {}}, sha = null;
   if (g.ok) { // preserve every existing field (FF1's album.json carries notes/order)
     const j = await g.json();
@@ -6560,8 +6585,8 @@ async function renameRepoTitle(key, title, h) { // album.json songs override + m
   const body = {message: "Rename " + base + " to \"" + title + "\" from Night Roll", branch: "main",
     content: btoa(unescape(encodeURIComponent(JSON.stringify(meta, null, 1) + "\n")))};
   if (sha) body.sha = sha;
-  const r = await fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
-  if (!r.ok) throw new Error("album.json HTTP " + r.status);
+  const r = await fetch(repoApi("songs") + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
+  if (!r.ok) throw apiError("songs", r, "album.json");
   await updateManifest(h, albums => {
     let changed = false;
     for (const a of albums) {
@@ -6855,7 +6880,7 @@ document.getElementById("impcommit").addEventListener("click", e => {
 });
 async function ensureImportAlbum(slug, h, songTitles, nsfTracks) { // album.json keeps build_manifest.mjs honest offline
   const path = IMP_DIR + slug + "/album.json";
-  const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+  const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
   let meta = {title: titleCaseSlug(slug), order: 50, songs: {}}, sha = null;
   if (g.ok) { // second batch into the same album: merge, don't clobber earlier titles
     const j = await g.json();
@@ -6873,8 +6898,8 @@ async function ensureImportAlbum(slug, h, songTitles, nsfTracks) { // album.json
   const body = {message: "Import album " + slug + " from Night Roll", branch: "main",
     content: btoa(unescape(encodeURIComponent(JSON.stringify(meta, null, 1) + "\n")))};
   if (sha) body.sha = sha;
-  const r = await fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
-  if (!r.ok) throw new Error("album.json HTTP " + r.status);
+  const r = await fetch(repoApi("songs") + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
+  if (!r.ok) throw apiError("songs", r, "album.json");
 }
 // NSFs are NEVER committed (.gitignore *.nsf — ROM music stays out of the
 // public repo). For chip audio across reloads, the bytes persist in THIS
@@ -6962,10 +6987,10 @@ async function commitImports(status, keys) { // push import drafts (all by defau
       await ensureImportAlbum(slug, h, overrides, nsfTracks);
       if (rec && rec.bytes) {
         try {
-          const chk = await fetch("https://api.github.com/repos/" + NSF_VAULT + "/contents/" + slug + ".nsf?ref=main", {headers: h});
+          const chk = await fetch(repoApi("nsf") + slug + ".nsf?ref=main", {headers: h});
           if (!chk.ok) {
             status("Uploading NSF to the private vault…");
-            const put = await fetch("https://api.github.com/repos/" + NSF_VAULT + "/contents/" + slug + ".nsf", {
+            const put = await fetch(repoApi("nsf") + slug + ".nsf", {
               method: "PUT", headers: h, body: JSON.stringify({
                 message: "NSF for " + slug + " (chip audio)", branch: "main",
                 content: midiBase64(rec.bytes instanceof Uint8Array ? rec.bytes : new Uint8Array(rec.bytes))})});
@@ -7038,22 +7063,22 @@ async function putMidAt(path, h, bytes) { // PUT a .mid (current song unless byt
   const data = midiBase64(bytes || writeMidi(song));
   const putOnce = async () => {
     let sha = null;
-    const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+    const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
     if (g.ok) sha = (await g.json()).sha;
     const body = {message: "Save " + path + " from Night Roll", branch: "main",
                   content: data};
     if (sha) body.sha = sha;
-    return fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
+    return fetch(repoApi("songs") + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
   };
   let r = await putOnce();
   if (r.status === 409) r = await putOnce();
   return r;
 }
 async function deleteRepoFile(path, h) { // tolerate absence: never-synced drafts have no repo file
-  const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+  const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
   if (!g.ok) return;
   const sha = (await g.json()).sha;
-  await fetch(REPO_API + path, {method: "DELETE", headers: h,
+  await fetch(repoApi("songs") + path, {method: "DELETE", headers: h,
     body: JSON.stringify({message: "Move " + path + " from Night Roll", sha, branch: "main"})});
 }
 async function moveComposition(destDir) {
@@ -7125,7 +7150,48 @@ document.getElementById("undobtn").addEventListener("click", () => {
   }
 }
 
-const REPO_API = "https://api.github.com/repos/joshcough/night-roll/contents/";
+// ---------------------------------------------------- data-location config
+// Josh's design (2026-08-17, advisor-reviewed): the app is CONFIGURED with
+// where songs, analysis (rollnotes + docs), and NSFs live, so another analyst
+// can point their own analysis repo at a shared songs corpus. Read locations
+// are BASE URLS ("" = this origin, relative — today's behavior; or any
+// https://raw.githubusercontent.com/<owner>/<repo>/<branch> or local server);
+// write targets are owner/repo for the GitHub Contents API. One fine-grained
+// token (ff1roll-ghtoken) granted per-repo covers all writes.
+function cfg() {
+  if (!cfg.c) {
+    let c = {};
+    try { c = JSON.parse(localStorage.getItem("ff1roll-cfg") || "{}"); } catch (err) { /* corrupt: defaults */ }
+    cfg.c = {
+      songsBase: c.songsBase || "",
+      analysisBase: c.analysisBase || "",
+      nsfBase: c.nsfBase || "https://raw.githubusercontent.com/joshcough/nsf-archive/main",
+      songsRepo: c.songsRepo || "joshcough/night-roll",
+      analysisRepo: c.analysisRepo || "joshcough/night-roll",
+      nsfRepo: c.nsfRepo || "joshcough/nsf-archive",
+    };
+  }
+  return cfg.c;
+}
+function saveCfg(patch) {
+  const c = {...cfg(), ...patch};
+  localStorage.setItem("ff1roll-cfg", JSON.stringify(c));
+  cfg.c = null;
+}
+function baseJoin(base, path) { return base ? base.replace(/\/+$/, "") + "/" + path : path; }
+function songsURL(path) { return baseJoin(cfg().songsBase, path); }     // .mid, album.json, manifest.json
+function analysisURL(path) { return baseJoin(cfg().analysisBase, path); } // .rollnotes.json + docs
+function nsfURL(file) { return baseJoin(cfg().nsfBase, file); }
+function repoName(which) { return cfg()[which + "Repo"]; }
+function repoApi(which) { return "https://api.github.com/repos/" + repoName(which) + "/contents/"; }
+// Contents-API failure -> an error that names the repo; fine-grained tokens
+// make invisible repos 404, so that reads as a scope problem, not a bug
+function apiError(which, r, what) {
+  if (r.status === 404 || r.status === 403)
+    return new Error(what + ": token can't see " + repoName(which) + " (HTTP " + r.status +
+                     ") — edit the token on GitHub and add that repo to it");
+  return new Error(what + " → " + repoName(which) + " HTTP " + r.status);
+}
 let syncReturnToList = false; // sync opened from the notes list → return there after commit
 // review pane: every unsynced note on this device, grouped by song, so a
 // commit is never a blind dialog — you see exactly what's outstanding
@@ -7176,15 +7242,40 @@ function discardPending(key, idx) { // drop one never-synced note from the stash
   updateSyncBtn();
   renderSyncPending();
 }
-document.getElementById("syncbtn").addEventListener("click", () => {
-  if (!song) return;
-  syncReturnToList = false; // notelistSync sets it true right after this handler runs
-  renderSyncPending();
+function openSyncSheet() { // callable even with no song loaded (bad-config recovery)
+  syncReturnToList = false; // notelistSync sets it true right after this runs
+  if (song) renderSyncPending();
   document.getElementById("ghtoken").value = localStorage.getItem("ff1roll-ghtoken") || "";
-  document.getElementById("syncstatus").textContent = songKey
-    ? "Token: Settings → Developer settings → Fine-grained tokens → this repo only, Contents read/write."
+  const c = cfg();
+  document.getElementById("repolink").href = "https://github.com/" + c.songsRepo;
+  document.getElementById("cfgsongsbase").value = c.songsBase;
+  document.getElementById("cfgsongsrepo").value = c.songsRepo;
+  document.getElementById("cfganalysisbase").value = c.analysisBase;
+  document.getElementById("cfganalysisrepo").value = c.analysisRepo;
+  document.getElementById("cfgnsfbase").value = c.nsfBase;
+  document.getElementById("cfgnsfrepo").value = c.nsfRepo;
+  document.getElementById("syncstatus").textContent = !song
+    ? "No song loaded — fix Data locations below if the catalog failed, then reload."
+    : songKey
+    ? "Token: Settings → Developer settings → Fine-grained tokens → grant the repos configured above, Contents read/write."
     : "Local file — Copy/Download only (no repo path to commit to).";
   syncsheet.classList.add("on");
+}
+document.getElementById("syncbtn").addEventListener("click", openSyncSheet);
+document.getElementById("cfgtoggle").addEventListener("click", () => {
+  const f = document.getElementById("cfgform");
+  f.style.display = f.style.display === "none" ? "" : "none";
+});
+document.getElementById("cfgsave").addEventListener("click", () => {
+  saveCfg({
+    songsBase: document.getElementById("cfgsongsbase").value.trim(),
+    songsRepo: document.getElementById("cfgsongsrepo").value.trim() || "joshcough/night-roll",
+    analysisBase: document.getElementById("cfganalysisbase").value.trim(),
+    analysisRepo: document.getElementById("cfganalysisrepo").value.trim() || "joshcough/night-roll",
+    nsfBase: document.getElementById("cfgnsfbase").value.trim(),
+    nsfRepo: document.getElementById("cfgnsfrepo").value.trim() || "joshcough/nsf-archive",
+  });
+  document.getElementById("syncstatus").textContent = "Data locations saved — reload to apply everywhere.";
 });
 document.getElementById("synccancel").addEventListener("click", () => syncsheet.classList.remove("on"));
 document.getElementById("copyfile").addEventListener("click", async () => {
@@ -7206,7 +7297,7 @@ function ghHeaders(token) {
 async function putRollnotes(path, content, headers) { // PUT with one stale-sha retry
   const putOnce = async () => {
     let sha = null;
-    const g = await fetch(REPO_API + path + "?ref=main", {headers, cache: "no-store"});
+    const g = await fetch(repoApi("analysis") + path + "?ref=main", {headers, cache: "no-store"});
     if (g.ok) sha = (await g.json()).sha;
     const body = {
       message: "Update " + path + " from Night Roll",
@@ -7214,7 +7305,7 @@ async function putRollnotes(path, content, headers) { // PUT with one stale-sha 
       branch: "main",
     };
     if (sha) body.sha = sha;
-    return fetch(REPO_API + path, {method: "PUT", headers, body: JSON.stringify(body)});
+    return fetch(repoApi("analysis") + path, {method: "PUT", headers, body: JSON.stringify(body)});
   };
   let r = await putOnce();
   if (r.status === 409) r = await putOnce();
@@ -7312,7 +7403,11 @@ try { // a capture beacon surviving into a fresh load = the tab was killed mid-c
 } catch (err) { /* no beacon */ }
 (async function boot() {
   try { await initCatalog(); }
-  catch (e) { setInfo("albums/manifest.json failed to load — open via a web server: " + e.message); return; }
+  catch (e) {
+    const b = cfg().songsBase || "(this site)";
+    setInfo("catalog failed to load from " + b + " — check Data locations via the Sync button, or serve over http: " + e.message);
+    return;
+  }
   const all = Object.values(CATALOG).flat().map(([, p]) => p);
   const last = localStorage.getItem("ff1roll-lastsong");
   // drafts aren't in the manifest but are perfectly loadable (draft-wins path)
