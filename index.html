@@ -3197,7 +3197,7 @@ function scheduleNote(ti, n, when, durSec) {
     if (buf) {
       const src = audio.createBufferSource();
       src.buffer = buf;
-      const vel = Math.pow(n.v / 127, 1.6); // sampled voices: same chip-true dynamics
+      const vel = n.v / 127; // sampled voices: same linear chip-true dynamics
       g.gain.setValueAtTime(vel, when);
       g.gain.setValueAtTime(vel, Math.max(when + 0.01, end - 0.04));
       g.gain.linearRampToValueAtTime(0, end + 0.09); // release past the gate
@@ -3209,11 +3209,12 @@ function scheduleNote(ti, n, when, durSec) {
     sfDecode(file, n.p); // not decoded yet: ready by the next loop pass —
     v = "triangle";      // meanwhile a quiet triangle holds the line
   }
-  // velocity -> amplitude tracks the chip: the old 0.25 floor compressed
-  // dynamics so echo voices (chip vol ~half) played at ~70% loudness — MM2's
-  // 50ms slap echoes flammed like mistakes instead of sitting behind the
-  // melody as ambience (Josh's "weirdly overlapped", 2026-08-17)
-  const amp = Math.pow(n.v / 127, 1.6) * (VOICE_AMP[v] || 0.5);
+  // velocity -> amplitude LINEAR, no floor: the chip's own ratios. The old
+  // 0.25 floor squashed echo voices to ~70% loudness (flams); the ^1.6
+  // overcorrection exaggerated gallop accents into pumping "tremolo"
+  // (Josh, back-to-back vs the real track). Linear = vol 8-vs-13 renders
+  // at exactly the hardware's 0.62.
+  const amp = (n.v / 127) * (VOICE_AMP[v] || 0.5);
   const f0 = 440 * Math.pow(2, (n.p - 69) / 12);
   if (v === "pluck") { // a real vibrating string, not an oscillator
     const src = audio.createBufferSource();
@@ -6448,14 +6449,28 @@ async function captureNsfTrack(M, nsf, track, seconds, onProgress) { // dump-all
       .map(ev => ({...ev, endFrame: Math.min(ev.endFrame, keptFrames)}));
   }
   const bpm = M.fitBpm(events, frameSec, 120);
-  const bytes = M.makeMidi(events, {bpm, tsNum: 4, tsDen: 4, frameSec, snap: true});
+  // snap-residual gate: a through-composed track with a mid-song tempo
+  // change fits ONE grid — snapping the off-grid section audibly warps it
+  // ("slows down at the end", MM2 title). If too many onsets sit far from
+  // the fitted grid, keep raw chip timing (the offline dumper's NO_SNAP,
+  // automated). Bar labels stay approximate; the music stays true.
+  const grid = 60 / bpm / 4 / frameSec; // frames per 16th
+  let far = 0, timed = 0;
+  for (const ev of events) {
+    if (ev.channel === "noise") continue;
+    timed++;
+    const ph = ev.startFrame % grid;
+    if (Math.min(ph, grid - ph) > 1.6) far++;
+  }
+  const snap = far / Math.max(1, timed) < 0.12;
+  const bytes = M.makeMidi(events, {bpm, tsNum: 4, tsDen: 4, frameSec, snap});
   const beatSec = 60 / bpm;
   const backBeats = loop ? (loop.keep - loop.period) * frameSec / beatSec : 0;
   const bq = beats => { // beats-from-zero -> [bar, beat] on the 16th grid (4/4 until re-barred)
     const qb = Math.round(beats * 4) / 4;
     return [Math.floor(qb / 4) + 1, qb - Math.floor(qb / 4) * 4 + 1];
   };
-  return {bytes, bpm, secs: keptFrames * frameSec, looped: !!loop,
+  return {bytes, bpm, secs: keptFrames * frameSec, looped: !!loop, snapped: snap,
           loopAnchor: loop && backBeats > 0.4 ? bq(keptFrames * frameSec / beatSec) : null,
           loopTarget: loop && backBeats > 0.4 ? bq(backBeats) : null};
 }
@@ -6601,7 +6616,8 @@ async function impCapture(n) {
         {b1: cap.loopAnchor[0], q1: cap.loopAnchor[1], b2: null, q2: null,
          text: "loop: " + cap.loopTarget[0] + "." + cap.loopTarget[1]}]));
     row.st.textContent = "✓ saved · " + cap.secs.toFixed(1) + "s · " + cap.bpm + "bpm · " +
-                         (cap.looped ? "loop" : "no loop ≤" + secs + "s");
+                         (cap.looped ? "loop" : "no loop ≤" + secs + "s") +
+                         (cap.snapped ? "" : " · raw timing (tempo shifts)");
     row.open.style.display = "";
     row.cap.textContent = "↻"; // captured: tapping again re-runs and overwrites this draft
     row.cap.setAttribute("aria-label", "Re-capture this track");
