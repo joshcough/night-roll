@@ -3467,8 +3467,12 @@ async function albumMetaFor(key) {
   if (!(dir in albumMetaCache)) {
     try {
       const r = await fetch(songsURL(dir + "/album.json") + "?t=" + Date.now(), {cache: "no-cache"});
-      albumMetaCache[dir] = r.ok ? await r.json() : null;
-    } catch (err) { albumMetaCache[dir] = null; }
+      // cache SUCCESS only: a 404 during CDN lag (album committed seconds ago)
+      // must not poison the tab — it made committed songs silently play synth
+      // while drafts played chip (Josh's side-by-side, 2026-08-17)
+      if (r.ok) albumMetaCache[dir] = await r.json();
+      else return null;
+    } catch (err) { return null; }
   }
   return albumMetaCache[dir];
 }
@@ -3530,7 +3534,7 @@ async function updateChipBtn() { // name kept for call sites; now just the auto-
   // loudly enough to find (Josh listened to synth for an hour believing it
   // was the chip, 2026-08-17): the ⚠ log names the fix
   if (!available && songKey && songKey.startsWith("albums/imports/") &&
-      localStorage.getItem(draftStoreKey(songKey)) !== null && updateChipBtn.warned !== songKey) {
+      updateChipBtn.warned !== songKey) {
     updateChipBtn.warned = songKey;
     logErr("chip audio unavailable for " + songKey.split("/").pop() +
            " — no NSF on this device (captures made before NSF storage, or another device's import). " +
