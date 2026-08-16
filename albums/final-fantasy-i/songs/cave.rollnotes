@@ -1,10 +1,5 @@
-# cave.rollnotes — beat-anchored annotations
-
-[1.1]
-key: Cm
-
-[1.1 - 7.4]
-section: A
-
-[8.1 - 15.4]
-section: B
+{ "version": 1, "song": "cave", "notes": [
+  {"at":[1,1],"type":"key","key":"Cm"},
+  {"at":[1,1],"to":[7,4],"type":"section","label":"A"},
+  {"at":[8,1],"to":[15,4],"type":"section","label":"B"}
+] }

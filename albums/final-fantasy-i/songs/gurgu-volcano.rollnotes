@@ -1,7 +1,4 @@
-# gurgu-volcano.rollnotes — beat-anchored annotations
-
-[1.1]
-key: D dorian
-
-[17.1]
-key: F dorian
+{ "version": 1, "song": "gurgu-volcano", "notes": [
+  {"at":[1,1],"type":"key","key":"D dorian"},
+  {"at":[17,1],"type":"key","key":"F dorian"}
+] }

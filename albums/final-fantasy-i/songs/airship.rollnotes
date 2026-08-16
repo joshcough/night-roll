@@ -1,10 +1,5 @@
-# airship.rollnotes — beat-anchored annotations
-
-[1.1]
-key: F
-
-[1.1 - 8.2]
-section: A
-
-[8.3 - 16.4]
-section: B
+{ "version": 1, "song": "airship", "notes": [
+  {"at":[1,1],"type":"key","key":"F"},
+  {"at":[1,1],"to":[8,2],"type":"section","label":"A"},
+  {"at":[8,3],"to":[16,4],"type":"section","label":"B"}
+] }

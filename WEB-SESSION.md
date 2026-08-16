@@ -66,8 +66,10 @@ chrome each.)
   (bar/beat/pitch/duration + `vN` chip volume on pulses; triangle has no
   volume control — absence there is N/A, not silence).
 - `albums/final-fantasy-i/songs/<song>.rollnotes` — his annotations: keys
-  (`key: Gm`, partial `key: Bb?` = tonic stored/mode pending), meters,
-  sections, chords, loops, chops. Format spec in `NIGHT-ROLL.md`.
+  (partial `"key": "Bb?"` = tonic stored/mode pending), meters, sections,
+  chords, loops, chops, tempo, track voice/color. JSON since 2026-08-15,
+  one note per line; format spec in `NIGHT-ROLL.md` (legacy text grammar
+  still documented there).
 - `analysis/*.md` — per-song derivation docs (his findings + the paths).
 - `analysis/key-sweep.md` — the opening-key sweep tally (may lag rollnotes).
 - `quizzes.md` — quiz protocol + question bank. Sessions open with ~5

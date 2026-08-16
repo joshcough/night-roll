@@ -78,9 +78,12 @@ test("rollnotes round-trip: parse → serialize → parse is stable", () => {
   run(`rollnotes = parseRollnotes(${JSON.stringify(once)}).map(resolveNote);`);
   const twice = run(`serializeRollnotes()`);
   assert.equal(twice, once);
-  assert.match(once, /\[1\.1 - 4\.4\]\nsection: A/);
-  assert.match(once, /\[5\.1\]\nkey: G\n/);
-  assert.match(once, /\[6\.1\]\nkey: Gm\n/); // minor tonic survives the round-trip
+  const doc = JSON.parse(once);
+  assert.equal(doc.version, 1);
+  const secN = doc.notes.find(x => x.type === "section");
+  assert.deepEqual([secN.at, secN.to, secN.label.startsWith("A")], [[1, 1], [4, 4], true]);
+  assert.ok(doc.notes.some(x => x.type === "key" && x.key === "G" && x.at[0] === 5));
+  assert.ok(doc.notes.some(x => x.type === "key" && x.key === "Gm" && x.at[0] === 6)); // minor tonic survives
   assert.equal(run(`rollnotes.find(n => n.text === "key: Gm").keydir`), -2); // Gm = 2 flats
 });
 
@@ -111,8 +114,8 @@ test("chop: start/end directives trim the displayed song and renumber", () => {
   assert.equal(val(`rollnotes.find(n => n.chord)`).start, 0);
   // round-trip: directives serialize verbatim in raw coords
   const once = run(`serializeRollnotes()`);
-  assert.match(once, /\[2\.1\]\nchop: start\n/);
-  assert.match(once, /\[4\.1\]\nchop: end\n/);
+  const chops = JSON.parse(once).notes.filter(x => x.type === "chop");
+  assert.deepEqual(chops.map(x => [x.at[0], x.chop]), [[2, "start"], [4, "end"]]);
   // shiftAnchors: removing the start chop moves displayed anchors right one bar
   run(`shiftAnchors(1920); rollnotes = rollnotes.filter(n => n.chopdir !== "start"); finalizeNotes();`);
   const c = val(`rollnotes.find(n => n.chord)`);
@@ -141,7 +144,8 @@ test("6/8: beats are eighths — anchors, defaults, re-bar conversion", () => {
   assert.equal(f7.end, 1440);
   assert.equal(val(`rollnotes.find(n => n.text === "a note")`).start, 1440); // bar 2 = one 6/8 bar in
   // serialize keeps eighth-counted anchors
-  assert.match(run(`serializeRollnotes()`), /\[1\.4 - 1\.6\]\nchord: F7\n/);
+  assert.ok(JSON.parse(run(`serializeRollnotes()`)).notes.some(x =>
+    x.type === "chord" && x.chord === "F7" && x.at[1] === 4 && x.to[1] === 6));
   // re-bar 6/8 → 4/4 preserves absolute positions: eighth 4 of bar 1 = quarter 2.5
   run(`convertAnchors([6, 8], [4, 4]); declaredTs = null;
        rollnotes = rollnotes.filter(n => !n.tsdir); finalizeNotes();`);
@@ -172,8 +176,9 @@ test("chord directives: parse, attached note, round-trip", () => {
   // sections stay sections, chords stay chords
   assert.ok(!g7.section);
   const once = run(`serializeRollnotes()`);
-  assert.match(once, /\[1\.3 - 1\.4\]\nchord: G7\/B\nno 5th — the bass supplies it\n/);
-  assert.match(once, /chord: C\n/);
+  const cN = JSON.parse(once).notes.find(x => x.chord === "G7/B");
+  assert.equal(cN.note, "no 5th — the bass supplies it");
+  assert.ok(JSON.parse(once).notes.some(x => x.chord === "C"));
   run(`rollnotes = parseRollnotes(${JSON.stringify(once)}).map(resolveNote); finalizeNotes();`);
   assert.equal(run(`serializeRollnotes()`), once);
 });
@@ -199,7 +204,7 @@ test("modal keys: tonic + mode names map to the relative major's signature", () 
   // round-trip through rollnotes: the modal name survives and carries its signature
   run(`rollnotes = parseRollnotes("[1.1]\\nkey: D dorian\\n").map(resolveNote); finalizeNotes();`);
   assert.equal(run(`rollnotes[0].keydir`), 0);
-  assert.match(run(`serializeRollnotes()`), /key: D dorian\n/);
+  assert.ok(JSON.parse(run(`serializeRollnotes()`)).notes.some(x => x.key === "D dorian"));
 });
 
 test("tickToSec/secToTick: piecewise tempo map, mutual inverses", () => {
@@ -329,7 +334,7 @@ test("meter: neutral 4/4 until a timesig directive declares one; anchors convert
   assert.deepEqual(val(`declaredTs`), [6, 8]);
   assert.equal(run(`barTicks()`), 3 * 480); // declared: 6/8 = 3 quarter-beats per bar
   const once = run(`serializeRollnotes()`);
-  assert.match(once, /timesig: 6\/8\n/); // round-trips like any directive
+  assert.ok(JSON.parse(once).notes.some(x => x.timesig === "6/8")); // round-trips like any directive
   // conversion: [2.1] under 6/8 (tick 1440 = 3 quarters) re-expressed in 4/4 = bar 1 beat 4
   run(`rollnotes.push(resolveNote({b1: 2, q1: 1, b2: null, q2: null, text: "hi", added: true})); finalizeNotes();`);
   run(`convertAnchors([6, 8], [4, 4]);`);
@@ -480,7 +485,7 @@ test("partial keys: tonic stored, never applied — round-trips with the ? marke
   assert.equal(run(`rollnotes[0].keydir`), undefined); // not applied:
   assert.equal(run(`keyRegions.length`), 0);           // no region, no signature
   assert.equal(run(`sfDeclaredAt(0)`), null);          // staff renders as unkeyed
-  assert.match(run(`serializeRollnotes()`), /key: G#\/Ab\?\n/); // survives Sync
+  assert.ok(JSON.parse(run(`serializeRollnotes()`)).notes.some(x => x.key === "G#/Ab?")); // survives Sync
   run(`rollnotes = []; finalizeNotes();`);
 });
 
@@ -490,7 +495,7 @@ test("asserted tonic spellings: Bb?, A#?, and fused A#/Bb? all round-trip as par
     run(`rollnotes = parseRollnotes(${JSON.stringify("[1.1]\nkey: " + form + "?\n")}).map(resolveNote); finalizeNotes();`);
     assert.equal(run(`rollnotes[0].keypartial`), form, form);
     assert.equal(run(`rollnotes[0].keydir`), undefined, form + " not applied");
-    assert.match(run(`serializeRollnotes()`), new RegExp("key: " + form.replace(/[#/]/g, m => "\\" + m) + "\\?\n"), form);
+    assert.ok(JSON.parse(run(`serializeRollnotes()`)).notes.some(x => x.key === form + "?"), form);
   }
   // option-value mapping: stored name -> the dropdown option that wrote it
   assert.equal(run(`tonicOptionValue("Bb")`), "10:Bb");
@@ -609,7 +614,7 @@ test("tempo: directives rebuild the map from the song's base; removal restores",
   assert.deepEqual(val(`song.tempos`), [{tick: 0, usq: 500000, sec: 0}]); // base restored
   // round-trips like any directive
   run(`rollnotes = parseRollnotes("[1.1]\\ntempo: 90\\n").map(resolveNote); finalizeNotes();`);
-  assert.match(run(`serializeRollnotes()`), /tempo: 90\n/);
+  assert.ok(JSON.parse(run(`serializeRollnotes()`)).notes.some(x => x.type === "tempo" && x.bpm === 90));
   assert.equal(val(`song.tempos`)[0].usq, Math.round(6e7 / 90));
   run(`rollnotes = []; finalizeNotes(); song.baseTempos = null; songKey = "midi/test.mid";`);
 });
@@ -628,10 +633,67 @@ test("track: directive — voice & color as synced annotations, round-tripping",
   assert.equal(run(`trackVoice(0)`), "sine");
   assert.equal(run(`trackColor(0)`), "#0aa2c0");
   assert.equal(run(`song.tracks[1].voice`), undefined); // untouched track
-  assert.match(run(`serializeRollnotes()`), /track: pulse1 voice=sine color=#0aa2c0\n/);
+  assert.ok(JSON.parse(run(`serializeRollnotes()`)).notes.some(x =>
+    x.type === "track" && x.track === "pulse1" && x.voice === "sine" && x.color === "#0aa2c0"));
   // removing the directive reverts to the NES defaults
   run(`rollnotes = []; finalizeNotes();`);
   assert.equal(run(`song.tracks[0].voice`), undefined);
   assert.equal(run(`trackVoice(0)`), "square");
   run(`song = null; songKey = "midi/test.mid";`);
+});
+
+test("format identity: text → object → JSON → object yields the SAME object (Josh's spec)", () => {
+  installSong();
+  const textFile = `# legacy header comment (dropped by design)
+[1.1]
+timesig: 6/8
+
+[1.1]
+key: Bb
+
+[2.1]
+key: A#/Bb?
+
+[1.1 - 4.6]
+section: A — home
+
+[5.3 - 5.4]
+chord: G7/B
+no 5th — the bass supplies it
+second attached line
+
+[3.1]
+tempo: 90
+
+[1.1]
+track: pulse1 voice=sine color=#0aa2c0
+
+[2.1]
+chop: start
+
+[25.1]
+loop: 2.1
+
+[6.2.5]
+Plain prose observation,
+across two lines.
+`;
+  const out = val(`(() => {
+    const A = parseRollnotes(${JSON.stringify(textFile)});          // text → object
+    const json = serializeNotesList(A, 6, "identity-test");         // object → JSON
+    const B = parseRollnotes(json);                                 // JSON → object
+    const json2 = serializeNotesList(B, 6, "identity-test");        // and once more
+    return {A, B, stable: json === json2, isJson: json.trimStart().startsWith("{")};
+  })()`);
+  assert.equal(out.isJson, true);
+  assert.equal(out.stable, true);                 // JSON round-trip is a fixed point
+  assert.equal(out.A.length, 10);
+  assert.deepEqual(out.B, out.A);                 // the objects are IDENTICAL
+  // spot-check the interesting ones survived with full fidelity
+  const chord = out.B.find(n => n.chord);
+  assert.equal(chord.cnote, "no 5th — the bass supplies it\nsecond attached line");
+  assert.equal(out.B.find(n => n.keypartial)?.keypartial, "A#/Bb");
+  assert.equal(out.B.find(n => n.tempodir)?.tempodir, 90);
+  assert.deepEqual(out.B.find(n => n.trackdir)?.trackdir, {name: "pulse1", voice: "sine", color: "#0aa2c0"});
+  assert.equal(out.B.find(n => n.q1 === 2.5)?.text.startsWith("Plain prose"), true); // fractional beat
 });

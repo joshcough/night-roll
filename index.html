@@ -1250,7 +1250,11 @@ function notesBase() { return songKey ? songKey.replace(/\.midi?$/i, "") : null;
 function baseName() { return notesBase() ? notesBase().split("/").pop() : "notes"; }
 function notesStoreKey() { return songKey ? "ff1roll-notes-" + songKey : null; }
 
+// .rollnotes is JSON (version 1, 2026-08-15 — see NIGHT-ROLL.md). The legacy
+// text grammar parses forever: both formats reduce to the same raw shape and
+// run through the SAME directive derivation, so they cannot disagree.
 function parseRollnotes(text) {
+  if ((text || "").trimStart().startsWith("{")) return parseRollnotesJSON(text);
   const out = [];
   let cur = null;
   for (const line of text.split(/\r?\n/)) {
@@ -1263,6 +1267,34 @@ function parseRollnotes(text) {
     }
   }
   if (cur) out.push(cur);
+  return deriveNoteTypes(out);
+}
+function jsonToRawNote(j) { // schema entry -> the raw shape the deriver expects
+  const at = Array.isArray(j.at) ? j.at : [1];
+  const n = {b1: +at[0] || 1, q1: at[1] !== undefined ? +at[1] : 1,
+             b2: j.to ? +j.to[0] : null,
+             q2: j.to && j.to[1] !== undefined ? +j.to[1] : null, text: ""};
+  switch (j.type) {
+    case "section": n.text = "section: " + (j.label || ""); break;
+    case "chord": n.text = "chord: " + (j.chord || "") + (j.note ? "\n" + j.note : ""); break;
+    case "key": n.text = "key: " + (j.key || ""); break;
+    case "timesig": n.text = "timesig: " + (j.timesig || ""); break;
+    case "tempo": n.text = "tempo: " + j.bpm; break;
+    case "track": n.text = "track: " + (j.track || "") +
+      (j.voice ? " voice=" + j.voice : "") + (j.color ? " color=" + j.color : ""); break;
+    case "loop": n.text = "loop: " + (j.loop || ""); break;
+    case "chop": n.text = "chop: " + (j.chop || ""); break;
+    default: n.text = j.text || "";
+  }
+  return n;
+}
+function parseRollnotesJSON(text) {
+  let doc;
+  try { doc = JSON.parse(text); } catch (err) { return []; }
+  if (!doc || !Array.isArray(doc.notes)) return [];
+  return deriveNoteTypes(doc.notes.map(jsonToRawNote));
+}
+function deriveNoteTypes(out) {
   out.forEach(n => {
     n.text = n.text.trim();
     const m = n.text.match(/^section:\s*(.+)/s);
@@ -1305,6 +1337,30 @@ function parseRollnotes(text) {
     } else delete n.trackdir;
   });
   return out.filter(n => n.text);
+}
+function noteToJSON(n) { // enriched-or-stashed note -> schema entry (text prefixes are truth)
+  const j = {at: n.q1 !== 1 ? [n.b1, n.q1] : [n.b1, 1]};
+  if (n.b2) j.to = (n.q2 !== null && n.q2 !== undefined) ? [n.b2, n.q2] : [n.b2];
+  const t = n.text || "";
+  let m;
+  if (n.section) { j.type = "section"; j.label = t; return j; }
+  if (n.chord) { j.type = "chord"; j.chord = t; if (n.cnote) j.note = n.cnote; return j; }
+  if ((m = t.match(/^key:\s*(.+)$/is))) { j.type = "key"; j.key = m[1].trim(); return j; }
+  if ((m = t.match(/^timesig:\s*(.+)$/is))) { j.type = "timesig"; j.timesig = m[1].trim(); return j; }
+  if ((m = t.match(/^tempo:\s*(\d+(?:\.\d+)?)\s*$/i))) { j.type = "tempo"; j.bpm = +m[1]; return j; }
+  if ((m = t.match(/^track:\s*(\S+)((?:\s+\w+=\S+)*)\s*$/i))) {
+    j.type = "track"; j.track = m[1];
+    for (const kv of m[2].trim().split(/\s+/).filter(Boolean)) {
+      const [k, v] = kv.split("=");
+      if (k === "voice") j.voice = v;
+      if (k === "color") j.color = v;
+    }
+    return j;
+  }
+  if ((m = t.match(/^loop:\s*(.+)$/is))) { j.type = "loop"; j.loop = m[1].trim(); return j; }
+  if ((m = t.match(/^chop:\s*(start|end)\s*$/i))) { j.type = "chop"; j.chop = m[1].toLowerCase(); return j; }
+  j.text = t;
+  return j;
 }
 // modes: semitones from the relative major up to the tonic — the signature
 // engraved is always the relative major's; the stored name keeps tonic+mode
@@ -1522,15 +1578,10 @@ function updateSyncBtn() {
   document.getElementById("syncbtn").textContent = n > 1 ? "Sync (" + n + ")" : "Sync";
 }
 function serializeNotesList(list, beatsPerBar, base) {
-  const lines = ["# " + base + ".rollnotes — beat-anchored annotations", ""];
-  for (const n of list) {
-    const a = n.b1 + "." + n.q1;
-    const b = n.b2 ? " - " + n.b2 + "." + (n.q2 || beatsPerBar) : "";
-    const body = n.chord ? "chord: " + n.text + (n.cnote ? "\n" + n.cnote : "")
-               : (n.section ? "section: " : "") + n.text;
-    lines.push("[" + a + b + "]", body, "");
-  }
-  return lines.join("\n");
+  // one note per line: valid JSON that git-diffs like the old text format
+  const rows = list.map(n => "  " + JSON.stringify(noteToJSON(n)));
+  return '{ "version": 1, "song": ' + JSON.stringify(base) + ', "notes": [\n' +
+         rows.join(",\n") + "\n] }\n";
 }
 function serializeRollnotes() { return serializeNotesList(rollnotes, beatsPerBarDisp(), baseName()); }
 // serialize another song's sidecar + this device's local additions, without

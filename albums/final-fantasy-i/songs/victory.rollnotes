@@ -1,10 +1,5 @@
-# victory.rollnotes — beat-anchored annotations
-
-[1.1]
-key: Eb
-
-[3.3 - 4.2]
-chord: Eb
-
-[11.3]
-loop: 3.3
+{ "version": 1, "song": "victory", "notes": [
+  {"at":[1,1],"type":"key","key":"Eb"},
+  {"at":[3,3],"to":[4,2],"type":"chord","chord":"Eb"},
+  {"at":[11,3],"type":"loop","loop":"3.3"}
+] }

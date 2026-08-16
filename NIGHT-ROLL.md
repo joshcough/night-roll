@@ -244,7 +244,38 @@ vgmusic.com's ff1ship2.mid — same transcription, 5 tracks incl. drums.
 
 ## .rollnotes format (the spec)
 
-Sidecar file next to each .mid: `<song>.rollnotes`. Plain text blocks:
+Sidecar file next to each .mid: `<song>.rollnotes`. **JSON since
+2026-08-15** (version 1) — the file is a direct serialization of the
+app's in-memory note objects, one note per line so git diffs stay
+line-per-change:
+
+```json
+{ "version": 1, "song": "menu", "notes": [
+  {"at":[1,1],"type":"timesig","timesig":"6/8"},
+  {"at":[1,1],"type":"key","key":"Bb"},
+  {"at":[2,1],"type":"key","key":"A#/Bb?"},
+  {"at":[1,1],"to":[4,6],"type":"section","label":"A — home"},
+  {"at":[5,3],"to":[5,4],"type":"chord","chord":"G7/B","note":"no 5th"},
+  {"at":[3,1],"type":"tempo","bpm":90},
+  {"at":[1,1],"type":"track","track":"pulse1","voice":"sine","color":"#0aa2c0"},
+  {"at":[2,1],"type":"chop","chop":"start"},
+  {"at":[25,1],"type":"loop","loop":"2.1"},
+  {"at":[6,2.5],"text":"Plain prose observation."}
+] }
+```
+
+Source fields only: `at`/`to` are [bar, beat] (beats may be fractional;
+`to` beat omitted = end of bar), `type` + its value field(s), free
+`text` (or `note` attached to a chord). Derived data (ticks, band
+depths, region ends, key sf) is computed at load, never stored. The
+semantics of every type are exactly the legacy directives below — both
+formats reduce to the same raw shape and run through the same
+derivation code, and the format-identity test (text → object → JSON →
+object, deepEqual) enforces that they can never disagree. The legacy
+TEXT format below parses forever (loading sniffs the first character);
+any Sync rewrites a song as JSON.
+
+### Legacy text grammar (still parsed, no longer written)
 
 ```
 [3.1]              ← anchor: bar 3, beat 1 (beats may be fractional: 2.5)

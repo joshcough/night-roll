@@ -1,73 +1,25 @@
-# cornelia-castle.rollnotes — beat-anchored annotations
-
-[1.1]
-key: D
-
-[1.1 - 4.4]
-section: A — the four-slot sentence
-
-[1.1 - 1.4]
-D — I. Home.
-
-[1.1 - 1.4]
-chord: D/A
-
-[2.1 - 2.4]
-A — V. Dominant. Bass staircase D→C# underway.
-
-[2.1 - 2.4]
-chord: A
-
-[3.1 - 3.4]
-Bm — vi. Relative minor.
-
-[3.1 - 3.4]
-chord: Bm
-
-[4.1 - 4.4]
-F# — V/vi, aiming at Bm. The A# is the out-of-key giveaway.
-
-[4.1 - 4.4]
-chord: F#
-
-[5.1 - 8.4]
-section: B — mixture + turnaround
-
-[5.1 - 5.2]
-G — IV. Harmonic rhythm doubles: two chords per bar now.
-
-[5.1 - 5.2]
-chord: G
-
-[5.3 - 5.4]
-Gm — iv, borrowed from D minor. One voice slips a half step
-(B→Bb over a shared root) and the light dims. Dm never sounds:
-borrowing, not modulation.
-
-[5.3 - 5.4]
-chord: Gm
-
-[6.1 - 6.2]
-D — I. Home again, briefly.
-
-[6.1 - 6.2]
-chord: D
-
-[6.3 - 6.4]
-B7 — V7/ii, aiming at Em.
-
-[6.3 - 6.4]
-chord: B7
-
-[7.1 - 7.4]
-Em — ii. The target lands.
-
-[7.1 - 7.4]
-chord: Em
-
-[8.1 - 8.4]
-D/A → A — I6/4 → V turnaround. Arpeggio dissolves into scale
-runs; texture change marks the cadence, delivering the loop home.
-
-[8.1 - 8.4]
-chord: D/A
+{ "version": 1, "song": "cornelia-castle", "notes": [
+  {"at":[1,1],"type":"key","key":"D"},
+  {"at":[1,1],"to":[4,4],"type":"section","label":"A — the four-slot sentence"},
+  {"at":[1,1],"to":[1,4],"text":"D — I. Home."},
+  {"at":[1,1],"to":[1,4],"type":"chord","chord":"D/A"},
+  {"at":[2,1],"to":[2,4],"text":"A — V. Dominant. Bass staircase D→C# underway."},
+  {"at":[2,1],"to":[2,4],"type":"chord","chord":"A"},
+  {"at":[3,1],"to":[3,4],"text":"Bm — vi. Relative minor."},
+  {"at":[3,1],"to":[3,4],"type":"chord","chord":"Bm"},
+  {"at":[4,1],"to":[4,4],"text":"F# — V/vi, aiming at Bm. The A# is the out-of-key giveaway."},
+  {"at":[4,1],"to":[4,4],"type":"chord","chord":"F#"},
+  {"at":[5,1],"to":[8,4],"type":"section","label":"B — mixture + turnaround"},
+  {"at":[5,1],"to":[5,2],"text":"G — IV. Harmonic rhythm doubles: two chords per bar now."},
+  {"at":[5,1],"to":[5,2],"type":"chord","chord":"G"},
+  {"at":[5,3],"to":[5,4],"text":"Gm — iv, borrowed from D minor. One voice slips a half step\n(B→Bb over a shared root) and the light dims. Dm never sounds:\nborrowing, not modulation."},
+  {"at":[5,3],"to":[5,4],"type":"chord","chord":"Gm"},
+  {"at":[6,1],"to":[6,2],"text":"D — I. Home again, briefly."},
+  {"at":[6,1],"to":[6,2],"type":"chord","chord":"D"},
+  {"at":[6,3],"to":[6,4],"text":"B7 — V7/ii, aiming at Em."},
+  {"at":[6,3],"to":[6,4],"type":"chord","chord":"B7"},
+  {"at":[7,1],"to":[7,4],"text":"Em — ii. The target lands."},
+  {"at":[7,1],"to":[7,4],"type":"chord","chord":"Em"},
+  {"at":[8,1],"to":[8,4],"text":"D/A → A — I6/4 → V turnaround. Arpeggio dissolves into scale\nruns; texture change marks the cadence, delivering the loop home."},
+  {"at":[8,1],"to":[8,4],"type":"chord","chord":"D/A"}
+] }
