@@ -312,7 +312,7 @@
   #importsheet .lbl { font-family: var(--mono); font-size: 12px; color: var(--dim); }
   #implist { max-height: 42vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
   #implist .row { flex-wrap: nowrap; }
-  #implist .st { font-family: var(--mono); font-size: 11px; color: var(--dim); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #implist .st { font-family: var(--mono); font-size: 11px; line-height: 1.35; color: var(--dim); flex: 1; min-width: 0; white-space: normal; }
 
   #filesheet {
     display: none;
@@ -6437,7 +6437,7 @@ async function impCapture(n) {
     // (emulation is ~50x realtime; this costs seconds, not minutes)
     while (cap && !cap.looped && secs < 300) {
       const next = Math.min(300, secs * 2);
-      row.st.textContent = "no loop in " + secs + "s — retrying at " + next + "s…";
+      row.st.textContent = "no loop @" + secs + "s — trying " + next + "s…";
       await new Promise(r => setTimeout(r));
       secs = next;
       cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
@@ -6467,7 +6467,7 @@ async function impCapture(n) {
         {b1: cap.loopAnchor[0], q1: cap.loopAnchor[1], b2: null, q2: null,
          text: "loop: " + cap.loopTarget[0] + "." + cap.loopTarget[1]}]));
     row.st.textContent = cap.secs.toFixed(1) + "s · " + cap.bpm + "bpm · " +
-                         (cap.looped ? "loop found" : "no loop even at " + secs + "s (through-composed?)");
+                         (cap.looped ? "loop" : "no loop ≤" + secs + "s");
     row.open.style.display = "";
   } catch (err) { row.st.textContent = "failed: " + err.message; }
 }
