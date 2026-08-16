@@ -294,14 +294,5 @@
     "path": "albums/imports/tmnt-2/selection.mid"
    }
   ]
- },
- {
-  "title": "Batch Test",
-  "songs": [
-   {
-    "title": "Ping",
-    "path": "albums/imports/batch-test/ping.mid"
-   }
-  ]
  }
 ]
