@@ -663,7 +663,8 @@
     <h3>PLAYBACK</h3>
     <dl>
       <dt>▶ Play / ■ Stop</dt><dd>NES-style voices; drum tracks get a real kit. Songs loop at their final bar forever.</dd>
-      <dt>⏱ Metronome</dt><dd>Full-featured and standalone: any meter (1–12 over 2/4/8/16 — bpm counts the denominator beat, matching the app's counting), tap each beat cell to cycle accent → normal → silent, subdivisions in 2/3/4, slider or tap-tempo. Keeps clicking over a playing song, so you can audition a candidate meter against the music. Settings stick.</dd>
+      <dt>⏱ Metronome</dt><dd>Any meter (1–12 over 2/4/8/16 — bpm counts the denominator beat), tap each beat cell to cycle accent → normal → silent, subdivisions in 2/3/4, slider or tap-tempo. Three modes: <b>free-running</b> (its own clock); <b>follow song</b> — clicks ride the song's own grid, phase-perfect on the declared meter through tempo changes, speed slider, and loops; <b>trial meter</b> — click a meter of YOUR choosing over the real music to A/B candidates by ear (the "shift accents" ‹ › slides the pattern's starting beat, since a right meter can sit offset). Settings stick.</dd>
+      <dt>Count-in</dt><dd>Optional one-bar click lead-in, only when play starts from bar 1 beat 1 — never mid-song, never when the song loops back around.</dd>
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
@@ -777,6 +778,25 @@
         <option value="1">—</option><option value="2">in 2</option>
         <option value="3">in 3</option><option value="4">in 4</option>
       </select>
+    </div>
+    <div class="row">
+      <span class="lbl">mode</span>
+      <select id="metfollow">
+        <option value="free">free-running</option>
+        <option value="follow">follow song (declared meter)</option>
+        <option value="trial">trial meter over song</option>
+      </select>
+      <span id="metnudgewrap" style="display:none">
+        <button id="metnudgeL" style="min-height:34px;padding:4px 10px">‹</button>
+        <span class="lbl">shift accents</span>
+        <button id="metnudgeR" style="min-height:34px;padding:4px 10px">›</button>
+      </span>
+    </div>
+    <div class="row">
+      <label class="lbl" style="display:flex;align-items:center;gap:8px;min-height:40px">
+        <input type="checkbox" id="metcountin" style="width:20px;height:20px">
+        count-in one bar when play starts from 1.1 (never on loops)
+      </label>
     </div>
     <div class="row" id="metbeats" style="gap:6px;flex-wrap:wrap"></div>
     <div class="meta" style="margin:2px 0 0">tap a beat: accent → normal → silent · bpm counts the denominator beat</div>
@@ -2498,6 +2518,18 @@ async function play(fromSec = 0) {
   playing = true;
   playOffset = fromSec;
   playT0 = audio.currentTime + 0.08; // small lead so the first notes are never in the past
+  // count-in (Josh's rules, 2026-08-15): ONE bar of clicks, only when play
+  // starts from 1.1 — never mid-song, and loops can't retrigger it because
+  // wraps never re-enter play(). Implemented by pushing playT0 one bar out
+  // and clicking the gap; playSec() clamps at 0, so the playhead waits.
+  if (met.countIn && fromSec < 1e-6 && song && songEndTick > 0) {
+    ensureMetGain();
+    const beats = beatsPerBarDisp();
+    const beatSec = tickToSec(song, beatTicks());
+    playT0 += beats * beatSec;
+    for (let b = 0; b < beats; b++)
+      metClick(playT0 - (beats - b) * beatSec, b === 0 ? 2 : 1);
+  }
   loopPass = 0;
   loopSeg = currentLoop();
   if (fromSec >= loopSeg.end - 0.01) loopSeg = {start: 0, end: tickToSec(song, songEndTick)};
@@ -3399,12 +3431,14 @@ keysetBtn.addEventListener("click", () => {
 // accent → normal → silent), subdivisions, tap tempo. Plays through its own
 // gain straight to the destination, so it survives song stop()'s master fade
 // and can click OVER a playing song — a poor man's meter audition.
-const met = Object.assign({bpm: 120, num: 4, den: 4, sub: 1, accents: [2, 1, 1, 1], on: false},
+const met = Object.assign({bpm: 120, num: 4, den: 4, sub: 1, accents: [2, 1, 1, 1], on: false,
+                           follow: "free", nudge: 0, countIn: false},
                           JSON.parse(localStorage.getItem("ff1roll-met") || "{}"));
 met.on = false;
-let metGain = null, metTimer = 0, metNext = 0, metIdx = 0;
+let metGain = null, metTimer = 0, metNext = 0, metIdx = 0, metLastWhen = -1;
 const metSave = () => localStorage.setItem("ff1roll-met",
-  JSON.stringify({bpm: met.bpm, num: met.num, den: met.den, sub: met.sub, accents: met.accents}));
+  JSON.stringify({bpm: met.bpm, num: met.num, den: met.den, sub: met.sub, accents: met.accents,
+                  follow: met.follow, nudge: met.nudge, countIn: met.countIn}));
 function metDefaultAccents() { // beat 1 accented; compound meters accent each group of 3
   return Array.from({length: met.num}, (_, i) =>
     i === 0 ? 2 : (met.den >= 8 && met.num % 3 === 0 && i % 3 === 0) ? 2 : 1);
@@ -3437,7 +3471,49 @@ function metClick(when, level) { // NES-flavored square blips
   o.start(when);
   o.stop(when + 0.09);
 }
+// Follow/trial modes (Josh, 2026-08-15): clicks derive from the SONG's own
+// tick grid through tickToSec — phase-true by construction, tempo map and
+// speed slider included, loop wraps handled by chasing the next beat inside
+// the loop segment. Follow clicks the declared meter; trial clicks a meter
+// of Josh's choosing over the real music (the honest meter audition:
+// accents supplied, verdict his), with "shift accents" cycling the pattern's
+// starting beat — a candidate meter can be right but offset.
+function metFollowBeatTicks() {
+  const den = met.follow === "trial" ? met.den : effTs()[1];
+  return song.ppq * 4 / den;
+}
+function metFollowNum() { return met.follow === "trial" ? met.num : effTs()[0]; }
+function metPumpFollow() {
+  if (!playing) return; // follow/trial click only while the song runs
+  const tb = metFollowBeatTicks();
+  const num = metFollowNum();
+  const now = playSec();
+  let bt = Math.ceil((secToTick(song, now) + 1) / tb) * tb;
+  let delta;
+  const sec = tickToSec(song, bt);
+  if (loopSeg && loopSeg.end > loopSeg.start && sec >= loopSeg.end - 1e-4) {
+    // next beat lies past the jump point: chase it into the next pass
+    bt = Math.ceil((secToTick(song, loopSeg.start) - 1e-4) / tb) * tb;
+    delta = (loopSeg.end - now) + (tickToSec(song, bt) - loopSeg.start);
+  } else {
+    delta = sec - now;
+  }
+  if (delta > 0.16) return;
+  const when = audio.currentTime + Math.max(0.005, delta);
+  if (metLastWhen >= 0 && Math.abs(when - metLastWhen) < 0.03) return; // this beat is scheduled
+  metLastWhen = when;
+  const k = Math.round(bt / tb);
+  const idx = (((k + met.nudge) % num) + num) % num;
+  const lv = met.accents[idx] !== undefined ? met.accents[idx] : 1;
+  if (lv > 0) metClick(when, lv);
+  setTimeout(() => {
+    if (!met.on) return;
+    document.querySelectorAll("#metbeats .metbeat").forEach((el, j) =>
+      el.classList.toggle("now", j === idx));
+  }, Math.max(0, (when - audio.currentTime) * 1000));
+}
 function metPump() {
+  if (met.follow !== "free") { metPumpFollow(); return; }
   const spb = 60 / met.bpm; // seconds per counted (denominator) beat
   while (metNext < audio.currentTime + 0.12) {
     const i = metIdx % met.num;
@@ -3454,14 +3530,17 @@ function metPump() {
     metNext += spb;
   }
 }
-async function metStart() {
-  ensureAudio();
-  await resumeAudio();
+function ensureMetGain() {
   if (!metGain || metGain.context !== audio) {
     metGain = audio.createGain();
     metGain.gain.value = 1;
     metGain.connect(audio.destination); // not master: song stop()'s fade can't silence the click
   }
+}
+async function metStart() {
+  ensureAudio();
+  await resumeAudio();
+  ensureMetGain();
   met.on = true;
   metIdx = 0;
   metNext = audio.currentTime + 0.08;
@@ -3487,7 +3566,10 @@ function metHalt() {
   document.getElementById("metsub").value = String(met.sub);
   document.getElementById("metbpm").value = String(met.bpm);
   document.getElementById("metbpmlbl").textContent = met.bpm + " bpm";
+  document.getElementById("metfollow").value = met.follow;
+  document.getElementById("metcountin").checked = !!met.countIn;
   metBuildCells();
+  applyMetMode();
 }
 document.getElementById("metbtn").addEventListener("click", () =>
   document.getElementById("metsheet").classList.add("on"));
@@ -3515,6 +3597,40 @@ document.getElementById("metden").addEventListener("change", e => {
 });
 document.getElementById("metsub").addEventListener("change", e => {
   met.sub = +e.target.value;
+  metSave();
+});
+function applyMetMode() {
+  const f = met.follow;
+  document.getElementById("metnudgewrap").style.display = f === "trial" ? "" : "none";
+  document.getElementById("metbpm").disabled = f !== "free";
+  document.getElementById("metnum").disabled = f === "follow";
+  document.getElementById("metden").disabled = f === "follow";
+  document.getElementById("metsub").disabled = f !== "free"; // subs are free-run only
+  if (f === "follow" && song) { // cells mirror the declared meter
+    met.num = effTs()[0];
+    met.den = effTs()[1];
+    document.getElementById("metnum").value = String(met.num);
+    document.getElementById("metden").value = String(met.den);
+    met.accents = metDefaultAccents();
+    metBuildCells();
+  }
+  metLastWhen = -1;
+  metSave();
+}
+document.getElementById("metfollow").addEventListener("change", e => {
+  met.follow = e.target.value;
+  applyMetMode();
+});
+document.getElementById("metnudgeL").addEventListener("click", () => {
+  met.nudge = (((met.nudge - 1) % metFollowNum()) + metFollowNum()) % metFollowNum();
+  metSave();
+});
+document.getElementById("metnudgeR").addEventListener("click", () => {
+  met.nudge = (met.nudge + 1) % metFollowNum();
+  metSave();
+});
+document.getElementById("metcountin").addEventListener("change", e => {
+  met.countIn = e.target.checked;
   metSave();
 });
 let metTaps = [];
