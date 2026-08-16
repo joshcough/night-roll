@@ -1106,7 +1106,7 @@ function parseMidi(buf) {
     const declaredEnd = i + 8 + u32(i+4);
     const nextMagic = tn + 1 < magics.length ? magics[tn+1] : d.length;
     const end = Math.min(declaredEnd, nextMagic);
-    let j = i + 8, t = 0, running = null, name = "";
+    let j = i + 8, t = 0, running = null, name = "", curDuty;
     const open = {}, notes = [];
     const varlen = () => { let v = 0, b; do { b = d[j++]; v = (v<<7) | (b & 0x7F); } while (b & 0x80); return v; };
     try {
@@ -1131,12 +1131,17 @@ function parseMidi(buf) {
           if (st === 0x90 || st === 0x80) {
             const p = d[j], v = d[j+1]; j += 2;
             if (st === 0x90 && v > 0) {
-              (open[p] = open[p] || []).push({t, v});
+              (open[p] = open[p] || []).push({t, v, duty: curDuty});
             } else if (open[p] && open[p].length) {
               const o = open[p].shift();
-              notes.push({t: o.t, d: t - o.t, p, v: o.v, ch});
+              const n = {t: o.t, d: t - o.t, p, v: o.v, ch};
+              if (o.duty !== undefined) n.duty = o.duty; // chip timbre (CC70, our own capture files)
+              notes.push(n);
             }
-          } else if (st === 0xA0 || st === 0xB0 || st === 0xE0) j += 2;
+          } else if (st === 0xB0) {
+            if (d[j] === 70) curDuty = d[j + 1] & 3; // CC70 = pulse duty from the NSF capture
+            j += 2;
+          } else if (st === 0xA0 || st === 0xE0) j += 2;
           else if (st === 0xC0 || st === 0xD0) j += 1;
         }
       }
@@ -3178,6 +3183,11 @@ function scheduleNote(ti, n, when, durSec) {
   when = Math.max(when, audio.currentTime + 0.003);
   if (n.ch === 9 || trackIsDrums(ti)) { drumHit(ti, n.p, when, n.v); return; }
   let v = trackVoice(ti);
+  // per-note chip timbre: NSF captures carry each pulse note's duty (the
+  // chip's instrument choice — 12.5% thin, 25% classic, 50% hollow; 75%
+  // mirrors 25%). Honored on auto voice; an explicit voice pick overrides.
+  if (n.duty !== undefined && (!song.tracks[ti].voice || song.tracks[ti].voice === "auto"))
+    v = ["square12", "square25", "square", "square25"][n.duty];
   const g = audio.createGain();
   g.connect(trackGain(ti));
   const end = when + durSec;
@@ -4944,6 +4954,7 @@ async function importBytes(bytes, name) { // byte-sniff: extension lies, headers
     tracks: parsed.tracks.map(tr => ({name: tr.name, notes: tr.notes.map(nt => {
       const o = {t: nt.t, d: nt.d, p: nt.p, v: nt.v};
       if (nt.ch !== undefined) o.ch = nt.ch; // drums live on ch 9 — must survive the round-trip
+      if (nt.duty !== undefined) o.duty = nt.duty; // chip timbre survives too
       return o;
     })}))}));
   openDraft(key);
@@ -5974,6 +5985,7 @@ function saveDraft(clean) { // clean=true right after a successful Save
       notes: tr.notes.filter(n => !n.gone).map(n => {
         const o = {t: n.t, d: n.d, p: n.p, v: n.v};
         if (n.ch !== undefined) o.ch = n.ch; // drum channel survives edit re-saves
+        if (n.duty !== undefined) o.duty = n.duty;
         return o;
       })})),
   }));
@@ -6581,6 +6593,7 @@ async function impCapture(n) {
         notes: tr.notes.map(nt => {
           const o = {t: nt.t, d: nt.d, p: nt.p, v: nt.v};
           if (nt.ch !== undefined) o.ch = nt.ch; // noise rides ch 9 — dropping it made drums play as pitched tones
+          if (nt.duty !== undefined) o.duty = nt.duty; // chip timbre (per-note duty) survives
           return o;
         })}))}));
     if (cap.loopAnchor) // hardware loop point -> annotation, same rule as the FF1 dumps

@@ -133,6 +133,27 @@ test("period → pitch boundaries: guard floors and ceilings", () => {
   assert.equal(pitchName(deep[0].midi), "A0");
 });
 
+test("duty rides the pipeline: APU bits -> events -> CC70 in the MIDI bytes", () => {
+  // two notes, duty 25% (0x40 bits) then 12.5% — reconstruct must tag them
+  let frame = 0;
+  const log = [{frame: frame++, addr: 0x4015, value: 0x01}];
+  for (const [duty, p] of [[1, 0x0FD], [0, 0x1FC]]) {
+    log.push({frame, addr: 0x4000, value: (duty << 6) | 0x1F});
+    log.push({frame, addr: 0x4002, value: p & 0xFF});
+    log.push({frame, addr: 0x4003, value: (p >> 8) & 7});
+    frame += 6;
+    log.push({frame: frame++, addr: 0x4000, value: 0x10});
+  }
+  const events = reconstruct(log, frame + 1, 1 / 60);
+  assert.deepEqual(events.map(e => e.duty), [1, 0]);
+  const bytes = makeMidi(events, {bpm: 120, frameSec: 1 / 60, snap: true});
+  // CC70 (0xB0, 70, duty) appears for both duty values
+  let cc = [];
+  for (let i = 0; i + 2 < bytes.length; i++)
+    if ((bytes[i] & 0xF0) === 0xB0 && bytes[i + 1] === 70) cc.push(bytes[i + 2]);
+  assert.deepEqual(cc, [1, 0], "one CC70 per duty change");
+});
+
 test("backportTiming never births a negative time; makeMidi refuses one loudly", () => {
   // the MM2-track-3 tab-killer (2026-08-16): an event in the first ~3 frames
   // fuzzy-matches a twin whose backported start lands before frame 0; the

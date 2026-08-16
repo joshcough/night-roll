@@ -53,7 +53,8 @@ export function reconstruct(apuLog, frames, frameSec) {
       // ROM. Only meaningful in constant-volume mode (else the field is the
       // envelope period) and never on the triangle (no volume control).
       const vol = name !== "triangle" && c.constVol ? c.vol : null;
-      open[name] = {channel: name, startFrame: frame, endFrame: null, midi, periodValue: c.period, vol, freq0: freq};
+      const duty = (name === "pulse1" || name === "pulse2") ? c.duty : undefined; // pulse timbre at note start
+      open[name] = {channel: name, startFrame: frame, endFrame: null, midi, periodValue: c.period, vol, duty, freq0: freq};
       events.push(open[name]);
     }
   };
@@ -73,7 +74,7 @@ export function reconstruct(apuLog, frames, frameSec) {
       if (r < 0 || r > 3) continue;
       if (r === 0) {
         if (name === "triangle") c.linear = value & 0x7F;
-        else { c.vol = value & 0x0F; c.constVol = !!(value & 0x10); } // bit 4: constant-volume flag
+        else { c.vol = value & 0x0F; c.constVol = !!(value & 0x10); c.duty = (value >> 6) & 3; } // bits 6-7: duty = the chip's TIMBRE
       } else if (r === 2) {
         c.period = (c.period & 0x700) | value;
       } else if (r === 3) {

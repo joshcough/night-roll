@@ -28,7 +28,14 @@ function trackBytes(name, notes, ch, metas = []) {
   const evs = [];
   if (name) evs.push({t: 0, d: [0xFF, 0x03, name.length, ...[...name].map(c => c.charCodeAt(0))]});
   for (const m of metas) evs.push(m);
+  let lastDuty = null;
   for (const n of notes) {
+    // duty (chip timbre) rides as CC70 ahead of the note it changes on —
+    // Night Roll's parser reads it back; other DAWs just see a sound ctrl
+    if (n.duty !== undefined && n.duty !== lastDuty) {
+      evs.push({t: n.t, o: 0.5, d: [0xB0 | ch, 70, n.duty]});
+      lastDuty = n.duty;
+    }
     evs.push({t: n.t, o: 1, d: [0x90 | ch, n.p, n.v]});
     evs.push({t: n.t + n.d, o: 0, d: [0x80 | ch, n.p, 64]});
   }
@@ -60,7 +67,7 @@ export function makeMidi(events, {bpm, tsNum = 4, tsDen = 4, frameSec, snap = tr
     // chip volume -> velocity (accent data from the ROM); triangle and
     // envelope-mode notes have no level, so they get a neutral 96
     const v = e.vol == null ? 96 : Math.max(8, Math.round(e.vol / 15 * 127));
-    byCh[e.channel].push({t, d, p, v});
+    byCh[e.channel].push({t, d, p, v, duty: e.duty});
   }
   const metas = [
     {t: 0, d: [0xFF, 0x58, 4, tsNum, Math.round(Math.log2(tsDen)), 24, 8]},
