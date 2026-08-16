@@ -317,6 +317,23 @@
     box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
   }
   #filesub.on { display: block; }
+  #voicemenu {
+    display: none;
+    position: absolute;
+    z-index: 62;
+    background: var(--panel2);
+    border: 1px solid var(--grid);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 210px;
+    max-width: 80vw;
+    max-height: 70vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  }
+  #voicemenu.on { display: block; }
+  #voicemenu .fitem { display: block; width: 100%; text-align: left; border: 0; background: none; border-radius: 6px; min-height: 40px; padding: 8px 10px; font-family: var(--mono); font-size: 13px; color: var(--text); cursor: pointer; white-space: pre; }
+  #voicemenu .fitem:active { background: var(--panel); }
   #filesub .fitem { display: block; width: 100%; text-align: left; border: 0; background: none; border-radius: 6px; min-height: 42px; padding: 9px 12px; font-family: var(--mono); font-size: 13px; color: var(--text); cursor: pointer; }
   #filesub .fitem:active { background: var(--panel); }
   #filesheet .fitem {
@@ -791,7 +808,7 @@
 
     <h3>TRACKS</h3>
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Many tracks wrap onto more rows; a ▾ appears when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away. The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit centered on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu: pick the track's instrument (NES pulses, triangle, sine, saw — auto = the classic assignment) and its color. Both save as a normal synced annotation ("track: pulse1 voice=sine") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away. The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit centered on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -876,6 +893,7 @@
   <div class="status" id="filestatus"></div>
 </div>
 <div id="filesub"></div>
+<div id="voicemenu"></div>
 
 <div id="metsheet">
   <div class="metpanel">
@@ -1274,6 +1292,17 @@ function parseRollnotes(text) {
     const bm = n.text.match(/^tempo:\s*(\d+(?:\.\d+)?)\s*$/i);
     if (bm) { n.tempodir = +bm[1]; n.text = "tempo: " + bm[1]; }
     else delete n.tempodir;
+    const trm = n.text.match(/^track:\s*(\S+)((?:\s+\w+=\S+)*)\s*$/i);
+    if (trm) {
+      const d = {name: trm[1]};
+      for (const kv of trm[2].trim().split(/\s+/).filter(Boolean)) {
+        const [k, v] = kv.split("=");
+        if (k === "voice") d.voice = v;
+        if (k === "color") d.color = v;
+      }
+      n.trackdir = d;
+      n.text = "track: " + d.name + (d.voice ? " voice=" + d.voice : "") + (d.color ? " color=" + d.color : "");
+    } else delete n.trackdir;
   });
   return out.filter(n => n.text);
 }
@@ -1386,6 +1415,18 @@ function finalizeNotes() {
     } else {
       song.tempos = song.baseTempos.map(t => ({...t}));
     }
+  }
+  if (song) { // track: directives — per-track voice & color, synced like any note
+    song.tracks.forEach(tr => { delete tr.voice; delete tr.color; });
+    for (const n of rollnotes) {
+      if (!n.trackdir) continue;
+      const ti = song.tracks.findIndex((tr, i) =>
+        (tr.name || "tr" + (i + 1)).toLowerCase() === n.trackdir.name.toLowerCase());
+      if (ti < 0) continue;
+      if (n.trackdir.voice) song.tracks[ti].voice = n.trackdir.voice;
+      if (n.trackdir.color) song.tracks[ti].color = n.trackdir.color;
+    }
+    renderTrackbar();
   }
   if (song) { updateSongMeta(); computeSongEnd(); } // grid may have changed
   if (chopChanged) { playCursor = Math.min(playCursor, songEndTick); if (typeof fitView === "function") fitView(); }
@@ -1516,7 +1557,7 @@ function dropLocalKeyAt(bar) { // a new key change replaces any local key marker
 }
 function isDirective(n) { // anything that isn't a plain text note
   return !!(n.section || n.chord || n.chopdir || n.keydir !== undefined ||
-            n.loopTo !== undefined || n.tempodir !== undefined || /^(timesig|key|tempo):/i.test(n.text));
+            n.loopTo !== undefined || n.tempodir !== undefined || n.trackdir || /^(timesig|key|tempo|track):/i.test(n.text));
 }
 function activeNoteAt(tick) {
   let best = null;
@@ -1695,12 +1736,13 @@ function renderTrackbar() {
   bar.innerHTML = "";
   song.tracks.forEach((tr, ti) => {
     const chip = document.createElement("div");
-    chip.className = "chip" + (trackState[ti].muted ? " muted" : "") + (ti === selTrack ? " selected" : "");
+    const st = trackState[ti] || (trackState[ti] = {muted: false, solo: false});
+    chip.className = "chip" + (st.muted ? " muted" : "") + (ti === selTrack ? " selected" : "");
     chip.setAttribute("role", "button");
     chip.tabIndex = 0;
     const dot = document.createElement("span");
     dot.className = "dot";
-    dot.style.background = TRACK_COLORS[ti % TRACK_COLORS.length];
+    dot.style.background = trackColor(ti);
     const label = document.createElement("span");
     label.textContent = (tr.name || "tr" + (ti+1)).slice(0, 18);
     const solo = document.createElement("span");
@@ -1723,7 +1765,8 @@ function renderTrackbar() {
       renderTrackbar(); buildScoreModel(); updateTrackGains(); clampView(); draw();
     });
     chip.append(dot, label, mute, solo);
-    chip.addEventListener("click", () => {
+    chip.addEventListener("click", e => {
+      if (ti === selTrack) { openVoiceMenu(ti, chip); return; } // second tap: voice & color
       selTrack = ti;
       renderTrackbar(); buildScoreModel(); updateTrackGains(); clampView(); draw();
     });
@@ -1881,7 +1924,7 @@ function draw() {
   // notes
   song.tracks.forEach((tr, ti) => {
     if (!trackAudible(ti)) return; // hidden = gone, not dimmed
-    const color = TRACK_COLORS[ti % TRACK_COLORS.length];
+    const color = trackColor(ti);
     for (let ni = 0; ni < tr.notes.length; ni++) {
       const n = tr.notes[ni];
       if (n.gone) continue;
@@ -2598,7 +2641,7 @@ function warmContext() { // one silent sample: absorbs the fresh context's glitc
 function ensureAudio() { // one context for the app's lifetime — iOS Safari
   // glitches the first render quantum of a fresh context. But a context iOS
   // has killed (state "closed") can never come back: rebuild + re-warm.
-  if (audio && audio.state === "closed") { audio = null; master = null; pulse25 = null; trackGains = []; }
+  if (audio && audio.state === "closed") { audio = null; master = null; pulse25 = null; pulse12 = null; trackGains = []; }
   if (audio) return;
   audio = new (window.AudioContext || window.webkitAudioContext)();
   audio.onstatechange = () => console.log("[audio] state:", audio && audio.state);
@@ -2626,7 +2669,7 @@ async function resumeAudio() {
     await audio.resume().catch(() => {});
     if (!(await clockAlive())) {
       try { await audio.close(); } catch (err) {}
-      audio = null; master = null; pulse25 = null; trackGains = [];
+      audio = null; master = null; pulse25 = null; pulse12 = null; trackGains = [];
       ensureAudio(); // rebuilds + re-warms (covers the first-quantum glitch)
       await audio.resume().catch(() => {});
     }
@@ -2668,21 +2711,104 @@ function voiceType(ti) {
   if (ti === song.tracks.length - 1 && song.tracks.length > 1) return "triangle"; // bass-ish
   return ti % 2 === 0 ? "square" : "square25";
 }
-let pulse25 = null;
+// per-track voice override (Josh, 2026-08-15): tap the selected chip again to
+// pick. "auto" = the classic NES assignment above. Persists per song+device.
+const VOICES = [["auto", "auto (NES)"], ["square", "pulse 50%"], ["square25", "pulse 25%"],
+                ["square12", "pulse 12.5%"], ["triangle", "triangle"], ["sine", "sine"], ["sawtooth", "saw"]];
+const VOICE_AMP = {square: 0.5, square25: 0.5, square12: 0.5, triangle: 0.9, sine: 0.85, sawtooth: 0.33};
+function trackVoice(ti) {
+  const v = song.tracks[ti] && song.tracks[ti].voice;
+  return v && v !== "auto" ? v : voiceType(ti);
+}
+function trackColor(ti) {
+  const c = song && song.tracks[ti] && song.tracks[ti].color;
+  return c || TRACK_COLORS[ti % TRACK_COLORS.length];
+}
+function saveVoices() { // upsert this track's "track:" directive — a normal
+  // synced annotation (Josh, 2026-08-15): voice & color are song truths
+  const ti = voiceMenuTi;
+  const tr = song.tracks[ti];
+  const name = tr.name || "tr" + (ti + 1);
+  const chosen = {voice: tr.voice, color: tr.color};
+  rollnotes = rollnotes.filter(n => !(n.trackdir && n.trackdir.name.toLowerCase() === name.toLowerCase()));
+  const parts = [];
+  if (chosen.voice && chosen.voice !== "auto") parts.push("voice=" + chosen.voice);
+  if (chosen.color) parts.push("color=" + chosen.color);
+  if (parts.length) {
+    rollnotes.push(resolveNote({b1: 1, q1: 1, b2: null, q2: null,
+      text: "track: " + name + " " + parts.join(" "),
+      trackdir: {name, voice: chosen.voice, color: chosen.color}, added: true}));
+  }
+  finalizeNotes(); // re-applies (or reverts) voice/color from the directives
+  saveLocalNotes();
+  updateSyncBtn();
+}
+let pulse25 = null, pulse12 = null;
+function dutyWave(duty) {
+  const N = 32, real = new Float32Array(N), imag = new Float32Array(N);
+  for (let n = 1; n < N; n++) real[n] = (2 / (n * Math.PI)) * Math.sin(n * Math.PI * duty);
+  return audio.createPeriodicWave(real, imag);
+}
 function makeOsc(type) {
   const o = audio.createOscillator();
   if (type === "square25") {
-    if (!pulse25) {
-      const N = 32, real = new Float32Array(N), imag = new Float32Array(N);
-      for (let n = 1; n < N; n++) { // 25% duty pulse fourier
-        real[n] = (2 / (n * Math.PI)) * Math.sin(n * Math.PI * 0.25);
-      }
-      pulse25 = audio.createPeriodicWave(real, imag);
-    }
+    if (!pulse25) pulse25 = dutyWave(0.25);
     o.setPeriodicWave(pulse25);
+  } else if (type === "square12") {
+    if (!pulse12) pulse12 = dutyWave(0.125);
+    o.setPeriodicWave(pulse12);
   } else o.type = type;
   return o;
 }
+let voiceMenuTi = -1;
+function openVoiceMenu(ti, anchor) {
+  const menu = document.getElementById("voicemenu");
+  voiceMenuTi = ti;
+  menu.innerHTML = "";
+  const tr = song.tracks[ti];
+  const head = document.createElement("div");
+  head.className = "lbl";
+  head.style.cssText = "font-family:var(--mono);font-size:11px;color:var(--dim);padding:4px 10px";
+  head.textContent = (tr.name || "track " + (ti + 1)) + " — voice & color";
+  menu.appendChild(head);
+  for (const [v, label] of VOICES) {
+    const b = document.createElement("button");
+    b.className = "fitem";
+    b.textContent = ((tr.voice || "auto") === v ? "✓ " : "   ") + label;
+    b.addEventListener("click", () => {
+      tr.voice = v === "auto" ? undefined : v;
+      saveVoices();
+      previewNote(ti, 69); // hear it immediately
+      openVoiceMenu(ti, anchor); // stay open, refresh the ✓
+    });
+    menu.appendChild(b);
+  }
+  const sw = document.createElement("div");
+  sw.style.cssText = "display:flex;flex-wrap:wrap;gap:7px;padding:8px 10px";
+  for (const c of TRACK_COLORS) {
+    const d = document.createElement("button");
+    d.style.cssText = "width:26px;height:26px;border-radius:7px;border:2px solid " +
+      (trackColor(ti) === c ? "#fff" : "transparent") + ";background:" + c + ";padding:0";
+    d.addEventListener("click", () => {
+      tr.color = c === TRACK_COLORS[ti % TRACK_COLORS.length] ? undefined : c;
+      saveVoices();
+      renderTrackbar(); buildScoreModel(); draw();
+      openVoiceMenu(ti, anchor);
+    });
+    sw.appendChild(d);
+  }
+  menu.appendChild(sw);
+  const r = anchor.getBoundingClientRect();
+  menu.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 240)) + "px";
+  menu.style.top = (r.bottom + 6) + "px";
+  menu.classList.add("on");
+}
+document.addEventListener("pointerdown", e => { // tap-away closes the voice menu
+  const menu = document.getElementById("voicemenu");
+  if (!menu.classList.contains("on")) return;
+  if (menu.contains(e.target) || e.target.closest(".chip")) return;
+  menu.classList.remove("on");
+}, {capture: true});
 function trackIsDrums(ti) {
   const tr = song.tracks[ti];
   if (tr.drums === undefined)
@@ -2721,10 +2847,11 @@ function scheduleNote(ti, n, when, durSec) {
   // ramp and slam the oscillator on at full amplitude (audible click)
   when = Math.max(when, audio.currentTime + 0.003);
   if (n.ch === 9 || trackIsDrums(ti)) { drumHit(ti, n.p, when, n.v); return; }
-  const o = makeOsc(voiceType(ti));
+  const v = trackVoice(ti);
+  const o = makeOsc(v);
   o.frequency.value = 440 * Math.pow(2, (n.p - 69) / 12);
   const g = audio.createGain();
-  const amp = (0.25 + 0.75 * (n.v / 127)) * (voiceType(ti) === "triangle" ? 0.9 : 0.5);
+  const amp = (0.25 + 0.75 * (n.v / 127)) * (VOICE_AMP[v] || 0.5);
   g.gain.setValueAtTime(0, when);
   g.gain.linearRampToValueAtTime(amp, when + 0.008);
   g.gain.setValueAtTime(amp, Math.max(when + 0.008, when + durSec - 0.03));
@@ -3018,7 +3145,7 @@ function buildScoreModel() {
       }
       pos = Math.max(pos, endT);
     }
-    staves.push({ti, clef, color: TRACK_COLORS[ti % TRACK_COLORS.length], measures});
+    staves.push({ti, clef, color: trackColor(ti), measures});
   });
   // zoom floor from the densest measure: VexFlow treats the justify width as
   // a suggestion, so a bar needs ~20px per glyph or it spills past its barline
@@ -4063,6 +4190,7 @@ const notelistSheet = document.getElementById("notelistsheet");
 const NOTE_GROUPS = [
   {title: "KEY", type: "key", match: n => n.keydir !== undefined || n.keypartial},
   {title: "TEMPO", type: "tempo", match: n => n.tempodir !== undefined},
+  {title: "TRACKS", type: "note", match: n => n.trackdir},
   {title: "METER", type: "timesig", match: n => !!n.tsdir},
   {title: "SECTIONS", type: "section", match: n => n.section},
   {title: "CHORDS", type: "chord", match: n => n.chord},
@@ -4479,8 +4607,8 @@ function pianoGeom(W) {
 }
 function instLitColor(p, lit) {
   if (instFlash && instFlash.p === p) return css("--accent");
-  if (lit.sel.has(p)) return TRACK_COLORS[lit.sel.get(p) % TRACK_COLORS.length]; // lasso'd: source track's color
-  if (lit.live.has(p)) return TRACK_COLORS[lit.live.get(p) % TRACK_COLORS.length]; // sounding: its track's color
+  if (lit.sel.has(p)) return trackColor(lit.sel.get(p)); // lasso'd: source track's color
+  if (lit.live.has(p)) return trackColor(lit.live.get(p)); // sounding: its track's color
   return null;
 }
 function drawPiano(W, H, lit) {
@@ -4587,8 +4715,8 @@ function drawGuitar(W, H, lit) {
       if (f >= 0 && f <= GTR_FRETS) dots.push({si, f, p, p0, shift, color});
     });
   };
-  lit.live.forEach((ti, p) => add(p, TRACK_COLORS[ti % TRACK_COLORS.length]));
-  lit.sel.forEach((ti, p) => add(p, TRACK_COLORS[ti % TRACK_COLORS.length])); // lasso'd notes wear their track's color
+  lit.live.forEach((ti, p) => add(p, trackColor(ti)));
+  lit.sel.forEach((ti, p) => add(p, trackColor(ti))); // lasso'd notes wear their track's color
   if (instFlash && instFlash.si !== undefined) dots.push({...instFlash, color: css("--accent")});
   // pitch-class echoes (lasso only): EVERY same-named note on the neck gets a
   // hollow ring in its source note's track color — earliest track wins
@@ -4604,7 +4732,7 @@ function drawGuitar(W, H, lit) {
         const pc = (open + f) % 12;
         if (!selPcs.has(pc) || taken.has(si + ":" + f)) continue;
         const cx = g.nutX + (f === 0 ? 2 : (f - 0.5) * g.fw), cy = g.top + si * g.sh;
-        ictx.strokeStyle = TRACK_COLORS[selPcs.get(pc) % TRACK_COLORS.length];
+        ictx.strokeStyle = trackColor(selPcs.get(pc));
         ictx.globalAlpha = 0.7;
         ictx.beginPath();
         ictx.arc(cx, cy, 9, 0, 7);
@@ -4755,7 +4883,7 @@ function drawFall(W, H) {
   }
   song.tracks.forEach((tr, ti) => {
     if (!trackAudible(ti) || trackIsDrums(ti)) return;
-    const color = TRACK_COLORS[ti % TRACK_COLORS.length];
+    const color = trackColor(ti);
     tr.notes.forEach((n, ni) => {
       if (n.gone) return;
       const yB = secY(tickToSec(song, n.t));       // bottom edge = note-on

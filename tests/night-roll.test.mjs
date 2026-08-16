@@ -574,7 +574,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
-    "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change",
+    "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -612,4 +612,26 @@ test("tempo: directives rebuild the map from the song's base; removal restores",
   assert.match(run(`serializeRollnotes()`), /tempo: 90\n/);
   assert.equal(val(`song.tempos`)[0].usq, Math.round(6e7 / 90));
   run(`rollnotes = []; finalizeNotes(); song.baseTempos = null; songKey = "midi/test.mid";`);
+});
+
+test("track: directive — voice & color as synced annotations, round-tripping", () => {
+  installSong();
+  run(`
+    trackState = [{muted: false, solo: false}, {muted: false, solo: false}];
+    song.tracks = [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]},
+                   {name: "triangle", notes: [{t: 0, d: 480, p: 48, v: 80}]}];
+    rollnotes = parseRollnotes("[1.1]\\ntrack: pulse1 voice=sine color=#0aa2c0\\n").map(resolveNote);
+    finalizeNotes();
+  `);
+  assert.equal(run(`song.tracks[0].voice`), "sine");
+  assert.equal(run(`song.tracks[0].color`), "#0aa2c0");
+  assert.equal(run(`trackVoice(0)`), "sine");
+  assert.equal(run(`trackColor(0)`), "#0aa2c0");
+  assert.equal(run(`song.tracks[1].voice`), undefined); // untouched track
+  assert.match(run(`serializeRollnotes()`), /track: pulse1 voice=sine color=#0aa2c0\n/);
+  // removing the directive reverts to the NES defaults
+  run(`rollnotes = []; finalizeNotes();`);
+  assert.equal(run(`song.tracks[0].voice`), undefined);
+  assert.equal(run(`trackVoice(0)`), "square");
+  run(`song = null; songKey = "midi/test.mid";`);
 });

@@ -301,6 +301,16 @@ tempo: 90          ← tempo directive, TWO meanings by song kind (Josh's
                      leaves playback untouched (capture timing is
                      measured fact).
 
+[1.1]
+track: pulse1 voice=sine color=#0aa2c0
+                   ← track directive (2026-08-15): per-track VOICE (auto NES /
+                     pulse 50·25·12.5% / triangle / sine / saw) and COLOR
+                     override, set from the chip's voice-&-color menu (tap
+                     the selected chip again). A synced annotation like any
+                     other — song truth, not device preference. Playback
+                     only; the .mid is never touched. Tracks matched by
+                     name (or trN index). Removing it reverts to defaults.
+
 [3.1]
 chop: start        ← non-destructive trim, RAW capture coordinates (the one
                      annotation type that is): hides everything before raw
