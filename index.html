@@ -750,7 +750,7 @@
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
-      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "—", a stored tonic reads "B♭?".</dd>
+      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?".</dd>
       <dt>Blue cursor</dt><dd>Play starts here. Tap the bar ruler to place it, or drag its handle (triangle under the ruler). Tapping any note also moves it there.</dd>
     </dl>
 
@@ -1529,7 +1529,8 @@ function updateLCD() {
   const bpm = Math.round(6e7 / usq * playRate);
   const meter = declaredTs ? declaredTs[0] + "/" + declaredTs[1] : "4/4?";
   const partial = rollnotes.find(n => n.keypartial);
-  const key = keyNameAt(t) || (partial ? partial.keypartial + "?" : "—");
+  // same honesty as the meter's "4/4?": undeclared key = the C default, flagged
+  const key = keyNameAt(t) || (partial ? partial.keypartial + "?" : "C?");
   const s = bar + "|" + beat + "|" + bpm + "|" + meter + "|" + key;
   if (s === lcdCache) return;
   lcdCache = s;
