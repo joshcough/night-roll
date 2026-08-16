@@ -310,6 +310,21 @@ Sync — a sidecar without its .mid would be an orphan). Expansion-chip
 NSFs (VRC6/FDS/…) capture 2A03 channels only; silent SFX slots report
 "silent" and store nothing.
 
+**Chip audio** (2026-08-17, `chip` button in the transport during an
+import session): the captured APU register log rendered through a
+pure-JS 2A03 DSP (tools/nsf/apu-render.mjs — duty sequencers, hardware
+envelope units, length/sweep/linear counters, noise LFSR, Nesdev
+output curves, console RC filters). This is the console's own voice:
+a 33ms arpeggio run is one pulse wave changing period, not N oscillator
+attacks — built after oscillator-per-note rendering could not do MM2's
+fast sections justice. Renders ~400x realtime, per-channel buffers so
+mute/solo gains still work; loop points honored via buffer looping;
+speed slider acts tape-style (pitch follows). Available while the
+import session that captured the current draft is open (the NSF must
+be in memory); re-capturing invalidates the render. All async yields
+(emulation, loop scan, render) use MessageChannel, not setTimeout —
+background tabs throttle setTimeout to ~1/sec.
+
 **Robustness:** MIDI parser finds tracks by MTrk magic scan (the original
 ff1battle had corrupt length headers — since rebuilt clean, guard kept),
 honors end-of-track, clamps note durations to 8

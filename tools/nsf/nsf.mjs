@@ -98,6 +98,16 @@ export function runNSF(nsf, songIndex1Based, seconds) {
   return {apuLog: state.apuLog, frames, frameSec: nsf.playSpeedNTSC / 1_000_000};
 }
 
+// Unthrottled yield: background tabs clamp setTimeout to ~1/sec, which turned
+// a 1s loop scan into minutes; MessageChannel messages are macrotasks with no
+// background throttling. Node (no MessageChannel pre-15? has it) falls back.
+let _mc = null;
+export function microYield() {
+  if (typeof MessageChannel === "undefined") return new Promise(r => setTimeout(r, 0));
+  if (!_mc) _mc = new MessageChannel();
+  return new Promise(r => { _mc.port1.onmessage = () => r(); _mc.port2.postMessage(0); });
+}
+
 // Browser-friendly twin of runNSF: identical emulation, but yields to the
 // event loop every `chunkFrames` so a long capture can't freeze the tab —
 // iOS Safari's watchdog force-reloads a page that blocks too long (Josh's
@@ -117,7 +127,7 @@ export async function runNSFAsync(nsf, songIndex1Based, seconds, onProgress, bud
     state.callsub(nsf.playAddr, 0, 0);
     if (now() - last >= budgetMs) {
       if (onProgress) onProgress(f / frames);
-      await new Promise(r => setTimeout(r, 0)); // breathe: let the UI paint, keep the watchdog calm
+      await microYield(); // breathe: let the UI paint, keep the watchdog calm
       last = now();
     }
   }

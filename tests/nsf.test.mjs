@@ -7,6 +7,7 @@ import { makeTestNSF } from "../tools/nsf/make-test-nsf.mjs";
 import { parseNSF, runNSF } from "../tools/nsf/nsf.mjs";
 import { reconstruct, toNotesTxt, pitchName, backportTiming } from "../tools/nsf/notes.mjs";
 import { makeMidi } from "../tools/nsf/midi-write.mjs";
+import { renderApu } from "../tools/nsf/apu-render.mjs";
 
 test("NSF pipeline: synthetic tune comes back note-perfect with channel identity", () => {
   const nsf = parseNSF(makeTestNSF().buffer);
@@ -196,4 +197,33 @@ test("backportTiming never births a negative time; makeMidi refuses one loudly",
   assert.throws(() => makeMidi([{channel: "pulse1", midi: 60, startFrame: -50, endFrame: 5, vol: 8}],
                                {bpm: 150, frameSec: 1 / 60, snap: true}),
                 /negative MIDI delta/); // (a -2 rounds to grid zero; a real negative must throw, not hang)
+});
+
+test("APU renderer: a pulse register log becomes audio at the written pitch", () => {
+  // A4 on pulse1 (period $0FD), constant vol, 1 second
+  const log = [
+    {frame: 0, addr: 0x4015, value: 0x01},
+    {frame: 1, addr: 0x4000, value: 0x7F},          // duty 25%, halt length, const vol 15
+    {frame: 1, addr: 0x4002, value: 0xFD},
+    {frame: 1, addr: 0x4003, value: 0x08},          // period high 0 + length load
+  ];
+  const r = renderApu(log, 60, 1 / 60, {sampleRate: 44100});
+  let sum = 0;
+  for (let i = 0; i < r.pulse1.length; i++) sum += r.pulse1[i] * r.pulse1[i];
+  assert.ok(Math.sqrt(sum / r.pulse1.length) > 0.01, "pulse1 makes sound");
+  // dominant frequency by rising zero crossings in the steady middle
+  const seg = r.pulse1.subarray(11025, 33075);
+  let mean = 0;
+  for (const x of seg) mean += x;
+  mean /= seg.length;
+  let cross = 0;
+  for (let i = 1; i < seg.length; i++)
+    if (seg[i - 1] - mean < 0 && seg[i] - mean >= 0) cross++;
+  const hz = cross * 2; // half-second window
+  assert.ok(Math.abs(hz - 440) < 15, "pulse period $0FD renders near A440, got " + hz);
+  // silence when disabled
+  const r2 = renderApu([{frame: 0, addr: 0x4015, value: 0}], 30, 1 / 60, {});
+  let s2 = 0;
+  for (const x of r2.pulse1) s2 += Math.abs(x);
+  assert.ok(s2 < 1e-6, "disabled channel is silent");
 });
