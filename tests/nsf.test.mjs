@@ -146,12 +146,33 @@ test("duty rides the pipeline: APU bits -> events -> CC70 in the MIDI bytes", ()
   }
   const events = reconstruct(log, frame + 1, 1 / 60);
   assert.deepEqual(events.map(e => e.duty), [1, 0]);
+  assert.deepEqual(events.map(e => e.volEnd), [15, 15]); // no decay in this log
   const bytes = makeMidi(events, {bpm: 120, frameSec: 1 / 60, snap: true});
   // CC70 (0xB0, 70, duty) appears for both duty values
   let cc = [];
   for (let i = 0; i + 2 < bytes.length; i++)
     if ((bytes[i] & 0xF0) === 0xB0 && bytes[i + 1] === 70) cc.push(bytes[i + 2]);
   assert.deepEqual(cc, [1, 0], "one CC70 per duty change");
+});
+
+test("software envelope: intra-note decay lands as aftertouch in the MIDI", () => {
+  // one note whose vol steps 15 -> 7 while it sounds
+  let frame = 0;
+  const log = [{frame: frame++, addr: 0x4015, value: 0x01}];
+  log.push({frame, addr: 0x4000, value: 0x5F}); // duty 25%, constVol 15
+  log.push({frame, addr: 0x4002, value: 0xFD});
+  log.push({frame, addr: 0x4003, value: 0});
+  for (const v of [13, 11, 9, 7]) log.push({frame: frame += 3, addr: 0x4000, value: 0x50 | v});
+  log.push({frame: frame += 3, addr: 0x4000, value: 0x50}); // silence ends it
+  const events = reconstruct(log, frame + 2, 1 / 60);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].vol, 15);
+  assert.equal(events[0].volEnd, 7);
+  const bytes = makeMidi(events, {bpm: 120, frameSec: 1 / 60, snap: true});
+  let aft = null;
+  for (let i = 0; i + 2 < bytes.length; i++)
+    if ((bytes[i] & 0xF0) === 0xA0) aft = bytes[i + 2];
+  assert.equal(aft, Math.max(8, Math.round(7 / 15 * 127)), "aftertouch carries the decay target");
 });
 
 test("backportTiming never births a negative time; makeMidi refuses one loudly", () => {

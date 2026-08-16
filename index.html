@@ -1136,12 +1136,17 @@ function parseMidi(buf) {
               const o = open[p].shift();
               const n = {t: o.t, d: t - o.t, p, v: o.v, ch};
               if (o.duty !== undefined) n.duty = o.duty; // chip timbre (CC70, our own capture files)
+              if (o.ve !== undefined) n.ve = o.ve; // software-envelope decay target
               notes.push(n);
             }
           } else if (st === 0xB0) {
             if (d[j] === 70) curDuty = d[j + 1] & 3; // CC70 = pulse duty from the NSF capture
             j += 2;
-          } else if (st === 0xA0 || st === 0xE0) j += 2;
+          } else if (st === 0xA0) {
+            // polyphonic aftertouch = the capture's decay target (end volume)
+            const p = d[j], val = d[j + 1]; j += 2;
+            if (open[p] && open[p].length) open[p][open[p].length - 1].ve = val;
+          } else if (st === 0xE0) j += 2;
           else if (st === 0xC0 || st === 0xD0) j += 1;
         }
       }
@@ -3278,7 +3283,7 @@ function scheduleNote(ti, n, when, durSec) {
     o.stop(end + 0.12); mod.stop(end + 0.12);
     return;
   }
-  const o = makeOsc(v); // chip waves + organ: flat sustain
+  const o = makeOsc(v); // chip waves + organ
   o.frequency.value = f0;
   // envelope scales with the note: fixed 8ms attack + 30ms release ATE most
   // of a 50ms note (MM2 runs at 300bpm sound "cut off" — 2026-08-17); the
@@ -3287,7 +3292,14 @@ function scheduleNote(ti, n, when, durSec) {
   const rel = Math.min(0.03, durSec * 0.25);
   g.gain.setValueAtTime(0, when);
   g.gain.linearRampToValueAtTime(amp, when + atk);
-  g.gain.setValueAtTime(amp, Math.max(when + atk, end - rel));
+  if (n.ve !== undefined && n.ve < n.v) {
+    // the chip's software envelope: ramp to the recorded decay target —
+    // flat sustains against the echo voice beat like a tremolo (Josh's
+    // back-to-back vs the record, 2026-08-17); the decay is the space
+    g.gain.linearRampToValueAtTime(amp * (n.ve / n.v), Math.max(when + atk, end - rel));
+  } else {
+    g.gain.setValueAtTime(amp, Math.max(when + atk, end - rel));
+  }
   g.gain.linearRampToValueAtTime(0, end);
   o.connect(g);
   o.start(when);
@@ -4956,6 +4968,7 @@ async function importBytes(bytes, name) { // byte-sniff: extension lies, headers
       const o = {t: nt.t, d: nt.d, p: nt.p, v: nt.v};
       if (nt.ch !== undefined) o.ch = nt.ch; // drums live on ch 9 — must survive the round-trip
       if (nt.duty !== undefined) o.duty = nt.duty; // chip timbre survives too
+      if (nt.ve !== undefined) o.ve = nt.ve; // decay target survives
       return o;
     })}))}));
   openDraft(key);
@@ -5987,6 +6000,7 @@ function saveDraft(clean) { // clean=true right after a successful Save
         const o = {t: n.t, d: n.d, p: n.p, v: n.v};
         if (n.ch !== undefined) o.ch = n.ch; // drum channel survives edit re-saves
         if (n.duty !== undefined) o.duty = n.duty;
+        if (n.ve !== undefined) o.ve = n.ve;
         return o;
       })})),
   }));
@@ -6609,6 +6623,7 @@ async function impCapture(n) {
           const o = {t: nt.t, d: nt.d, p: nt.p, v: nt.v};
           if (nt.ch !== undefined) o.ch = nt.ch; // noise rides ch 9 — dropping it made drums play as pitched tones
           if (nt.duty !== undefined) o.duty = nt.duty; // chip timbre (per-note duty) survives
+          if (nt.ve !== undefined) o.ve = nt.ve; // decay target survives
           return o;
         })}))}));
     if (cap.loopAnchor) // hardware loop point -> annotation, same rule as the FF1 dumps

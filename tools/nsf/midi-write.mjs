@@ -37,6 +37,9 @@ function trackBytes(name, notes, ch, metas = []) {
       lastDuty = n.duty;
     }
     evs.push({t: n.t, o: 1, d: [0x90 | ch, n.p, n.v]});
+    // decay target as polyphonic aftertouch right after the on — Night
+    // Roll reads it back as the note's end volume; DAWs see key pressure
+    if (n.ve !== undefined) evs.push({t: n.t, o: 1.5, d: [0xA0 | ch, n.p, n.ve]});
     evs.push({t: n.t + n.d, o: 0, d: [0x80 | ch, n.p, 64]});
   }
   evs.sort((a, b) => a.t - b.t || (a.o || 0) - (b.o || 0));
@@ -67,7 +70,10 @@ export function makeMidi(events, {bpm, tsNum = 4, tsDen = 4, frameSec, snap = tr
     // chip volume -> velocity (accent data from the ROM); triangle and
     // envelope-mode notes have no level, so they get a neutral 96
     const v = e.vol == null ? 96 : Math.max(8, Math.round(e.vol / 15 * 127));
-    byCh[e.channel].push({t, d, p, v, duty: e.duty});
+    // end-volume of the software envelope rides along (0-127 like velocity)
+    const ve = e.volEnd != null && e.vol != null && e.volEnd < e.vol
+      ? Math.max(8, Math.round(e.volEnd / 15 * 127)) : undefined;
+    byCh[e.channel].push({t, d, p, v, duty: e.duty, ve});
   }
   const metas = [
     {t: 0, d: [0xFF, 0x58, 4, tsNum, Math.round(Math.log2(tsDen)), 24, 8]},

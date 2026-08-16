@@ -54,7 +54,7 @@ export function reconstruct(apuLog, frames, frameSec) {
       // envelope period) and never on the triangle (no volume control).
       const vol = name !== "triangle" && c.constVol ? c.vol : null;
       const duty = (name === "pulse1" || name === "pulse2") ? c.duty : undefined; // pulse timbre at note start
-      open[name] = {channel: name, startFrame: frame, endFrame: null, midi, periodValue: c.period, vol, duty, freq0: freq};
+      open[name] = {channel: name, startFrame: frame, endFrame: null, midi, periodValue: c.period, vol, volEnd: vol, duty, freq0: freq};
       events.push(open[name]);
     }
   };
@@ -74,7 +74,15 @@ export function reconstruct(apuLog, frames, frameSec) {
       if (r < 0 || r > 3) continue;
       if (r === 0) {
         if (name === "triangle") c.linear = value & 0x7F;
-        else { c.vol = value & 0x0F; c.constVol = !!(value & 0x10); c.duty = (value >> 6) & 3; } // bits 6-7: duty = the chip's TIMBRE
+        else {
+          c.vol = value & 0x0F; c.constVol = !!(value & 0x10); c.duty = (value >> 6) & 3; // bits 6-7: duty = the chip's TIMBRE
+          // software envelope: drivers walk vol down DURING a note (MM2
+          // decays 14→7); record where it lands so playback can ramp too.
+          // Only non-increasing writes: a same-frame RISE is the next note's
+          // attack landing before its period write, not this note's fade
+          if (open[name] && c.constVol && c.vol > 0 && open[name].volEnd !== null &&
+              c.vol <= open[name].volEnd) open[name].volEnd = c.vol;
+        }
       } else if (r === 2) {
         c.period = (c.period & 0x700) | value;
       } else if (r === 3) {
