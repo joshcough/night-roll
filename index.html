@@ -92,6 +92,29 @@
   #trackzone { flex: 1 1 0; min-width: 0; display: flex; align-items: flex-start; }
   #trackmore { margin: 8px 4px 0 0; min-height: 36px; padding: 4px 9px; flex: none; }
   #transport { display: flex; align-items: center; gap: 8px; flex: none; }
+  #lcd {
+    display: flex;
+    align-items: stretch;
+    background: #0c101e;
+    border: 1px solid var(--grid);
+    border-radius: 8px;
+    padding: 3px 4px;
+    gap: 2px;
+  }
+  .lcdseg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 10px;
+    border-right: 1px solid var(--grid);
+    min-width: 44px;
+  }
+  .lcdseg:last-child { border-right: 0; }
+  .lcdbig { font-family: var(--mono); font-size: 19px; line-height: 1.05; color: #dfe6ff; }
+  .lcdmid { font-family: var(--mono); font-size: 12px; line-height: 1.3; color: #dfe6ff; }
+  .lcdmid.lcdkey { color: var(--gold); }
+  .lcdlbl { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
   #timectl { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-right: 12px; flex: 1 1 0; min-width: 0; }
   #timectl #metbtn { min-height: 34px; padding: 4px 10px; }
   select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -109,7 +132,7 @@
   #speedsl {
     -webkit-appearance: none;
     appearance: none;
-    width: min(300px, 38vw);
+    width: min(200px, 22vw);
     height: 40px;
     background: transparent;
     cursor: pointer;
@@ -497,6 +520,12 @@
   <div id="transport">
     <button id="rwbtn" aria-label="Back to start">⏮</button>
     <button class="primary" id="playbtn">▶ Play</button>
+    <div id="lcd">
+      <div class="lcdseg"><span class="lcdbig" id="lcdbar">1</span><span class="lcdlbl">bar</span></div>
+      <div class="lcdseg"><span class="lcdbig" id="lcdbeat">1</span><span class="lcdlbl">beat</span></div>
+      <div class="lcdseg"><span class="lcdmid" id="lcdtempo">—</span><span class="lcdlbl">tempo</span></div>
+      <div class="lcdseg"><span class="lcdmid" id="lcdmeter">4/4</span><span class="lcdmid lcdkey" id="lcdkey">—</span></div>
+    </div>
   </div>
   <div id="timectl">
     <button id="metbtn" aria-label="Metronome">⏱</button>
@@ -504,7 +533,7 @@
            aria-label="Playback speed">
     <span class="meta" id="speedlbl" style="margin-left:0">100%</span>
     <button id="speedreset" style="display:none;min-height:32px;padding:4px 9px">100%</button>
-    <div class="meta" id="songmeta" style="margin-left:0"></div>
+    <div class="meta" id="songmeta" style="display:none"></div>
   </div>
 </div>
 <div id="rollwrap"><canvas id="roll"></canvas></div>
@@ -721,6 +750,7 @@
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
+      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "—", a stored tonic reads "B♭?".</dd>
       <dt>Blue cursor</dt><dd>Play starts here. Tap the bar ruler to place it, or drag its handle (triangle under the ruler). Tapping any note also moves it there.</dd>
     </dl>
 
@@ -1483,7 +1513,34 @@ function toggleHl() {
   updateSubtitle();
   draw();
 }
+// Logic-style LCD (Josh, 2026-08-15): live bar|beat (denominator beats, the
+// app's counting), tempo from the actual tempo map at the cursor, declared
+// meter and key. House rule intact: undeclared meter reads "4/4?", key "—",
+// a stored partial reads "Bb?" — the LCD reports, it never decides.
+let lcdCache = "";
+function updateLCD() {
+  if (!song) return;
+  const t = curTick();
+  const bt = barTicks(), tb = beatTicks();
+  const bar = Math.floor(t / bt) + 1;
+  const beat = Math.floor((t % bt) / tb) + 1;
+  let usq = song.tempos[0].usq;
+  for (const tp of song.tempos) { if (tp.tick <= t) usq = tp.usq; else break; }
+  const bpm = Math.round(6e7 / usq * playRate);
+  const meter = declaredTs ? declaredTs[0] + "/" + declaredTs[1] : "4/4?";
+  const partial = rollnotes.find(n => n.keypartial);
+  const key = keyNameAt(t) || (partial ? partial.keypartial + "?" : "—");
+  const s = bar + "|" + beat + "|" + bpm + "|" + meter + "|" + key;
+  if (s === lcdCache) return;
+  lcdCache = s;
+  document.getElementById("lcdbar").textContent = String(bar);
+  document.getElementById("lcdbeat").textContent = String(beat);
+  document.getElementById("lcdtempo").textContent = String(bpm);
+  document.getElementById("lcdmeter").textContent = meter;
+  document.getElementById("lcdkey").textContent = key;
+}
 function updateSubtitle() {
+  updateLCD(); // rides every cursor/playhead update
   refreshKeysetLabel(); // cursor moved: keep "Set @ bar N" honest
   const el = document.getElementById("subtitle");
   // the slot exists for the whole song (constant height, no layout bounce);
