@@ -32,7 +32,7 @@ export function parseNSF(buf) {
   };
 }
 
-export function runNSF(nsf, songIndex1Based, seconds) {
+function makeRun(nsf) { // shared machine state for the sync and async runners
   const ram = new Uint8Array(0x800);
   const sram = new Uint8Array(0x2000);        // $6000-$7FFF
   const rom = new Uint8Array(0x8000);         // $8000-$FFFF (non-banked view)
@@ -84,11 +84,36 @@ export function runNSF(nsf, songIndex1Based, seconds) {
     if (guard >= 2_000_000) throw new Error("runaway subroutine at frame " + frame);
   };
 
-  callsub(nsf.initAddr, songIndex1Based - 1, 0); // A = song, X = 0 (NTSC)
+  return {apuLog, callsub, setFrame(f) { frame = f; order = 0; }};
+}
+
+export function runNSF(nsf, songIndex1Based, seconds) {
+  const state = makeRun(nsf);
+  state.callsub(nsf.initAddr, songIndex1Based - 1, 0); // A = song, X = 0 (NTSC)
   const frames = Math.round(seconds * 1_000_000 / nsf.playSpeedNTSC);
-  for (frame = 1; frame <= frames; frame++) {
-    order = 0;
-    callsub(nsf.playAddr, 0, 0);
+  for (let f = 1; f <= frames; f++) {
+    state.setFrame(f);
+    state.callsub(nsf.playAddr, 0, 0);
   }
-  return {apuLog, frames, frameSec: nsf.playSpeedNTSC / 1_000_000};
+  return {apuLog: state.apuLog, frames, frameSec: nsf.playSpeedNTSC / 1_000_000};
+}
+
+// Browser-friendly twin of runNSF: identical emulation, but yields to the
+// event loop every `chunkFrames` so a long capture can't freeze the tab —
+// iOS Safari's watchdog force-reloads a page that blocks too long (Josh's
+// MM2 300s retry killed the whole import, 2026-08-16). onProgress(0..1)
+// optional. Node/offline callers keep the sync runNSF.
+export async function runNSFAsync(nsf, songIndex1Based, seconds, onProgress, chunkFrames = 240) {
+  const state = makeRun(nsf);
+  state.callsub(nsf.initAddr, songIndex1Based - 1, 0);
+  const frames = Math.round(seconds * 1_000_000 / nsf.playSpeedNTSC);
+  for (let f = 1; f <= frames; f++) {
+    state.setFrame(f);
+    state.callsub(nsf.playAddr, 0, 0);
+    if (f % chunkFrames === 0) {
+      if (onProgress) onProgress(f / frames);
+      await new Promise(r => setTimeout(r, 0)); // breathe: let the UI paint, keep the watchdog calm
+    }
+  }
+  return {apuLog: state.apuLog, frames, frameSec: nsf.playSpeedNTSC / 1_000_000};
 }

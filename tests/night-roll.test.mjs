@@ -665,15 +665,18 @@ test("NSF import: in-app capture runs the real pipeline and round-trips through 
   const nsf = M.parseNSF(readFileSync(new URL("../albums/final-fantasy-i/reference/ff1.nsf", import.meta.url)));
   app.context.__M = M;
   app.context.__nsf = nsf;
-  // track 17 = menu: known 8-bar loop, quick to run
-  const got = val(`(() => {
-    const cap = captureNsfTrack(__M, __nsf, 17, 35);
+  // track 17 = menu: known 8-bar loop, quick to run. captureNsfTrack is
+  // async (the runner yields so iOS Safari's watchdog doesn't kill the tab);
+  // the vm shares node's event loop, so await its promise from out here
+  run(`__capP = captureNsfTrack(__M, __nsf, 17, 35).then(cap => {
     const parsed = parseMidi(new Uint8Array(cap.bytes).buffer);
-    return {looped: cap.looped, bpm: cap.bpm, secs: cap.secs,
-            anchor: cap.loopAnchor, target: cap.loopTarget,
-            tracks: parsed.tracks.length,
-            notes: parsed.tracks.reduce((a, t) => a + t.notes.length, 0)};
-  })()`);
+    __cap = {looped: cap.looped, bpm: cap.bpm, secs: cap.secs,
+             anchor: cap.loopAnchor, target: cap.loopTarget,
+             tracks: parsed.tracks.length,
+             notes: parsed.tracks.reduce((a, t) => a + t.notes.length, 0)};
+  })`);
+  await app.context.__capP;
+  const got = val(`__cap`);
   assert.equal(got.looped, true, "menu loops on hardware");
   assert.ok(got.bpm > 60 && got.bpm < 300, "grid fit found a sane tempo: " + got.bpm);
   assert.ok(got.secs > 5 && got.secs < 35, "trimmed to intro + one pass");

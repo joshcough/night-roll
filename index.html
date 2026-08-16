@@ -6401,8 +6401,13 @@ async function nsfModules() {
   }
   return nsfModules.cache;
 }
-function captureNsfTrack(M, nsf, track, seconds) { // dump-all.mjs recipe, minus the FF1 reference data
-  const {apuLog, frames, frameSec} = M.runNSF(nsf, track, seconds);
+async function captureNsfTrack(M, nsf, track, seconds, onProgress) { // dump-all.mjs recipe, minus the FF1 reference data
+  // async runner yields to the event loop — a 300s emulation as one sync
+  // block froze the tab long enough for iOS Safari's watchdog to force a
+  // reload, killing the whole import mid-run (Josh, 2026-08-16)
+  const {apuLog, frames, frameSec} = M.runNSFAsync
+    ? await M.runNSFAsync(nsf, track, seconds, onProgress)
+    : M.runNSF(nsf, track, seconds); // stale-cached module: old sync path still works
   let events = M.reconstruct(apuLog, frames, frameSec);
   if (!events.length) return null; // silent slot (SFX banks have them)
   const t0 = Math.min(...events.map(ev => ev.startFrame));
@@ -6515,16 +6520,16 @@ async function impCapture(n) {
   row.st.textContent = "capturing…";
   row.open.style.display = "none";
   await new Promise(r => setTimeout(r)); // let the label paint before the CPU burn
+  const pct = p => { row.st.textContent = "capturing… " + Math.round(p * 100) + "%"; };
   try {
-    let cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
+    let cap = await captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs, pct);
     // the detector needs intro + TWO full passes in frame — a 35s loop with an
     // intro already busts 75s. No loop found? ONE retry straight at the 300s
     // ceiling (a doubling ladder just re-emulates the same song extra times)
     if (cap && !cap.looped && secs < 300) {
-      row.st.textContent = "no loop @" + secs + "s — trying 300s…";
-      await new Promise(r => setTimeout(r));
       secs = 300;
-      cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
+      const pct2 = p => { row.st.textContent = "no loop — retrying 300s… " + Math.round(p * 100) + "%"; };
+      cap = await captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs, pct2);
     }
     if (!cap) { row.st.textContent = "silent — nothing to keep"; return; }
     const raw = row.name.value.trim() || "track-" + String(n).padStart(2, "0");
