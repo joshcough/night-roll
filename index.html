@@ -882,7 +882,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -6161,9 +6161,35 @@ function fsubDrafts() {
   filesub.innerHTML = "";
   fsubItem("‹ drafts", fsubAlbums, true);
   const keys = draftKeys();
-  // import captures live in an album FOLDER each (Josh 2026-08-16), not flat
-  for (const slug of [...new Set(keys.filter(k => k.startsWith(IMP_DIR)).map(k => k.split("/")[2]))])
-    fsubItem(titleCaseSlug(slug) + "  ›", () => fsubImportAlbum(slug));
+  // import captures live in an album FOLDER each (Josh 2026-08-16), not flat;
+  // the folder's ✕ (tap twice) discards the WHOLE album's drafts at once
+  for (const slug of [...new Set(keys.filter(k => k.startsWith(IMP_DIR)).map(k => k.split("/")[2]))]) {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:4px";
+    const open = document.createElement("button");
+    open.className = "fitem";
+    open.style.flex = "1";
+    open.textContent = titleCaseSlug(slug) + "  ›";
+    open.addEventListener("click", () => fsubImportAlbum(slug));
+    const del = document.createElement("button");
+    del.className = "fitem";
+    del.style.cssText = "flex:none;width:auto;color:var(--dim)";
+    del.textContent = "✕";
+    del.addEventListener("click", () => {
+      if (del.textContent === "✕") {
+        del.textContent = "all?";
+        del.style.color = "#e66767";
+        return;
+      }
+      for (const k of importDraftKeys().filter(k => k.split("/")[2] === slug))
+        for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"])
+          localStorage.removeItem(pre + k);
+      fsubDrafts();
+      if (!draftKeys().length) fsubAlbums();
+    });
+    row.append(open, del);
+    filesub.appendChild(row);
+  }
   for (const key of keys.filter(k => !k.startsWith(IMP_DIR)))
     draftRow(key, (key.startsWith("local/") ? "local / " : "") + key.split("/").pop().replace(/\.mid$/, ""),
              () => { fsubDrafts(); if (!draftKeys().length) fsubAlbums(); });
@@ -6420,11 +6446,16 @@ async function impCapture(n) {
     const raw = row.name.value.trim() || "track-" + String(n).padStart(2, "0");
     const base = slugify(raw) || "track-" + String(n).padStart(2, "0");
     const key = IMP_DIR + slug + "/" + base + ".mid";
-    if (row.key !== key && localStorage.getItem(draftStoreKey(key)) !== null) {
+    // collision = two rows of THIS import fighting over one name. A draft
+    // left by an earlier import of the same album just gets overwritten —
+    // that's what re-importing means (Josh 2026-08-16, after a re-import
+    // refused every track until each old draft was deleted by hand)
+    if (nsfSess.rows.some((r, i) => r && i !== n && r.key === key)) {
       row.st.textContent = "⚠ another captured track is already named \"" + base + "\"";
       return;
     }
     row.key = key;
+    localStorage.removeItem("ff1roll-notes-" + key); // stale loop note dies with the old capture
     const parsed = parseMidi(cap.bytes.buffer);
     localStorage.setItem(draftStoreKey(key), JSON.stringify({
       savedStamp: 0, dirty: true, title: raw, ppq: parsed.ppq, timesig: parsed.timesig || [4, 4],
