@@ -20,7 +20,25 @@ full-width color picker (swatches removed), track-row layout fixes
 (▾ hugs chips, transport pinned top), voice menu holds position + ✕.
 Tests 45/45. Details in NIGHT-ROLL.md.
 
-**MM2 timing bug: ROOT-CAUSED AND FIXED same night (2026-08-16 late).**
+**MM2 bug #2 ALSO FIXED overnight (autonomous session with Josh's
+reference MIDIs + mm2.nsf):** after the fitBpm fix he reported "much
+better but still broken." Raw APU write dumps showed the real remainder:
+MM2's driver renders GLISSANDI as per-frame period steps (Flash Man's
+falling bass: A G F Eb D, one frame each) — reconstruct() turned each
+step into its own note: hundreds of 1-frame notes ("confetti"), which
+is the mess he heard in dense passages. Fixes in reconstruct():
+(1) ±70-cent vibrato guard vs the note's start frequency (same-frame
+setup writes exempt — the pitch-sweep tests catch that), (2) slide
+collapse: chains of abutting ≤2-frame moving-pitch notes merge — into
+the held target note (portamento) or the first pitch (fall-off).
+Verified: MM2 t3 confetti 335→8, fits land 150/180 (t9's 300 = real
+32nd runs); FF1 event counts byte-identical (507/432/703/333) so repo
+regeneration is untouched; 45/45. Track↔reference matching (interval
+5-grams): t1/2/23=title, t3=flash, t5=crash, t8=metal, t9=quick,
+t11=wily1, t22=end(1.00). MORNING STEP: hard reload → re-import mm2 →
+Re-capture all → listen. Reference MIDIs live on Josh's Desktop
+(Megaman_2/); transcription bpms (140/148/175) vs chip-true fits
+(150/150/180) — chip wins, transcribers rounded.
 Josh supplied mm2.nsf; IOI histograms showed MM2's driver is
 frame-integer (16th = exactly 5 or 6 frames → 180/150bpm) while fitBpm
 only searched ±15% around the cold seed of 120 — it fit ~134bpm and

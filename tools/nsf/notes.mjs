@@ -35,17 +35,25 @@ export function reconstruct(apuLog, frames, frameSec) {
 
   const update = (name, c, frame) => {
     const isOn = audible(name, c);
-    let midi = null;
-    if (isOn && name !== "noise") midi = midiFromFreq(freqOf(name, c));
+    let midi = null, freq = null;
+    if (isOn && name !== "noise") { freq = freqOf(name, c); midi = midiFromFreq(freq); }
     if (isOn && name === "noise") midi = c.period & 0x0F; // noise "pitch" = period index, not a MIDI note
     const cur = open[name];
+    // vibrato guard (MM2 bug 2026-08-16): drivers wobble the period every
+    // frame for vibrato; when the wobble crosses a semitone's rounding
+    // boundary a strict midi comparison shredded held notes into 1-frame
+    // confetti. Judge against the note's STARTING frequency: within ±70
+    // cents it's the same note singing; a real slide or step exceeds it.
+    if (cur && isOn && name !== "noise" && cur.midi !== midi &&
+        frame > cur.startFrame && // same-frame changes are note SETUP (vol lands before period), not vibrato
+        cur.freq0 && Math.abs(1200 * Math.log2(freq / cur.freq0)) < 70) return;
     if (cur && (!isOn || cur.midi !== midi)) { cur.endFrame = frame; delete open[name]; }
     if (isOn && !open[name]) {
       // vol: the 4-bit level at note start — accent data straight from the
       // ROM. Only meaningful in constant-volume mode (else the field is the
       // envelope period) and never on the triangle (no volume control).
       const vol = name !== "triangle" && c.constVol ? c.vol : null;
-      open[name] = {channel: name, startFrame: frame, endFrame: null, midi, periodValue: c.period, vol};
+      open[name] = {channel: name, startFrame: frame, endFrame: null, midi, periodValue: c.period, vol, freq0: freq};
       events.push(open[name]);
     }
   };
@@ -80,7 +88,40 @@ export function reconstruct(apuLog, frames, frameSec) {
   }
   for (const name of Object.keys(open)) open[name].endFrame = frames;
   for (const e of events) if (e.endFrame === null) e.endFrame = frames;
-  return events.filter(e => e.endFrame > e.startFrame);
+  // Slide collapse (MM2 2026-08-16): drivers render glissandi as per-frame
+  // period steps — a chain of abutting ≤2-frame notes, pitch moving each
+  // step (Flash Man's falling bass: A G F Eb D, one frame each, restart).
+  // Chip-true but musical nonsense as separate notes. A chain sliding INTO
+  // a held note merges into that note (portamento — the target is the note);
+  // an all-tiny chain merges into its FIRST pitch (a fall-off ornament).
+  // Real fast runs are safe: their notes are ≥3 frames and retriggered.
+  const byCh = {};
+  for (const e of events) (byCh[e.channel] = byCh[e.channel] || []).push(e);
+  const dead = new Set();
+  for (const [name, list] of Object.entries(byCh)) {
+    if (name === "noise") continue;
+    list.sort((a, b) => a.startFrame - b.startFrame || a.endFrame - b.endFrame);
+    const tiny = e => e.endFrame - e.startFrame <= 2;
+    let i = 0;
+    while (i < list.length) {
+      let j = i;
+      while (j + 1 < list.length && tiny(list[j]) &&
+             list[j + 1].startFrame - list[j].endFrame <= 0 &&
+             list[j + 1].midi !== list[j].midi &&
+             Math.abs(list[j + 1].midi - list[j].midi) <= 4) j++;
+      if (j > i) {
+        if (!tiny(list[j])) { // slid into a held note: the target absorbs the ramp
+          list[j].startFrame = list[i].startFrame;
+          for (let k = i; k < j; k++) dead.add(list[k]);
+        } else {              // pure ornament: first pitch, whole span
+          list[i].endFrame = list[j].endFrame;
+          for (let k = i + 1; k <= j; k++) dead.add(list[k]);
+        }
+      }
+      i = j + 1;
+    }
+  }
+  return events.filter(e => !dead.has(e) && e.endFrame > e.startFrame);
 }
 
 // The chip's true tempo rarely equals the MIDI transcription's round number
