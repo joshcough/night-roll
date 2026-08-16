@@ -4345,8 +4345,12 @@ function instRange() { // the song's pitch extent, octave-aligned C..B
   }
   return [Math.max(12, Math.floor(lo / 12) * 12), Math.min(107, Math.floor(hi / 12) * 12 + 11)];
 }
-function instLitPitches() { // sel = lasso'd, live = sounding right now (pitch → track index)
-  const sel = new Set(song ? multiSel.map(s => song.tracks[s.ti].notes[s.ni].p) : []);
+function instLitPitches() { // sel = lasso'd, live = sounding — both pitch → track index
+  const sel = new Map(); // earliest track wins when the same pitch is selected twice
+  if (song) for (const s of multiSel) {
+    const p = song.tracks[s.ti].notes[s.ni].p;
+    if (!sel.has(p) || s.ti < sel.get(p)) sel.set(p, s.ti);
+  }
   const live = new Map();
   if (playing && audio) {
     const s = playSec();
@@ -4477,11 +4481,15 @@ function drawGuitar(W, H, lit) {
     });
   };
   lit.live.forEach((ti, p) => add(p, TRACK_COLORS[ti % TRACK_COLORS.length]));
-  lit.sel.forEach(p => add(p, css("--gold"))); // lasso wins where both apply
+  lit.sel.forEach((ti, p) => add(p, TRACK_COLORS[ti % TRACK_COLORS.length])); // lasso'd notes wear their track's color
   if (instFlash && instFlash.si !== undefined) dots.push({...instFlash, color: css("--accent")});
   // pitch-class echoes (lasso only): EVERY same-named note on the neck gets a
-  // hollow ring — select an F# and all the F#s light, not just that octave
-  const selPcs = new Set([...lit.sel].map(p => p % 12));
+  // hollow ring in its source note's track color — earliest track wins
+  const selPcs = new Map();
+  lit.sel.forEach((ti, p) => {
+    const pc = p % 12;
+    if (!selPcs.has(pc) || ti < selPcs.get(pc)) selPcs.set(pc, ti);
+  });
   if (selPcs.size) {
     const taken = new Set(dots.map(d => d.si + ":" + d.f));
     GTR_TUNING.forEach((open, si) => {
@@ -4489,7 +4497,7 @@ function drawGuitar(W, H, lit) {
         const pc = (open + f) % 12;
         if (!selPcs.has(pc) || taken.has(si + ":" + f)) continue;
         const cx = g.nutX + (f === 0 ? 2 : (f - 0.5) * g.fw), cy = g.top + si * g.sh;
-        ictx.strokeStyle = css("--gold");
+        ictx.strokeStyle = TRACK_COLORS[selPcs.get(pc) % TRACK_COLORS.length];
         ictx.globalAlpha = 0.7;
         ictx.beginPath();
         ictx.arc(cx, cy, 9, 0, 7);
