@@ -567,6 +567,55 @@ test("manifest placement: save adds, move relocates, albums resolve by dir", () 
   assert.equal(mine.songs.find(s => s.path.includes("test-tune")).title, "Test Tune");
 });
 
+test("NSF import helpers: track keys, album titles, manifest, Sync exclusion", () => {
+  assert.equal(run(`impTrackKey("solstice", 7)`), "albums/imports/solstice/track-07.mid");
+  assert.equal(run(`albumTitleFor("albums/imports/solstice/track-07.mid")`), "Solstice");
+  run(`
+    localStorage.setItem("ff1roll-draft-albums/imports/solstice/track-07.mid", "{}");
+    localStorage.setItem("ff1roll-notes-albums/imports/solstice/track-07.mid", "[]");
+  `);
+  assert.deepEqual(val(`importDraftKeys()`), ["albums/imports/solstice/track-07.mid"]);
+  // uncommitted captures ride Commit import, not the Sync badge…
+  assert.equal(val(`dirtySongs()`).includes("albums/imports/solstice/track-07.mid"), false);
+  // …but once the draft is gone (committed), local notes sync normally again
+  run(`localStorage.removeItem("ff1roll-draft-albums/imports/solstice/track-07.mid");`);
+  assert.equal(val(`dirtySongs()`).includes("albums/imports/solstice/track-07.mid"), true);
+  run(`localStorage.removeItem("ff1roll-notes-albums/imports/solstice/track-07.mid");`);
+  const out = val(`(() => {
+    const albums = [];
+    manifestPlace(albums, null, "albums/imports/solstice/track-07.mid");
+    return albums;
+  })()`);
+  assert.equal(out[0].title, "Solstice"); // commit self-creates the album
+  assert.deepEqual(out[0].songs, [{title: "Track 07", path: "albums/imports/solstice/track-07.mid"}]);
+});
+
+test("NSF import: in-app capture runs the real pipeline and round-trips through parseMidi", async () => {
+  // same modules the browser dynamically imports, wired into the vm realm
+  const M = {
+    ...(await import("../tools/nsf/nsf.mjs")),
+    ...(await import("../tools/nsf/notes.mjs")),
+    ...(await import("../tools/nsf/midi-write.mjs")),
+  };
+  const nsf = M.parseNSF(readFileSync(new URL("../albums/final-fantasy-i/reference/ff1.nsf", import.meta.url)));
+  app.context.__M = M;
+  app.context.__nsf = nsf;
+  // track 17 = menu: known 8-bar loop, quick to run
+  const got = val(`(() => {
+    const cap = captureNsfTrack(__M, __nsf, 17, 35);
+    const parsed = parseMidi(new Uint8Array(cap.bytes).buffer);
+    return {looped: cap.looped, bpm: cap.bpm, secs: cap.secs,
+            anchor: cap.loopAnchor, target: cap.loopTarget,
+            tracks: parsed.tracks.length,
+            notes: parsed.tracks.reduce((a, t) => a + t.notes.length, 0)};
+  })()`);
+  assert.equal(got.looped, true, "menu loops on hardware");
+  assert.ok(got.bpm > 60 && got.bpm < 300, "grid fit found a sane tempo: " + got.bpm);
+  assert.ok(got.secs > 5 && got.secs < 35, "trimmed to intro + one pass");
+  assert.ok(got.tracks >= 3, "conductor + chip voices"); // conductor + pulses/triangle
+  assert.ok(got.notes > 50, "melody actually captured: " + got.notes + " notes");
+});
+
 test("help sheet covers every shipped feature (drift guard — extend this list when you ship)", () => {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   const help = html.match(/id="helpsheet"[\s\S]*?helpclose/)[0];
@@ -580,6 +629,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
+    "Import…", "NSF", "Commit import",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));

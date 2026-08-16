@@ -239,6 +239,32 @@ meter for foreign songs comes from a localStorage stash written on load).
 The Sync button shows the dirty-song count. Copy/Download fallbacks. Local
 unsynced additions persist in localStorage keyed by song path.
 
+**Import** (2026-08-15, File → Import…, replaces Load MIDI): one file
+picker, byte-sniffed — MIDI in any wrapper (.mid/.midi/.smf/.kar,
+RIFF-wrapped .rmi; MThd found anywhere) loads directly as a local file;
+an NSF (NESM magic) opens the capture panel instead. NSF capture runs
+the browser through the SAME pipeline that dumped the FF1 album —
+tools/nsf/{nsf,notes,midi-write}.mjs dynamically imported off Pages, so
+there is exactly one 6502/APU/loop-detect/tempo-fit code path — per
+track: run N seconds (panel field, default 75; needs intro + 2 loop
+passes), reconstruct, loop-detect + trim to intro + one pass, grid-fit
+bpm (4/4 seed 120 — meter/tempo stay re-derivable by annotation like
+any capture), makeMidi → parseMidi → stored as a LOCAL draft under
+`albums/imports/<album-slug>/track-NN.mid`, with a hardware `loop:`
+directive stashed as a local note when the loop returns past 1.1.
+Nothing touches the repo at capture time (Josh's ruling: audition
+first). Flow: Capture all (~10 s for a 23-track NSF) → open each from
+the panel or Open → drafts (labels prefixed `<album> /`) → ✕ the duds →
+Commit import (File menu item with live count, or the panel button)
+pushes every surviving import draft in one pass: .mid (writeMidi of the
+draft), loop rollnotes (stamped), album.json (self-created so
+build_manifest.mjs stays honest), manifest entries — then retires the
+local drafts; the album appears in Open like any other. Uncommitted
+captures are excluded from the Sync badge (their notes ride Commit, not
+Sync — a sidecar without its .mid would be an orphan). Expansion-chip
+NSFs (VRC6/FDS/…) capture 2A03 channels only; silent SFX slots report
+"silent" and store nothing.
+
 **Robustness:** MIDI parser finds tracks by MTrk magic scan (the original
 ff1battle had corrupt length headers — since rebuilt clean, guard kept),
 honors end-of-track, clamps note durations to 8

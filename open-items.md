@@ -404,18 +404,18 @@ his downloads: `review-handoff-2026-08-07.md` (code/tool review) and
   per bar; report changes. Not built yet.
 - **Game Over exercise owed:** bass root notes of all 8 bars as one
   sequence; name the pattern (game-over.md).
-- **Browser "Load .nsf" in Night Roll** (idea 2026-08-02; decided
-  2026-08-02 over a separate converter tool — Night Roll is already the
-  player you need for auditioning a fresh NSF's numbered tracks). Shape:
-  button next to Load .mid → pick file → track list → audition instantly
-  → download any track's .mid / .notes.txt. the NSF pipeline core (6502 + APU logger + note reconstruction +
-  MIDI writer, tools/nsf/) is pure JS with no Node dependencies, so it
-  can run in the page: file input → pick a track → capture + auto
-  loop-trim → straight into the roll, with .mid export. Would open any
-  plain-2A03 NSF (e.g. Mega Man 2). Caveats noted: cold NSFs have no
-  transcription reference, so tempo/bar labels start grid-fitted until
-  bars are counted by ear; track numbers are discovered by listening;
-  new sound drivers may expose new trimmer edge cases.
+- **Browser "Load .nsf" in Night Roll** (idea 2026-08-02; **SHIPPED
+  2026-08-15** as File → Import…): one byte-sniffing picker (MIDI loads
+  directly; NSF opens the capture panel), captures every track through
+  the dynamically-imported tools/nsf/ pipeline into LOCAL drafts under
+  albums/imports/<album>/, audition → ✕ duds → Commit import pushes the
+  keepers (mid + loop rollnotes + album.json + manifest) as a real
+  album. Josh's ruling: nothing commits until auditioned. URL fetching
+  was cut by Josh same day (downloading to the iPad turned out easy —
+  Files app, then the picker browses it). Standing caveats remain true:
+  cold NSFs start grid-fitted 4/4 until bars are counted by ear; tracks
+  are numbers until listened to; expansion chips (VRC6/FDS) don't
+  capture. First cold-NSF field test planned: Mega Man 2 on the iPad.
 
 - **In-app Claude chat — built but parked on the `claude-chat` branch,
   decision pending** (2026-08-01): a complete chat feature (💬 button,

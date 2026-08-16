@@ -289,6 +289,30 @@
   #metsheet .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   #metsheet .lbl { font-family: var(--mono); font-size: 12px; color: var(--dim); }
 
+  #importsheet {
+    display: none;
+    position: absolute;
+    z-index: 58;
+    max-width: 94vw;
+    width: 560px;
+  }
+  #importsheet.on { display: block; }
+  #importsheet .metpanel {
+    background: var(--panel2);
+    border: 1px solid var(--grid);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #importsheet .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #importsheet .lbl { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+  #implist { max-height: 42vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  #implist .row { flex-wrap: nowrap; }
+  #implist .st { font-family: var(--mono); font-size: 11px; color: var(--dim); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   #filesheet {
     display: none;
     position: absolute;
@@ -553,7 +577,7 @@
   <div class="brand">NIGHT <span>//</span> ROLL</div>
   <button id="filesheetbtn">File ▾</button>
   <span id="songcrumb"></span>
-  <input type="file" id="fileinput" accept=".mid,.midi,.smf,.kar,.rmi">
+  <input type="file" id="fileinput" accept=".mid,.midi,.smf,.kar,.rmi,.nsf">
 </header>
 <div id="trackrow">
   <div id="trackzone">
@@ -853,7 +877,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load MIDI (.mid, .midi, .smf, .kar, even RIFF-wrapped .rmi), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation — and lands as a LOCAL draft under an Import album; audition each capture, ✕ the duds in Open → drafts, then Commit import pushes the keepers to the repo as a real album; expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -866,7 +890,8 @@
   <button class="fitem" id="filenew">＋ New song…</button>
   <button class="fitem" id="filesave">Save (commit)</button>
   <button class="fitem" id="filesaveas">Save As…</button>
-  <label class="fitem" for="fileinput" style="display:block">Load MIDI…</label>
+  <label class="fitem" for="fileinput" style="display:block">Import… (.mid / .nsf)</label>
+  <button class="fitem" id="fileimpcommit" style="display:none">Commit import</button>
   <button class="fitem" id="filedlmid">Download .mid</button>
   <button class="fitem" id="filehelp">Help</button>
   <button class="fitem" id="fileabout">About</button>
@@ -941,6 +966,29 @@
     </div>
     <div class="row" id="metbeats" style="gap:6px;flex-wrap:wrap"></div>
     <div class="meta" style="margin:2px 0 0">tap a beat: accent → normal → silent · closing this panel does NOT stop the click</div>
+  </div>
+</div>
+
+<div id="importsheet">
+  <div class="metpanel">
+    <div class="row" style="align-items:center">
+      <h2 id="imptitle" style="margin:0;font-size:13px;letter-spacing:.1em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">NSF IMPORT</h2>
+      <button id="impclose" style="min-height:32px;padding:4px 10px">✕</button>
+    </div>
+    <div class="row">
+      <span class="lbl">album</span>
+      <input type="text" id="impslug" style="flex:1;min-width:120px;min-height:36px">
+      <span class="lbl">capture</span>
+      <input type="number" id="impsecs" value="75" min="10" max="300" style="width:64px;min-height:36px" aria-label="Seconds per track">
+      <span class="lbl">s</span>
+    </div>
+    <div class="row">
+      <button class="primary" id="impall">Capture all</button>
+      <button id="impcommit">Commit kept tracks</button>
+      <span class="lbl" id="impstatus" style="flex:1;min-width:0"></span>
+    </div>
+    <div id="implist"></div>
+    <div class="meta" style="margin:2px 0 0">captures are LOCAL drafts — audition each, ✕ the duds in Open → drafts, then Commit pushes the keepers to the repo</div>
   </div>
 </div>
 
@@ -1578,7 +1626,11 @@ function saveLocalNotes() {
 function dirtySongs() { // songs with unsynced local notes on this device
   return Object.keys(localStorage)
     .filter(k => k.startsWith("ff1roll-notes-"))
-    .map(k => k.slice("ff1roll-notes-".length));
+    .map(k => k.slice("ff1roll-notes-".length))
+    // uncommitted import captures ride Commit import, not Sync — a sidecar
+    // without its .mid in the repo would be an orphan
+    .filter(k => !(k.startsWith("albums/imports/") &&
+                   localStorage.getItem("ff1roll-draft-" + k) !== null));
 }
 function updateSyncBtn() {
   const n = dirtySongs().length;
@@ -3644,7 +3696,7 @@ function songTitleOf(path) {
     const hit = songs.find(([, p]) => p === path);
     if (hit) return hit[0];
   }
-  return path.split("/").pop();
+  return titleCaseSlug(path.split("/").pop().replace(/\.midi?$/i, ""));
 }
 function updateSongBtn() { // breadcrumb: Album › Title, with the real path dimmed after
   songtitleEl.innerHTML = "";
@@ -3653,7 +3705,9 @@ function updateSongBtn() { // breadcrumb: Album › Title, with the real path di
   const crumb = document.createElement("span");
   crumb.style.color = "var(--dim)";
   crumb.textContent = (group ? group[0]
-    : localStorage.getItem("ff1roll-draft-" + currentPath) ? "Night Roll drafts" : "Local") + " › ";
+    : localStorage.getItem("ff1roll-draft-" + currentPath)
+      ? (currentPath.startsWith("albums/imports/")
+         ? "Import › " + currentPath.split("/")[2] : "Night Roll drafts") : "Local") + " › ";
   const title = document.createElement("span");
   title.textContent = songTitleOf(currentPath);
   songtitleEl.append(crumb, title);
@@ -4579,12 +4633,21 @@ document.getElementById("fileinput").addEventListener("change", async e => {
   const f = e.target.files[0];
   if (!f) return;
   stop();
+  closeFileMenus();
   try {
-    setSong(parseMidi(await f.arrayBuffer()), null);
-    setInfo(f.name + " loaded (edits not saved for local files)");
-    songtitleEl.textContent = "Local › " + f.name;
-  } catch (err) { setInfo("could not parse: " + err.message); }
+    await importBytes(new Uint8Array(await f.arrayBuffer()), f.name);
+  } catch (err) { setInfo("could not import: " + err.message); }
+  e.target.value = ""; // allow re-picking the same file
 });
+async function importBytes(bytes, name) { // byte-sniff: extension lies, headers don't
+  if (String.fromCharCode(...bytes.subarray(0, 5)) === "NESM\x1a") {
+    await openNsfImport(bytes, name);
+    return;
+  }
+  setSong(parseMidi(bytes.buffer), null); // MThd is scanned anywhere (RIFF/.rmi too)
+  setInfo(name + " loaded (edits not saved for local files)");
+  songtitleEl.textContent = "Local › " + name;
+}
 document.getElementById("modeseg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
@@ -5555,6 +5618,7 @@ function isComposition() {
 const COMP_ALBUMS = [["Night Roll Sketches", NR_DIR], ["My Compositions", COMP_DIR]];
 function albumTitleFor(path) {
   for (const [t, dir] of COMP_ALBUMS) if (path.startsWith(dir) && !(dir === COMP_DIR && path.startsWith(NR_DIR))) return t;
+  if (path.startsWith("albums/imports/")) return titleCaseSlug(path.split("/")[2] || "imports");
   return null;
 }
 function titleCaseSlug(base) {
@@ -5726,6 +5790,10 @@ document.getElementById("filesheetbtn").addEventListener("click", e => {
       sel.appendChild(o);
     }
   }
+  const impN = importDraftKeys().length;
+  const impBtn = document.getElementById("fileimpcommit");
+  impBtn.style.display = impN ? "" : "none";
+  impBtn.textContent = "Commit import (" + impN + ")";
   fileStatus(isComposition() ? "composition — editable" : "locked (not an app-made song) — Save As forks an editable copy");
   const r = e.currentTarget.getBoundingClientRect();
   filesheet.style.left = Math.max(6, r.left) + "px";
@@ -5785,7 +5853,8 @@ function fsubDrafts() {
     const open = document.createElement("button");
     open.className = "fitem";
     open.style.flex = "1";
-    open.textContent = key.split("/").pop().replace(/\.mid$/, "") + (key === currentPath ? "   ✓" : "");
+    open.textContent = (key.startsWith(IMP_DIR) ? key.split("/")[2] + " / " : "") +
+                       key.split("/").pop().replace(/\.mid$/, "") + (key === currentPath ? "   ✓" : "");
     open.addEventListener("click", () => { closeFileMenus(); openDraft(key); });
     const del = document.createElement("button");
     del.className = "fitem";
@@ -5871,6 +5940,213 @@ document.getElementById("filedlmid").addEventListener("click", () => {
   a.click();
   URL.revokeObjectURL(a.href);
 });
+// ---------------------------------------------------------------- NSF import
+// Import… byte-sniffs the picked file: MIDI loads as before; an NSF (NESM
+// header) opens the capture panel instead. Capture runs the ROM's play
+// routine through the SAME 6502/APU pipeline that dumped the FF1 album
+// (tools/nsf/*.mjs, dynamically imported off Pages — one code path, zero
+// drift), loop-detects, trims to intro + one pass, grid-fits a tempo, and
+// stashes each track as a LOCAL draft under albums/imports/<album>/.
+// Nothing touches the repo until Commit (Josh's ruling 2026-08-15: audition
+// first — a bad capture never gets committed). ✕ the duds in Open → drafts;
+// Commit pushes the keepers: .mid + loop rollnotes + album.json + manifest.
+// Expansion-chip NSFs (VRC6/FDS/…) play 2A03 channels only.
+const IMP_DIR = "albums/imports/";
+function importDraftKeys() { return draftKeys().filter(k => k.startsWith(IMP_DIR)); }
+function impTrackKey(slug, n) { return IMP_DIR + slug + "/track-" + String(n).padStart(2, "0") + ".mid"; }
+let nsfSess = null; // {M: pipeline modules, nsf: parsed file, rows: [{st, open}]}
+async function nsfModules() {
+  if (!nsfModules.cache) {
+    const [a, b, c] = await Promise.all([
+      import("./tools/nsf/nsf.mjs"),
+      import("./tools/nsf/notes.mjs"),
+      import("./tools/nsf/midi-write.mjs"),
+    ]);
+    nsfModules.cache = {...a, ...b, ...c};
+  }
+  return nsfModules.cache;
+}
+function captureNsfTrack(M, nsf, track, seconds) { // dump-all.mjs recipe, minus the FF1 reference data
+  const {apuLog, frames, frameSec} = M.runNSF(nsf, track, seconds);
+  let events = M.reconstruct(apuLog, frames, frameSec);
+  if (!events.length) return null; // silent slot (SFX banks have them)
+  const t0 = Math.min(...events.map(ev => ev.startFrame));
+  events = events.map(ev => ({...ev, startFrame: ev.startFrame - t0, endFrame: ev.endFrame - t0}));
+  const loop = M.detectLoop(events, frames - t0, null);
+  let keptFrames = frames - t0;
+  if (loop) { // trim to intro + one pass, timing backported from later passes
+    events = M.backportTiming(events, loop.period);
+    keptFrames = loop.keep;
+    events = events.filter(ev => ev.startFrame < loop.onsets - 3)
+      .map(ev => ({...ev, endFrame: Math.min(ev.endFrame, keptFrames)}));
+  }
+  const bpm = M.fitBpm(events, frameSec, 120);
+  const bytes = M.makeMidi(events, {bpm, tsNum: 4, tsDen: 4, frameSec, snap: true});
+  const beatSec = 60 / bpm;
+  const backBeats = loop ? (loop.keep - loop.period) * frameSec / beatSec : 0;
+  const bq = beats => { // beats-from-zero -> [bar, beat] on the 16th grid (4/4 until re-barred)
+    const qb = Math.round(beats * 4) / 4;
+    return [Math.floor(qb / 4) + 1, qb - Math.floor(qb / 4) * 4 + 1];
+  };
+  return {bytes, bpm, secs: keptFrames * frameSec, looped: !!loop,
+          loopAnchor: loop && backBeats > 0.4 ? bq(keptFrames * frameSec / beatSec) : null,
+          loopTarget: loop && backBeats > 0.4 ? bq(backBeats) : null};
+}
+async function openNsfImport(bytes, name) {
+  const M = await nsfModules();
+  const nsf = M.parseNSF(bytes);
+  nsfSess = {M, nsf, rows: []};
+  document.getElementById("imptitle").textContent =
+    ((nsf.name || name) + (nsf.artist && nsf.artist !== "<?>" ? " — " + nsf.artist : "")).toUpperCase();
+  document.getElementById("impslug").value = slugify(nsf.name || name.replace(/\.nsf$/i, ""));
+  const list = document.getElementById("implist");
+  list.innerHTML = "";
+  for (let n = 1; n <= nsf.songs; n++) {
+    const row = document.createElement("div");
+    row.className = "row";
+    const lbl = document.createElement("span");
+    lbl.className = "lbl";
+    lbl.style.flex = "none";
+    lbl.textContent = "track " + String(n).padStart(2, "0");
+    const st = document.createElement("span");
+    st.className = "st";
+    st.textContent = "—";
+    const cap = document.createElement("button");
+    cap.style.cssText = "min-height:32px;padding:4px 10px;flex:none";
+    cap.textContent = "capture";
+    cap.addEventListener("click", () => impCapture(n));
+    const open = document.createElement("button");
+    open.style.cssText = "min-height:32px;padding:4px 10px;flex:none;display:none";
+    open.textContent = "open";
+    open.addEventListener("click", () => { // key pinned at capture time — slug edits later don't orphan it
+      const k = nsfSess.rows[n] && nsfSess.rows[n].key;
+      if (!k) return;
+      stop();
+      openDraft(k);
+    });
+    row.append(lbl, st, cap, open);
+    list.appendChild(row);
+    nsfSess.rows[n] = {st, open};
+  }
+  const sheet = document.getElementById("importsheet");
+  sheet.classList.add("on");
+  requestAnimationFrame(() => {
+    const w = sheet.offsetWidth;
+    sheet.style.left = Math.max(6, (window.innerWidth - w) / 2) + "px";
+    sheet.style.top = "56px";
+  });
+  impStatus(nsf.songs + " tracks — Capture all, audition, then commit the keepers.");
+}
+const impStatus = s => { document.getElementById("impstatus").textContent = s; };
+async function impCapture(n) {
+  if (!nsfSess) return;
+  const slug = slugify(document.getElementById("impslug").value) || "import";
+  const secs = Math.max(10, Math.min(300, +document.getElementById("impsecs").value || 75));
+  const row = nsfSess.rows[n];
+  row.st.textContent = "capturing…";
+  row.open.style.display = "none";
+  await new Promise(r => setTimeout(r)); // let the label paint before the CPU burn
+  try {
+    const cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
+    if (!cap) { row.st.textContent = "silent — nothing to keep"; return; }
+    const key = impTrackKey(slug, n);
+    row.key = key;
+    const parsed = parseMidi(cap.bytes.buffer);
+    localStorage.setItem(draftStoreKey(key), JSON.stringify({
+      savedStamp: 0, dirty: true, ppq: parsed.ppq, timesig: parsed.timesig || [4, 4],
+      tempos: parsed.tempos,
+      tracks: parsed.tracks.map(tr => ({name: tr.name,
+        notes: tr.notes.map(nt => ({t: nt.t, d: nt.d, p: nt.p, v: nt.v}))}))}));
+    if (cap.loopAnchor) // hardware loop point -> annotation, same rule as the FF1 dumps
+      localStorage.setItem("ff1roll-notes-" + key, JSON.stringify([
+        {b1: cap.loopAnchor[0], q1: cap.loopAnchor[1], b2: null, q2: null,
+         text: "loop: " + cap.loopTarget[0] + "." + cap.loopTarget[1]}]));
+    row.st.textContent = cap.secs.toFixed(1) + "s · " + cap.bpm + "bpm · " +
+                         (cap.looped ? "loop found" : "no loop (through-composed or capture too short)");
+    row.open.style.display = "";
+  } catch (err) { row.st.textContent = "failed: " + err.message; }
+}
+document.getElementById("impall").addEventListener("click", async e => {
+  if (!nsfSess) return;
+  const btn = e.currentTarget; // currentTarget nulls once the dispatch ends — grab it pre-await
+  btn.disabled = true;
+  try {
+    for (let n = 1; n <= nsfSess.nsf.songs; n++) {
+      impStatus("capturing " + n + "/" + nsfSess.nsf.songs + "…");
+      await impCapture(n);
+    }
+    impStatus("done — audition via open, ✕ duds in Open → drafts, then commit.");
+  } finally { btn.disabled = false; }
+});
+document.getElementById("impclose").addEventListener("click", () =>
+  document.getElementById("importsheet").classList.remove("on")); // captures live on as drafts
+document.getElementById("impcommit").addEventListener("click", e => {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  commitImports(impStatus).finally(() => { btn.disabled = false; });
+});
+async function ensureImportAlbum(slug, h) { // album.json keeps build_manifest.mjs honest offline
+  const path = IMP_DIR + slug + "/album.json";
+  const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+  if (g.ok) return;
+  const r = await fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify({
+    message: "Import album " + slug + " from Night Roll", branch: "main",
+    content: btoa(unescape(encodeURIComponent(
+      JSON.stringify({title: titleCaseSlug(slug), order: 50, songs: {}}, null, 1) + "\n")))})});
+  if (!r.ok) throw new Error("album.json HTTP " + r.status);
+}
+async function commitImports(status) { // push every surviving import draft in one pass
+  const keys = importDraftKeys();
+  if (!keys.length) { status("No import drafts to commit."); return; }
+  const token = localStorage.getItem("ff1roll-ghtoken");
+  if (!token) { status("No GitHub token stored yet — open Sync once and paste it there."); return; }
+  const h = ghHeaders(token);
+  let done = 0;
+  try {
+    for (const key of keys) {
+      status("Committing " + (done + 1) + "/" + keys.length + ": " + key.split("/").pop() + "…");
+      const d = JSON.parse(localStorage.getItem(draftStoreKey(key)));
+      const r1 = await putMidAt(key, h,
+        writeMidi({ppq: d.ppq, timesig: d.timesig, tempos: d.tempos, tracks: d.tracks}));
+      if (!r1.ok) throw new Error(key + " HTTP " + r1.status);
+      let local = [];
+      try { local = JSON.parse(localStorage.getItem("ff1roll-notes-" + key) || "[]"); } catch (err) { /* none */ }
+      if (local.length) {
+        const stamp = Date.now();
+        const content = serializeNotesList(local, 4, key.split("/").pop().replace(/\.mid$/, ""), stamp);
+        const r2 = await putRollnotes(key.replace(/\.mid$/, "") + ".rollnotes.json", content, h);
+        if (!r2.ok) throw new Error(key + " rollnotes HTTP " + r2.status);
+        localStorage.setItem("ff1roll-lastsync-" + key, JSON.stringify({t: stamp, text: content}));
+      }
+      done++;
+    }
+    for (const slug of [...new Set(keys.map(k => k.split("/")[2]))]) await ensureImportAlbum(slug, h);
+    await updateManifest(h, albums => {
+      let changed = false;
+      for (const k of keys) changed = manifestPlace(albums, null, k) || changed;
+      return changed;
+    });
+    for (const key of keys) { // repo owns them now; drafts + note stashes retire
+      localStorage.removeItem(draftStoreKey(key));
+      localStorage.removeItem("ff1roll-notes-" + key);
+      if (key === songKey && song) song.savedStamp = Date.now();
+    }
+    await initCatalog().catch(() => { /* Pages lag; dropdown refreshes next boot */ });
+    updateSongBtn();
+    updateSyncBtn();
+    status("Committed " + done + " track" + (done === 1 ? "" : "s") + " ✓ (Pages takes ~1 min to serve them).");
+  } catch (err) { status("Commit failed after " + done + ": " + err.message); }
+}
+document.getElementById("fileimpcommit").addEventListener("click", e => {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  commitImports(fileStatus).finally(() => {
+    btn.disabled = false;
+    const n = importDraftKeys().length;
+    btn.style.display = n ? "" : "none";
+    btn.textContent = "Commit import (" + n + ")";
+  });
+});
 document.getElementById("filesave").addEventListener("click", async e => {
   if (!song) return;
   if (!isComposition()) {
@@ -5898,13 +6174,14 @@ document.getElementById("filesave").addEventListener("click", async e => {
   } catch (err) { fileStatus("Save failed: " + err.message); }
   finally { btn.disabled = false; }
 });
-async function putMidAt(path, h) { // PUT the current song's .mid, one stale-sha retry
+async function putMidAt(path, h, bytes) { // PUT a .mid (current song unless bytes given), one stale-sha retry
+  const data = midiBase64(bytes || writeMidi(song));
   const putOnce = async () => {
     let sha = null;
     const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
     if (g.ok) sha = (await g.json()).sha;
     const body = {message: "Save " + path + " from Night Roll", branch: "main",
-                  content: midiBase64(writeMidi(song))};
+                  content: data};
     if (sha) body.sha = sha;
     return fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
   };

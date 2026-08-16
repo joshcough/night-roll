@@ -72,11 +72,18 @@ export function createApp() {
       addEventListener: noop,
     },
     window: { devicePixelRatio: 1, addEventListener: noop },
-    localStorage: {
+    // Proxy so Object.keys(localStorage) enumerates stored keys, like the real
+    // thing (draftKeys/dirtySongs scan that way)
+    localStorage: new Proxy({
       getItem: (k) => (store.has(k) ? store.get(k) : null),
       setItem: (k, v) => store.set(k, String(v)),
       removeItem: (k) => store.delete(k),
-    },
+    }, {
+      ownKeys: (t) => [...Object.keys(t), ...store.keys()],
+      getOwnPropertyDescriptor: (t, k) => store.has(k)
+        ? { enumerable: true, configurable: true, value: store.get(k) }
+        : Object.getOwnPropertyDescriptor(t, k),
+    }),
     getComputedStyle: () => ({ getPropertyValue: () => "#000" }),
     ResizeObserver: class { observe() {} },
     requestAnimationFrame: () => 0,
