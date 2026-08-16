@@ -578,8 +578,11 @@
   <div class="brand">NIGHT <span>//</span> ROLL</div>
   <button id="filesheetbtn">File ▾</button>
   <span id="songcrumb"></span>
-  <!-- no accept filter: iOS greys out extensions it doesn't recognize (.nsf) — the byte-sniff validates instead -->
-  <input type="file" id="fileinput">
+  <!-- accept threads two iOS quirks: listing only extensions grays out .nsf (no
+       registered type), while NO accept summons the photo-library sheet.
+       application/octet-stream maps to the root "any data" type: Files opens
+       directly and everything is selectable — the byte-sniff stays the real gate -->
+  <input type="file" id="fileinput" accept="application/octet-stream,.mid,.midi,.smf,.kar,.rmi,.nsf">
 </header>
 <div id="trackrow">
   <div id="trackzone">
