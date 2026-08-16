@@ -20,6 +20,28 @@ full-width color picker (swatches removed), track-row layout fixes
 (▾ hugs chips, transport pinned top), voice menu holds position + ✕.
 Tests 45/45. Details in NIGHT-ROLL.md.
 
+**MM2 "notes cut off" (Josh's last report before bed 2026-08-17
+~2am) — analysis + one fix shipped, LISTENING VERDICT NEEDED:**
+import now works end-to-end (the tab-killer was a negative backported
+time running the MIDI varint writer unbounded — found by the
+independent advisor, fixed + regression-tested). On the remaining
+"songs still fucked up / notes cut off": overnight data says the
+CAPTURE data is largely right — median durations legato (duty ~1,
+matching chip behavior), timing frame-exact, wily1 triangle matches
+its transcription 72% on a 50ms lattice (the pulse "mismatch" is
+mostly tempo drift: chip 150.01/180.01 vs transcribers' rounded
+148/175, plus echo/vibrato simplifications in the transcriptions).
+Prime suspect for the EAR: the app's fixed note envelope — 8ms attack
++ 30ms release ate 76% of a 50ms note, and MM2's 300bpm tracks are
+FULL of 50ms notes → "cut off" percept. Fix shipped: envelope now
+scales with duration (short notes keep ~75% body). Morning protocol:
+re-listen to a 300bpm track (Quick Man t9, Flash Man t3); if still
+wrong, Josh should name ONE track + ONE spot (bar/second) and whether
+it's the roll (data wrong) or only the sound (synthesis wrong) — that
+one datum decides capture-vs-playback. Also possible next lever:
+chip volume envelopes (MM2 fades notes; our render holds full level —
+sounds LONGER than game, not shorter).
+
 **MM2 bug #2 ALSO FIXED overnight (autonomous session with Josh's
 reference MIDIs + mm2.nsf):** after the fitBpm fix he reported "much
 better but still broken." Raw APU write dumps showed the real remainder:

@@ -3265,9 +3265,14 @@ function scheduleNote(ti, n, when, durSec) {
   }
   const o = makeOsc(v); // chip waves + organ: flat sustain
   o.frequency.value = f0;
+  // envelope scales with the note: fixed 8ms attack + 30ms release ATE most
+  // of a 50ms note (MM2 runs at 300bpm sound "cut off" — 2026-08-17); the
+  // chip itself is essentially gated square, so short notes stay mostly body
+  const atk = Math.min(0.008, durSec * 0.15);
+  const rel = Math.min(0.03, durSec * 0.25);
   g.gain.setValueAtTime(0, when);
-  g.gain.linearRampToValueAtTime(amp, when + 0.008);
-  g.gain.setValueAtTime(amp, Math.max(when + 0.008, end - 0.03));
+  g.gain.linearRampToValueAtTime(amp, when + atk);
+  g.gain.setValueAtTime(amp, Math.max(when + atk, end - rel));
   g.gain.linearRampToValueAtTime(0, end);
   o.connect(g);
   o.start(when);
