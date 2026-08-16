@@ -719,3 +719,21 @@ test("cross-device freshness: stamps ride saves, drafts remember their base", ()
   run(`songKey = "midi/test.mid"; rollnotes = [];`);
   app.store.delete("ff1roll-draft-albums/compositions/nightroll/fresh-test.mid");
 });
+
+test("parseMidi: MThd found anywhere — RIFF-wrapped and junk-prefixed files parse", () => {
+  installSong();
+  const out = val(`(() => {
+    const s = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}],
+      tracks: [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]}]};
+    const clean = writeMidi(s);
+    // fake an .rmi-style prefix: 20 bytes of RIFF-ish junk before MThd
+    const prefix = Uint8Array.from("RIFF....RMIDdata....", c => c.charCodeAt(0));
+    const wrapped = new Uint8Array(prefix.length + clean.length);
+    wrapped.set(prefix, 0);
+    wrapped.set(clean, prefix.length);
+    const p = parseMidi(wrapped.buffer);
+    return {ppq: p.ppq, notes: p.tracks[0].notes.map(n => [n.t, n.p])};
+  })()`);
+  assert.equal(out.ppq, 480);
+  assert.deepEqual(out.notes, [[0, 60]]);
+});

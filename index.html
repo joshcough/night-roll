@@ -553,7 +553,7 @@
   <div class="brand">NIGHT <span>//</span> ROLL</div>
   <button id="filesheetbtn">File ▾</button>
   <span id="songcrumb"></span>
-  <input type="file" id="fileinput" accept=".mid,.midi">
+  <input type="file" id="fileinput" accept=".mid,.midi,.smf,.kar,.rmi">
 </header>
 <div id="trackrow">
   <div id="trackzone">
@@ -853,7 +853,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load .mid, Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Load MIDI (.mid, .midi, .smf, .kar, even RIFF-wrapped .rmi), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -866,7 +866,7 @@
   <button class="fitem" id="filenew">＋ New song…</button>
   <button class="fitem" id="filesave">Save (commit)</button>
   <button class="fitem" id="filesaveas">Save As…</button>
-  <label class="fitem" for="fileinput" style="display:block">Load .mid…</label>
+  <label class="fitem" for="fileinput" style="display:block">Load MIDI…</label>
   <button class="fitem" id="filedlmid">Download .mid</button>
   <button class="fitem" id="filehelp">Help</button>
   <button class="fitem" id="fileabout">About</button>
@@ -1022,9 +1022,15 @@ function parseMidi(buf) {
   let i = 0;
   const u32 = p => (d[p]<<24 | d[p+1]<<16 | d[p+2]<<8 | d[p+3]) >>> 0;
   const u16 = p => d[p]<<8 | d[p+1];
-  if (String.fromCharCode(d[0],d[1],d[2],d[3]) !== "MThd") throw new Error("not a MIDI file");
-  const hlen = u32(4), ntrk = u16(10), ppq = u16(12);
-  i = 8 + hlen;
+  // find MThd wherever it sits — .rmi wraps SMF in a RIFF header, and some
+  // exports carry junk prefixes; requiring byte 0 rejected real MIDI files
+  let h = -1;
+  for (let k = 0; k + 4 <= d.length; k++) {
+    if (d[k] === 0x4D && d[k+1] === 0x54 && d[k+2] === 0x68 && d[k+3] === 0x64) { h = k; break; }
+  }
+  if (h < 0) throw new Error("not a MIDI file");
+  const hlen = u32(h + 4), ntrk = u16(h + 10), ppq = u16(h + 12);
+  i = h + 8 + hlen;
   const tracks = [];
   const tempos = []; // {tick, usq}
   let timesig = [4, 4];
@@ -1032,7 +1038,7 @@ function parseMidi(buf) {
   // Track boundaries by MTrk magic scan — some files (ff1battle) have corrupt
   // track-length headers, so the declared length can't be trusted alone.
   const magics = [];
-  for (let k = 8 + hlen; k + 4 <= d.length; k++) {
+  for (let k = h + 8 + hlen; k + 4 <= d.length; k++) {
     if (d[k] === 0x4D && d[k+1] === 0x54 && d[k+2] === 0x72 && d[k+3] === 0x6B) magics.push(k);
   }
   for (let tn = 0; tn < magics.length; tn++) {
