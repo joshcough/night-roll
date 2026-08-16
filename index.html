@@ -882,7 +882,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -913,6 +913,13 @@
     <div class="row">
       <input type="text" id="fsname" placeholder="fork name" style="flex:1;min-height:40px">
       <button class="primary" id="fsgo">Fork</button>
+    </div>
+  </div>
+  <button class="fitem" id="filerename">Rename…</button>
+  <div id="filerenameform" style="display:none">
+    <div class="row">
+      <input type="text" id="frname" placeholder="new name" style="flex:1;min-height:40px">
+      <button class="primary" id="frgo">Rename</button>
     </div>
   </div>
   <div class="row" id="filemoverow" style="display:none">
@@ -3962,7 +3969,12 @@ function songTitleOf(path) {
     const hit = songs.find(([, p]) => p === path);
     if (hit) return hit[0];
   }
-  return titleCaseSlug(path.split("/").pop().replace(/\.midi?$/i, ""));
+  const base = path.split("/").pop().replace(/\.midi?$/i, "");
+  try { // a draft may carry a typed title (rename / import naming)
+    const d = JSON.parse(localStorage.getItem("ff1roll-draft-" + path) || "null");
+    if (d && d.title) return impDisplayTitle(d, base);
+  } catch (err) { /* corrupt draft */ }
+  return titleCaseSlug(base);
 }
 function updateSongBtn() { // breadcrumb: Album › Title, with the real path dimmed after
   songtitleEl.innerHTML = "";
@@ -6064,6 +6076,7 @@ document.getElementById("filesheetbtn").addEventListener("click", e => {
   filesub.classList.remove("on");
   document.getElementById("filenewform").style.display = "none";
   document.getElementById("filesaveasform").style.display = "none";
+  document.getElementById("filerenameform").style.display = "none";
   document.getElementById("filemoverow").style.display = isComposition() ? "" : "none";
   if (isComposition()) { // move targets: the other compositions album(s)
     const sel = document.getElementById("fmdest");
@@ -6191,7 +6204,7 @@ function fsubDrafts() {
     filesub.appendChild(row);
   }
   for (const key of keys.filter(k => !k.startsWith(IMP_DIR)))
-    draftRow(key, (key.startsWith("local/") ? "local / " : "") + key.split("/").pop().replace(/\.mid$/, ""),
+    draftRow(key, (key.startsWith("local/") ? "local / " : "") + songTitleOf(key),
              () => { fsubDrafts(); if (!draftKeys().length) fsubAlbums(); });
 }
 function fsubImportAlbum(slug) {
@@ -6219,7 +6232,7 @@ function fsubImportAlbum(slug) {
       commitImports(s => fileStatus(s), [key])
         .finally(() => { importDraftKeys().some(k => k.split("/")[2] === slug) ? fsubImportAlbum(slug) : fsubDrafts(); });
     });
-    draftRow(key, key.split("/").pop().replace(/\.mid$/, ""),
+    draftRow(key, songTitleOf(key),
              () => { importDraftKeys().some(k => k.split("/")[2] === slug) ? fsubImportAlbum(slug) : fsubDrafts(); },
              up);
   }
@@ -6283,6 +6296,76 @@ document.getElementById("fsgo").addEventListener("click", () => {
   document.getElementById("filesheet").classList.remove("on");
   setInfo("forked to " + songKey + " — fully editable; File → Save commits it.");
 });
+// Rename works on EVERYTHING (Josh 2026-08-16): an uncommitted draft renames
+// its file; a repo song keeps its filename (analysis docs reference it) and
+// gets a display-title override in album.json + the manifest instead
+document.getElementById("filerename").addEventListener("click", () => {
+  if (!songKey) { fileStatus("Nothing to rename — no song open."); return; }
+  document.getElementById("filerenameform").style.display = "";
+  document.getElementById("filenewform").style.display = "none";
+  document.getElementById("filesaveasform").style.display = "none";
+  const inp = document.getElementById("frname");
+  inp.value = songTitleOf(songKey);
+  inp.focus();
+  inp.select();
+});
+document.getElementById("frname").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); document.getElementById("frgo").click(); }
+});
+document.getElementById("frgo").addEventListener("click", async e => {
+  const raw = document.getElementById("frname").value.trim();
+  if (!raw || !songKey) { fileStatus("⚠ Type the new name first."); return; }
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  try {
+    const hasDraft = localStorage.getItem(draftStoreKey(songKey)) !== null;
+    if (hasDraft && !(song && song.savedStamp)) { // never committed: rename the file itself
+      const newKey = renameImportDraft(songKey, raw);
+      if (newKey === null) { fileStatus("⚠ A draft named \"" + slugify(raw) + "\" already exists."); return; }
+      updateSongBtn();
+      fileStatus("Renamed ✓ (local draft — the name commits with it).");
+    } else { // repo song: title override, filename untouched
+      const token = localStorage.getItem("ff1roll-ghtoken");
+      if (!token) { fileStatus("No GitHub token stored yet — open Sync once and paste it there."); return; }
+      fileStatus("Renaming…");
+      await renameRepoTitle(songKey, raw, ghHeaders(token));
+      await initCatalog().catch(() => { /* CDN lag; next boot */ });
+      updateSongBtn();
+      fileStatus("Renamed ✓ — \"" + raw + "\" everywhere the dropdown shows it.");
+    }
+    document.getElementById("filerenameform").style.display = "none";
+  } catch (err) { fileStatus("Rename failed: " + err.message); }
+  finally { btn.disabled = false; }
+});
+async function renameRepoTitle(key, title, h) { // album.json songs override + manifest entry
+  const parts = key.split("/");
+  const file = parts.pop();
+  if (parts[parts.length - 1] === "songs") parts.pop(); // FF1-style albums keep songs/ nested
+  const path = parts.join("/") + "/album.json";
+  const base = file.replace(/\.midi?$/i, "");
+  const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
+  let meta = {title: titleCaseSlug(parts[parts.length - 1]), songs: {}}, sha = null;
+  if (g.ok) { // preserve every existing field (FF1's album.json carries notes/order)
+    const j = await g.json();
+    sha = j.sha;
+    try { meta = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, ""))))); } catch (err) { /* rewrite */ }
+  }
+  if (Array.isArray(meta.songs)) meta.songs = {}; // ancient shape guard
+  meta.songs = {...(meta.songs || {}), [base]: title};
+  const body = {message: "Rename " + base + " to \"" + title + "\" from Night Roll", branch: "main",
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(meta, null, 1) + "\n")))};
+  if (sha) body.sha = sha;
+  const r = await fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
+  if (!r.ok) throw new Error("album.json HTTP " + r.status);
+  await updateManifest(h, albums => {
+    let changed = false;
+    for (const a of albums) {
+      const s = a.songs.find(x => x.path === key);
+      if (s) { s.title = title; a.songs.sort((x, y) => x.title.localeCompare(y.title)); changed = true; }
+    }
+    return changed;
+  });
+}
 document.getElementById("filedlmid").addEventListener("click", () => {
   if (!song) return;
   const a = document.createElement("a");
