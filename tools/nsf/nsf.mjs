@@ -103,16 +103,22 @@ export function runNSF(nsf, songIndex1Based, seconds) {
 // iOS Safari's watchdog force-reloads a page that blocks too long (Josh's
 // MM2 300s retry killed the whole import, 2026-08-16). onProgress(0..1)
 // optional. Node/offline callers keep the sync runNSF.
-export async function runNSFAsync(nsf, songIndex1Based, seconds, onProgress, chunkFrames = 240) {
+export async function runNSFAsync(nsf, songIndex1Based, seconds, onProgress, budgetMs = 35) {
+  // TIME-based yielding, not count-based: a fixed chunk size tuned on a fast
+  // machine is seconds per chunk on an iPad — and iOS Safari's watchdog kills
+  // the tab anyway (the 2026-08-16 crash chain). ~35ms keeps any device fluid.
+  const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
   const state = makeRun(nsf);
   state.callsub(nsf.initAddr, songIndex1Based - 1, 0);
   const frames = Math.round(seconds * 1_000_000 / nsf.playSpeedNTSC);
+  let last = now();
   for (let f = 1; f <= frames; f++) {
     state.setFrame(f);
     state.callsub(nsf.playAddr, 0, 0);
-    if (f % chunkFrames === 0) {
+    if (now() - last >= budgetMs) {
       if (onProgress) onProgress(f / frames);
       await new Promise(r => setTimeout(r, 0)); // breathe: let the UI paint, keep the watchdog calm
+      last = now();
     }
   }
   return {apuLog: state.apuLog, frames, frameSec: nsf.playSpeedNTSC / 1_000_000};

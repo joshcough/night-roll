@@ -7007,8 +7007,10 @@ try { // a capture beacon surviving into a fresh load = the tab was killed mid-c
   const b = JSON.parse(sessionStorage.getItem("ff1roll-capcrash") || "null");
   if (b) {
     sessionStorage.removeItem("ff1roll-capcrash");
-    setInfo("⚠ the last NSF capture killed this tab: track " + b.n + ", " + b.phase +
-            " at " + (b.pct || 0) + "% of " + b.secs + "s — tell Claude these numbers");
+    const msg = "⚠ the last NSF capture killed this tab: track " + b.n + ", " + b.phase +
+                " at " + (b.pct || 0) + "% of " + b.secs + "s — tell Claude these numbers";
+    setInfo(msg);
+    setTimeout(() => setInfo(msg), 2500); // outlive whatever boot writes over it
   }
 } catch (err) { /* no beacon */ }
 (async function boot() {

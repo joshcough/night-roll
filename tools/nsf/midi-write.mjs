@@ -15,6 +15,9 @@ export function snapBeat(b) {
 }
 
 function vl(v) {
+  // negative deltas never terminate (sign-preserving >>) — the loop
+  // allocates unbounded memory and kills the tab. Fail loudly instead.
+  if (v < 0) throw new Error("negative MIDI delta " + v + " — timing bug upstream");
   const out = [v & 0x7F];
   v >>= 7;
   while (v) { out.push((v & 0x7F) | 0x80); v >>= 7; }

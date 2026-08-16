@@ -5,7 +5,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { makeTestNSF } from "../tools/nsf/make-test-nsf.mjs";
 import { parseNSF, runNSF } from "../tools/nsf/nsf.mjs";
-import { reconstruct, toNotesTxt, pitchName } from "../tools/nsf/notes.mjs";
+import { reconstruct, toNotesTxt, pitchName, backportTiming } from "../tools/nsf/notes.mjs";
+import { makeMidi } from "../tools/nsf/midi-write.mjs";
 
 test("NSF pipeline: synthetic tune comes back note-perfect with channel identity", () => {
   const nsf = parseNSF(makeTestNSF().buffer);
@@ -130,4 +131,27 @@ test("period → pitch boundaries: guard floors and ceilings", () => {
   // triangle depth: $7FF → 27.32 Hz → A0, the bass floor Josh reads
   const deep = reconstruct(triLog([0x7FF]).log, 10, 1 / 60);
   assert.equal(pitchName(deep[0].midi), "A0");
+});
+
+test("backportTiming never births a negative time; makeMidi refuses one loudly", () => {
+  // the MM2-track-3 tab-killer (2026-08-16): an event in the first ~3 frames
+  // fuzzy-matches a twin whose backported start lands before frame 0; the
+  // negative MIDI delta then ran the varint writer's loop unbounded
+  const P = 100;
+  const events = [
+    {channel: "noise", midi: 7, startFrame: 1, endFrame: 4, vol: 8},     // early event…
+    {channel: "noise", midi: 7, startFrame: 98, endFrame: 101, vol: 8},  // …fuzzy twin at +P-3 → s2 = -2
+    {channel: "pulse1", midi: 60, startFrame: 10, endFrame: 20, vol: 8},
+    {channel: "pulse1", midi: 60, startFrame: 110, endFrame: 120, vol: 8},
+  ];
+  const back = backportTiming(events, P);
+  assert.ok(back.every(e => e.startFrame >= 0), "no negative startFrames");
+  assert.deepEqual(back.find(e => e.startFrame === 1 && e.channel === "noise"),
+                   events[0], "hazardous match keeps raw timing");
+  // the exact-twin pulse still backports normally
+  assert.equal(back.filter(e => e.channel === "pulse1")[0].startFrame, 10);
+  // and the writer now fails loudly instead of allocating forever
+  assert.throws(() => makeMidi([{channel: "pulse1", midi: 60, startFrame: -50, endFrame: 5, vol: 8}],
+                               {bpm: 150, frameSec: 1 / 60, snap: true}),
+                /negative MIDI delta/); // (a -2 rounds to grid zero; a real negative must throw, not hang)
 });

@@ -236,12 +236,15 @@ export function detectLoop(events, frames, hint = null) {
 // tab AFTER the (already-async) emulation hit 100% — Josh's beacon-adjacent
 // sighting pinned it (2026-08-16). Identical iteration order = identical
 // results to detectLoop.
-export async function detectLoopAsync(events, frames, hint = null, yieldEvery = 300) {
+export async function detectLoopAsync(events, frames, hint = null, budgetMs = 35) {
+  // time-budget yields (not every-N): one candidate's cost varies 10-20x
+  // between a desktop and an iPad — counting chunks re-froze the slow device
   const scan = makeLoopScan(events, frames, hint);
   if (!scan) return null;
-  let best = null, since = 0;
+  const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+  let best = null, last = now();
   for (let P = scan.pLo; P <= scan.pHi; P++) {
-    if (++since >= yieldEvery) { since = 0; await new Promise(r => setTimeout(r, 0)); }
+    if (now() - last >= budgetMs) { await new Promise(r => setTimeout(r, 0)); last = now(); }
     const r = scan.step(P);
     if (!r) continue;
     if (!hint) return r;
@@ -262,6 +265,12 @@ export function backportTiming(events, period) {
       const twin = byKey.get(e.channel + ":" + e.midi + ":" + (e.startFrame + period + off));
       if (twin) {
         const s2 = twin.startFrame - period;
+        // an event in the first ~3 frames can fuzzy-match a twin whose
+        // backported start lands BEFORE frame 0 — a negative time that sent
+        // the MIDI varint writer into an unbounded allocation loop and
+        // killed the iPad tab every run (MM2 track 3, 2026-08-16). Keep
+        // raw timing instead; frame-0 material is once-only anyway.
+        if (s2 < 0) return e;
         return s2 === e.startFrame ? e
           : {...e, startFrame: s2, endFrame: twin.endFrame - period};
       }
