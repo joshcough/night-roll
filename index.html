@@ -6525,7 +6525,15 @@ async function impCapture(n) {
   row.st.textContent = "capturing…";
   row.open.style.display = "none";
   await new Promise(r => setTimeout(r)); // let the label paint before the CPU burn
-  const pct = p => { row.st.textContent = "capturing… " + Math.round(p * 100) + "%"; };
+  // crash beacon: if the tab dies mid-capture (watchdog, OOM), this survives
+  // the reload and names the casualty instead of leaving a mystery
+  const beacon = phase => sessionStorage.setItem("ff1roll-capcrash",
+    JSON.stringify({n, secs, phase, pct: 0, t: Date.now()}));
+  beacon("emulating");
+  const pct = p => {
+    row.st.textContent = "capturing… " + Math.round(p * 100) + "%";
+    try { const b = JSON.parse(sessionStorage.getItem("ff1roll-capcrash")); b.pct = Math.round(p * 100); sessionStorage.setItem("ff1roll-capcrash", JSON.stringify(b)); } catch (err) { /* beacon lost */ }
+  };
   try {
     let cap = await captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs, pct);
     // the detector needs intro + TWO full passes in frame — a 35s loop with an
@@ -6533,6 +6541,7 @@ async function impCapture(n) {
     // ceiling (a doubling ladder just re-emulates the same song extra times)
     if (cap && !cap.looped && secs < 300) {
       secs = 300;
+      beacon("retry-300s");
       const pct2 = p => { row.st.textContent = "no loop — retrying 300s… " + Math.round(p * 100) + "%"; };
       cap = await captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs, pct2);
     }
@@ -6569,8 +6578,10 @@ async function impCapture(n) {
     row.open.style.display = "";
     row.cap.textContent = "↻"; // captured: tapping again re-runs and overwrites this draft
     row.cap.setAttribute("aria-label", "Re-capture this track");
+    sessionStorage.removeItem("ff1roll-capcrash"); // survived
     return true;
   } catch (err) { row.st.textContent = "failed: " + err.message; }
+  sessionStorage.removeItem("ff1roll-capcrash"); // an error row is not a crash
   return false;
 }
 function impRename(n) { // typed a name in a row: rename its captured draft in place
@@ -6987,6 +6998,14 @@ document.getElementById("ghsaveall").addEventListener("click", async e => {
 applyViewMode();
 resize();
 updateSyncBtn();
+try { // a capture beacon surviving into a fresh load = the tab was killed mid-capture
+  const b = JSON.parse(sessionStorage.getItem("ff1roll-capcrash") || "null");
+  if (b) {
+    sessionStorage.removeItem("ff1roll-capcrash");
+    setInfo("⚠ the last NSF capture killed this tab: track " + b.n + ", " + b.phase +
+            " at " + (b.pct || 0) + "% of " + b.secs + "s — tell Claude these numbers");
+  }
+} catch (err) { /* no beacon */ }
 (async function boot() {
   try { await initCatalog(); }
   catch (e) { setInfo("albums/manifest.json failed to load — open via a web server: " + e.message); return; }
