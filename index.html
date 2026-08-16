@@ -5519,14 +5519,30 @@ document.getElementById("filenew").addEventListener("click", () => {
 });
 document.getElementById("fncreate").addEventListener("click", () => {
   const name = document.getElementById("fnname").value;
-  if (!name.trim()) { fileStatus("Name it first."); return; }
+  if (!name.trim()) { fileStatus("⚠ Name it first."); document.getElementById("fnname").focus(); return; }
   const key = NR_DIR + slugify(name) + ".mid";
-  if (localStorage.getItem(draftStoreKey(key))) { fileStatus("A draft by that name exists — pick another."); return; }
+  if (localStorage.getItem(draftStoreKey(key))) {
+    // collision: suggest the next free name instead of silently refusing
+    let n = 2;
+    while (localStorage.getItem(draftStoreKey(NR_DIR + slugify(name) + "-" + n + ".mid"))) n++;
+    document.getElementById("fnname").value = slugify(name) + "-" + n;
+    fileStatus("⚠ A draft named \"" + slugify(name) + "\" already exists (see Open → Night Roll drafts). " +
+               "Suggested \"" + slugify(name) + "-" + n + "\" — tap Create again to use it.");
+    return;
+  }
   stop();
   createComposition(name, +document.getElementById("fnbpm").value || 120,
                     +document.getElementById("fnnum").value, +document.getElementById("fnden").value);
   document.getElementById("filesheet").classList.remove("on");
   setInfo("new song — Edit → Pencil to write. Draft auto-saves on this device; File → Save commits.");
+});
+// return key in the name fields = the primary action (iOS keyboards
+// otherwise cost an extra tap: the first one just dismisses the keyboard)
+document.getElementById("fnname").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); document.getElementById("fncreate").click(); }
+});
+document.getElementById("fsname").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); document.getElementById("fsgo").click(); }
 });
 document.getElementById("filesaveas").addEventListener("click", () => {
   if (!song) return;
