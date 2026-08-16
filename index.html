@@ -680,6 +680,7 @@
   <button id="subbtn">💬</button>
   <button id="listbtn">☰ Notes</button>
   <button id="notebtn">+ Note</button>
+  <button id="errbtn" style="display:none;color:#e66767" aria-label="Errors">⚠</button>
   <button id="syncbtn">Sync</button>
   <button id="clearbtn" style="display:none">Clear edits</button>
 </footer>
@@ -885,6 +886,7 @@
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
+      <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -1000,6 +1002,17 @@
       <button id="midcancel">Cancel</button>
     </div>
     <div class="status">An album lands in Open → drafts as a folder — audition, rename, then ⇪ Commit publishes it to the songs repo and annotations sync everywhere. Local stays on this device, annotations included.</div>
+  </div>
+</div>
+
+<div class="overlay" id="errsheet">
+  <div class="sheet">
+    <h2>MESSAGES</h2>
+    <div class="status" id="errlist" style="max-height:55vh;overflow-y:auto;white-space:pre-wrap"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="errclear">Clear</button>
+      <button id="errclose" style="margin-left:auto">Close</button>
+    </div>
   </div>
 </div>
 
@@ -2528,7 +2541,36 @@ function noteLabel(ti, ni) {
          (n.d / song.ppq).toFixed(2) + "q · vel " + n.v + " · " + tname + (n.added ? " · added" : "");
 }
 let infoCopyText = null; // when set, tapping the info strip copies this
+// Error log (Josh's design 2026-08-17): errors must outlive the info strip
+// (the next message overwrites it) and be findable without devtools —
+// crucial on the iPad. ⚠ appears in the footer only when something logged.
+const appErrors = [];
+function logErr(msg) {
+  appErrors.push({t: new Date(), msg: String(msg)});
+  if (appErrors.length > 200) appErrors.shift();
+  const b = document.getElementById("errbtn");
+  b.style.display = "";
+  b.textContent = "⚠ " + appErrors.length;
+}
+window.addEventListener("error", e =>
+  logErr("uncaught: " + e.message + (e.filename ? " (" + (e.filename.split("/").pop()) + ":" + e.lineno + ")" : "")));
+window.addEventListener("unhandledrejection", e =>
+  logErr("unhandled: " + (e.reason && e.reason.message || e.reason)));
+document.getElementById("errbtn").addEventListener("click", () => {
+  document.getElementById("errlist").textContent = appErrors.length
+    ? [...appErrors].reverse().map(x => x.t.toLocaleTimeString() + "  " + x.msg).join("\n\n")
+    : "No messages.";
+  document.getElementById("errsheet").classList.add("on");
+});
+document.getElementById("errclose").addEventListener("click", () =>
+  document.getElementById("errsheet").classList.remove("on"));
+document.getElementById("errclear").addEventListener("click", () => {
+  appErrors.length = 0;
+  document.getElementById("errbtn").style.display = "none";
+  document.getElementById("errsheet").classList.remove("on");
+});
 function setInfo(s, copyText) {
+  if (/⚠|failed|error|can't|cannot|unavailable/i.test(s)) logErr(s); // warnings survive being overwritten
   const el = document.getElementById("noteinfo");
   el.textContent = s;
   infoCopyText = copyText || null;
@@ -6353,7 +6395,10 @@ function forkCurrentSong(name) {
   updateSongBtn();
   draw();
 }
-const fileStatus = s => { document.getElementById("filestatus").textContent = s; };
+const fileStatus = s => {
+  if (/⚠|failed|error|can't|cannot/i.test(s)) logErr(s);
+  document.getElementById("filestatus").textContent = s;
+};
 const filesheet = document.getElementById("filesheet");
 document.getElementById("filesheetbtn").addEventListener("click", e => {
   if (filesheet.classList.contains("on")) { closeFileMenus(); return; }
@@ -6796,7 +6841,10 @@ async function openNsfImport(bytes, name) {
   });
   impStatus(nsf.songs + " tracks — Capture all, audition, then commit the keepers.");
 }
-const impStatus = s => { document.getElementById("impstatus").textContent = s; };
+const impStatus = s => {
+  if (/⚠|failed|error|can't|cannot/i.test(s)) logErr(s);
+  document.getElementById("impstatus").textContent = s;
+};
 // display name for a committed import: the typed title verbatim ("Dr. Wily's
 // Castle") — a bare slug just gets prettified ("airship" -> "Airship")
 function impDisplayTitle(d, base) {
