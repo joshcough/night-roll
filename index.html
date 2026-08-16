@@ -6392,10 +6392,14 @@ function impTrackKey(slug, n) { return IMP_DIR + slug + "/track-" + String(n).pa
 let nsfSess = null; // {M: pipeline modules, nsf: parsed file, rows: [{st, open}]}
 async function nsfModules() {
   if (!nsfModules.cache) {
+    // ?v busts the Pages CDN per page load — a stale pipeline module next to
+    // a fresh index.html reintroduced fixed bugs (the sync-runner fallback
+    // froze Josh's iPad tab an hour after the async fix shipped)
+    const v = "?v=" + Date.now();
     const [a, b, c] = await Promise.all([
-      import("./tools/nsf/nsf.mjs"),
-      import("./tools/nsf/notes.mjs"),
-      import("./tools/nsf/midi-write.mjs"),
+      import("./tools/nsf/nsf.mjs" + v),
+      import("./tools/nsf/notes.mjs" + v),
+      import("./tools/nsf/midi-write.mjs" + v),
     ]);
     nsfModules.cache = {...a, ...b, ...c};
   }
@@ -6405,9 +6409,10 @@ async function captureNsfTrack(M, nsf, track, seconds, onProgress) { // dump-all
   // async runner yields to the event loop — a 300s emulation as one sync
   // block froze the tab long enough for iOS Safari's watchdog to force a
   // reload, killing the whole import mid-run (Josh, 2026-08-16)
-  const {apuLog, frames, frameSec} = M.runNSFAsync
-    ? await M.runNSFAsync(nsf, track, seconds, onProgress)
-    : M.runNSF(nsf, track, seconds); // stale-cached module: old sync path still works
+  // NO sync fallback: a long sync run freezes the tab until Safari's
+  // watchdog force-reloads it — an honest error beats a dead page
+  if (!M.runNSFAsync) throw new Error("pipeline update still deploying — close the import panel and retry in a minute");
+  const {apuLog, frames, frameSec} = await M.runNSFAsync(nsf, track, seconds, onProgress);
   let events = M.reconstruct(apuLog, frames, frameSec);
   if (!events.length) return null; // silent slot (SFX banks have them)
   const t0 = Math.min(...events.map(ev => ev.startFrame));
