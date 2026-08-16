@@ -3422,7 +3422,7 @@ async function vaultFetch(file) {
     if (raw.ok) return new Uint8Array(await raw.arrayBuffer());
   } catch (err) { /* offline or blocked: try the API */ }
   const token = localStorage.getItem("ff1roll-ghtoken");
-  if (!token) throw new Error("NSF not publicly reachable and no GitHub token on this device — open Sync once and paste it");
+  if (!token) throw new Error("NSF not publicly reachable and no GitHub token on this device — add one in File → Settings");
   const r = await fetch(repoApi("nsf") + file + "?ref=main", {headers: ghHeaders(token)});
   if (!r.ok) throw apiError("nsf", r, file);
   const j = await r.json();
@@ -6630,7 +6630,7 @@ document.getElementById("frgo").addEventListener("click", async e => {
       fileStatus("Renamed ✓ (local draft — the name commits with it).");
     } else { // repo song: title override, filename untouched
       const token = localStorage.getItem("ff1roll-ghtoken");
-      if (!token) { fileStatus("No GitHub token stored yet — open Sync once and paste it there."); return; }
+      if (!token) { fileStatus("No GitHub token stored yet — add one in File → Settings."); return; }
       fileStatus("Renaming…");
       await renameRepoTitle(songKey, raw, ghHeaders(token));
       await initCatalog().catch(() => { /* CDN lag; next boot */ });
@@ -7021,7 +7021,7 @@ async function commitImports(status, keys) { // push import drafts (all by defau
   keys = keys || importDraftKeys();
   if (!keys.length) { status("No import drafts to commit."); return; }
   const token = localStorage.getItem("ff1roll-ghtoken");
-  if (!token) { status("No GitHub token stored yet — open Sync once and paste it there."); return; }
+  if (!token) { status("No GitHub token stored yet — add one in File → Settings."); return; }
   const h = ghHeaders(token);
   let done = 0;
   const titles = {}; // key -> display title (typed names survive to the dropdown)
@@ -7113,7 +7113,7 @@ document.getElementById("filesave").addEventListener("click", async e => {
     return;
   }
   const token = localStorage.getItem("ff1roll-ghtoken");
-  if (!token) { fileStatus("No GitHub token stored yet — open Sync once and paste it there."); return; }
+  if (!token) { fileStatus("No GitHub token stored yet — add one in File → Settings."); return; }
   const btn = e.currentTarget;
   btn.disabled = true;
   fileStatus("Committing " + songKey + "…");
