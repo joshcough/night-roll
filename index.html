@@ -115,6 +115,8 @@
   .lcdmid { font-family: var(--mono); font-size: 12px; line-height: 1.3; color: #dfe6ff; }
   .lcdmid.lcdkey { color: var(--gold); }
   .lcdlbl { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  .lcdseg.tappable { cursor: pointer; }
+  .lcdseg.tappable:active { background: var(--panel); border-radius: 5px; }
   #timectl { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-right: 12px; flex: 1 1 0; min-width: 0; }
   #timectl #metbtn { min-height: 34px; padding: 4px 10px; }
   select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -524,7 +526,7 @@
       <div class="lcdseg"><span class="lcdbig" id="lcdbar">1</span><span class="lcdlbl">bar</span></div>
       <div class="lcdseg"><span class="lcdbig" id="lcdbeat">1</span><span class="lcdlbl">beat</span></div>
       <div class="lcdseg"><span class="lcdmid" id="lcdtempo">—</span><span class="lcdlbl">tempo</span></div>
-      <div class="lcdseg"><span class="lcdmid" id="lcdmeter">4/4</span><span class="lcdmid lcdkey" id="lcdkey">—</span></div>
+      <div class="lcdseg" id="lcdmkseg"><span class="lcdmid" id="lcdmeter">4/4</span><span class="lcdmid lcdkey" id="lcdkey">—</span></div>
     </div>
   </div>
   <div id="timectl">
@@ -750,7 +752,7 @@
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
-      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?".</dd>
+      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". The meter·key segment is tappable whenever it shows a "?" — it opens the editor preset to answer it: Time signature if the meter is unset (it wins when both are), Key change otherwise; a stored partial opens its own note with the tonic already filled.</dd>
       <dt>Blue cursor</dt><dd>Play starts here. Tap the bar ruler to place it, or drag its handle (triangle under the ruler). Tapping any note also moves it there.</dd>
     </dl>
 
@@ -1539,7 +1541,16 @@ function updateLCD() {
   document.getElementById("lcdtempo").textContent = String(bpm);
   document.getElementById("lcdmeter").textContent = meter;
   document.getElementById("lcdkey").textContent = key;
+  // a "?" is an invitation: the segment taps open the editor that answers it
+  document.getElementById("lcdmkseg").classList.toggle("tappable",
+    meter.includes("?") || key.includes("?"));
 }
+document.getElementById("lcdmkseg").addEventListener("click", () => {
+  if (!song) return;
+  if (!declaredTs) { openEditor(null, "timesig"); return; } // meter first: the easier ruling
+  const partial = rollnotes.find(n => n.keypartial);
+  if (keyNameAt(curTick()) === null) openEditor(partial || null, partial ? undefined : "key");
+});
 function updateSubtitle() {
   updateLCD(); // rides every cursor/playhead update
   refreshKeysetLabel(); // cursor moved: keep "Set @ bar N" honest
