@@ -1695,7 +1695,11 @@ let trackExpand = false;
 function updateTrackMore() {
   const bar = document.getElementById("trackbar");
   const more = document.getElementById("trackmore");
+  const slide = document.getElementById("trackslide");
   bar.classList.toggle("collapsed", !trackExpand);
+  // never measure while the cluster is hidden or mid-slide — a squeezed
+  // width wraps every chip and poisons the disclosure state
+  if (slide && (slide.classList.contains("off") || slide.clientWidth < 60)) return;
   // reading scrollHeight forces a fresh layout — measure synchronously
   const overflowing = bar.scrollHeight > bar.clientHeight + 2;
   more.style.display = overflowing || trackExpand ? "" : "none";
@@ -1719,6 +1723,11 @@ document.getElementById("trackmore").addEventListener("click", () => {
     const hidden = !slide.classList.contains("off");
     localStorage.setItem("ff1roll-tracks-hidden", hidden ? "1" : "0");
     apply(hidden);
+  });
+  // re-measure once the slide animation actually finishes — measuring at a
+  // transitional width wrapped chips onto phantom rows (Josh's toggle bug)
+  slide.addEventListener("transitionend", () => {
+    if (!slide.classList.contains("off")) updateTrackMore();
   });
   apply(localStorage.getItem("ff1roll-tracks-hidden") === "1");
 }
