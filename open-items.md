@@ -20,21 +20,24 @@ full-width color picker (swatches removed), track-row layout fixes
 (▾ hugs chips, transport pinned top), voice menu holds position + ✕.
 Tests 45/45. Details in NIGHT-ROLL.md.
 
-**OPEN BUG — MM2 captures unusable (2026-08-16 late, CONFIRMED on fresh
-code):** Josh hard-reloaded, re-captured, opened track 3: "immediately
-obvious upon pressing play that something is definitely wrong. Probably
-a timing thing." So the noise-ch draft fix (a775198) was real but NOT
-the dominant bug — the mangling is in the capture itself, from note
-one, across tracks. Prime suspect unchanged: fitBpm grid-fits a wrong
-bpm on cold NSFs (no verified tempo, seed 120) and snapBeat then
-quantizes everything onto the wrong 16th grid. Attack plan: get
-mm2.nsf into reference/ (Josh has it on the iPad — or reproduce with
-any cold NSF), capture a track with snap:false and compare by ear/by
-IOI histogram against snapped; if raw is right, add a snap-residual
-sanity gate (fall back to raw timing when the fit moves too many
-notes too far — epilogue's NO_SNAP generalized and automated). Also
-check: MM2's driver may use a non-60Hz play rate (playSpeedNTSC) or
-tempo changes mid-track, both of which break a single-bpm grid.
+**MM2 timing bug: ROOT-CAUSED AND FIXED same night (2026-08-16 late).**
+Josh supplied mm2.nsf; IOI histograms showed MM2's driver is
+frame-integer (16th = exactly 5 or 6 frames → 180/150bpm) while fitBpm
+only searched ±15% around the cold seed of 120 — it fit ~134bpm and
+snapBeat quantized every note onto a grid that doesn't exist. Fix in
+tools/nsf/notes.mjs (shared by app + offline dumper): fitBpm now also
+tests the chip-native family (integer frames per 16th, half-steps
+included), and among near-tied fits (double/half grids —
+timing-identical, different labels) picks the bpm closest to the seed.
+Verified: MM2 tracks land exact (180/150/300 — 300 = real 32nd-note
+arps needing the fine grid); FF1 overworld cold-fits its true 150.
+Josh must RE-CAPTURE MM2 once more (needs Pages deploy + reload).
+Known remaining softness: FF1-style accumulator drivers (fractional
+frames per 16th, e.g. battle) still fit imperfectly cold — repo FF1
+is loop-calibrated so unaffected; snap-residual raw-timing fallback
+remains future work if a cold accumulator-driver NSF sounds rough.
+mm2.nsf lives in Josh's scratchpad copy only — NOT committed (he may
+want it in reference/ later). Reference MIDIs: Josh finding tomorrow.
 
 **AWAITING JOSH:** Mega Man 2 NSF field test on the iPad — mm2.nsf is
 downloaded there; the picker bug that blocked .nsf selection (iOS

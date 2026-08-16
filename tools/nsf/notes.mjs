@@ -208,17 +208,35 @@ export function backportTiming(events, period) {
 export function fitBpm(events, frameSec, seedBpm) {
   const onsets = events.filter(e => e.channel !== "noise").map(e => e.startFrame * frameSec);
   if (onsets.length < 8) return seedBpm;
-  let best = null;
-  for (let bpm = seedBpm * 0.85; bpm <= seedBpm * 1.15; bpm += 0.02) {
+  const cands = [];
+  const tryBpm = (bpm) => {
     const grid = 60 / bpm / 4; // a 16th
     let err = 0;
     for (const t of onsets) {
       const ph = (t / grid) % 1;
       err += Math.min(ph, 1 - ph);
     }
-    if (!best || err < best.err) best = {bpm: +bpm.toFixed(2), err};
+    cands.push({bpm: +bpm.toFixed(2), err});
+  };
+  for (let bpm = seedBpm * 0.85; bpm <= seedBpm * 1.15; bpm += 0.02) tryBpm(bpm);
+  // A seed from a transcription lands in that window — but a COLD capture
+  // seeds a guess, and the true tempo (MM2: 150/180) can sit far outside it.
+  // NES drivers count in whole frames, so also test the chip-native family:
+  // an integer number of frames per 16th (5 -> 180bpm, 6 -> 150, 8 -> 112.5
+  // at 60.099Hz), plus half-steps for shuffle/24th drivers. The residual is
+  // phase-fraction (grid-relative), so scores compare fairly across tempos.
+  for (let u = 3; u <= 18; u += 0.5) {
+    const bpm = 60 / (4 * u * frameSec);
+    if (bpm >= 40 && bpm <= 320) tryBpm(bpm);
   }
-  return best.bpm;
+  // near-ties are grid RELATIVES (double/half: 75 vs 150 over the same
+  // onsets) — timing-identical, different note labels. Among them prefer the
+  // bpm closest to the seed (the least extreme notation); a genuinely better
+  // fit (a 6/8 song's triplet grid, a true 5-frame 16th) wins outright.
+  const minErr = Math.min(...cands.map(c => c.err));
+  const tol = minErr + onsets.length * 0.01; // ~1% avg phase = the jitter floor
+  return cands.filter(c => c.err <= tol)
+    .sort((a, b) => Math.abs(a.bpm - seedBpm) - Math.abs(b.bpm - seedBpm))[0].bpm;
 }
 
 // Stage 3: events -> the repo's .notes.txt format. Bars need a tempo the
