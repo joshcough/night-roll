@@ -6303,6 +6303,7 @@ function openDraft(key) {
   openDraftDoc(d, key);
 }
 function openDraftDoc(d, key) {
+  stop(); // a looping chip buffer would otherwise play the OLD song under the new roll
   const parsed = {ppq: d.ppq, timesig: d.timesig,
     tempos: d.tempos.map(t => ({...t})),
     tracks: d.tracks.map(tr => ({name: tr.name, notes: tr.notes.map(n => ({...n}))}))};
