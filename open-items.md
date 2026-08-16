@@ -20,16 +20,21 @@ full-width color picker (swatches removed), track-row layout fixes
 (▾ hugs chips, transport pinned top), voice menu holds position + ✕.
 Tests 45/45. Details in NIGHT-ROLL.md.
 
-**OPEN BUG (2026-08-16 late, from the MM2 field test):** dense passages
-in MM2 captures play with mangled timing even with noise muted. Prime
-suspect: fitBpm's grid-fit lands off on cold NSFs (no verified tempo)
-and snapBeat then quantizes busy runs onto the wrong 16th grid — check
-by comparing a raw (snap:false) capture of the same track by ear; if
-raw sounds right, the fix is a snap-residual sanity gate (fall back to
-raw timing when too many notes move too far), like NO_SNAP for
-epilogue. Track: MM2 first song, audibly wrong from bar 13. Noise-
-channel drum fix landed (a775198) but predates his drafts — he was
-re-capturing as the session ended; confirm drums first.
+**OPEN BUG — MM2 captures unusable (2026-08-16 late, CONFIRMED on fresh
+code):** Josh hard-reloaded, re-captured, opened track 3: "immediately
+obvious upon pressing play that something is definitely wrong. Probably
+a timing thing." So the noise-ch draft fix (a775198) was real but NOT
+the dominant bug — the mangling is in the capture itself, from note
+one, across tracks. Prime suspect unchanged: fitBpm grid-fits a wrong
+bpm on cold NSFs (no verified tempo, seed 120) and snapBeat then
+quantizes everything onto the wrong 16th grid. Attack plan: get
+mm2.nsf into reference/ (Josh has it on the iPad — or reproduce with
+any cold NSF), capture a track with snap:false and compare by ear/by
+IOI histogram against snapped; if raw is right, add a snap-residual
+sanity gate (fall back to raw timing when the fit moves too many
+notes too far — epilogue's NO_SNAP generalized and automated). Also
+check: MM2's driver may use a non-60Hz play rate (playSpeedNTSC) or
+tempo changes mid-track, both of which break a single-bpm grid.
 
 **AWAITING JOSH:** Mega Man 2 NSF field test on the iPad — mm2.nsf is
 downloaded there; the picker bug that blocked .nsf selection (iOS
