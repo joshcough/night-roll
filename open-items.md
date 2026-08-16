@@ -4,6 +4,31 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## RESTART CONTEXT — updated 2026-08-15 late night (the seven-hour app marathon)
+
+**Analysis thread unchanged:** prologue F#–C tritone is still THE NEXT
+MOVE (see the 08-14 block below — nothing analytical happened tonight).
+
+**App, all shipped and pushed tonight (2026-08-15 evening session):**
+NSF import (File → Import…, byte-sniffed picker; captures = local
+drafts; audition → rename in the panel row → ✕ duds → Commit import
+publishes the album), local MIDI imports persist as `local/` drafts
+(reopenable from Open → drafts, never synced), 36 sampled FluidR3
+instruments in a family-grouped voice menu (~85MB in vendor/soundfonts/,
+lazy per track per pitch; the 08-15 synth patches left the menu),
+full-width color picker (swatches removed), track-row layout fixes
+(▾ hugs chips, transport pinned top), voice menu holds position + ✕.
+Tests 45/45. Details in NIGHT-ROLL.md.
+
+**AWAITING JOSH:** Mega Man 2 NSF field test on the iPad — mm2.nsf is
+downloaded there; the picker bug that blocked .nsf selection (iOS
+accept-filter) is fixed. First cold-NSF run: expect grid-fitted 4/4
+guesses, per-row capture-seconds bumps for long intros, track naming
+during audition. Also: does he want more GM instruments pulled
+(~90 remain — sitar, koto, timpani, ocarina, steel drums…)?
+
+Older context below still applies where not superseded.
+
 ## RESTART CONTEXT — updated 2026-08-15 (after the 08-14 web session)
 
 **Prologue is the live thread.** 6.3 determined: F#(♭5), root position,
