@@ -53,11 +53,14 @@ suspends auto-follow until the playhead re-enters the view.
 
 **Tracks:** chips mute (= fully hide, roll and score) and solo. Score model
 rebuilds on toggle. Second tap on the selected chip opens the voice &
-color menu: NES waves plus SAMPLED instruments (2026-08-15, Josh's
-call after the synth patches sounded "just okay") — piano, nylon and
-steel guitar, violin, cello, string ensemble, flute, church organ, as
-per-note FluidR3_GM MP3s in vendor/soundfonts/*.json (MIT, see
-LICENSE.md there; ~2MB per instrument). Lazy at every level: nothing
+color menu, now grouped by family (Josh 2026-08-15: flat list got too
+long): NES / waves, then SAMPLED instruments (his call after the synth
+patches sounded "just okay") — 36 FluidR3_GM instruments across Keys &
+mallets, Guitar & bass, Strings, Winds, Brass, Organ & choir, as
+per-note MP3s in vendor/soundfonts/*.json (MIT, see LICENSE.md there;
+~2MB per instrument, ~85MB total in the repo — web sessions should
+clone with `--filter=blob:limit=1m` to skip them). The menu opens in
+the current voice's family; ‹ backs out to the family list. Lazy at every level: nothing
 fetches at page load; a track using voice=sf-* fetches its instrument
 once (browser-cached) and decodes ONLY the pitches the song actually
 plays (a full 88-key decode would cost ~60MB RAM per instrument on the

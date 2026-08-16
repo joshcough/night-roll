@@ -47,7 +47,11 @@ a destroyed exercise.
 
 **Clone the repo first — do not fetch files one at a time.**
 
-    cd /home/claude && git clone --depth 1 https://github.com/joshcough/night-roll.git
+    cd /home/claude && git clone --depth 1 --filter=blob:limit=1m https://github.com/joshcough/night-roll.git
+
+(The blob filter skips ~85MB of soundfont samples under
+vendor/soundfonts/ that analysis sessions never need; every rollnotes,
+notes.txt, and doc file comes through normally.)
 
 Everything below is then a local path under `night-roll/`, and `grep`
 across all rollnotes/notes.txt works. Re-run `git pull` mid-session after

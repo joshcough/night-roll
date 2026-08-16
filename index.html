@@ -834,7 +834,7 @@
 
     <h3>TRACKS</h3>
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu: pick the track's instrument — the NES set (pulses, triangle, sine, saw; auto = the classic assignment) plus real sampled instruments (piano, nylon and steel guitar, violin, cello, strings, flute, church organ — FluidR3 soundfont recordings, fetched only when a track uses one and cached after) — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -2862,17 +2862,58 @@ function voiceType(ti) {
 // browser-cached); only the pitches the song actually plays get decoded.
 const SF_VOICES = [ // [voice id, menu label, soundfont file]
   ["sf-piano", "piano", "acoustic_grand_piano"],
+  ["sf-rhodes", "electric piano", "electric_piano_1"],
+  ["sf-harpsichord", "harpsichord", "harpsichord"],
+  ["sf-celesta", "celesta", "celesta"],
+  ["sf-musicbox", "music box", "music_box"],
+  ["sf-vibes", "vibraphone", "vibraphone"],
+  ["sf-marimba", "marimba", "marimba"],
+  ["sf-glock", "glockenspiel", "glockenspiel"],
   ["sf-guitar", "guitar (nylon)", "acoustic_guitar_nylon"],
   ["sf-steel", "guitar (steel)", "acoustic_guitar_steel"],
+  ["sf-eguitar", "electric guitar", "electric_guitar_clean"],
+  ["sf-banjo", "banjo", "banjo"],
+  ["sf-abass", "upright bass", "acoustic_bass"],
+  ["sf-ebass", "electric bass", "electric_bass_finger"],
   ["sf-violin", "violin", "violin"],
+  ["sf-viola", "viola", "viola"],
   ["sf-cello", "cello", "cello"],
-  ["sf-strings", "strings", "string_ensemble_1"],
+  ["sf-contrabass", "contrabass", "contrabass"],
+  ["sf-strings", "strings (section)", "string_ensemble_1"],
+  ["sf-pizz", "pizzicato strings", "pizzicato_strings"],
+  ["sf-harp", "harp", "orchestral_harp"],
   ["sf-flute", "flute", "flute"],
+  ["sf-piccolo", "piccolo", "piccolo"],
+  ["sf-clarinet", "clarinet", "clarinet"],
+  ["sf-oboe", "oboe", "oboe"],
+  ["sf-altosax", "alto sax", "alto_sax"],
+  ["sf-tenorsax", "tenor sax", "tenor_sax"],
+  ["sf-trumpet", "trumpet", "trumpet"],
+  ["sf-trombone", "trombone", "trombone"],
+  ["sf-horn", "french horn", "french_horn"],
+  ["sf-tuba", "tuba", "tuba"],
+  ["sf-brass", "brass section", "brass_section"],
   ["sf-organ", "church organ", "church_organ"],
+  ["sf-organ2", "drawbar organ", "drawbar_organ"],
+  ["sf-accordion", "accordion", "accordion"],
+  ["sf-choir", "choir", "choir_aahs"],
 ];
-const VOICES = [["auto", "auto (NES)"], ["square", "pulse 50%"], ["square25", "pulse 25%"],
-                ["square12", "pulse 12.5%"], ["triangle", "triangle"], ["sine", "sine"], ["sawtooth", "saw"],
-                ...SF_VOICES.map(([id, label]) => [id, label])];
+function sfPick(ids) {
+  return ids.map(id => { const e = SF_VOICES.find(x => x[0] === id); return [e[0], e[1]]; });
+}
+// the menu shows FAMILIES first (Josh 2026-08-15: one flat list got too long),
+// each opening its instruments; the flat VOICES list keeps every lookup working
+const VOICE_GROUPS = [
+  ["NES / waves", [["auto", "auto (NES)"], ["square", "pulse 50%"], ["square25", "pulse 25%"],
+                   ["square12", "pulse 12.5%"], ["triangle", "triangle"], ["sine", "sine"], ["sawtooth", "saw"]]],
+  ["Keys & mallets", sfPick(["sf-piano", "sf-rhodes", "sf-harpsichord", "sf-celesta", "sf-musicbox", "sf-vibes", "sf-marimba", "sf-glock"])],
+  ["Guitar & bass", sfPick(["sf-guitar", "sf-steel", "sf-eguitar", "sf-banjo", "sf-abass", "sf-ebass"])],
+  ["Strings", sfPick(["sf-violin", "sf-viola", "sf-cello", "sf-contrabass", "sf-strings", "sf-pizz", "sf-harp"])],
+  ["Winds", sfPick(["sf-flute", "sf-piccolo", "sf-clarinet", "sf-oboe", "sf-altosax", "sf-tenorsax"])],
+  ["Brass", sfPick(["sf-trumpet", "sf-trombone", "sf-horn", "sf-tuba", "sf-brass"])],
+  ["Organ & choir", sfPick(["sf-organ", "sf-organ2", "sf-accordion", "sf-choir"])],
+];
+const VOICES = VOICE_GROUPS.flatMap(([, vs]) => vs);
 // the 2026-08-15 synth patches (piano/pluck/strings/organ/bell) stay playable
 // for any annotation that saved them, but the menu now offers samples instead
 const VOICE_AMP = {square: 0.5, square25: 0.5, square12: 0.5, triangle: 0.9, sine: 0.85, sawtooth: 0.33,
@@ -2995,9 +3036,14 @@ function pluckBuffer(p) {
   return buf;
 }
 let voiceMenuTi = -1;
+let voiceMenuGroup = null; // null = family list; a title = that family's instruments
 function openVoiceMenu(ti, anchor) { // position ONCE from the chip, then show
   const menu = document.getElementById("voicemenu");
   voiceMenuTi = ti;
+  // open straight into the family holding the track's current voice
+  const cur = song.tracks[ti].voice || "auto";
+  const home = VOICE_GROUPS.find(([, vs]) => vs.some(([id]) => id === cur));
+  voiceMenuGroup = home ? home[0] : null;
   buildVoiceMenu(ti);
   const r = anchor.getBoundingClientRect();
   menu.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 240)) + "px";
@@ -3023,21 +3069,41 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
   close.addEventListener("click", () => menu.classList.remove("on"));
   head.append(hlbl, close);
   menu.appendChild(head);
-  for (const [v, label] of VOICES) {
-    const b = document.createElement("button");
-    b.className = "fitem";
-    b.textContent = ((tr.voice || "auto") === v ? "✓ " : "   ") + label;
-    b.addEventListener("click", () => {
-      tr.voice = v === "auto" ? undefined : v;
-      saveVoices();
-      const file = sfFileFor(v);
-      if (file) { // sampled: preview once its A4 is actually decoded
-        ensureAudio();
-        sfDecode(file, 69).then(() => previewNote(ti, 69));
-      } else previewNote(ti, 69); // synth voices are instant
-      buildVoiceMenu(ti); // refresh the ✓ — the menu stays where it is
-    });
-    menu.appendChild(b);
+  const cur = tr.voice || "auto";
+  const curLabel = (VOICES.find(([id]) => id === cur) || [, cur])[1];
+  if (voiceMenuGroup === null) { // level 1: the instrument families
+    for (const [title, vs] of VOICE_GROUPS) {
+      const b = document.createElement("button");
+      b.className = "fitem";
+      const holds = vs.some(([id]) => id === cur);
+      b.textContent = title + "  ›" + (holds ? "   (" + curLabel + ")" : "");
+      b.addEventListener("click", () => { voiceMenuGroup = title; buildVoiceMenu(ti); });
+      menu.appendChild(b);
+    }
+  } else { // level 2: one family's instruments
+    const back = document.createElement("button");
+    back.className = "fitem";
+    back.style.color = "var(--dim)";
+    back.textContent = "‹ " + voiceMenuGroup;
+    back.addEventListener("click", () => { voiceMenuGroup = null; buildVoiceMenu(ti); });
+    menu.appendChild(back);
+    const group = VOICE_GROUPS.find(([t]) => t === voiceMenuGroup);
+    for (const [v, label] of (group ? group[1] : [])) {
+      const b = document.createElement("button");
+      b.className = "fitem";
+      b.textContent = (cur === v ? "✓ " : "   ") + label;
+      b.addEventListener("click", () => {
+        tr.voice = v === "auto" ? undefined : v;
+        saveVoices();
+        const file = sfFileFor(v);
+        if (file) { // sampled: preview once its A4 is actually decoded
+          ensureAudio();
+          sfDecode(file, 69).then(() => previewNote(ti, 69));
+        } else previewNote(ti, 69); // synth voices are instant
+        buildVoiceMenu(ti); // refresh the ✓ — the menu stays where it is
+      });
+      menu.appendChild(b);
+    }
   }
   const sw = document.createElement("div");
   sw.style.cssText = "padding:8px 10px";
