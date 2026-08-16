@@ -52,7 +52,25 @@ cursor play their remainder (chase). Manual scroll during playback
 suspends auto-follow until the playhead re-enters the view.
 
 **Tracks:** chips mute (= fully hide, roll and score) and solo. Score model
-rebuilds on toggle.
+rebuilds on toggle. Second tap on the selected chip opens the voice &
+color menu: NES waves plus synthesized piano (detuned struck pair),
+guitar (Karplus-Strong plucked string, rendered per pitch and cached),
+strings (bowed saw + lowpass + easing vibrato), organ (drawbar
+harmonics), bell (FM strike); color from swatches or a full
+`<input type=color>` picker (any hex — stored in the track: directive
+as color=#rrggbb). The chips hug their content: ▾ sits beside the last
+chip, and the transport/LCD cluster stays pinned to the top row when
+chips wrap (2026-08-15 iPad fixes). `darkreader-lock` meta keeps the
+Dark Reader extension from repainting swatches gray.
+
+**Local MIDI imports** (2026-08-15, Josh lost one to a song switch):
+a picked MIDI becomes a device-local draft under `local/<name>.mid` —
+reopens from Open → drafts ("local /" prefix), stays editable
+(saveDraft allows local/ alongside compositions; note `ch` is preserved
+so drums survive), never syncs (dirtySongs excludes local/), never
+commits; Save As forks it into a real composition. The file input has
+NO accept filter: iOS grays out extensions it doesn't recognize (.nsf
+was unpickable) — the byte-sniff is the real gatekeeper.
 
 **Metronome** (2026-08-14, ⏱ in the header): standalone, feature-rich —
 meter 1–12 over 2/4/8/16 (bpm counts the DENOMINATOR beat, matching the

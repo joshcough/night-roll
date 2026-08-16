@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="darkreader-lock"><!-- already a dark app; Dark Reader repaints the track-color swatches to gray -->
 <title>Night Roll — OST Analyzer</title>
 <style>
   :root {
@@ -83,7 +84,7 @@
   }
   #trackrow {
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* chips may wrap to more rows; transport stays pinned to the first */
     gap: 8px;
     background: var(--panel);
     border-bottom: 1px solid var(--grid);
@@ -94,7 +95,7 @@
   #trackslide {
     display: flex;
     align-items: flex-start;
-    flex: 1;
+    flex: 0 1 auto; /* hug the chips so ▾ sits beside the last one; shrink (wrap) only when squeezed */
     min-width: 0;
     overflow: hidden;
     max-width: 100vw;
@@ -103,7 +104,7 @@
   }
   #trackslide.off { max-width: 0; opacity: 0; flex: none; }
   #trackmore { margin: 8px 4px 0 0; min-height: 36px; padding: 4px 9px; flex: none; }
-  #transport { display: flex; align-items: center; gap: 8px; flex: none; }
+  #transport { display: flex; align-items: center; gap: 8px; flex: none; margin-top: 6px; }
   #lcd {
     display: flex;
     align-items: stretch;
@@ -129,7 +130,7 @@
   .lcdlbl { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
   .lcdseg.tappable { cursor: pointer; }
   .lcdseg.tappable:active { background: var(--panel); border-radius: 5px; }
-  #timectl { display: flex; align-items: center; gap: 10px; padding-right: 12px; flex: none; }
+  #timectl { display: flex; align-items: center; gap: 10px; padding-right: 12px; flex: none; margin-top: 6px; min-height: 44px; }
   #timectl #metbtn { min-height: 34px; padding: 4px 10px; }
   select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; min-width: 74px; }
@@ -173,7 +174,7 @@
     flex-wrap: wrap; /* many tracks flow onto more rows instead of scrolling */
     gap: 8px;
     padding: 8px 0 8px 12px;
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
   }
   #trackbar.collapsed { max-height: 52px; overflow: hidden; } /* first row only */
@@ -577,7 +578,8 @@
   <div class="brand">NIGHT <span>//</span> ROLL</div>
   <button id="filesheetbtn">File ▾</button>
   <span id="songcrumb"></span>
-  <input type="file" id="fileinput" accept=".mid,.midi,.smf,.kar,.rmi,.nsf">
+  <!-- no accept filter: iOS greys out extensions it doesn't recognize (.nsf) — the byte-sniff validates instead -->
+  <input type="file" id="fileinput">
 </header>
 <div id="trackrow">
   <div id="trackzone">
@@ -832,7 +834,7 @@
 
     <h3>TRACKS</h3>
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu: pick the track's instrument (NES pulses, triangle, sine, saw — auto = the classic assignment) and its color. Both save as a normal synced annotation ("track: pulse1 voice=sine") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away. The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit centered on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu: pick the track's instrument — the NES set (pulses, triangle, sine, saw; auto = the classic assignment) plus synthesized piano, guitar (a Karplus-Strong plucked string), strings (bowed saw with vibrato), organ, and bell — and its color, from the swatches or the rainbow chip at the end (a full color picker, any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -877,7 +879,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker — ✕ the duds in Open → drafts, then Commit import pushes the keepers to the repo as a real album; expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker — ✕ the duds in Open → drafts, then Commit import pushes the keepers to the repo as a real album; expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -1255,7 +1257,7 @@ function updateClearBtn() {
 }
 function updateEditBtnVis() { // the edit ROW exists only on songs made in the app
   // (or local .mid loads) — never on the FF captures (Josh, 2026-08-15)
-  const editable = isComposition() || (!!song && songKey === null);
+  const editable = isComposition() || isLocalDraft() || (!!song && songKey === null);
   if (!editable && mode !== "select") { // leaving an editable song mid-pencil
     mode = "select";
     for (const x of document.querySelectorAll("#modeseg button"))
@@ -1628,8 +1630,10 @@ function dirtySongs() { // songs with unsynced local notes on this device
     .filter(k => k.startsWith("ff1roll-notes-"))
     .map(k => k.slice("ff1roll-notes-".length))
     // uncommitted import captures ride Commit import, not Sync — a sidecar
-    // without its .mid in the repo would be an orphan
-    .filter(k => !(k.startsWith("albums/imports/") &&
+    // without its .mid in the repo would be an orphan; local/ files have no
+    // repo path at all, their annotations stay on this device
+    .filter(k => !k.startsWith("local/") &&
+                 !(k.startsWith("albums/imports/") &&
                    localStorage.getItem("ff1roll-draft-" + k) !== null));
 }
 function updateSyncBtn() {
@@ -2853,8 +2857,11 @@ function voiceType(ti) {
 // per-track voice override (Josh, 2026-08-15): tap the selected chip again to
 // pick. "auto" = the classic NES assignment above. Persists per song+device.
 const VOICES = [["auto", "auto (NES)"], ["square", "pulse 50%"], ["square25", "pulse 25%"],
-                ["square12", "pulse 12.5%"], ["triangle", "triangle"], ["sine", "sine"], ["sawtooth", "saw"]];
-const VOICE_AMP = {square: 0.5, square25: 0.5, square12: 0.5, triangle: 0.9, sine: 0.85, sawtooth: 0.33};
+                ["square12", "pulse 12.5%"], ["triangle", "triangle"], ["sine", "sine"], ["sawtooth", "saw"],
+                ["piano", "piano"], ["pluck", "guitar (pluck)"], ["strings", "strings (bow)"],
+                ["organ", "organ"], ["bell", "bell"]];
+const VOICE_AMP = {square: 0.5, square25: 0.5, square12: 0.5, triangle: 0.9, sine: 0.85, sawtooth: 0.33,
+                   piano: 0.8, pluck: 0.9, strings: 0.42, organ: 0.5, bell: 0.6};
 function trackVoice(ti) {
   const v = song.tracks[ti] && song.tracks[ti].voice;
   return v && v !== "auto" ? v : voiceType(ti);
@@ -2888,6 +2895,7 @@ function dutyWave(duty) {
   for (let n = 1; n < N; n++) real[n] = (2 / (n * Math.PI)) * Math.sin(n * Math.PI * duty);
   return audio.createPeriodicWave(real, imag);
 }
+let organWave = null;
 function makeOsc(type) {
   const o = audio.createOscillator();
   if (type === "square25") {
@@ -2896,8 +2904,37 @@ function makeOsc(type) {
   } else if (type === "square12") {
     if (!pulse12) pulse12 = dutyWave(0.125);
     o.setPeriodicWave(pulse12);
+  } else if (type === "organ") { // drawbar-ish harmonic stack, flat sustain
+    if (!organWave) {
+      const real = new Float32Array([0, 1, 0.55, 0.28, 0.4, 0.1, 0.16, 0, 0.1]);
+      organWave = audio.createPeriodicWave(real, new Float32Array(real.length));
+    }
+    o.setPeriodicWave(organWave);
   } else o.type = type;
   return o;
+}
+// Karplus-Strong plucked string: a noise burst circulating a damped delay
+// line IS a guitar string — rendered once per pitch, cached (~350KB each)
+let pluckCache = {};
+function pluckBuffer(p) {
+  if (pluckCache[p]) return pluckCache[p];
+  if (Object.keys(pluckCache).length > 40) pluckCache = {}; // runaway-range guard
+  const sr = audio.sampleRate;
+  const f0 = 440 * Math.pow(2, (p - 69) / 12);
+  const N = Math.max(2, Math.round(sr / f0));
+  const buf = audio.createBuffer(1, Math.ceil(sr * 2), sr);
+  const ch = buf.getChannelData(0);
+  const dl = new Float32Array(N);
+  for (let i = 0; i < N; i++) dl[i] = Math.random() * 2 - 1;
+  let idx = 0;
+  for (let i = 0; i < ch.length; i++) {
+    const cur = dl[idx], nxt = dl[(idx + 1) % N];
+    ch[i] = cur;
+    dl[idx] = (cur + nxt) * 0.5 * 0.997; // averaging = lowpass; 0.997 = string damping
+    idx = (idx + 1) % N;
+  }
+  pluckCache[p] = buf;
+  return buf;
 }
 let voiceMenuTi = -1;
 function openVoiceMenu(ti, anchor) {
@@ -2936,6 +2973,17 @@ function openVoiceMenu(ti, anchor) {
     });
     sw.appendChild(d);
   }
+  const custom = document.createElement("input"); // any color at all — the swatches are just shortcuts
+  custom.type = "color";
+  custom.value = /^#[0-9a-fA-F]{6}$/.test(trackColor(ti)) ? trackColor(ti) : "#888888";
+  custom.style.cssText = "width:34px;height:26px;padding:0;border:2px solid var(--grid);border-radius:7px;background:none";
+  custom.setAttribute("aria-label", "Custom color");
+  custom.addEventListener("input", () => {
+    tr.color = custom.value;
+    saveVoices();
+    renderTrackbar(); buildScoreModel(); draw();
+  });
+  sw.appendChild(custom);
   menu.appendChild(sw);
   const r = anchor.getBoundingClientRect();
   menu.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 240)) + "px";
@@ -2987,17 +3035,82 @@ function scheduleNote(ti, n, when, durSec) {
   when = Math.max(when, audio.currentTime + 0.003);
   if (n.ch === 9 || trackIsDrums(ti)) { drumHit(ti, n.p, when, n.v); return; }
   const v = trackVoice(ti);
-  const o = makeOsc(v);
-  o.frequency.value = 440 * Math.pow(2, (n.p - 69) / 12);
-  const g = audio.createGain();
   const amp = (0.25 + 0.75 * (n.v / 127)) * (VOICE_AMP[v] || 0.5);
+  const f0 = 440 * Math.pow(2, (n.p - 69) / 12);
+  const g = audio.createGain();
+  g.connect(trackGain(ti));
+  const end = when + durSec;
+  if (v === "pluck") { // a real vibrating string, not an oscillator
+    const src = audio.createBufferSource();
+    src.buffer = pluckBuffer(n.p);
+    g.gain.setValueAtTime(amp, when);
+    g.gain.setValueAtTime(amp, Math.max(when + 0.01, end - 0.02));
+    g.gain.linearRampToValueAtTime(0, end + 0.03);
+    src.connect(g);
+    src.start(when);
+    src.stop(end + 0.06);
+    return;
+  }
+  if (v === "piano") { // struck pair, slightly detuned (beating shimmer), exponential die-away
+    const o1 = makeOsc("triangle"), o2 = makeOsc("triangle");
+    o1.frequency.value = f0;
+    o2.frequency.value = f0 * 1.0015;
+    const tau = Math.max(0.35, Math.min(2.4, durSec * 1.2));
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(amp, when + 0.006);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.001, amp * Math.exp(-durSec / tau)), end);
+    g.gain.linearRampToValueAtTime(0, end + 0.05);
+    o1.connect(g); o2.connect(g);
+    o1.start(when); o2.start(when);
+    o1.stop(end + 0.1); o2.stop(end + 0.1);
+    return;
+  }
+  if (v === "strings") { // bowed: saw through a lowpass, slow attack, vibrato easing in
+    const o = makeOsc("sawtooth");
+    o.frequency.value = f0;
+    const lp = audio.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = Math.min(3200, f0 * 6);
+    lp.Q.value = 0.4;
+    const lfo = makeOsc("sine"), lg = audio.createGain();
+    lfo.frequency.value = 5.2;
+    lg.gain.setValueAtTime(0, when);
+    lg.gain.linearRampToValueAtTime(f0 * 0.006, when + 0.35);
+    lfo.connect(lg); lg.connect(o.frequency);
+    const atk = Math.min(0.12, durSec * 0.3);
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(amp, when + atk);
+    g.gain.setValueAtTime(amp, Math.max(when + atk, end - 0.06));
+    g.gain.linearRampToValueAtTime(0, end + 0.02);
+    o.connect(lp); lp.connect(g);
+    o.start(when); lfo.start(when);
+    o.stop(end + 0.05); lfo.stop(end + 0.05);
+    return;
+  }
+  if (v === "bell") { // FM strike: inharmonic partial whose brightness decays fast
+    const o = makeOsc("sine"), mod = makeOsc("sine"), mg = audio.createGain();
+    o.frequency.value = f0;
+    mod.frequency.value = f0 * 3.53;
+    mg.gain.setValueAtTime(f0 * 2.2, when);
+    mg.gain.exponentialRampToValueAtTime(f0 * 0.02, when + Math.min(1.2, durSec + 0.4));
+    mod.connect(mg); mg.connect(o.frequency);
+    g.gain.setValueAtTime(amp, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + Math.max(0.25, durSec));
+    g.gain.linearRampToValueAtTime(0, end + 0.08);
+    o.connect(g);
+    o.start(when); mod.start(when);
+    o.stop(end + 0.12); mod.stop(end + 0.12);
+    return;
+  }
+  const o = makeOsc(v); // chip waves + organ: flat sustain
+  o.frequency.value = f0;
   g.gain.setValueAtTime(0, when);
   g.gain.linearRampToValueAtTime(amp, when + 0.008);
-  g.gain.setValueAtTime(amp, Math.max(when + 0.008, when + durSec - 0.03));
-  g.gain.linearRampToValueAtTime(0, when + durSec);
-  o.connect(g); g.connect(trackGain(ti));
+  g.gain.setValueAtTime(amp, Math.max(when + 0.008, end - 0.03));
+  g.gain.linearRampToValueAtTime(0, end);
+  o.connect(g);
   o.start(when);
-  o.stop(when + durSec + 0.05);
+  o.stop(end + 0.05);
 }
 async function previewNote(ti, pitch) {
   ensureAudio();
@@ -3707,7 +3820,8 @@ function updateSongBtn() { // breadcrumb: Album › Title, with the real path di
   crumb.textContent = (group ? group[0]
     : localStorage.getItem("ff1roll-draft-" + currentPath)
       ? (currentPath.startsWith("albums/imports/")
-         ? "Import › " + currentPath.split("/")[2] : "Night Roll drafts") : "Local") + " › ";
+         ? "Import › " + currentPath.split("/")[2]
+         : currentPath.startsWith("local/") ? "Local files" : "Night Roll drafts") : "Local") + " › ";
   const title = document.createElement("span");
   title.textContent = songTitleOf(currentPath);
   songtitleEl.append(crumb, title);
@@ -4644,9 +4758,21 @@ async function importBytes(bytes, name) { // byte-sniff: extension lies, headers
     await openNsfImport(bytes, name);
     return;
   }
-  setSong(parseMidi(bytes.buffer), null); // MThd is scanned anywhere (RIFF/.rmi too)
-  setInfo(name + " loaded (edits not saved for local files)");
-  songtitleEl.textContent = "Local › " + name;
+  const parsed = parseMidi(bytes.buffer); // MThd is scanned anywhere (RIFF/.rmi too)
+  // a local MIDI becomes a device-local draft (Josh's report 2026-08-15:
+  // switching songs used to lose it with no way back) — reopen from
+  // Open → drafts; ✕ there to let it go; never synced to the repo
+  const key = "local/" + slugify(name.replace(/\.(midi?|smf|kar|rmi)$/i, "")) + ".mid";
+  localStorage.setItem(draftStoreKey(key), JSON.stringify({
+    savedStamp: 0, dirty: true, title: name, ppq: parsed.ppq, timesig: parsed.timesig || [4, 4],
+    tempos: parsed.tempos,
+    tracks: parsed.tracks.map(tr => ({name: tr.name, notes: tr.notes.map(nt => {
+      const o = {t: nt.t, d: nt.d, p: nt.p, v: nt.v};
+      if (nt.ch !== undefined) o.ch = nt.ch; // drums live on ch 9 — must survive the round-trip
+      return o;
+    })}))}));
+  openDraft(key);
+  setInfo(name + " imported — edits stay on this device; reopen from Open → drafts");
 }
 document.getElementById("modeseg").addEventListener("click", e => {
   const b = e.target.closest("button");
@@ -4756,7 +4882,7 @@ function pianoGeom(W) {
   return {lo, hi, whites, wW, wx};
 }
 function instLitColor(p, lit) {
-  if (instFlash && instFlash.p === p) return css("--accent");
+  if (instFlash && instFlash.p === p) return trackColor(selTrack); // tap flash wears the selected track's color
   if (lit.sel.has(p)) return trackColor(lit.sel.get(p)); // lasso'd: source track's color
   if (lit.live.has(p)) return trackColor(lit.live.get(p)); // sounding: its track's color
   return null;
@@ -4867,7 +4993,7 @@ function drawGuitar(W, H, lit) {
   };
   lit.live.forEach((ti, p) => add(p, trackColor(ti)));
   lit.sel.forEach((ti, p) => add(p, trackColor(ti))); // lasso'd notes wear their track's color
-  if (instFlash && instFlash.si !== undefined) dots.push({...instFlash, color: css("--accent")});
+  if (instFlash && instFlash.si !== undefined) dots.push({...instFlash, color: trackColor(selTrack)});
   // pitch-class echoes (lasso only): EVERY same-named note on the neck gets a
   // hollow ring in its source note's track color — earliest track wins
   const selPcs = new Map();
@@ -5661,13 +5787,20 @@ function slugify(s) {
   return (s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
 }
 function draftStoreKey(key) { return "ff1roll-draft-" + key; }
+// imported local MIDIs live under local/ — draft-backed and editable on this
+// device, but with no repo path: never synced, never committed
+function isLocalDraft() { return !!songKey && songKey.startsWith("local/"); }
 function saveDraft(clean) { // clean=true right after a successful Save
-  if (!isComposition()) return;
+  if (!isComposition() && !isLocalDraft()) return;
   localStorage.setItem(draftStoreKey(songKey), JSON.stringify({
     savedStamp: song.savedStamp || 0, dirty: !clean,
     ppq: song.ppq, timesig: song.timesig || effTs(), tempos: song.baseTempos || song.tempos,
     tracks: song.tracks.map(tr => ({name: tr.name,
-      notes: tr.notes.filter(n => !n.gone).map(n => ({t: n.t, d: n.d, p: n.p, v: n.v}))})),
+      notes: tr.notes.filter(n => !n.gone).map(n => {
+        const o = {t: n.t, d: n.d, p: n.p, v: n.v};
+        if (n.ch !== undefined) o.ch = n.ch; // drum channel survives edit re-saves
+        return o;
+      })})),
   }));
 }
 function draftKeys() {
@@ -5853,7 +5986,8 @@ function fsubDrafts() {
     const open = document.createElement("button");
     open.className = "fitem";
     open.style.flex = "1";
-    open.textContent = (key.startsWith(IMP_DIR) ? key.split("/")[2] + " / " : "") +
+    open.textContent = (key.startsWith(IMP_DIR) ? key.split("/")[2] + " / "
+                        : key.startsWith("local/") ? "local / " : "") +
                        key.split("/").pop().replace(/\.mid$/, "") + (key === currentPath ? "   ✓" : "");
     open.addEventListener("click", () => { closeFileMenus(); openDraft(key); });
     const del = document.createElement("button");

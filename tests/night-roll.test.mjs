@@ -590,6 +590,26 @@ test("NSF import helpers: track keys, album titles, manifest, Sync exclusion", (
   assert.deepEqual(out[0].songs, [{title: "Track 07", path: "albums/imports/solstice/track-07.mid"}]);
 });
 
+test("local MIDI imports persist as device drafts: editable, drums intact, never synced", () => {
+  installSong();
+  run(`
+    songKey = "local/some-song.mid";
+    song.tracks = [{name: "kit", notes: [{t: 0, d: 480, p: 38, v: 90, ch: 9}]}];
+    saveDraft();
+  `);
+  const d = JSON.parse(app.store.get("ff1roll-draft-local/some-song.mid"));
+  assert.equal(d.tracks[0].notes[0].ch, 9); // drum channel survives the draft round-trip
+  assert.equal(run(`isLocalDraft()`), true); // pencil editing allowed
+  assert.equal(run(`isComposition()`), false); // but Save (commit) stays locked
+  run(`localStorage.setItem("ff1roll-notes-local/some-song.mid", "[]");`);
+  assert.equal(val(`dirtySongs()`).includes("local/some-song.mid"), false); // no repo path — never syncs
+  run(`
+    songKey = null;
+    localStorage.removeItem("ff1roll-draft-local/some-song.mid");
+    localStorage.removeItem("ff1roll-notes-local/some-song.mid");
+  `);
+});
+
 test("NSF import rename: draft moves, typed title survives, collisions refused", () => {
   run(`
     localStorage.setItem("ff1roll-draft-albums/imports/mm2/track-15.mid", JSON.stringify({title: "track-15", tracks: []}));
@@ -653,7 +673,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import",
+    "Import…", "NSF", "Commit import", "color picker", "Karplus",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
