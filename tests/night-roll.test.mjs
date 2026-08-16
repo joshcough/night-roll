@@ -574,8 +574,42 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
-    "follow song", "trial meter", "Count-in", "LCD readout",
+    "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
+});
+
+test("tempo: directives rebuild the map from the song's base; removal restores", () => {
+  installSong();
+  // ANALYSIS song (not under compositions/): the directive is a pure
+  // observation — the measured map must not move (Josh's ruling)
+  run(`
+    song.baseTempos = null;
+    song.tempos = [{tick: 0, usq: 500000, sec: 0}];
+    rollnotes = parseRollnotes("[3.1]\\ntempo: 60\\n").map(resolveNote);
+    finalizeNotes();
+  `);
+  assert.deepEqual(val(`song.tempos`), [{tick: 0, usq: 500000, sec: 0}]);
+  assert.equal(run(`rollnotes[0].tempodir`), 60); // but the observation is recorded
+  // CREATED song: the same annotation authors the tempo
+  run(`
+    songKey = "albums/compositions/nightroll/tempo-test.mid";
+    song.baseTempos = null;
+    rollnotes = parseRollnotes("[1.1]\\ntimesig: 4/4\\n\\n[3.1]\\ntempo: 60\\n").map(resolveNote);
+    finalizeNotes();
+  `);
+  const map = val(`song.tempos`);
+  assert.equal(map.length, 2);
+  assert.equal(map[0].usq, 500000);            // base 120bpm until bar 3
+  assert.equal(map[1].tick, 2 * 4 * 480);      // directive lands at bar 3
+  assert.equal(map[1].usq, 1000000);           // 60bpm
+  assert.equal(map[1].sec, 4);                 // 8 quarters at 120bpm = 4s
+  run(`rollnotes = rollnotes.filter(n => n.tempodir === undefined); finalizeNotes();`);
+  assert.deepEqual(val(`song.tempos`), [{tick: 0, usq: 500000, sec: 0}]); // base restored
+  // round-trips like any directive
+  run(`rollnotes = parseRollnotes("[1.1]\\ntempo: 90\\n").map(resolveNote); finalizeNotes();`);
+  assert.match(run(`serializeRollnotes()`), /tempo: 90\n/);
+  assert.equal(val(`song.tempos`)[0].usq, Math.round(6e7 / 90));
+  run(`rollnotes = []; finalizeNotes(); song.baseTempos = null; songKey = "midi/test.mid";`);
 });

@@ -540,7 +540,7 @@
     <div id="lcd">
       <div class="lcdseg"><span class="lcdbig" id="lcdbar">1</span><span class="lcdlbl">bar</span></div>
       <div class="lcdseg"><span class="lcdbig" id="lcdbeat">1</span><span class="lcdlbl">beat</span></div>
-      <div class="lcdseg"><span class="lcdmid" id="lcdtempo">—</span><span class="lcdlbl">tempo</span></div>
+      <div class="lcdseg" id="lcdtemposeg"><span class="lcdmid" id="lcdtempo">—</span><span class="lcdlbl">tempo</span></div>
       <div class="lcdseg" id="lcdmkseg"><span class="lcdmid" id="lcdmeter">4/4</span><span class="lcdmid lcdkey" id="lcdkey">—</span></div>
     </div>
   </div>
@@ -644,6 +644,7 @@
         <option value="key">Key change</option>
         <option value="timesig">Time signature</option>
         <option value="loop">Loop point</option>
+        <option value="tempo">Tempo change</option>
         <option value="chop">Chop</option>
       </select>
     </div>
@@ -683,6 +684,10 @@
         <option value="mixolydian">mixolydian</option>
         <option value="locrian">locrian</option>
       </select>
+    </div>
+    <div class="row" id="ntemporow" style="display:none">
+      <span class="lbl">bpm</span>
+      <input type="number" id="ntempo" min="20" max="400" value="120" style="width:90px;min-height:40px">
     </div>
     <div class="row" id="ntsrow" style="display:none">
       <span class="lbl">meter</span>
@@ -767,7 +772,7 @@
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
-      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". The meter·key segment is tappable whenever it shows a "?" — it opens the editor preset to answer it: Time signature if the meter is unset (it wins when both are), Key change otherwise; a stored partial opens its own note with the tonic already filled.</dd>
+      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). The meter·key segment is tappable whenever it shows a "?" — it opens the editor preset to answer it: Time signature if the meter is unset (it wins when both are), Key change otherwise; a stored partial opens its own note with the tonic already filled.</dd>
       <dt>Blue cursor</dt><dd>Play starts here. Tap the bar ruler to place it, or drag its handle (triangle under the ruler). Tapping any note also moves it there.</dd>
     </dl>
 
@@ -1246,6 +1251,9 @@ function parseRollnotes(text) {
     const tm = n.text.match(/^timesig:\s*(\d+)\s*\/\s*(\d+)/i);
     if (tm) { n.tsdir = [+tm[1], +tm[2]]; n.text = "timesig: " + tm[1] + "/" + tm[2]; }
     else delete n.tsdir;
+    const bm = n.text.match(/^tempo:\s*(\d+(?:\.\d+)?)\s*$/i);
+    if (bm) { n.tempodir = +bm[1]; n.text = "tempo: " + bm[1]; }
+    else delete n.tempodir;
   });
   return out.filter(n => n.text);
 }
@@ -1335,6 +1343,29 @@ function finalizeNotes() {
     const lm = n.text.match(/^loop:\s*(\d+)(?:\.(\d+(?:\.\d+)?))?\s*$/);
     if (lm) n.loopTo = (+lm[1] - 1) * bt + ((lm[2] ? +lm[2] : 1) - 1) * beatTicks();
     else delete n.loopTo;
+  }
+  if (song && isComposition()) { // Josh's ruling (2026-08-15): on CREATED songs a
+    // tempo: annotation authors the tempo — it rebuilds the map. On ANALYZED
+    // songs the same annotation is an observation ("the song changes tempo
+    // here") and must not touch playback: captures' timing is measured.
+    const dirs = rollnotes.filter(n => n.tempodir !== undefined).sort((a, b) => a.start - b.start);
+    if (!song.baseTempos) song.baseTempos = song.tempos.map(t => ({...t}));
+    if (dirs.length) {
+      const evs = song.baseTempos.filter(t => t.tick < dirs[0].start).map(t => ({tick: t.tick, usq: t.usq}));
+      if (!evs.length) evs.push({tick: 0, usq: Math.round(6e7 / dirs[0].tempodir)});
+      for (const d of dirs) evs.push({tick: Math.max(0, Math.round(d.start)), usq: Math.round(6e7 / d.tempodir)});
+      const byTick = new Map();
+      for (const e of evs) byTick.set(e.tick, e); // same tick: the directive wins
+      const sorted = [...byTick.values()].sort((a, b) => a.tick - b.tick);
+      let sec = 0;
+      for (let i = 0; i < sorted.length; i++) {
+        if (i > 0) sec += (sorted[i].tick - sorted[i - 1].tick) / song.ppq * sorted[i - 1].usq / 1e6;
+        sorted[i].sec = sec;
+      }
+      song.tempos = sorted;
+    } else {
+      song.tempos = song.baseTempos.map(t => ({...t}));
+    }
   }
   if (song) { updateSongMeta(); computeSongEnd(); } // grid may have changed
   if (chopChanged) { playCursor = Math.min(playCursor, songEndTick); if (typeof fitView === "function") fitView(); }
@@ -1465,7 +1496,7 @@ function dropLocalKeyAt(bar) { // a new key change replaces any local key marker
 }
 function isDirective(n) { // anything that isn't a plain text note
   return !!(n.section || n.chord || n.chopdir || n.keydir !== undefined ||
-            n.loopTo !== undefined || /^(timesig|key):/i.test(n.text));
+            n.loopTo !== undefined || n.tempodir !== undefined || /^(timesig|key|tempo):/i.test(n.text));
 }
 function activeNoteAt(tick) {
   let best = null;
@@ -1559,7 +1590,12 @@ function updateLCD() {
   // a "?" is an invitation: the segment taps open the editor that answers it
   document.getElementById("lcdmkseg").classList.toggle("tappable",
     meter.includes("?") || key.includes("?"));
+  // tempo is tappable on the app's own songs — authoring, not analysis
+  document.getElementById("lcdtemposeg").classList.toggle("tappable", isComposition());
 }
+document.getElementById("lcdtemposeg").addEventListener("click", () => {
+  if (song && isComposition()) openEditor(null, "tempo");
+});
 document.getElementById("lcdmkseg").addEventListener("click", () => {
   if (!song) return;
   if (!declaredTs) { openEditor(null, "timesig"); return; } // meter first: the easier ruling
@@ -1607,6 +1643,7 @@ async function loadSong(path) {
 function setSong(parsed, key) {
   loadGen++; // covers the local-file path: invalidate any in-flight catalog load
   song = parsed;
+  song.baseTempos = song.tempos.map(t => ({...t})); // tempo: directives rebuild from this
   songKey = key;
   declaredTs = null; // meter resets to neutral until this song's notes declare one
   selNote = null;
@@ -4005,6 +4042,7 @@ const notelistSheet = document.getElementById("notelistsheet");
 // all the keys) never means hunting through a mixed chronological pile
 const NOTE_GROUPS = [
   {title: "KEY", type: "key", match: n => n.keydir !== undefined || n.keypartial},
+  {title: "TEMPO", type: "tempo", match: n => n.tempodir !== undefined},
   {title: "METER", type: "timesig", match: n => !!n.tsdir},
   {title: "SECTIONS", type: "section", match: n => n.section},
   {title: "CHORDS", type: "chord", match: n => n.chord},
@@ -4847,15 +4885,16 @@ function fillBarBeatSelects() {
 function editorType() { return document.getElementById("ntype").value; }
 function applyEditorType() {
   const t = editorType();
-  document.getElementById("ntext").style.display = t === "key" || t === "loop" || t === "timesig" || t === "chop" ? "none" : "";
+  document.getElementById("ntext").style.display = t === "key" || t === "loop" || t === "timesig" || t === "chop" || t === "tempo" ? "none" : "";
   document.getElementById("nkeyrow").style.display = t === "key" ? "" : "none";
   document.getElementById("nchordbox").style.display = t === "chord" ? "" : "none";
   document.getElementById("ntsrow").style.display = t === "timesig" ? "" : "none";
+  document.getElementById("ntemporow").style.display = t === "tempo" ? "" : "none";
   document.getElementById("nlooprow").style.display = t === "loop" ? "" : "none";
   document.getElementById("nchoprow").style.display = t === "chop" ? "" : "none";
-  document.getElementById("ntorow").style.display = t === "loop" || t === "timesig" || t === "chop" ? "none" : "";
+  document.getElementById("ntorow").style.display = t === "loop" || t === "timesig" || t === "chop" || t === "tempo" ? "none" : "";
   document.getElementById("nmic").style.display =
-    SPEECH && t !== "key" && t !== "loop" && t !== "timesig" && t !== "chop" ? "" : "none"; // dictation targets the text box
+    SPEECH && t !== "key" && t !== "loop" && t !== "timesig" && t !== "chop" && t !== "tempo" ? "" : "none"; // dictation targets the text box
   document.getElementById("ntext").placeholder =
     t === "section" ? "Section label (shows in the ruler, e.g. A — G home)"
     : t === "chord" ? "Optional note about this chord (✱ in the ruler)"
@@ -4866,6 +4905,9 @@ function applyEditorType() {
     t === "chop" ? "Non-destructive trim: the chopped part disappears entirely and bars renumber. Chopping the start shifts your annotations to match; delete the chop to restore." :
     t === "loop" ? "When playback reaches the 'from' point (or the song end, if 'from' is at/before the target), it jumps back to the target bar/beat." :
     t === "timesig" ? "Until you declare a meter, the grid is a neutral 4/4 ruler. Declaring re-bars the song; existing annotations are converted to keep their musical positions." :
+    t === "tempo" ? (isComposition()
+      ? "Authoring: sets the tempo from this bar/beat onward. Playback, the LCD, and Save all follow."
+      : "Observation: records that the music changes tempo here. Playback is untouched — the capture's timing is measured fact.") :
     document.getElementById("nstatus").textContent;
 }
 document.getElementById("ntype").addEventListener("change", applyEditorType);
@@ -5019,7 +5061,7 @@ function openEditor(note, presetType) {
   }
   const type = note ? (note.chord ? "chord" : note.section ? "section"
                        : note.keydir !== undefined || note.keypartial ? "key"
-                       : note.tsdir ? "timesig" : note.chopdir ? "chop"
+                       : note.tsdir ? "timesig" : note.tempodir !== undefined ? "tempo" : note.chopdir ? "chop"
                        : note.loopTo !== undefined ? "loop" : "note")
              : presetType ? presetType // a group's + button pre-picks its type
              // a drag before + Note means "label this span" — as whichever of
@@ -5027,6 +5069,12 @@ function openEditor(note, presetType) {
              : rangeSel ? (localStorage.getItem("ff1roll-dragtype") || "section")
              : "note";
   document.getElementById("ntype").value = type;
+  if (type === "tempo") {
+    let usq = song.tempos[0].usq;
+    for (const tp of song.tempos) { if (tp.tick <= playCursor) usq = tp.usq; else break; }
+    document.getElementById("ntempo").value =
+      note && note.tempodir !== undefined ? String(note.tempodir) : String(Math.round(6e7 / usq));
+  }
   if (type === "timesig" && note) {
     document.getElementById("ntsnum").value = String(note.tsdir[0]);
     document.getElementById("ntsden").value = String(note.tsdir[1]);
@@ -5126,7 +5174,7 @@ document.getElementById("nsave").addEventListener("click", () => {
   micStop();
   const type = editorType();
   const text = document.getElementById("ntext").value.trim();
-  if (type !== "key" && type !== "loop" && type !== "timesig" && type !== "chord" && type !== "chop" && !text) { document.getElementById("nstatus").textContent = "Note text is empty."; return; }
+  if (type !== "key" && type !== "loop" && type !== "timesig" && type !== "chord" && type !== "chop" && type !== "tempo" && !text) { document.getElementById("nstatus").textContent = "Note text is empty."; return; }
   const b1 = Math.max(1, +document.getElementById("nb1").value || 1);
   const q1 = Math.max(1, +document.getElementById("nq1").value || 1);
   const b2raw = +document.getElementById("nb2").value || 0;
@@ -5147,6 +5195,9 @@ document.getElementById("nsave").addEventListener("click", () => {
       fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
                text: "key: " + tonic + "?", keypartial: tonic, added: true};
     }
+  } else if (type === "tempo") {
+    const bpm = Math.max(20, Math.min(400, +document.getElementById("ntempo").value || 120));
+    fresh = {b1, q1, b2: null, q2: null, text: "tempo: " + bpm, tempodir: bpm, added: true};
   } else if (type === "timesig") {
     const num = +document.getElementById("ntsnum").value, den = +document.getElementById("ntsden").value;
     const oldTs = effTs();
@@ -5329,7 +5380,7 @@ function draftStoreKey(key) { return "ff1roll-draft-" + key; }
 function saveDraft() {
   if (!isComposition()) return;
   localStorage.setItem(draftStoreKey(songKey), JSON.stringify({
-    ppq: song.ppq, timesig: song.timesig || effTs(), tempos: song.tempos,
+    ppq: song.ppq, timesig: song.timesig || effTs(), tempos: song.baseTempos || song.tempos,
     tracks: song.tracks.map(tr => ({name: tr.name,
       notes: tr.notes.filter(n => !n.gone).map(n => ({t: n.t, d: n.d, p: n.p, v: n.v}))})),
   }));
@@ -5355,7 +5406,11 @@ function writeMidi(s) { // format-1 SMF: meta track (tempo + meter) + one track 
   const str = t => [...t].map(c => c.charCodeAt(0) & 255);
   const track = body => [...str("MTrk"), ...u32(body.length), ...body];
   const t0 = [];
-  t0.push(...vlq(0), 0xFF, 0x51, 0x03, ...u32(s.tempos[0].usq).slice(1));
+  let lastT = 0;
+  for (const tp of [...s.tempos].sort((a, b) => a.tick - b.tick)) {
+    t0.push(...vlq(Math.max(0, tp.tick - lastT)), 0xFF, 0x51, 0x03, ...u32(tp.usq).slice(1));
+    lastT = Math.max(lastT, tp.tick);
+  }
   const ts = s.timesig || [4, 4];
   t0.push(...vlq(0), 0xFF, 0x58, 0x04, ts[0], Math.round(Math.log2(ts[1])), 24, 8);
   t0.push(...vlq(0), 0xFF, 0x2F, 0x00);
