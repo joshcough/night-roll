@@ -721,7 +721,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -878,4 +878,19 @@ test("parseMidi: MThd found anywhere — RIFF-wrapped and junk-prefixed files pa
   })()`);
   assert.equal(out.ppq, 480);
   assert.deepEqual(out.notes, [[0, 60]]);
+});
+
+test("m3u playlists: track names parse from the emu-scene format", () => {
+  const text = [
+    "# Mega Man II",
+    "mm2.nsf::NSF,3,Mega Man II - Ogeretsu Kun\\, Manami Matsumae - Flash Man,0:01:17,,0:00:06",
+    "mm2.nsf::NSF,11,Mega Man II - Ogeretsu Kun\\, Manami Matsumae - Dr. Wily's Castle,0:02:30,,0:00:11",
+    "mm2.nsf::NSF,12,Game - Artist - Dr. Wily's Castle II,0:01:16,,0:00:07",
+    "not a track line",
+  ].join("\n");
+  const map = val(`parseM3u(${JSON.stringify(text)})`);
+  assert.equal(map[3], "Flash Man");
+  assert.equal(map[11], "Dr. Wily's Castle"); // escaped commas in artist survive
+  assert.equal(map[12], "Dr. Wily's Castle II");
+  assert.equal(Object.keys(map).length, 3);
 });

@@ -583,7 +583,7 @@
        registered type), while NO accept summons the photo-library sheet.
        application/octet-stream maps to the root "any data" type: Files opens
        directly and everything is selectable — the byte-sniff stays the real gate -->
-  <input type="file" id="fileinput" multiple accept="application/octet-stream,.mid,.midi,.smf,.kar,.rmi,.nsf">
+  <input type="file" id="fileinput" multiple accept="application/octet-stream,.mid,.midi,.smf,.kar,.rmi,.nsf,.m3u,.m3u8">
 </header>
 <div id="trackrow">
   <div id="trackzone">
@@ -884,7 +884,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
@@ -5190,6 +5190,37 @@ document.getElementById("accseg").addEventListener("click", e => {
   pencilAcc = b.dataset.acc;
   for (const x of document.querySelectorAll("#accseg button")) x.classList.toggle("active", x === b);
 });
+// .m3u track-name playlists (the emu-scene convention: NSF rips ship with
+// one). Zero-typing names (Josh, 2026-08-17 — hands hurt; data entry that a
+// file already did is theft): pick the m3u with the NSF, or alone while an
+// import session is open, and every row gets its real title.
+function parseM3u(text) {
+  const map = {};
+  for (const line of text.split(/\r?\n/)) {
+    const m = line.match(/::NSF,(\d+),(.+?),\d+:\d\d/);
+    if (!m) continue;
+    const raw = m[2].replace(/\\,/g, ",");
+    const parts = raw.split(" - ");
+    const title = (parts.length >= 3 ? parts.slice(2).join(" - ") : parts[parts.length - 1]).trim();
+    if (title) map[+m[1]] = title;
+  }
+  return map;
+}
+function applyM3uNames(map) {
+  if (!nsfSess) return 0;
+  let applied = 0;
+  for (const [nStr, title] of Object.entries(map)) {
+    const row = nsfSess.rows[+nStr];
+    if (!row) continue;
+    row.name.value = title;
+    if (row.key) { // captured already: rename the draft in place
+      const nk = renameImportDraft(row.key, title);
+      if (nk !== null) row.key = nk;
+    }
+    applied++;
+  }
+  return applied;
+}
 let pendingMidis = null; // [{name, parsed}] awaiting a destination choice
 document.getElementById("fileinput").addEventListener("change", async e => {
   const files = [...e.target.files];
@@ -5199,10 +5230,19 @@ document.getElementById("fileinput").addEventListener("change", async e => {
   try {
     const loaded = [];
     for (const f of files) loaded.push({name: f.name, bytes: new Uint8Array(await f.arrayBuffer())});
-    const nsfs = loaded.filter(x => String.fromCharCode(...x.bytes.subarray(0, 5)) === "NESM\x1a");
+    const isM3u = x => /\.m3u8?$/i.test(x.name);
+    const m3us = loaded.filter(isM3u);
+    const rest = loaded.filter(x => !isM3u(x));
+    const names = m3us.length ? parseM3u(new TextDecoder().decode(m3us[0].bytes)) : null;
+    const nsfs = rest.filter(x => String.fromCharCode(...x.bytes.subarray(0, 5)) === "NESM\x1a");
     if (nsfs.length) { // an NSF is an album by itself
-      if (loaded.length > 1) setInfo("importing the NSF; pick MIDI files separately from other formats");
+      if (rest.length > 1) setInfo("importing the NSF; pick MIDI files separately from other formats");
       await openNsfImport(nsfs[0].bytes, nsfs[0].name);
+      if (names) setInfo(applyM3uNames(names) + " track names loaded from the playlist — capture away.");
+    } else if (m3us.length && !rest.length) { // playlist alone: name the open session's tracks/drafts
+      if (!nsfSess) setInfo("⚠ that is a track-name playlist — import its NSF first (or pick both together)");
+      else setInfo("✓ " + applyM3uNames(names) + " tracks named from the playlist" +
+                   " — captured drafts renamed in place.");
     } else {
       pendingMidis = loaded.map(x => ({name: x.name, parsed: parseMidi(x.bytes.buffer)})); // sniffed: MThd found anywhere
       document.getElementById("miditle").textContent =
