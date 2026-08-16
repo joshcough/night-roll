@@ -84,11 +84,15 @@
   #trackrow {
     display: flex;
     align-items: center;
+    gap: 8px;
     background: var(--panel);
     border-bottom: 1px solid var(--grid);
     flex-shrink: 0;
   }
-  #timectl { display: flex; align-items: center; gap: 10px; padding-right: 12px; flex: none; }
+  #trackzone { flex: 1 1 0; min-width: 0; display: flex; align-items: flex-start; }
+  #trackmore { margin: 8px 4px 0 0; min-height: 36px; padding: 4px 9px; flex: none; }
+  #transport { display: flex; align-items: center; gap: 8px; flex: none; }
+  #timectl { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-right: 12px; flex: 1 1 0; min-width: 0; }
   #timectl #metbtn { min-height: 34px; padding: 4px 10px; }
   select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; min-width: 74px; }
@@ -129,12 +133,13 @@
 
   #trackbar {
     display: flex;
+    flex-wrap: wrap; /* many tracks flow onto more rows instead of scrolling */
     gap: 8px;
-    padding: 8px 12px;
-    overflow-x: auto;
+    padding: 8px 0 8px 12px;
     flex: 1;
     min-width: 0;
   }
+  #trackbar.collapsed { max-height: 52px; overflow: hidden; } /* first row only */
   .chip {
     touch-action: manipulation; /* iOS ignores the viewport no-zoom meta; without this two quick taps zoom the page */
     display: flex;
@@ -481,14 +486,18 @@
 <header>
   <div class="brand">NIGHT <span>//</span> ROLL</div>
   <button id="filesheetbtn">File ▾</button>
-  <button id="rwbtn" aria-label="Back to start">⏮</button>
-  <button class="primary" id="playbtn">▶ Play</button>
-  <button id="viewbtn" aria-label="Toggle score view">𝄞 Score</button>
   <span id="songcrumb"></span>
   <input type="file" id="fileinput" accept=".mid,.midi">
 </header>
 <div id="trackrow">
-  <div id="trackbar"></div>
+  <div id="trackzone">
+    <div id="trackbar"></div>
+    <button id="trackmore" style="display:none" aria-label="Show all tracks">▾</button>
+  </div>
+  <div id="transport">
+    <button id="rwbtn" aria-label="Back to start">⏮</button>
+    <button class="primary" id="playbtn">▶ Play</button>
+  </div>
   <div id="timectl">
     <button id="metbtn" aria-label="Metronome">⏱</button>
     <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
@@ -512,6 +521,7 @@
 </div>
 <div id="subtitle"></div>
 <footer>
+  <button id="viewbtn" aria-label="Toggle score view">𝄞 Score</button>
   <button id="editbtn">Edit</button>
   <div class="seg" id="modeseg" style="display:none">
     <button data-mode="select" class="active">Select</button>
@@ -716,7 +726,7 @@
 
     <h3>TRACKS</h3>
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Many tracks wrap onto more rows; a ▾ appears when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away. ▶ Play and ⏮ sit centered on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -1593,7 +1603,24 @@ function renderTrackbar() {
     });
     bar.appendChild(add);
   }
+  updateTrackMore();
 }
+// 30 tracks would eat the screen: collapsed shows the first chip row only,
+// ▾ reveals the rest, ▴ tucks them back (Josh's disclosure design)
+let trackExpand = false;
+function updateTrackMore() {
+  const bar = document.getElementById("trackbar");
+  const more = document.getElementById("trackmore");
+  bar.classList.toggle("collapsed", !trackExpand);
+  // reading scrollHeight forces a fresh layout — measure synchronously
+  const overflowing = bar.scrollHeight > bar.clientHeight + 2;
+  more.style.display = overflowing || trackExpand ? "" : "none";
+  more.textContent = trackExpand ? "▴" : "▾";
+}
+document.getElementById("trackmore").addEventListener("click", () => {
+  trackExpand = !trackExpand;
+  updateTrackMore();
+});
 function trackAudible(ti) {
   const anySolo = trackState.some(s => s.solo);
   return anySolo ? trackState[ti].solo : !trackState[ti].muted;
@@ -1605,6 +1632,7 @@ function resize() {
   canvas.width = wrap.clientWidth * dpr;
   canvas.height = wrap.clientHeight * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (typeof updateTrackMore === "function") updateTrackMore(); // wrap point moves with width
   draw();
 }
 const cssCache = {}; // theme is static — cache so 60fps draw() skips getComputedStyle
