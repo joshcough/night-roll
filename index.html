@@ -1897,8 +1897,21 @@ function updateSubtitle() {
 
 // ---------------------------------------------------------------- load song
 let loadGen = 0; // bumps on every song switch; stale async loads check it and bail
+let songLoading = false, pendingPlay = false;
 async function loadSong(path) {
   stop();
+  songLoading = true;
+  try {
+    await loadSongInner(path);
+  } finally {
+    songLoading = false;
+    if (pendingPlay) { // play pressed mid-load: honor it now the song is real
+      pendingPlay = false;
+      play(0).catch(() => { /* audio context refusal */ });
+    }
+  }
+}
+async function loadSongInner(path) {
   const draftRaw = localStorage.getItem("ff1roll-draft-" + path);
   if (draftRaw) {
     // cross-device freshness (Josh, 2026-08-16): a Save from another machine
@@ -3581,6 +3594,11 @@ function chipStart(fromSec) {
   }
 }
 async function play(fromSec = 0) {
+  if (songLoading) { // starting a transport against a half-loaded song played
+    pendingPlay = true; // a couple of chase notes then died (Josh, 2026-08-17)
+    document.getElementById("playbtn").textContent = "▶ …";
+    return;
+  }
   ensureAudio();
   await resumeAudio(); // await: scheduling against a frozen clock builds a stale time base
   openMaster();
@@ -3668,6 +3686,7 @@ async function play(fromSec = 0) {
   raf = requestAnimationFrame(tick);
 }
 function stop() {
+  pendingPlay = false; // an explicit stop cancels a queued mid-load play
   if (!playing) { draw(); return; }
   playCursor = secToTick(song, playSec());
   playing = false;
