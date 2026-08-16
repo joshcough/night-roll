@@ -3513,6 +3513,16 @@ async function updateChipBtn() { // name kept for call sites; now just the auto-
   // the voice menu — auto = the console own sound, an explicit instrument
   // swaps that track to synthesis.
   const available = chipTrackNo() !== null || (await chipSource()) !== null;
+  // an import capture with NO reachable NSF plays synthesized — say so ONCE,
+  // loudly enough to find (Josh listened to synth for an hour believing it
+  // was the chip, 2026-08-17): the ⚠ log names the fix
+  if (!available && songKey && songKey.startsWith("albums/imports/") &&
+      localStorage.getItem(draftStoreKey(songKey)) !== null && updateChipBtn.warned !== songKey) {
+    updateChipBtn.warned = songKey;
+    logErr("chip audio unavailable for " + songKey.split("/").pop() +
+           " — no NSF on this device (captures made before NSF storage, or another device's import). " +
+           "Re-import the album's NSF once, or commit the album; playing synthesized voices meanwhile.");
+  }
   if (available && chip.key !== songKey && chip.rendering !== songKey) {
     chip.rendering = songKey;
     const forKey = songKey;
