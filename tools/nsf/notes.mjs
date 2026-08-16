@@ -133,7 +133,7 @@ export function reconstruct(apuLog, frames, frameSec) {
 // identical partner at t−P). Keep [0, R): intro + one full pass — the same
 // cut rule used to trim the transcriptions. Returns {keep: R, period: P} in
 // frames, or null (non-looping jingles like the epilogue).
-export function detectLoop(events, frames, hint = null) {
+function makeLoopScan(events, frames, hint) { // shared core: sync + async twins iterate it
   const evs = [...events].sort((a, b) => a.startFrame - b.startFrame);
   if (evs.length < 8) return null;
   const byKey = new Map(); // channel:midi:startFrame -> event
@@ -209,14 +209,41 @@ export function detectLoop(events, frames, hint = null) {
     return best;
   };
 
-  let best = null;
-  for (let P = pLo; P <= pHi; P++) {
+  const step = (P) => { // one candidate period: a full trim result or null
     let quickBad = 0;
     for (const s of samples) if (s.startFrame >= P && !partnerOk(s, P)) quickBad++;
-    if (quickBad > samples.length / 2) continue;
+    if (quickBad > samples.length / 2) return null;
     const r0 = evaluate(P);
-    if (!r0) continue;
-    const r = evaluate(refine(P)) || r0;
+    if (!r0) return null;
+    return evaluate(refine(P)) || r0;
+  };
+  return {pLo, pHi, step};
+}
+export function detectLoop(events, frames, hint = null) {
+  const scan = makeLoopScan(events, frames, hint);
+  if (!scan) return null;
+  let best = null;
+  for (let P = scan.pLo; P <= scan.pHi; P++) {
+    const r = scan.step(P);
+    if (!r) continue;
+    if (!hint) return r;
+    if (!best || r.bad < best.bad) best = r;
+  }
+  return best;
+}
+// Same scan, but yields to the event loop periodically: a 300s no-loop
+// capture sweeps ~10k candidate periods in one sync block, which froze the
+// tab AFTER the (already-async) emulation hit 100% — Josh's beacon-adjacent
+// sighting pinned it (2026-08-16). Identical iteration order = identical
+// results to detectLoop.
+export async function detectLoopAsync(events, frames, hint = null, yieldEvery = 300) {
+  const scan = makeLoopScan(events, frames, hint);
+  if (!scan) return null;
+  let best = null, since = 0;
+  for (let P = scan.pLo; P <= scan.pHi; P++) {
+    if (++since >= yieldEvery) { since = 0; await new Promise(r => setTimeout(r, 0)); }
+    const r = scan.step(P);
+    if (!r) continue;
     if (!hint) return r;
     if (!best || r.bad < best.bad) best = r;
   }

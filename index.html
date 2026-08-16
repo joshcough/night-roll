@@ -6411,13 +6411,14 @@ async function captureNsfTrack(M, nsf, track, seconds, onProgress) { // dump-all
   // reload, killing the whole import mid-run (Josh, 2026-08-16)
   // NO sync fallback: a long sync run freezes the tab until Safari's
   // watchdog force-reloads it — an honest error beats a dead page
-  if (!M.runNSFAsync) throw new Error("pipeline update still deploying — close the import panel and retry in a minute");
+  if (!M.runNSFAsync || !M.detectLoopAsync) throw new Error("pipeline update still deploying — close the import panel and retry in a minute");
   const {apuLog, frames, frameSec} = await M.runNSFAsync(nsf, track, seconds, onProgress);
   let events = M.reconstruct(apuLog, frames, frameSec);
   if (!events.length) return null; // silent slot (SFX banks have them)
   const t0 = Math.min(...events.map(ev => ev.startFrame));
   events = events.map(ev => ({...ev, startFrame: ev.startFrame - t0, endFrame: ev.endFrame - t0}));
-  const loop = M.detectLoop(events, frames - t0, null);
+  if (onProgress) onProgress("scan"); // emulation done — the loop scan is its own beacon phase
+  const loop = await M.detectLoopAsync(events, frames - t0, null); // yielding twin: the sync scan froze the tab post-100%
   let keptFrames = frames - t0;
   if (loop) { // trim to intro + one pass, timing backported from later passes
     events = M.backportTiming(events, loop.period);
@@ -6530,10 +6531,15 @@ async function impCapture(n) {
   const beacon = phase => sessionStorage.setItem("ff1roll-capcrash",
     JSON.stringify({n, secs, phase, pct: 0, t: Date.now()}));
   beacon("emulating");
-  const pct = p => {
-    row.st.textContent = "capturing… " + Math.round(p * 100) + "%";
-    try { const b = JSON.parse(sessionStorage.getItem("ff1roll-capcrash")); b.pct = Math.round(p * 100); sessionStorage.setItem("ff1roll-capcrash", JSON.stringify(b)); } catch (err) { /* beacon lost */ }
+  const tick = (label) => p => {
+    try {
+      const b = JSON.parse(sessionStorage.getItem("ff1roll-capcrash"));
+      if (p === "scan") { b.phase = "loop-scan"; row.st.textContent = label + "detecting loop…"; }
+      else { b.pct = Math.round(p * 100); row.st.textContent = label + "capturing… " + b.pct + "%"; }
+      sessionStorage.setItem("ff1roll-capcrash", JSON.stringify(b));
+    } catch (err) { /* beacon lost */ }
   };
+  const pct = tick("");
   try {
     let cap = await captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs, pct);
     // the detector needs intro + TWO full passes in frame — a 35s loop with an
@@ -6541,9 +6547,8 @@ async function impCapture(n) {
     // ceiling (a doubling ladder just re-emulates the same song extra times)
     if (cap && !cap.looped && secs < 300) {
       secs = 300;
-      beacon("retry-300s");
-      const pct2 = p => { row.st.textContent = "no loop — retrying 300s… " + Math.round(p * 100) + "%"; };
-      cap = await captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs, pct2);
+      beacon("retry");
+      cap = await captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs, tick("no loop — 300s: "));
     }
     if (!cap) { row.st.textContent = "silent — nothing to keep"; return; }
     const raw = row.name.value.trim() || "track-" + String(n).padStart(2, "0");
