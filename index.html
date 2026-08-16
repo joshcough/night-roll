@@ -5194,23 +5194,23 @@ document.getElementById("accseg").addEventListener("click", e => {
 // one). Zero-typing names (Josh, 2026-08-17 — hands hurt; data entry that a
 // file already did is theft): pick the m3u with the NSF, or alone while an
 // import session is open, and every row gets its real title.
-function parseM3u(text) {
-  const map = {};
+function parseM3u(text) { // ordered [{n, title}] — playlist order IS album order
+  const list = [];
   for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/::NSF,(\d+),(.+?),\d+:\d\d/);
+    const m = line.match(/::NSF,(\d+),(.+?),(\d+):(\d\d(?:\.\d+)?)/);
     if (!m) continue;
     const raw = m[2].replace(/\\,/g, ",");
     const parts = raw.split(" - ");
     const title = (parts.length >= 3 ? parts.slice(2).join(" - ") : parts[parts.length - 1]).trim();
-    if (title) map[+m[1]] = title;
+    if (title) list.push({n: +m[1], title, len: +m[3] * 60 + +m[4]});
   }
-  return map;
+  return list;
 }
-function applyM3uNames(map) {
+function applyM3uNames(list) {
   if (!nsfSess) return 0;
   let applied = 0;
-  for (const [nStr, title] of Object.entries(map)) {
-    const row = nsfSess.rows[+nStr];
+  for (const {n, title} of list) {
+    const row = nsfSess.rows[n];
     if (!row) continue;
     row.name.value = title;
     if (row.key) { // captured already: rename the draft in place
@@ -5237,8 +5237,7 @@ document.getElementById("fileinput").addEventListener("change", async e => {
     const nsfs = rest.filter(x => String.fromCharCode(...x.bytes.subarray(0, 5)) === "NESM\x1a");
     if (nsfs.length) { // an NSF is an album by itself
       if (rest.length > 1) setInfo("importing the NSF; pick MIDI files separately from other formats");
-      await openNsfImport(nsfs[0].bytes, nsfs[0].name);
-      if (names) setInfo(applyM3uNames(names) + " track names loaded from the playlist — capture away.");
+      await openNsfImport(nsfs[0].bytes, nsfs[0].name, names);
     } else if (m3us.length && !rest.length) { // playlist alone: name the open session's tracks/drafts
       if (!nsfSess) setInfo("⚠ that is a track-name playlist — import its NSF first (or pick both together)");
       else setInfo("✓ " + applyM3uNames(names) + " tracks named from the playlist" +
@@ -6844,7 +6843,7 @@ async function captureNsfTrack(M, nsf, track, seconds, onProgress) { // dump-all
           loopAnchor: loop && backBeats > 0.4 ? bq(keptFrames * frameSec / beatSec) : null,
           loopTarget: loop && backBeats > 0.4 ? bq(backBeats) : null};
 }
-async function openNsfImport(bytes, name) {
+async function openNsfImport(bytes, name, m3uList) {
   const M = await nsfModules();
   const nsf = M.parseNSF(bytes);
   nsfSess = {M, nsf, bytes, rows: []};
@@ -6853,12 +6852,18 @@ async function openNsfImport(bytes, name) {
   document.getElementById("impslug").value = slugify(nsf.name || name.replace(/\.nsf$/i, ""));
   const list = document.getElementById("implist");
   list.innerHTML = "";
-  for (let n = 1; n <= nsf.songs; n++) {
+  // an m3u names the MUSIC tracks — an NSF like TMNT2 carries 120 slots of
+  // which 95 are sound effects; with a playlist we list only the songs, in
+  // album order, pre-named. Without one: every slot, as before.
+  nsfSess.trackList = m3uList && m3uList.length
+    ? m3uList.filter(e => e.n >= 1 && e.n <= nsf.songs)
+    : Array.from({length: nsf.songs}, (_, i) => ({n: i + 1, title: null}));
+  for (const {n, title} of nsfSess.trackList) {
     const row = document.createElement("div");
     row.className = "row";
     const lbl = document.createElement("input"); // editable: type the real name once you recognize the tune
     lbl.type = "text";
-    lbl.value = "track-" + String(n).padStart(2, "0");
+    lbl.value = title || ("track-" + String(n).padStart(2, "0"));
     lbl.style.cssText = "flex:none;width:150px;min-height:32px;font-family:var(--mono);font-size:12px";
     lbl.addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.preventDefault(); lbl.blur(); } });
     lbl.addEventListener("change", () => impRename(n));
@@ -6883,6 +6888,7 @@ async function openNsfImport(bytes, name) {
     nsfSess.rows[n] = {name: lbl, st, open, cap};
   }
   document.getElementById("impall").textContent = "Capture all"; // fresh import, fresh verb
+  if (m3uList && m3uList.length) setInfo(nsfSess.trackList.length + " songs listed from the playlist (of " + nsf.songs + " NSF slots) — names loaded.");
   const sheet = document.getElementById("importsheet");
   sheet.classList.add("on");
   requestAnimationFrame(() => {
@@ -6931,6 +6937,12 @@ async function impCapture(n) {
   if (!nsfSess) return;
   const slug = slugify(document.getElementById("impslug").value) || "import";
   let secs = Math.max(10, Math.min(300, +document.getElementById("impsecs").value || 75));
+  // the playlist knows each track's length: size the capture to it (a 10s
+  // jingle should not produce a 300s draft), and skip the 300s no-loop
+  // retry for known-short jingles — they are through-composed by nature
+  const meta = (nsfSess.trackList || []).find(e => e.n === n);
+  const isJingle = meta && meta.len && meta.len <= 22;
+  if (meta && meta.len) secs = Math.max(12, Math.min(300, Math.ceil(meta.len * 2.5 + 4)));
   const row = nsfSess.rows[n];
   row.st.textContent = "capturing…";
   row.open.style.display = "none";
@@ -6954,7 +6966,7 @@ async function impCapture(n) {
     // the detector needs intro + TWO full passes in frame — a 35s loop with an
     // intro already busts 75s. No loop found? ONE retry straight at the 300s
     // ceiling (a doubling ladder just re-emulates the same song extra times)
-    if (cap && !cap.looped && secs < 300) {
+    if (cap && !cap.looped && secs < 300 && !isJingle) {
       secs = 300;
       beacon("retry");
       cap = await captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs, tick("no loop — 300s: "));
@@ -7026,9 +7038,10 @@ document.getElementById("impall").addEventListener("click", async e => {
   btn.disabled = true;
   try {
     let saved = 0;
-    for (let n = 1; n <= nsfSess.nsf.songs; n++) {
-      impStatus("capturing " + n + "/" + nsfSess.nsf.songs + "…");
-      if (await impCapture(n)) saved++;
+    const list = nsfSess.trackList || [];
+    for (let i = 0; i < list.length; i++) {
+      impStatus("capturing " + (i + 1) + "/" + list.length + "…");
+      if (await impCapture(list[i].n)) saved++;
     }
     const slug = slugify(document.getElementById("impslug").value) || "import";
     impStatus(saved + " track" + (saved === 1 ? "" : "s") + " saved as local drafts — folder \"" +

@@ -888,9 +888,10 @@ test("m3u playlists: track names parse from the emu-scene format", () => {
     "mm2.nsf::NSF,12,Game - Artist - Dr. Wily's Castle II,0:01:16,,0:00:07",
     "not a track line",
   ].join("\n");
-  const map = val(`parseM3u(${JSON.stringify(text)})`);
-  assert.equal(map[3], "Flash Man");
-  assert.equal(map[11], "Dr. Wily's Castle"); // escaped commas in artist survive
-  assert.equal(map[12], "Dr. Wily's Castle II");
-  assert.equal(Object.keys(map).length, 3);
+  const list = val(`parseM3u(${JSON.stringify(text)})`);
+  assert.deepEqual(list.map(e => [e.n, e.title]), [
+    [3, "Flash Man"],
+    [11, "Dr. Wily's Castle"], // escaped commas in artist survive; order = playlist order
+    [12, "Dr. Wily's Castle II"],
+  ]);
 });
