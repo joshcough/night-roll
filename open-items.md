@@ -20,7 +20,30 @@ full-width color picker (swatches removed), track-row layout fixes
 (▾ hugs chips, transport pinned top), voice menu holds position + ✕.
 Tests 45/45. Details in NIGHT-ROLL.md.
 
-**MM2 "notes cut off" (Josh's last report before bed 2026-08-17
+**MM2 STATUS AFTER THE ALL-NIGHTER (2026-08-17 ~3am):** Flash Man (t3)
+"sounds really good"; Wily 1 (t11) "pretty great"; title (t1) "really
+really close" after the snap-residual raw-timing gate. Shipped in the
+final hour: per-note duty timbres (chip instrument choice, CC70),
+chip software envelopes (per-note decay targets as aftertouch —
+targets the "tremolo" flat-sustain beating; Josh had NOT yet auditioned
+this build), linear velocity map (the ^1.6 experiment pumped gallop
+accents — reverted), auto raw-timing for tracks one grid can't hold
+(t1 mid-song tempo change, t2 triplet gallops).
+
+**OPEN: title theme (t2) bars 17-25 "train wreck — band not together"**
+(fresh capture, rest of song good). Autopsy data: that section is
+32nd-note arpeggio runs — IOIs alternate 2/3 frames (33ms notes) vs
+the clean 5-frame 16ths elsewhere; channels perfectly synced (p2 lag 0
+for 61/67 notes), so data is chip-true — the wreck is RENDERING walls
+of 33ms notes (osc-per-note attack/release blur, possibly also the
+snap-residual gate keeping raw timing so the roll grid misleads).
+Ideas: envelope build may already help (unheard); if not, consider
+arp-aware rendering (merge rapid same-channel runs into one osc with
+frequency steps — the chip IS one osc changing pitch, not N osc
+attacks). Also unheard-yet: whether bars 17-25 improve under the decay
+envelopes. FIRST MORNING STEP: re-capture t2 on latest build, listen.
+
+**MM2 "notes cut off" (Josh's earlier report before bed 2026-08-17
 ~2am) — analysis + one fix shipped, LISTENING VERDICT NEEDED:**
 import now works end-to-end (the tab-killer was a negative backported
 time running the MIDI varint writer unbounded — found by the
