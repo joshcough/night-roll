@@ -3141,7 +3141,8 @@ document.addEventListener("pointerdown", e => { // tap-away closes the voice men
 function trackIsDrums(ti) {
   const tr = song.tracks[ti];
   if (tr.drums === undefined)
-    tr.drums = /drum|percussion|kit/i.test(tr.name) || tr.notes.some(x => x.ch === 9);
+    // "noise" = the NES noise channel — percussion by hardware definition
+    tr.drums = /drum|percussion|kit|noise/i.test(tr.name) || tr.notes.some(x => x.ch === 9);
   return tr.drums;
 }
 function drumHit(ti, p, when, vel) {
@@ -6544,7 +6545,11 @@ async function impCapture(n) {
       savedStamp: 0, dirty: true, title: raw, ppq: parsed.ppq, timesig: parsed.timesig || [4, 4],
       tempos: parsed.tempos,
       tracks: parsed.tracks.map(tr => ({name: tr.name,
-        notes: tr.notes.map(nt => ({t: nt.t, d: nt.d, p: nt.p, v: nt.v}))}))}));
+        notes: tr.notes.map(nt => {
+          const o = {t: nt.t, d: nt.d, p: nt.p, v: nt.v};
+          if (nt.ch !== undefined) o.ch = nt.ch; // noise rides ch 9 — dropping it made drums play as pitched tones
+          return o;
+        })}))}));
     if (cap.loopAnchor) // hardware loop point -> annotation, same rule as the FF1 dumps
       localStorage.setItem("ff1roll-notes-" + key, JSON.stringify([
         {b1: cap.loopAnchor[0], q1: cap.loopAnchor[1], b2: null, q2: null,
