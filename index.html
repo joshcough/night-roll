@@ -542,7 +542,6 @@
   <button id="undobtn" style="display:none">⟲</button>
   <button id="lassobtn">⊞ Lasso</button>
   <button id="instbtn">🎹</button>
-  <button id="subbtn">💬</button>
   <select id="findsel" aria-label="Highlight a pitch class" style="max-width:110px">
     <option value="">find: off</option>
   </select>
@@ -563,6 +562,7 @@
   <button id="keyset" style="display:none">Set</button>
   <button id="cofbtn" aria-label="Circle of fifths">◯5</button>
   <div id="noteinfo">tap a note</div>
+  <button id="subbtn">💬</button>
   <button id="listbtn">☰ Notes</button>
   <button id="notebtn">+ Note</button>
   <button id="syncbtn">Sync</button>
@@ -1082,6 +1082,13 @@ function updateClearBtn() {
   const has = editsKey() && localStorage.getItem(editsKey());
   document.getElementById("clearbtn").style.display = has ? "" : "none";
 }
+function updateEditBtnVis() { // Edit exists only on songs made in the app (or local
+  // .mid loads) — never on the FF captures (Josh, 2026-08-15)
+  const editable = isComposition() || (!!song && songKey === null);
+  const btn = document.getElementById("editbtn");
+  if (!editable && editOn) btn.click(); // force-exit edit mode before hiding it
+  btn.style.display = editable ? "" : "none";
+}
 
 // ---------------------------------------------------------------- rollnotes
 function barTicks() { return beatsPerBarEff() * song.ppq; }
@@ -1250,6 +1257,7 @@ function finalizeNotes() {
   }
   if (song) { updateSongMeta(); computeSongEnd(); } // grid may have changed
   if (chopChanged) { playCursor = Math.min(playCursor, songEndTick); if (typeof fitView === "function") fitView(); }
+  updateEditBtnVis(); // "forked from" notes arrive with the rollnotes — recheck editability
   keyRegions = rollnotes.filter(n => n.keydir !== undefined)
     .map(n => ({start: n.start, sf: n.keydir,
                 name: (n.text.match(/^key:\s*(\S+(?:\s+[a-z]+)?)/i) || [, SF_MAJOR[n.keydir]])[1], // "Gm"/"D dorian" show as recorded
@@ -1498,6 +1506,7 @@ function setSong(parsed, key) {
   computeSongEnd();
   fitView();
   renderTrackbar();
+  updateEditBtnVis();
   buildScoreModel();
   clampView();
   setInfo("tap a note");
@@ -5400,6 +5409,7 @@ async function moveComposition(destDir) {
     currentPath = newKey;
     localStorage.setItem("ff1roll-lastsong", newKey);
     updateSongBtn();
+    updateEditBtnVis();
   };
   if (!token) { // no token: draft-only move on this device
     renameLocal();
