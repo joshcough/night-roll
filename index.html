@@ -3187,7 +3187,7 @@ function scheduleNote(ti, n, when, durSec) {
     if (buf) {
       const src = audio.createBufferSource();
       src.buffer = buf;
-      const vel = 0.25 + 0.75 * (n.v / 127);
+      const vel = Math.pow(n.v / 127, 1.6); // sampled voices: same chip-true dynamics
       g.gain.setValueAtTime(vel, when);
       g.gain.setValueAtTime(vel, Math.max(when + 0.01, end - 0.04));
       g.gain.linearRampToValueAtTime(0, end + 0.09); // release past the gate
@@ -3199,7 +3199,11 @@ function scheduleNote(ti, n, when, durSec) {
     sfDecode(file, n.p); // not decoded yet: ready by the next loop pass —
     v = "triangle";      // meanwhile a quiet triangle holds the line
   }
-  const amp = (0.25 + 0.75 * (n.v / 127)) * (VOICE_AMP[v] || 0.5);
+  // velocity -> amplitude tracks the chip: the old 0.25 floor compressed
+  // dynamics so echo voices (chip vol ~half) played at ~70% loudness — MM2's
+  // 50ms slap echoes flammed like mistakes instead of sitting behind the
+  // melody as ambience (Josh's "weirdly overlapped", 2026-08-17)
+  const amp = Math.pow(n.v / 127, 1.6) * (VOICE_AMP[v] || 0.5);
   const f0 = 440 * Math.pow(2, (n.p - 69) / 12);
   if (v === "pluck") { // a real vibrating string, not an oscillator
     const src = audio.createBufferSource();
