@@ -680,8 +680,8 @@
   <button id="subbtn">💬</button>
   <button id="listbtn">☰ Notes</button>
   <button id="notebtn">+ Note</button>
-  <button id="errbtn" style="display:none;color:#e66767" aria-label="Errors">⚠</button>
   <button id="syncbtn">Sync</button>
+  <button id="errbtn" style="display:none;color:#e66767" aria-label="Errors">⚠</button>
   <button id="clearbtn" style="display:none">Clear edits</button>
 </footer>
 
@@ -7152,7 +7152,10 @@ async function commitImports(status, keys) { // push import drafts (all by defau
       await ensureImportAlbum(slug, h, overrides, nsfTracks);
       if (rec && rec.bytes) {
         try {
-          const chk = await fetch(repoApi("nsf") + slug + ".nsf?ref=main", {headers: h});
+          // check existence via the public URL — the API with a token that
+          // can't see the repo reports 404 for files that are THERE (Josh's
+          // false "vault upload failed" after mm2.nsf already existed)
+          const chk = await fetch(nsfURL(slug + ".nsf") + "?t=" + Date.now(), {cache: "no-cache"});
           if (!chk.ok) {
             status("Uploading NSF to the private vault…");
             const put = await fetch(repoApi("nsf") + slug + ".nsf", {
