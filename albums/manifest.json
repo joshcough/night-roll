@@ -35,10 +35,6 @@
     "path": "albums/final-fantasy-i/songs/gurgu-volcano.mid"
    },
    {
-    "title": "Main Theme",
-    "path": "albums/final-fantasy-i/songs/overworld.mid"
-   },
-   {
     "title": "Matoya's Cave",
     "path": "albums/final-fantasy-i/songs/matoyas-cave.mid"
    },
@@ -49,6 +45,10 @@
    {
     "title": "Opening Theme",
     "path": "albums/final-fantasy-i/songs/prologue.mid"
+   },
+   {
+    "title": "Overworld",
+    "path": "albums/final-fantasy-i/songs/overworld.mid"
    },
    {
     "title": "Prelude",
