@@ -590,6 +590,30 @@ test("NSF import helpers: track keys, album titles, manifest, Sync exclusion", (
   assert.deepEqual(out[0].songs, [{title: "Track 07", path: "albums/imports/solstice/track-07.mid"}]);
 });
 
+test("NSF import rename: draft moves, typed title survives, collisions refused", () => {
+  run(`
+    localStorage.setItem("ff1roll-draft-albums/imports/mm2/track-15.mid", JSON.stringify({title: "track-15", tracks: []}));
+    localStorage.setItem("ff1roll-notes-albums/imports/mm2/track-15.mid", "[]");
+    localStorage.setItem("ff1roll-draft-albums/imports/mm2/track-16.mid", JSON.stringify({title: "track-16", tracks: []}));
+  `);
+  assert.equal(run(`renameImportDraft("albums/imports/mm2/track-15.mid", "Dr. Wily's Castle")`),
+               "albums/imports/mm2/dr-wily-s-castle.mid");
+  const d = JSON.parse(app.store.get("ff1roll-draft-albums/imports/mm2/dr-wily-s-castle.mid"));
+  assert.equal(d.title, "Dr. Wily's Castle"); // punctuation intact for the dropdown
+  assert.equal(app.store.get("ff1roll-draft-albums/imports/mm2/track-15.mid"), undefined);
+  assert.equal(app.store.get("ff1roll-notes-albums/imports/mm2/dr-wily-s-castle.mid"), "[]"); // stash rides along
+  // display titles: typed names verbatim, bare slugs prettified
+  assert.equal(run(`impDisplayTitle({title: "Dr. Wily's Castle"}, "dr-wily-s-castle")`), "Dr. Wily's Castle");
+  assert.equal(run(`impDisplayTitle({title: "airship"}, "airship")`), "Airship");
+  assert.equal(run(`impDisplayTitle(null, "track-07")`), "Track 07");
+  // collision: another captured track already owns the name
+  assert.equal(run(`renameImportDraft("albums/imports/mm2/track-16.mid", "dr wily s castle")`), null);
+  run(`
+    for (const k of Object.keys(localStorage).filter(k => k.includes("albums/imports/mm2/")))
+      localStorage.removeItem(k);
+  `);
+});
+
 test("NSF import: in-app capture runs the real pipeline and round-trips through parseMidi", async () => {
   // same modules the browser dynamically imports, wired into the vm realm
   const M = {

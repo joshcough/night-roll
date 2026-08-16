@@ -877,7 +877,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation — and lands as a LOCAL draft under an Import album; audition each capture, ✕ the duds in Open → drafts, then Commit import pushes the keepers to the repo as a real album; expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker — ✕ the duds in Open → drafts, then Commit import pushes the keepers to the repo as a real album; expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -6004,10 +6004,12 @@ async function openNsfImport(bytes, name) {
   for (let n = 1; n <= nsf.songs; n++) {
     const row = document.createElement("div");
     row.className = "row";
-    const lbl = document.createElement("span");
-    lbl.className = "lbl";
-    lbl.style.flex = "none";
-    lbl.textContent = "track " + String(n).padStart(2, "0");
+    const lbl = document.createElement("input"); // editable: type the real name once you recognize the tune
+    lbl.type = "text";
+    lbl.value = "track-" + String(n).padStart(2, "0");
+    lbl.style.cssText = "flex:none;width:150px;min-height:32px;font-family:var(--mono);font-size:12px";
+    lbl.addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.preventDefault(); lbl.blur(); } });
+    lbl.addEventListener("change", () => impRename(n));
     const st = document.createElement("span");
     st.className = "st";
     st.textContent = "—";
@@ -6026,7 +6028,7 @@ async function openNsfImport(bytes, name) {
     });
     row.append(lbl, st, cap, open);
     list.appendChild(row);
-    nsfSess.rows[n] = {st, open};
+    nsfSess.rows[n] = {name: lbl, st, open};
   }
   const sheet = document.getElementById("importsheet");
   sheet.classList.add("on");
@@ -6038,6 +6040,37 @@ async function openNsfImport(bytes, name) {
   impStatus(nsf.songs + " tracks — Capture all, audition, then commit the keepers.");
 }
 const impStatus = s => { document.getElementById("impstatus").textContent = s; };
+// display name for a committed import: the typed title verbatim ("Dr. Wily's
+// Castle") — a bare slug just gets prettified ("airship" -> "Airship")
+function impDisplayTitle(d, base) {
+  const t = d && d.title;
+  if (!t) return titleCaseSlug(base);
+  return /^[a-z0-9-]+$/.test(t) ? titleCaseSlug(t) : t;
+}
+function renameImportDraft(oldKey, raw) { // returns the new key; null = name collision
+  const base = slugify(raw);
+  const dir = oldKey.slice(0, oldKey.lastIndexOf("/") + 1);
+  const newKey = dir + base + ".mid";
+  if (newKey !== oldKey && localStorage.getItem(draftStoreKey(newKey)) !== null) return null;
+  if (newKey !== oldKey) {
+    for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"]) {
+      const v = localStorage.getItem(pre + oldKey);
+      if (v !== null) { localStorage.setItem(pre + newKey, v); localStorage.removeItem(pre + oldKey); }
+    }
+    if (songKey === oldKey) { // renamed the song being auditioned — follow it
+      songKey = newKey;
+      currentPath = newKey;
+      localStorage.setItem("ff1roll-lastsong", newKey);
+      updateSongBtn();
+    }
+  }
+  try { // the typed name (punctuation intact) rides the draft into Commit
+    const d = JSON.parse(localStorage.getItem(draftStoreKey(newKey)));
+    d.title = raw.trim();
+    localStorage.setItem(draftStoreKey(newKey), JSON.stringify(d));
+  } catch (err) { /* draft absent — nothing to title */ }
+  return newKey;
+}
 async function impCapture(n) {
   if (!nsfSess) return;
   const slug = slugify(document.getElementById("impslug").value) || "import";
@@ -6049,11 +6082,17 @@ async function impCapture(n) {
   try {
     const cap = captureNsfTrack(nsfSess.M, nsfSess.nsf, n, secs);
     if (!cap) { row.st.textContent = "silent — nothing to keep"; return; }
-    const key = impTrackKey(slug, n);
+    const raw = row.name.value.trim() || "track-" + String(n).padStart(2, "0");
+    const base = slugify(raw) || "track-" + String(n).padStart(2, "0");
+    const key = IMP_DIR + slug + "/" + base + ".mid";
+    if (row.key !== key && localStorage.getItem(draftStoreKey(key)) !== null) {
+      row.st.textContent = "⚠ another captured track is already named \"" + base + "\"";
+      return;
+    }
     row.key = key;
     const parsed = parseMidi(cap.bytes.buffer);
     localStorage.setItem(draftStoreKey(key), JSON.stringify({
-      savedStamp: 0, dirty: true, ppq: parsed.ppq, timesig: parsed.timesig || [4, 4],
+      savedStamp: 0, dirty: true, title: raw, ppq: parsed.ppq, timesig: parsed.timesig || [4, 4],
       tempos: parsed.tempos,
       tracks: parsed.tracks.map(tr => ({name: tr.name,
         notes: tr.notes.map(nt => ({t: nt.t, d: nt.d, p: nt.p, v: nt.v}))}))}));
@@ -6065,6 +6104,20 @@ async function impCapture(n) {
                          (cap.looped ? "loop found" : "no loop (through-composed or capture too short)");
     row.open.style.display = "";
   } catch (err) { row.st.textContent = "failed: " + err.message; }
+}
+function impRename(n) { // typed a name in a row: rename its captured draft in place
+  const row = nsfSess && nsfSess.rows[n];
+  if (!row) return;
+  const raw = row.name.value.trim() || "track-" + String(n).padStart(2, "0");
+  if (!row.key) return; // not captured yet — the name simply applies at capture time
+  const newKey = renameImportDraft(row.key, raw);
+  if (newKey === null) {
+    impStatus("⚠ a captured track is already named \"" + slugify(raw) + "\" — pick another");
+    row.name.value = row.key.split("/").pop().replace(/\.mid$/, "");
+    return;
+  }
+  row.key = newKey;
+  impStatus("renamed → " + newKey.split("/").pop());
 }
 document.getElementById("impall").addEventListener("click", async e => {
   if (!nsfSess) return;
@@ -6085,14 +6138,21 @@ document.getElementById("impcommit").addEventListener("click", e => {
   btn.disabled = true;
   commitImports(impStatus).finally(() => { btn.disabled = false; });
 });
-async function ensureImportAlbum(slug, h) { // album.json keeps build_manifest.mjs honest offline
+async function ensureImportAlbum(slug, h, songTitles) { // album.json keeps build_manifest.mjs honest offline
   const path = IMP_DIR + slug + "/album.json";
   const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
-  if (g.ok) return;
-  const r = await fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify({
-    message: "Import album " + slug + " from Night Roll", branch: "main",
-    content: btoa(unescape(encodeURIComponent(
-      JSON.stringify({title: titleCaseSlug(slug), order: 50, songs: {}}, null, 1) + "\n")))})});
+  let meta = {title: titleCaseSlug(slug), order: 50, songs: {}}, sha = null;
+  if (g.ok) { // second batch into the same album: merge, don't clobber earlier titles
+    const j = await g.json();
+    sha = j.sha;
+    try { meta = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, ""))))); } catch (err) { /* rewrite */ }
+    if (!Object.keys(songTitles || {}).length) return;
+  }
+  meta.songs = {...(meta.songs || {}), ...(songTitles || {})};
+  const body = {message: "Import album " + slug + " from Night Roll", branch: "main",
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(meta, null, 1) + "\n")))};
+  if (sha) body.sha = sha;
+  const r = await fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
   if (!r.ok) throw new Error("album.json HTTP " + r.status);
 }
 async function commitImports(status) { // push every surviving import draft in one pass
@@ -6102,10 +6162,12 @@ async function commitImports(status) { // push every surviving import draft in o
   if (!token) { status("No GitHub token stored yet — open Sync once and paste it there."); return; }
   const h = ghHeaders(token);
   let done = 0;
+  const titles = {}; // key -> display title (typed names survive to the dropdown)
   try {
     for (const key of keys) {
       status("Committing " + (done + 1) + "/" + keys.length + ": " + key.split("/").pop() + "…");
       const d = JSON.parse(localStorage.getItem(draftStoreKey(key)));
+      titles[key] = impDisplayTitle(d, key.split("/").pop().replace(/\.mid$/, ""));
       const r1 = await putMidAt(key, h,
         writeMidi({ppq: d.ppq, timesig: d.timesig, tempos: d.tempos, tracks: d.tracks}));
       if (!r1.ok) throw new Error(key + " HTTP " + r1.status);
@@ -6120,10 +6182,23 @@ async function commitImports(status) { // push every surviving import draft in o
       }
       done++;
     }
-    for (const slug of [...new Set(keys.map(k => k.split("/")[2]))]) await ensureImportAlbum(slug, h);
+    for (const slug of [...new Set(keys.map(k => k.split("/")[2]))]) {
+      const overrides = {}; // only names the filename can't spell need album.json
+      for (const k of keys) {
+        const base = k.split("/").pop().replace(/\.mid$/, "");
+        if (k.split("/")[2] === slug && titles[k] !== titleCaseSlug(base)) overrides[base] = titles[k];
+      }
+      await ensureImportAlbum(slug, h, overrides);
+    }
     await updateManifest(h, albums => {
       let changed = false;
-      for (const k of keys) changed = manifestPlace(albums, null, k) || changed;
+      for (const k of keys) {
+        changed = manifestPlace(albums, null, k) || changed;
+        const album = albums.find(a => a.title === albumTitleFor(k));
+        const entry = album && album.songs.find(s => s.path === k);
+        if (entry && titles[k]) entry.title = titles[k];
+      }
+      for (const a of albums) a.songs.sort((x, y) => x.title.localeCompare(y.title));
       return changed;
     });
     for (const key of keys) { // repo owns them now; drafts + note stashes retire
