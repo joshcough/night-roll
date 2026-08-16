@@ -6634,6 +6634,13 @@ document.getElementById("frgo").addEventListener("click", async e => {
       fileStatus("Renaming…");
       await renameRepoTitle(songKey, raw, ghHeaders(token));
       await initCatalog().catch(() => { /* CDN lag; next boot */ });
+      // the refetched manifest can be CDN-stale for ~10 min — the repo write
+      // succeeded, so patch the in-memory catalog instead of trusting it
+      // (Josh renamed Main Theme and the crumb kept saying Main Theme)
+      for (const songs of Object.values(CATALOG)) {
+        const hit = songs.find(([, p]) => p === songKey);
+        if (hit) hit[0] = raw;
+      }
       updateSongBtn();
       fileStatus("Renamed ✓ — \"" + raw + "\" everywhere the dropdown shows it.");
     }
