@@ -3458,22 +3458,26 @@ function metBuildCells() {
     row.appendChild(b);
   });
 }
-function metClick(when, level) { // woody "tock": triangle with a falling pitch —
-  // the old high square blips read as squeaky (Josh, 2026-08-15)
-  const o = audio.createOscillator();
-  o.type = "triangle";
-  const f = level === 2 ? 880 : level === 1 ? 620 : 1050;
-  o.frequency.setValueAtTime(f, when);
-  o.frequency.exponentialRampToValueAtTime(f * 0.55, when + 0.045);
+function metClick(when, level) { // natural wood click: bandpassed noise tick.
+  // v1 squares were squeaky; v2's pitch glide read as sci-fi (Josh) — the
+  // fix is NO pitch movement at all, just a short filtered transient whose
+  // ring dies on its own, like a physical metronome.
+  const dur = 0.03;
+  const buf = audio.createBuffer(1, Math.ceil(audio.sampleRate * dur), audio.sampleRate);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / ch.length, 2);
+  const src = audio.createBufferSource();
+  src.buffer = buf;
+  const bp = audio.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = level === 2 ? 1500 : level === 1 ? 1000 : 2000;
+  bp.Q.value = 8;
   const g = audio.createGain();
-  const amp = level === 2 ? 0.95 : level === 1 ? 0.6 : 0.28;
-  g.gain.setValueAtTime(0, when);
-  g.gain.linearRampToValueAtTime(amp, when + 0.0015);
-  g.gain.exponentialRampToValueAtTime(0.001, when + (level === 2 ? 0.09 : 0.07));
-  o.connect(g);
+  g.gain.value = (level === 2 ? 2.8 : level === 1 ? 1.8 : 0.8); // narrowband eats energy
+  src.connect(bp);
+  bp.connect(g);
   g.connect(metGain);
-  o.start(when);
-  o.stop(when + 0.12);
+  src.start(when);
 }
 // Follow/trial modes (Josh, 2026-08-15): clicks derive from the SONG's own
 // tick grid through tickToSec — phase-true by construction, tempo map and
