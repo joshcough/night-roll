@@ -1524,7 +1524,8 @@ async function loadNotes() {
     try {
       // ?t= busts the Pages CDN (it caches ~10 min; a reload right after
       // Sync otherwise shows pre-sync annotations and looks like data loss)
-      const res = await fetch(notesBase() + ".rollnotes?t=" + Date.now(), {cache: "no-cache"});
+      let res = await fetch(notesBase() + ".rollnotes.json?t=" + Date.now(), {cache: "no-cache"});
+      if (!res.ok) res = await fetch(notesBase() + ".rollnotes?t=" + Date.now(), {cache: "no-cache"}); // legacy
       let text = res.ok ? await res.text() : null;
       if (gen !== loadGen) return;
       // deploy-lag bridge: a Sync younger than 10 min beats a disagreeing CDN
@@ -1590,7 +1591,8 @@ async function buildRollnotesFor(key) {
   const base = key.replace(/\.midi?$/i, "");
   let notes = [];
   try {
-    const res = await fetch(base + ".rollnotes", {cache: "no-cache"});
+    let res = await fetch(base + ".rollnotes.json", {cache: "no-cache"});
+    if (!res.ok) res = await fetch(base + ".rollnotes", {cache: "no-cache"}); // legacy
     if (res.ok) notes = parseRollnotes(await res.text());
   } catch (err) { /* no sidecar yet */ }
   let local = [];
@@ -1601,7 +1603,7 @@ async function buildRollnotesFor(key) {
   }
   notes.sort((a, b) => (a.b1 - b.b1) || (a.q1 - b.q1));
   const beats = +(localStorage.getItem("ff1roll-ts-" + key) || "4").split("/")[0] || 4;
-  return {path: base + ".rollnotes", content: serializeNotesList(notes, beats, base.split("/").pop())};
+  return {path: base + ".rollnotes.json", content: serializeNotesList(notes, beats, base.split("/").pop())};
 }
 function dropLocalKeyAt(bar) { // a new key change replaces any local key marker at the same bar
   rollnotes = rollnotes.filter(n => !(n.added && n.keydir !== undefined && n.b1 === bar));
@@ -5822,8 +5824,8 @@ document.getElementById("filesave").addEventListener("click", async e => {
     const h = ghHeaders(token);
     const r1 = await putMidAt(songKey, h);
     if (!r1.ok) throw new Error(".mid HTTP " + r1.status);
-    const r2 = await putRollnotes(songKey.replace(/\.mid$/, "") + ".rollnotes", serializeRollnotes(), h);
-    if (!r2.ok) throw new Error(".rollnotes HTTP " + r2.status);
+    const r2 = await putRollnotes(songKey.replace(/\.mid$/, "") + ".rollnotes.json", serializeRollnotes(), h);
+    if (!r2.ok) throw new Error(".rollnotes.json HTTP " + r2.status);
     await updateManifest(h, albums => manifestPlace(albums, null, songKey));
     markCurrentSongSynced();
     await initCatalog().catch(() => {});
@@ -5879,10 +5881,11 @@ async function moveComposition(destDir) {
     const h = ghHeaders(token);
     const r1 = await putMidAt(newKey, h);
     if (!r1.ok) throw new Error(".mid HTTP " + r1.status);
-    const r2 = await putRollnotes(newKey.replace(/\.mid$/, "") + ".rollnotes", serializeRollnotes(), h);
-    if (!r2.ok) throw new Error(".rollnotes HTTP " + r2.status);
+    const r2 = await putRollnotes(newKey.replace(/\.mid$/, "") + ".rollnotes.json", serializeRollnotes(), h);
+    if (!r2.ok) throw new Error(".rollnotes.json HTTP " + r2.status);
     await deleteRepoFile(oldKey, h);
-    await deleteRepoFile(oldKey.replace(/\.mid$/, ".rollnotes"), h);
+    await deleteRepoFile(oldKey.replace(/\.mid$/, ".rollnotes.json"), h);
+    await deleteRepoFile(oldKey.replace(/\.mid$/, ".rollnotes"), h); // legacy leftover, if any
     await updateManifest(h, albums => manifestPlace(albums, oldKey, newKey));
     renameLocal();
     markCurrentSongSynced();
@@ -5990,7 +5993,7 @@ document.getElementById("copyfile").addEventListener("click", async () => {
 document.getElementById("dlfile").addEventListener("click", () => {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([serializeRollnotes()], {type: "text/plain"}));
-  a.download = baseName() + ".rollnotes";
+  a.download = baseName() + ".rollnotes.json";
   a.click();
   URL.revokeObjectURL(a.href);
 });
@@ -6044,7 +6047,7 @@ document.getElementById("ghsave").addEventListener("click", async e => {
   btn.disabled = true;
   status.textContent = "Committing…";
   try {
-    const r = await putRollnotes(notesBase() + ".rollnotes", serializeRollnotes(), ghHeaders(token));
+    const r = await putRollnotes(notesBase() + ".rollnotes.json", serializeRollnotes(), ghHeaders(token));
     if (!r.ok) throw new Error("HTTP " + r.status + (r.status === 401 || r.status === 403 ? " — check token scope" : ""));
     markCurrentSongSynced();
     status.textContent = "Committed ✓ (GitHub Pages takes ~1 min to serve the new file.)";

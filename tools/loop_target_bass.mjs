@@ -16,7 +16,7 @@ const LETTER_PC = {C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11};
 let unswept = 0;
 for (const f of readdirSync(SONGS).filter(f => f.endsWith(".mid")).sort()) {
   const base = f.replace(/\.mid$/, "");
-  const rn = path.join(SONGS, base + ".rollnotes");
+  const rn = path.join(SONGS, base + ".rollnotes.json");
   const text = existsSync(rn) ? readFileSync(rn, "utf8") : "";
   const key = (text.match(/^key:\s*(\S+(?:\s+[a-z]+)?)\s*$/mi) || [])[1];
   if (!key) { unswept++; continue; } // no recorded key -> say nothing at all

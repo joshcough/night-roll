@@ -244,8 +244,9 @@ vgmusic.com's ff1ship2.mid — same transcription, 5 tracks incl. drums.
 
 ## .rollnotes format (the spec)
 
-Sidecar file next to each .mid: `<song>.rollnotes`. **JSON since
-2026-08-15** (version 1) — the file is a direct serialization of the
+Sidecar file next to each .mid: `<song>.rollnotes.json`. **JSON since
+2026-08-15** (version 1; renamed from bare `.rollnotes` same day — the
+extension says what the content is) — the file is a direct serialization of the
 app's in-memory note objects, one note per line so git diffs stay
 line-per-change:
 

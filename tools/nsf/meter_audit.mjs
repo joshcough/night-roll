@@ -68,7 +68,7 @@ const chatSummary = [];
 for (const f of readdirSync(SONGS).filter(f => f.endsWith(".mid")).sort()) {
   const base = f.replace(/\.mid$/, "");
   const a = analyze(f);
-  const rn = path.join(SONGS, base + ".rollnotes");
+  const rn = path.join(SONGS, base + ".rollnotes.json");
   const declared = existsSync(rn) &&
     (readFileSync(rn, "utf8").match(/^timesig:\s*(\d+\/\d+)/m) || [])[1];
   const curQ = (() => { const [n, d] = a.ts.split("/").map(Number); return n * 4 / d; })();

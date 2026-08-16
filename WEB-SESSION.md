@@ -65,7 +65,7 @@ chrome each.)
 - `albums/final-fantasy-i/songs/<song>.notes.txt` — the note data Josh reads
   (bar/beat/pitch/duration + `vN` chip volume on pulses; triangle has no
   volume control — absence there is N/A, not silence).
-- `albums/final-fantasy-i/songs/<song>.rollnotes` — his annotations: keys
+- `albums/final-fantasy-i/songs/<song>.rollnotes.json` — his annotations: keys
   (partial `"key": "Bb?"` = tonic stored/mode pending), meters, sections,
   chords, loops, chops, tempo, track voice/color. JSON since 2026-08-15,
   one note per line; format spec in `NIGHT-ROLL.md` (legacy text grammar

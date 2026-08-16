@@ -152,15 +152,15 @@ for (const [track, name, seconds] of TRACKS) {
   // when the loop returns somewhere other than the top, that's hardware fact:
   // record it as a loop: directive in the chip song's rollnotes (never
   // overwrite a file Josh may have edited)
-  if (loop && !existsSync("albums/final-fantasy-i/songs/" + name + ".rollnotes")) {
+  if (loop && !existsSync("albums/final-fantasy-i/songs/" + name + ".rollnotes.json")) {
     const backBeats = (loop.keep - loop.period) * frameSec / beatSec;
     if (backBeats > 0.4) {
       // anchor = the jump point (capture end), value = the jump target —
       // the player fires the loop at the anchor when it sits past the target
       const anchor = bq(loop.keep * frameSec / beatSec);
       const target = "loop: " + bq(backBeats);
-      writeFileSync("albums/final-fantasy-i/songs/" + name + ".rollnotes",
-        "# " + name + ".rollnotes — chip capture\n\n[" + anchor + "]\n" + target + "\n");
+      writeFileSync("albums/final-fantasy-i/songs/" + name + ".rollnotes.json",
+        "# " + name + " — chip capture (legacy text; app migrates on sync)\n\n[" + anchor + "]\n" + target + "\n");
       console.log("   wrote loop directive: [" + anchor + "] " + target);
     }
   }
