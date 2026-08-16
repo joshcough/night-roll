@@ -879,7 +879,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker — ✕ the duds in Open → drafts, then Commit import pushes the keepers to the repo as a real album; expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Import… (byte-sniffs the picked file: MIDI — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — loads directly; an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation — and lands as a LOCAL draft under an Import album; audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
 
@@ -6127,41 +6127,79 @@ function fsubSongs(group) {
       loadSong(path).catch(err => setInfo(err.message));
     });
 }
+function draftRow(key, label, rerender, extra) { // open + (optional extra) + two-tap ✕
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex;align-items:center;gap:4px";
+  const open = document.createElement("button");
+  open.className = "fitem";
+  open.style.flex = "1";
+  open.textContent = label + (key === currentPath ? "   ✓" : "");
+  open.addEventListener("click", () => { closeFileMenus(); openDraft(key); });
+  row.appendChild(open);
+  if (extra) row.appendChild(extra);
+  const del = document.createElement("button");
+  del.className = "fitem";
+  del.style.cssText = "flex:none;width:auto;color:var(--dim)";
+  del.textContent = "✕";
+  del.addEventListener("click", () => {
+    if (del.textContent === "✕") { // two-tap confirm: unsaved work dies with a draft
+      del.textContent = "sure?";
+      del.style.color = "#e66767";
+      return;
+    }
+    for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"])
+      localStorage.removeItem(pre + key);
+    rerender();
+  });
+  row.appendChild(del);
+  filesub.appendChild(row);
+}
 function fsubDrafts() {
   filesub.innerHTML = "";
   fsubItem("‹ drafts", fsubAlbums, true);
-  for (const key of draftKeys()) {
-    const row = document.createElement("div");
-    row.style.cssText = "display:flex;align-items:center;gap:4px";
-    const open = document.createElement("button");
-    open.className = "fitem";
-    open.style.flex = "1";
-    open.textContent = (key.startsWith(IMP_DIR) ? key.split("/")[2] + " / "
-                        : key.startsWith("local/") ? "local / " : "") +
-                       key.split("/").pop().replace(/\.mid$/, "") + (key === currentPath ? "   ✓" : "");
-    open.addEventListener("click", () => { closeFileMenus(); openDraft(key); });
-    const del = document.createElement("button");
-    del.className = "fitem";
-    del.style.cssText = "flex:none;width:auto;color:var(--dim)";
-    del.textContent = "✕";
-    del.addEventListener("click", () => {
-      if (del.textContent === "✕") { // two-tap confirm: unsaved work dies with a draft
-        del.textContent = "sure?";
-        del.style.color = "#e66767";
-        return;
-      }
-      for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"])
-        localStorage.removeItem(pre + key);
-      fsubDrafts(); // re-render; the group empties itself when the last one goes
-      if (!draftKeys().length) fsubAlbums();
+  const keys = draftKeys();
+  // import captures live in an album FOLDER each (Josh 2026-08-16), not flat
+  for (const slug of [...new Set(keys.filter(k => k.startsWith(IMP_DIR)).map(k => k.split("/")[2]))])
+    fsubItem(titleCaseSlug(slug) + "  ›", () => fsubImportAlbum(slug));
+  for (const key of keys.filter(k => !k.startsWith(IMP_DIR)))
+    draftRow(key, (key.startsWith("local/") ? "local / " : "") + key.split("/").pop().replace(/\.mid$/, ""),
+             () => { fsubDrafts(); if (!draftKeys().length) fsubAlbums(); });
+}
+function fsubImportAlbum(slug) {
+  filesub.innerHTML = "";
+  fsubItem("‹ " + titleCaseSlug(slug), fsubDrafts, true);
+  const keys = importDraftKeys().filter(k => k.split("/")[2] === slug);
+  const all = document.createElement("button"); // whole folder in one commit
+  all.className = "fitem";
+  all.style.color = "var(--gold)";
+  all.textContent = "⇪ Commit album (" + keys.length + " track" + (keys.length === 1 ? "" : "s") + ")";
+  all.addEventListener("click", () => {
+    all.disabled = true;
+    commitImports(s => { all.textContent = s; }, keys)
+      .finally(() => { importDraftKeys().some(k => k.split("/")[2] === slug) ? fsubImportAlbum(slug) : fsubDrafts(); });
+  });
+  filesub.appendChild(all);
+  for (const key of keys) {
+    const up = document.createElement("button"); // single track -> same album, top level
+    up.className = "fitem";
+    up.style.cssText = "flex:none;width:auto;color:var(--dim)";
+    up.textContent = "⇪";
+    up.setAttribute("aria-label", "Commit this track");
+    up.addEventListener("click", () => {
+      up.disabled = true;
+      commitImports(s => fileStatus(s), [key])
+        .finally(() => { importDraftKeys().some(k => k.split("/")[2] === slug) ? fsubImportAlbum(slug) : fsubDrafts(); });
     });
-    row.append(open, del);
-    filesub.appendChild(row);
+    draftRow(key, key.split("/").pop().replace(/\.mid$/, ""),
+             () => { importDraftKeys().some(k => k.split("/")[2] === slug) ? fsubImportAlbum(slug) : fsubDrafts(); },
+             up);
   }
 }
 document.getElementById("fileopen").addEventListener("click", e => {
   const group = Object.entries(CATALOG).find(([, songs]) => songs.some(([, p]) => p === currentPath));
   if (group) fsubSongs(group[0]);
+  else if (currentPath && currentPath.startsWith(IMP_DIR) && localStorage.getItem("ff1roll-draft-" + currentPath))
+    fsubImportAlbum(currentPath.split("/")[2]); // straight into the album folder being auditioned
   else if (currentPath && localStorage.getItem("ff1roll-draft-" + currentPath)) fsubDrafts();
   else fsubAlbums();
   const mr = filesheet.getBoundingClientRect();
@@ -6439,8 +6477,8 @@ async function ensureImportAlbum(slug, h, songTitles) { // album.json keeps buil
   const r = await fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
   if (!r.ok) throw new Error("album.json HTTP " + r.status);
 }
-async function commitImports(status) { // push every surviving import draft in one pass
-  const keys = importDraftKeys();
+async function commitImports(status, keys) { // push import drafts (all by default, or a chosen set)
+  keys = keys || importDraftKeys();
   if (!keys.length) { status("No import drafts to commit."); return; }
   const token = localStorage.getItem("ff1roll-ghtoken");
   if (!token) { status("No GitHub token stored yet — open Sync once and paste it there."); return; }

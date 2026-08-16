@@ -285,7 +285,10 @@ any capture), makeMidi → parseMidi → stored as a LOCAL draft under
 directive stashed as a local note when the loop returns past 1.1.
 Nothing touches the repo at capture time (Josh's ruling: audition
 first). Flow: Capture all (~10 s for a 23-track NSF) → open each from
-the panel or Open → drafts (labels prefixed `<album> /`) → recognize a
+the panel or Open → drafts, where every import album is its own folder
+(2026-08-16: tap in for the track list; ⇪ per track commits that song
+alone to its album, "⇪ Commit album" pushes the whole folder; the
+folder disappears as its last draft commits or dies) → recognize a
 tune and type its real name in the panel row (the draft renames in
 place; the typed title — punctuation intact — becomes the dropdown
 title at commit, via an album.json `songs` override when the filename
