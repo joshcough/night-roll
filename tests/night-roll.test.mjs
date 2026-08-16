@@ -697,3 +697,25 @@ across two lines.
   assert.deepEqual(out.B.find(n => n.trackdir)?.trackdir, {name: "pulse1", voice: "sine", color: "#0aa2c0"});
   assert.equal(out.B.find(n => n.q1 === 2.5)?.text.startsWith("Plain prose"), true); // fractional beat
 });
+
+test("cross-device freshness: stamps ride saves, drafts remember their base", () => {
+  installSong();
+  run(`rollnotes = parseRollnotes("[1.1]\\ntimesig: 4/4\\n");`);
+  const stamped = run(`serializeRollnotesStamped(1234567)`);
+  assert.equal(JSON.parse(stamped).saved, 1234567);
+  const unstamped = run(`serializeRollnotes()`);
+  assert.equal(JSON.parse(unstamped).saved, undefined); // pure serialization: no stamp
+  // draft carries base stamp + dirty flag; clean save flips dirty off
+  run(`
+    songKey = "albums/compositions/nightroll/fresh-test.mid";
+    song.savedStamp = 1234567;
+    saveDraft();      // an edit: dirty
+  `);
+  let d = JSON.parse(app.store.get("ff1roll-draft-albums/compositions/nightroll/fresh-test.mid"));
+  assert.deepEqual([d.savedStamp, d.dirty], [1234567, true]);
+  run(`saveDraft(true);`); // post-save: clean
+  d = JSON.parse(app.store.get("ff1roll-draft-albums/compositions/nightroll/fresh-test.mid"));
+  assert.deepEqual([d.savedStamp, d.dirty], [1234567, false]);
+  run(`songKey = "midi/test.mid"; rollnotes = [];`);
+  app.store.delete("ff1roll-draft-albums/compositions/nightroll/fresh-test.mid");
+});

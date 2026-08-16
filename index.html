@@ -1578,13 +1578,17 @@ function updateSyncBtn() {
   const n = dirtySongs().length;
   document.getElementById("syncbtn").textContent = n > 1 ? "Sync (" + n + ")" : "Sync";
 }
-function serializeNotesList(list, beatsPerBar, base) {
-  // one note per line: valid JSON that git-diffs like the old text format
+function serializeNotesList(list, beatsPerBar, base, stamp) {
+  // one note per line: valid JSON that git-diffs like the old text format.
+  // stamp (epoch ms) marks WHEN this state was saved — the cross-device
+  // freshness beacon (Josh, 2026-08-16); omitted for pure serialization.
   const rows = list.map(n => "  " + JSON.stringify(noteToJSON(n)));
-  return '{ "version": 1, "song": ' + JSON.stringify(base) + ', "notes": [\n' +
+  return '{ "version": 1, "song": ' + JSON.stringify(base) +
+         (stamp ? ', "saved": ' + stamp : "") + ', "notes": [\n' +
          rows.join(",\n") + "\n] }\n";
 }
 function serializeRollnotes() { return serializeNotesList(rollnotes, beatsPerBarDisp(), baseName()); }
+function serializeRollnotesStamped(stamp) { return serializeNotesList(rollnotes, beatsPerBarDisp(), baseName(), stamp); }
 // serialize another song's sidecar + this device's local additions, without
 // loading it: its meter was stashed in localStorage when it was last open
 async function buildRollnotesFor(key) {
@@ -1603,7 +1607,9 @@ async function buildRollnotesFor(key) {
   }
   notes.sort((a, b) => (a.b1 - b.b1) || (a.q1 - b.q1));
   const beats = +(localStorage.getItem("ff1roll-ts-" + key) || "4").split("/")[0] || 4;
-  return {path: base + ".rollnotes.json", content: serializeNotesList(notes, beats, base.split("/").pop())};
+  const stamp = Date.now();
+  return {path: base + ".rollnotes.json", stamp,
+          content: serializeNotesList(notes, beats, base.split("/").pop(), stamp)};
 }
 function dropLocalKeyAt(bar) { // a new key change replaces any local key marker at the same bar
   rollnotes = rollnotes.filter(n => !(n.added && n.keydir !== undefined && n.b1 === bar));
@@ -1746,7 +1752,29 @@ function updateSubtitle() {
 let loadGen = 0; // bumps on every song switch; stale async loads check it and bail
 async function loadSong(path) {
   stop();
-  if (localStorage.getItem("ff1roll-draft-" + path)) { openDraft(path); return; } // local draft wins
+  const draftRaw = localStorage.getItem("ff1roll-draft-" + path);
+  if (draftRaw) {
+    // cross-device freshness (Josh, 2026-08-16): a Save from another machine
+    // stamps the repo file; if it's newer than this draft's base, the draft
+    // must not silently mask it
+    let d = null;
+    try { d = JSON.parse(draftRaw); } catch (err) {}
+    let repoStamp = 0;
+    try {
+      const r = await fetch(path.replace(/\.mid$/, "") + ".rollnotes.json?t=" + Date.now(), {cache: "no-cache"});
+      if (r.ok) repoStamp = (JSON.parse(await r.text()).saved || 0);
+    } catch (err) { /* offline / not yet saved: draft wins */ }
+    if (d && repoStamp > (d.savedStamp || 0)) {
+      if (!d.dirty || window.confirm(
+        "This song was saved from another device more recently than this draft.\n\n" +
+        "OK = use the newer save (this device's unsaved changes are discarded)\n" +
+        "Cancel = keep this device's draft")) {
+        for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"])
+          localStorage.removeItem(pre + path);
+        // fall through to the normal repo load below
+      } else { openDraftDoc(d, path); return; } // keep the local draft, knowingly
+    } else if (d) { openDraftDoc(d, path); return; } // draft is the newest known state
+  }
   const gen = ++loadGen;
   const res = await fetch(path, {cache: "no-cache"});
   if (!res.ok) throw new Error("fetch failed: " + path);
@@ -5563,9 +5591,10 @@ function slugify(s) {
   return (s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
 }
 function draftStoreKey(key) { return "ff1roll-draft-" + key; }
-function saveDraft() {
+function saveDraft(clean) { // clean=true right after a successful Save
   if (!isComposition()) return;
   localStorage.setItem(draftStoreKey(songKey), JSON.stringify({
+    savedStamp: song.savedStamp || 0, dirty: !clean,
     ppq: song.ppq, timesig: song.timesig || effTs(), tempos: song.baseTempos || song.tempos,
     tracks: song.tracks.map(tr => ({name: tr.name,
       notes: tr.notes.filter(n => !n.gone).map(n => ({t: n.t, d: n.d, p: n.p, v: n.v}))})),
@@ -5577,10 +5606,14 @@ function draftKeys() {
 }
 function openDraft(key) {
   const d = JSON.parse(localStorage.getItem(draftStoreKey(key)));
+  openDraftDoc(d, key);
+}
+function openDraftDoc(d, key) {
   const parsed = {ppq: d.ppq, timesig: d.timesig,
     tempos: d.tempos.map(t => ({...t})),
     tracks: d.tracks.map(tr => ({name: tr.name, notes: tr.notes.map(n => ({...n}))}))};
   setSong(parsed, key); // rollnotes ride the normal sidecar + local-notes path
+  song.savedStamp = d.savedStamp || 0;
   currentPath = key;
   localStorage.setItem("ff1roll-lastsong", key);
   updateSongBtn();
@@ -5847,10 +5880,12 @@ document.getElementById("filesave").addEventListener("click", async e => {
     const h = ghHeaders(token);
     const r1 = await putMidAt(songKey, h);
     if (!r1.ok) throw new Error(".mid HTTP " + r1.status);
-    const r2 = await putRollnotes(songKey.replace(/\.mid$/, "") + ".rollnotes.json", serializeRollnotes(), h);
+    const stamp = Date.now();
+    const content = serializeRollnotesStamped(stamp);
+    const r2 = await putRollnotes(songKey.replace(/\.mid$/, "") + ".rollnotes.json", content, h);
     if (!r2.ok) throw new Error(".rollnotes.json HTTP " + r2.status);
     await updateManifest(h, albums => manifestPlace(albums, null, songKey));
-    markCurrentSongSynced();
+    markCurrentSongSynced(content, stamp);
     await initCatalog().catch(() => {});
     updateSongBtn();
     fileStatus("Committed ✓ — in the dropdown now (Pages takes ~1 min to serve the files).");
@@ -5904,14 +5939,16 @@ async function moveComposition(destDir) {
     const h = ghHeaders(token);
     const r1 = await putMidAt(newKey, h);
     if (!r1.ok) throw new Error(".mid HTTP " + r1.status);
-    const r2 = await putRollnotes(newKey.replace(/\.mid$/, "") + ".rollnotes.json", serializeRollnotes(), h);
+    const stamp = Date.now();
+    const content = serializeRollnotesStamped(stamp);
+    const r2 = await putRollnotes(newKey.replace(/\.mid$/, "") + ".rollnotes.json", content, h);
     if (!r2.ok) throw new Error(".rollnotes.json HTTP " + r2.status);
     await deleteRepoFile(oldKey, h);
     await deleteRepoFile(oldKey.replace(/\.mid$/, ".rollnotes.json"), h);
     await deleteRepoFile(oldKey.replace(/\.mid$/, ".rollnotes"), h); // legacy leftover, if any
     await updateManifest(h, albums => manifestPlace(albums, oldKey, newKey));
     renameLocal();
-    markCurrentSongSynced();
+    markCurrentSongSynced(content, stamp);
     await initCatalog().catch(() => {});
     updateSongBtn();
     fileStatus("Moved ✓ → " + newKey);
@@ -6040,13 +6077,17 @@ async function putRollnotes(path, content, headers) { // PUT with one stale-sha 
   if (r.status === 409) r = await putOnce();
   return r;
 }
-function markCurrentSongSynced() {
+function markCurrentSongSynced(content, stamp) {
   rollnotes.forEach(n => n.added = false); // now canonical in the repo
   saveLocalNotes();
   // Pages deploys lag the commit by ~1 min; a reload in that window fetches
-  // the PRE-sync file and the notes look gone. Keep the synced state as a
-  // bridge — loadNotes prefers it while it's fresh and the CDN disagrees.
-  recordLastSync(songKey, serializeRollnotes());
+  // the PRE-sync file and the notes look gone. Keep the EXACT pushed content
+  // as a bridge — loadNotes prefers it while fresh and the CDN disagrees.
+  recordLastSync(songKey, content || serializeRollnotes());
+  if (stamp) {
+    song.savedStamp = stamp; // cross-device freshness beacon
+    if (isComposition()) saveDraft(true); // draft now clean, based on this save
+  }
   lastSubtitle = undefined;
   updateSubtitle();
   draw();
@@ -6070,9 +6111,11 @@ document.getElementById("ghsave").addEventListener("click", async e => {
   btn.disabled = true;
   status.textContent = "Committing…";
   try {
-    const r = await putRollnotes(notesBase() + ".rollnotes.json", serializeRollnotes(), ghHeaders(token));
+    const stamp = Date.now();
+    const content = serializeRollnotesStamped(stamp);
+    const r = await putRollnotes(notesBase() + ".rollnotes.json", content, ghHeaders(token));
     if (!r.ok) throw new Error("HTTP " + r.status + (r.status === 401 || r.status === 403 ? " — check token scope" : ""));
-    markCurrentSongSynced();
+    markCurrentSongSynced(content, stamp);
     status.textContent = "Committed ✓ (GitHub Pages takes ~1 min to serve the new file.)";
     setTimeout(() => { // done — close, and return to the notes list if that's where we came from
       syncsheet.classList.remove("on");
@@ -6096,10 +6139,10 @@ document.getElementById("ghsaveall").addEventListener("click", async e => {
     const short = key.split("/").pop().replace(/\.midi?$/i, "");
     status.textContent = "Committing " + short + "… " + results.join("  ");
     try {
-      const {path, content} = await buildRollnotesFor(key);
+      const {path, content, stamp} = await buildRollnotesFor(key);
       const r = await putRollnotes(path, content, ghHeaders(token));
       if (!r.ok) throw new Error("HTTP " + r.status);
-      if (key === songKey) markCurrentSongSynced();
+      if (key === songKey) markCurrentSongSynced(content, stamp);
       else { localStorage.removeItem("ff1roll-notes-" + key); recordLastSync(key, content); }
       results.push(short + " ✓");
     } catch (err) {

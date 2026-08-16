@@ -200,7 +200,12 @@ locked** — Save refuses anything outside nightroll/ (regenerable
 pipeline output; a stray thumb must not corrupt the corpus) — but
 File→Save As forks ANY song into nightroll/ with rollnotes inherited
 verbatim plus a "forked from <path>" note (drift is Josh's to own, no
-app warnings — ruled). Unsaved work auto-drafts to localStorage
+app warnings — ruled). Cross-device freshness (2026-08-16): every repo write stamps the
+rollnotes with 'saved' (epoch ms); drafts remember the stamp they're
+based on plus a dirty flag. Load compares — newer repo + clean draft
+switches to the repo silently; newer repo + dirty draft asks (keep
+draft / take newer save); otherwise the draft wins as before. Offline
+or unstamped repo = draft wins. Unsaved work auto-drafts to localStorage
 (ff1roll-draft-<path>, full song JSON) on every edit; drafts win over
 repo fetches on load and are listed under "Night Roll drafts" in the
 picker. Pencil upgrades: dotted durations (8·, 4·, whole), p/mf/f
