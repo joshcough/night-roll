@@ -3453,7 +3453,7 @@ async function chipSource() { // {bytes, n, secs} for the current song, or null
   if (typeof tr === "number") tr = {n: tr};
   let bytes = rec && rec.bytes;
   if (!bytes && meta && meta.nsf && meta.nsf.vault) { // fall back to the vault, then cache
-    setInfo("chip audio: fetching NSF from the vault…");
+    console.log("[chip] fetching NSF from the archive…");
     try {
       bytes = await vaultFetch(meta.nsf.vault);
       if (bytes) idbNsfPut(slug, bytes, meta.nsf.tracks || {});
@@ -3486,12 +3486,12 @@ async function chipRender() {
   const nsfParsed = M.parseNSF(src.bytes);
   const secs = Math.ceil(src.secs + 1);
   const {apuLog, frames, frameSec} = await M.runNSFAsync(nsfParsed, src.n, secs,
-    p => setInfo("chip audio: emulating… " + Math.round(p * 100) + "%"));
+    p => console.log("[chip] emulating " + Math.round(p * 100) + "%"));
   // song time zero = first onset (the capture's trim) — find it the same way
   const ev = M.reconstruct(apuLog, frames, frameSec);
   const t0 = ev.length ? Math.min(...ev.map(e => e.startFrame)) : 0;
   const r = await M.renderApu(apuLog, frames, frameSec, {sampleRate: audio.sampleRate,
-    onProgress: p => setInfo("chip audio: rendering… " + Math.round(p * 100) + "%")});
+    onProgress: p => console.log("[chip] rendering " + Math.round(p * 100) + "%")});
   chip.buffers = {};
   for (const name of ["pulse1", "pulse2", "triangle", "noise"]) {
     const buf = audio.createBuffer(1, r[name].length, r.sampleRate);
@@ -3500,7 +3500,7 @@ async function chipRender() {
   }
   chip.lead = t0 * frameSec;
   chip.key = songKey;
-  setInfo("chip audio ready — playing the console's own sound (pick a voice on a track to override)");
+  console.log("[chip] ready: " + songKey + " — playing the console's own sound");
   return true;
 }
 function chipActive() { return chip.key === songKey && !!chip.buffers; }
