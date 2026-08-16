@@ -3458,18 +3458,22 @@ function metBuildCells() {
     row.appendChild(b);
   });
 }
-function metClick(when, level) { // NES-flavored square blips
-  const o = makeOsc("square25");
-  o.frequency.value = level === 2 ? 1720 : level === 1 ? 1180 : 2100;
+function metClick(when, level) { // woody "tock": triangle with a falling pitch —
+  // the old high square blips read as squeaky (Josh, 2026-08-15)
+  const o = audio.createOscillator();
+  o.type = "triangle";
+  const f = level === 2 ? 880 : level === 1 ? 620 : 1050;
+  o.frequency.setValueAtTime(f, when);
+  o.frequency.exponentialRampToValueAtTime(f * 0.55, when + 0.045);
   const g = audio.createGain();
-  const amp = level === 2 ? 0.55 : level === 1 ? 0.34 : 0.16;
+  const amp = level === 2 ? 0.95 : level === 1 ? 0.6 : 0.28;
   g.gain.setValueAtTime(0, when);
-  g.gain.linearRampToValueAtTime(amp, when + 0.002);
-  g.gain.exponentialRampToValueAtTime(0.001, when + (level === 2 ? 0.06 : 0.04));
+  g.gain.linearRampToValueAtTime(amp, when + 0.0015);
+  g.gain.exponentialRampToValueAtTime(0.001, when + (level === 2 ? 0.09 : 0.07));
   o.connect(g);
   g.connect(metGain);
   o.start(when);
-  o.stop(when + 0.09);
+  o.stop(when + 0.12);
 }
 // Follow/trial modes (Josh, 2026-08-15): clicks derive from the SONG's own
 // tick grid through tickToSec — phase-true by construction, tempo map and
