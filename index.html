@@ -90,6 +90,18 @@
     flex-shrink: 0;
   }
   #trackzone { flex: 1 1 0; min-width: 0; display: flex; align-items: flex-start; }
+  #tracktoggle { margin: 8px 0 0 8px; min-height: 36px; padding: 4px 8px; flex: none; }
+  #trackslide {
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    max-width: 100vw;
+    opacity: 1;
+    transition: max-width 0.22s ease, opacity 0.22s ease;
+  }
+  #trackslide.off { max-width: 0; opacity: 0; flex: none; }
   #trackmore { margin: 8px 4px 0 0; min-height: 36px; padding: 4px 9px; flex: none; }
   #transport { display: flex; align-items: center; gap: 8px; flex: none; }
   #lcd {
@@ -516,8 +528,11 @@
 </header>
 <div id="trackrow">
   <div id="trackzone">
-    <div id="trackbar"></div>
-    <button id="trackmore" style="display:none" aria-label="Show all tracks">▾</button>
+    <button id="tracktoggle" aria-label="Hide tracks">◂</button>
+    <div id="trackslide">
+      <div id="trackbar"></div>
+      <button id="trackmore" style="display:none" aria-label="Show all tracks">▾</button>
+    </div>
   </div>
   <div id="transport">
     <button id="rwbtn" aria-label="Back to start">⏮</button>
@@ -758,7 +773,7 @@
 
     <h3>TRACKS</h3>
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Many tracks wrap onto more rows; a ▾ appears when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away. ▶ Play and ⏮ sit centered on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Many tracks wrap onto more rows; a ▾ appears when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away. The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit centered on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -1690,6 +1705,23 @@ document.getElementById("trackmore").addEventListener("click", () => {
   trackExpand = !trackExpand;
   updateTrackMore();
 });
+// slide the whole chip cluster away when the row feels noisy (Josh, 2026-08-15)
+{
+  const slide = document.getElementById("trackslide");
+  const tog = document.getElementById("tracktoggle");
+  const apply = hidden => {
+    slide.classList.toggle("off", hidden);
+    tog.textContent = hidden ? "▸" : "◂";
+    tog.setAttribute("aria-label", hidden ? "Show tracks" : "Hide tracks");
+    if (!hidden) updateTrackMore();
+  };
+  tog.addEventListener("click", () => {
+    const hidden = !slide.classList.contains("off");
+    localStorage.setItem("ff1roll-tracks-hidden", hidden ? "1" : "0");
+    apply(hidden);
+  });
+  apply(localStorage.getItem("ff1roll-tracks-hidden") === "1");
+}
 function trackAudible(ti) {
   const anySolo = trackState.some(s => s.solo);
   return anySolo ? trackState[ti].solo : !trackState[ti].muted;
