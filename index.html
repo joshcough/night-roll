@@ -1245,8 +1245,17 @@ async function loadNotes() {
       // ?t= busts the Pages CDN (it caches ~10 min; a reload right after
       // Sync otherwise shows pre-sync annotations and looks like data loss)
       const res = await fetch(notesBase() + ".rollnotes?t=" + Date.now(), {cache: "no-cache"});
-      const text = res.ok ? await res.text() : null;
+      let text = res.ok ? await res.text() : null;
       if (gen !== loadGen) return;
+      // deploy-lag bridge: a Sync younger than 10 min beats a disagreeing CDN
+      try {
+        const ls = JSON.parse(localStorage.getItem("ff1roll-lastsync-" + songKey) || "null");
+        if (ls) {
+          if (text === ls.text || Date.now() - ls.t > 10 * 60e3)
+            localStorage.removeItem("ff1roll-lastsync-" + songKey); // CDN caught up (or bridge expired)
+          else text = ls.text;
+        }
+      } catch (err) { /* corrupt bridge: ignore */ }
       if (text !== null) rollnotes = parseRollnotes(text).map(resolveNote);
     } catch (err) { /* no sidecar */ }
     if (gen !== loadGen) return;
@@ -2969,6 +2978,7 @@ function drawScore(W, H) {
     }
     ctx.lineWidth = 1;
   }
+  drawScorePencilGuides(W, H);
   drawLasso();
   // playhead / cursor — both interpolate notehead-to-notehead (scoreTickToX)
   if (playing) {
@@ -2990,6 +3000,47 @@ function drawScore(W, H) {
 // staff step (calibrated from VexFlow's own line geometry — no magic
 // constants), the key signature supplies the accidental unless the ♮♯♭
 // segment overrides it, and x snaps to the pencil-duration grid.
+function scoreMeasureAnchors(mi) { // how many real x→time anchors this measure has
+  const entry = scoreCache.get(mi) || renderMeasure(mi);
+  return entry ? entry.timeMap.length : 0;
+}
+function scorePencilTick(x) {
+  // scoreXToTick interpolates between engraved noteheads — fine when a bar
+  // has them, wildly coarse when it's empty (a blank composition's default).
+  // Sparse bars get a LINEAR map from the note-start edge instead, which is
+  // exactly what the pencil beat guides draw.
+  const ppt = pxPerTick();
+  const mw = scoreModel.bt * ppt;
+  const mi = Math.max(0, Math.floor((x - RULER_W + view.x) / mw));
+  const entry = scoreCache.get(mi) || renderMeasure(mi);
+  if (entry && entry.timeMap.length >= 2) return scoreXToTick(x);
+  const nsx = entry ? entry.noteStartX : SCORE_PAD;
+  const localX = x - (RULER_W + mi * mw - view.x - SCORE_PAD);
+  const frac = Math.max(0, Math.min(0.999, (localX - nsx) / Math.max(1, mw + SCORE_PAD - nsx)));
+  return mi * scoreModel.bt + frac * scoreModel.bt;
+}
+function drawScorePencilGuides(W, H) { // faint beat lines wherever the linear map governs
+  if (!editOn || mode !== "pencil" || !scoreModel) return;
+  const ppt = pxPerTick();
+  const mw = scoreModel.bt * ppt;
+  const first = Math.max(0, Math.floor(view.x / mw));
+  const last = Math.min(scoreModel.nMeasures - 1, Math.ceil((view.x + W) / mw));
+  const bpb = beatsPerBarDisp();
+  ctx.fillStyle = css("--accent");
+  for (let mi = first; mi <= last; mi++) {
+    if (scoreMeasureAnchors(mi) >= 2) continue; // engraved anchors govern there
+    const entry = scoreCache.get(mi);
+    const nsx = entry ? entry.noteStartX : SCORE_PAD;
+    const x0 = RULER_W + mi * mw - view.x - SCORE_PAD;
+    const usable = mw + SCORE_PAD - nsx;
+    ctx.globalAlpha = 0.25;
+    for (let b = 0; b < bpb; b++) {
+      const bx = x0 + nsx + (b / bpb) * usable;
+      ctx.fillRect(bx, RULER_H + 4, 1, scoreContentH());
+    }
+    ctx.globalAlpha = 1;
+  }
+}
 function scoreStaveAt(pos) {
   const localY = pos.y - (RULER_H + 4 - (view.y || 0));
   const si = Math.max(0, Math.min(scoreModel.staves.length - 1,
@@ -3017,7 +3068,7 @@ function scorePencil(pos) {
   const pitch = (octave + 1) * 12 + LETTER_PC[letter] + acc;
   if (pitch < 0 || pitch > 127) return;
   const snap = song.ppq * pencilDur;
-  const t = Math.max(0, Math.round(scoreXToTick(pos.x) / snap) * snap);
+  const t = Math.max(0, Math.round(scorePencilTick(pos.x) / snap) * snap);
   selTrack = st.ti;
   const tr = song.tracks[st.ti];
   const added = !isComposition();
@@ -4850,9 +4901,18 @@ const syncsheet = document.getElementById("syncsheet");
 // full-song localStorage draft, keyed by path, listed in the song picker.
 const NR_DIR = "albums/compositions/nightroll/";
 const COMP_DIR = "albums/compositions/";
-// everything under compositions/ is Josh's own work and stays editable; the
-// 08-14 lock is specifically on NSF pipeline output (everything else)
-function isComposition() { return !!songKey && songKey.startsWith(COMP_DIR); }
+// Writable = the app's OWN songs only (2026-08-15 tightening): nightroll/,
+// or an app-created song promoted out of it — recognized by its local draft
+// or its "forked from" note. Josh's Logic exports live under compositions/
+// too but have no regeneration path; writeMidi would also strip anything
+// beyond notes/tempo/meter (CCs, programs), so they stay locked like chip
+// captures. Save As forks them into nightroll/ if he wants to edit one.
+function isComposition() {
+  if (!songKey || !songKey.startsWith(COMP_DIR)) return false;
+  if (songKey.startsWith(NR_DIR)) return true;
+  return localStorage.getItem(draftStoreKey(songKey)) !== null ||
+         rollnotes.some(n => n.text && n.text.startsWith("forked from "));
+}
 // Move targets (Josh 2026-08-15: only compositions move, between these two)
 const COMP_ALBUMS = [["Night Roll Sketches", NR_DIR], ["My Compositions", COMP_DIR]];
 function albumTitleFor(path) {
@@ -5017,7 +5077,7 @@ document.getElementById("filesheetbtn").addEventListener("click", e => {
       sel.appendChild(o);
     }
   }
-  fileStatus(isComposition() ? "composition — editable" : "chip capture — locked; Save As forks it");
+  fileStatus(isComposition() ? "composition — editable" : "locked (not an app-made song) — Save As forks an editable copy");
   const r = e.currentTarget.getBoundingClientRect();
   filesheet.style.left = Math.max(6, r.left) + "px";
   filesheet.style.top = (r.bottom + 4) + "px";
@@ -5332,9 +5392,17 @@ async function putRollnotes(path, content, headers) { // PUT with one stale-sha 
 function markCurrentSongSynced() {
   rollnotes.forEach(n => n.added = false); // now canonical in the repo
   saveLocalNotes();
+  // Pages deploys lag the commit by ~1 min; a reload in that window fetches
+  // the PRE-sync file and the notes look gone. Keep the synced state as a
+  // bridge — loadNotes prefers it while it's fresh and the CDN disagrees.
+  recordLastSync(songKey, serializeRollnotes());
   lastSubtitle = undefined;
   updateSubtitle();
   draw();
+}
+function recordLastSync(key, text) {
+  try { localStorage.setItem("ff1roll-lastsync-" + key, JSON.stringify({t: Date.now(), text})); }
+  catch (err) { /* storage full: the bridge is best-effort */ }
 }
 function takeToken(status) {
   const token = document.getElementById("ghtoken").value.trim();
@@ -5381,7 +5449,7 @@ document.getElementById("ghsaveall").addEventListener("click", async e => {
       const r = await putRollnotes(path, content, ghHeaders(token));
       if (!r.ok) throw new Error("HTTP " + r.status);
       if (key === songKey) markCurrentSongSynced();
-      else localStorage.removeItem("ff1roll-notes-" + key);
+      else { localStorage.removeItem("ff1roll-notes-" + key); recordLastSync(key, content); }
       results.push(short + " ✓");
     } catch (err) {
       results.push(short + " ✗ " + err.message);
