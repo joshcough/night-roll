@@ -92,5 +92,14 @@
     "path": "albums/compositions/KeyChangeTest-07-26.mid"
    }
   ]
+ },
+ {
+  "title": "Night Roll Sketches",
+  "songs": [
+   {
+    "title": "Test",
+    "path": "albums/compositions/nightroll/test.mid"
+   }
+  ]
  }
 ]
