@@ -319,11 +319,22 @@ a 33ms arpeggio run is one pulse wave changing period, not N oscillator
 attacks — built after oscillator-per-note rendering could not do MM2's
 fast sections justice. Renders ~400x realtime, per-channel buffers so
 mute/solo gains still work; loop points honored via buffer looping;
-speed slider acts tape-style (pitch follows). Available while the
-import session that captured the current draft is open (the NSF must
-be in memory); re-capturing invalidates the render. All async yields
-(emulation, loop scan, render) use MessageChannel, not setTimeout —
-background tabs throttle setTimeout to ~1/sec.
+speed slider acts tape-style (pitch follows). Re-capturing invalidates
+the render. All async yields (emulation, loop scan, render) use
+MessageChannel, not setTimeout — background tabs throttle setTimeout
+to ~1/sec.
+
+Chip audio is the DEFAULT wherever a source resolves (Josh: "a million
+times better... always use this if possible"; the chip button is the
+opt-out, preference in ff1roll-chip). Source chain, honoring the
+*.nsf gitignore (ROM music never enters the public repo): live import
+session → this device's IndexedDB cache → **joshcough/nsf-archive**,
+Josh's PRIVATE repo, fetched via the GitHub API with the same token
+Sync uses, then cached. album.json carries only metadata: `nsf:
+{vault: "<file>.nsf", tracks: {<base>: {n, secs}}}` — Commit import
+writes it and uploads the album's NSF to the archive; FF1's album.json
+maps all 19 tracks to ff1.nsf, so the whole analysis album plays with
+the console's own voice on any device with the token.
 
 **Robustness:** MIDI parser finds tracks by MTrk magic scan (the original
 ff1battle had corrupt length headers — since rebuilt clean, guard kept),

@@ -3344,26 +3344,95 @@ function currentLoop() { // "loop: B.Q" = at the anchor (jump point), return to 
 // import session that captured the current draft is still open.
 let chipOn = false;
 const chip = {key: null, buffers: null, lead: 0, srcs: []};
-function chipTrackNo() { // NSF track number for the current song, if knowable
+function chipTrackNo() { // NSF track number from the LIVE import session
   if (!songKey || !nsfSess) return null;
   for (let n = 1; n < nsfSess.rows.length; n++)
     if (nsfSess.rows[n] && nsfSess.rows[n].key === songKey) return n;
   return null;
 }
-function updateChipBtn() {
+// NSF vault: a PRIVATE repo (Josh's design, 2026-08-17) holding the NSFs the
+// public repo must not — album.json links to it (vault file + track map, pure
+// metadata) and the app fetches with the same token Sync uses. Chain:
+// live import session → this device's IndexedDB cache → vault fetch (cached).
+const NSF_VAULT = "joshcough/nsf-archive"; // Josh's pre-existing private NSF repo
+const albumMetaCache = {}; // album dir -> album.json contents (or null)
+async function albumMetaFor(key) {
+  const m = key && key.match(/^(albums\/.+?)\/(?:songs\/)?[^/]+\.mid$/); // lazy: don't swallow /songs/
+  if (!m) return null;
+  const dir = m[1];
+  if (!(dir in albumMetaCache)) {
+    try {
+      const r = await fetch(dir + "/album.json?t=" + Date.now(), {cache: "no-cache"});
+      albumMetaCache[dir] = r.ok ? await r.json() : null;
+    } catch (err) { albumMetaCache[dir] = null; }
+  }
+  return albumMetaCache[dir];
+}
+async function vaultFetch(file) { // private repo needs the API + token
+  const token = localStorage.getItem("ff1roll-ghtoken");
+  if (!token) return null;
+  const r = await fetch("https://api.github.com/repos/" + NSF_VAULT + "/contents/" + file + "?ref=main",
+    {headers: ghHeaders(token)});
+  if (!r.ok) return null;
+  const j = await r.json();
+  const bin = atob(j.content.replace(/\n/g, ""));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+async function chipSource() { // {bytes, n, secs} for the current song, or null
+  if (chipTrackNo() !== null) {
+    const n = chipTrackNo();
+    return {bytes: nsfSess.bytes, n, secs: nsfSess.rows[n].secs || 60};
+  }
+  if (!songKey) return null;
+  const base = songKey.split("/").pop().replace(/\.mid$/, "");
+  // this device already has the bytes? (import happened here, or vault cached)
+  const im = songKey.match(/^albums\/imports\/([^/]+)\//);
+  const meta = await albumMetaFor(songKey);
+  const slug = im ? im[1] : (meta && meta.nsf && meta.nsf.vault) || null;
+  if (!slug) return null;
+  const metaTr = meta && meta.nsf && meta.nsf.tracks && meta.nsf.tracks[base];
+  const rec = await idbNsfGet(slug);
+  let tr = (rec && rec.tracks && rec.tracks[base]) || metaTr;
+  if (tr === undefined || tr === null) return null;
+  if (typeof tr === "number") tr = {n: tr};
+  let bytes = rec && rec.bytes;
+  if (!bytes && meta && meta.nsf && meta.nsf.vault) { // fall back to the vault, then cache
+    setInfo("chip audio: fetching NSF from the vault…");
+    bytes = await vaultFetch(meta.nsf.vault);
+    if (bytes) idbNsfPut(slug, bytes, meta.nsf.tracks || {});
+  }
+  if (!bytes) return null;
+  return {bytes, n: tr.n, secs: tr.secs || 75};
+}
+let chipMaybe = false; // last async availability answer, drives the button
+async function updateChipBtn() {
   const b = document.getElementById("chipbtn");
-  const ok = chipTrackNo() !== null;
-  b.style.display = ok ? "" : "none";
+  chipMaybe = chipTrackNo() !== null || (await chipSource()) !== null;
+  b.style.display = chipMaybe ? "" : "none";
   b.classList.toggle("active", chipOn && chip.key === songKey);
-  if (!ok && chipOn) chipOn = false;
+  if (!chipMaybe && chipOn) chipOn = false;
+  // "always use this if possible" (Josh, 2026-08-17): the authentic sound is
+  // the default — auto-render when a source exists, unless he switched it off
+  if (chipMaybe && localStorage.getItem("ff1roll-chip") !== "0" &&
+      chip.key !== songKey && chip.rendering !== songKey) {
+    chip.rendering = songKey;
+    const forKey = songKey;
+    chipRender().then(ok => {
+      if (ok && songKey === forKey) { chipOn = true; updateChipBtn(); }
+    }).catch(() => { /* render failed: button stays manual */ })
+      .finally(() => { if (chip.rendering === forKey) chip.rendering = null; });
+  }
 }
 async function chipRender() {
-  const n = chipTrackNo();
-  if (n === null) return false;
+  const src = await chipSource();
+  if (!src) return false;
   ensureAudio();
-  const M = nsfSess.M;
-  const secs = Math.ceil((nsfSess.rows[n].secs || 60) + 1);
-  const {apuLog, frames, frameSec} = await M.runNSFAsync(nsfSess.nsf, n, secs,
+  const M = await nsfModules();
+  const nsfParsed = M.parseNSF(src.bytes);
+  const secs = Math.ceil(src.secs + 1);
+  const {apuLog, frames, frameSec} = await M.runNSFAsync(nsfParsed, src.n, secs,
     p => setInfo("chip audio: emulating… " + Math.round(p * 100) + "%"));
   // song time zero = first onset (the capture's trim) — find it the same way
   const ev = M.reconstruct(apuLog, frames, frameSec);
@@ -3406,8 +3475,16 @@ function chipStart(fromSec) {
 }
 document.getElementById("chipbtn").addEventListener("click", async e => {
   const btn = e.currentTarget;
-  if (chipOn) { chipOn = false; updateChipBtn(); if (playing) stop(); return; }
+  if (chipOn) { // opt out — remembered until toggled back
+    chipOn = false;
+    localStorage.setItem("ff1roll-chip", "0");
+    updateChipBtn();
+    if (playing) stop();
+    setInfo("chip audio off — synthesized voices (tap chip to switch back)");
+    return;
+  }
   btn.disabled = true;
+  localStorage.setItem("ff1roll-chip", "1");
   try {
     if (chip.key !== songKey) await chipRender();
     chipOn = chip.key === songKey;
@@ -6576,7 +6653,7 @@ async function captureNsfTrack(M, nsf, track, seconds, onProgress) { // dump-all
 async function openNsfImport(bytes, name) {
   const M = await nsfModules();
   const nsf = M.parseNSF(bytes);
-  nsfSess = {M, nsf, rows: []};
+  nsfSess = {M, nsf, bytes, rows: []};
   document.getElementById("imptitle").textContent =
     ((nsf.name || name) + (nsf.artist && nsf.artist !== "<?>" ? " — " + nsf.artist : "")).toUpperCase();
   document.getElementById("impslug").value = slugify(nsf.name || name.replace(/\.nsf$/i, ""));
@@ -6717,6 +6794,9 @@ async function impCapture(n) {
          text: "loop: " + cap.loopTarget[0] + "." + cap.loopTarget[1]}]));
     row.secs = cap.secs; // chip-audio render length for this track
     if (chip.key === key) { chip.key = null; chipOn = false; updateChipBtn(); } // re-capture invalidates rendered audio
+    // NSF bytes + track number persist on this device so chip audio outlives
+    // the session (never the repo — *.nsf is gitignored ROM music)
+    idbNsfPut(slug, nsfSess.bytes, {[base]: {n, secs: cap.secs}});
     row.st.textContent = "✓ saved · " + cap.secs.toFixed(1) + "s · " + cap.bpm + "bpm · " +
                          (cap.looped ? "loop" : "no loop ≤" + secs + "s") +
                          (cap.snapped ? "" : " · raw timing (tempo shifts)");
@@ -6766,7 +6846,7 @@ document.getElementById("impcommit").addEventListener("click", e => {
   btn.disabled = true;
   commitImports(impStatus).finally(() => { btn.disabled = false; });
 });
-async function ensureImportAlbum(slug, h, songTitles) { // album.json keeps build_manifest.mjs honest offline
+async function ensureImportAlbum(slug, h, songTitles, nsfTracks) { // album.json keeps build_manifest.mjs honest offline
   const path = IMP_DIR + slug + "/album.json";
   const g = await fetch(REPO_API + path + "?ref=main", {headers: h, cache: "no-store"});
   let meta = {title: titleCaseSlug(slug), order: 50, songs: {}}, sha = null;
@@ -6774,14 +6854,62 @@ async function ensureImportAlbum(slug, h, songTitles) { // album.json keeps buil
     const j = await g.json();
     sha = j.sha;
     try { meta = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, ""))))); } catch (err) { /* rewrite */ }
-    if (!Object.keys(songTitles || {}).length) return;
   }
   meta.songs = {...(meta.songs || {}), ...(songTitles || {})};
+  // NSF link: vault file + track map (pure metadata — the ROM data itself
+  // lives in the PRIVATE nsf-vault repo, never here). This is what makes
+  // chip audio work on any device (Josh's design, 2026-08-17).
+  if (nsfTracks && Object.keys(nsfTracks).length) {
+    meta.nsf = meta.nsf || {vault: slug + ".nsf", tracks: {}};
+    meta.nsf.tracks = {...meta.nsf.tracks, ...nsfTracks};
+  }
   const body = {message: "Import album " + slug + " from Night Roll", branch: "main",
     content: btoa(unescape(encodeURIComponent(JSON.stringify(meta, null, 1) + "\n")))};
   if (sha) body.sha = sha;
   const r = await fetch(REPO_API + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
   if (!r.ok) throw new Error("album.json HTTP " + r.status);
+}
+// NSFs are NEVER committed (.gitignore *.nsf — ROM music stays out of the
+// public repo). For chip audio across reloads, the bytes persist in THIS
+// device's IndexedDB at import time instead: private, offline, zero
+// redistribution. Each device imports the NSF once.
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open("ff1roll", 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore("nsf");
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function idbNsfPut(slug, bytes, trackPatch) {
+  try {
+    const db = await idbOpen();
+    const cur = await new Promise(res => {
+      const r = db.transaction("nsf").objectStore("nsf").get(slug);
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => res(null);
+    });
+    const rec = {bytes: bytes || (cur && cur.bytes), tracks: {...(cur ? cur.tracks : {}), ...(trackPatch || {})}};
+    await new Promise((res, rej) => {
+      const tx = db.transaction("nsf", "readwrite");
+      tx.objectStore("nsf").put(rec, slug);
+      tx.oncomplete = res;
+      tx.onerror = () => rej(tx.error);
+    });
+    db.close();
+  } catch (err) { /* private mode etc: chip audio stays session-only */ }
+}
+async function idbNsfGet(slug) {
+  try {
+    const db = await idbOpen();
+    const rec = await new Promise(res => {
+      const r = db.transaction("nsf").objectStore("nsf").get(slug);
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => res(null);
+    });
+    db.close();
+    return rec;
+  } catch (err) { return null; }
 }
 async function commitImports(status, keys) { // push import drafts (all by default, or a chosen set)
   keys = keys || importDraftKeys();
@@ -6816,7 +6944,29 @@ async function commitImports(status, keys) { // push import drafts (all by defau
         const base = k.split("/").pop().replace(/\.mid$/, "");
         if (k.split("/")[2] === slug && titles[k] !== titleCaseSlug(base)) overrides[base] = titles[k];
       }
-      await ensureImportAlbum(slug, h, overrides);
+      // chip audio on every device: the NSF goes to the PRIVATE vault, the
+      // committed songs' track numbers into album.json
+      const rec = await idbNsfGet(slug);
+      const nsfTracks = {};
+      if (rec && rec.tracks) for (const k of keys) {
+        const base = k.split("/").pop().replace(/\.mid$/, "");
+        if (k.split("/")[2] === slug && rec.tracks[base] !== undefined) nsfTracks[base] = rec.tracks[base];
+      }
+      await ensureImportAlbum(slug, h, overrides, nsfTracks);
+      if (rec && rec.bytes) {
+        try {
+          const chk = await fetch("https://api.github.com/repos/" + NSF_VAULT + "/contents/" + slug + ".nsf?ref=main", {headers: h});
+          if (!chk.ok) {
+            status("Uploading NSF to the private vault…");
+            const put = await fetch("https://api.github.com/repos/" + NSF_VAULT + "/contents/" + slug + ".nsf", {
+              method: "PUT", headers: h, body: JSON.stringify({
+                message: "NSF for " + slug + " (chip audio)", branch: "main",
+                content: midiBase64(rec.bytes instanceof Uint8Array ? rec.bytes : new Uint8Array(rec.bytes))})});
+            if (!put.ok) throw new Error("HTTP " + put.status);
+          }
+        } catch (err) { status("⚠ vault upload failed (" + err.message + ") — chip audio stays device-local"); }
+      }
+      delete albumMetaCache[IMP_DIR + slug]; // album.json changed
     }
     await updateManifest(h, albums => {
       let changed = false;
