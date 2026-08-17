@@ -639,6 +639,7 @@
     <button data-acc="1">♯</button>
     <button data-acc="-1">♭</button>
   </div>
+  <button id="delbtn" aria-label="Delete selected notes">🗑</button>
   <button id="undobtn">⟲</button>
 </div>
 <div id="instpanel">
@@ -848,7 +849,7 @@
       <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — and plays it.</dd>
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
       <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high.</dd>
-      <dt>Move &amp; resize</dt><dd>On songs you can edit: lasso notes (or tap one), then <b>drag</b> them — up/down transposes, left/right slides in time on the pencil grid, all together (a chord moves as a chord). Drag a selected note's <b>right edge</b> to lengthen or shorten every selected note by the same amount. <b>Option-drag</b> drags out a copy. Keyboard does it all with less hand strain: arrows move (Shift+↑↓ = octave), Option+←→ resizes, ⌘C copies, ⌘V pastes the selection at the playhead (pasted notes arrive selected, ready to move), Delete removes. Every gesture is one undo step.</dd>
+      <dt>Move &amp; resize</dt><dd>On songs you can edit: lasso notes (or tap one), then <b>drag</b> them — up/down transposes, left/right slides in time on the pencil grid, all together (a chord moves as a chord). Drag a selected note's <b>right edge</b> to lengthen or shorten every selected note by the same amount. <b>Option-drag</b> drags out a copy. Keyboard does it all with less hand strain: arrows move (Shift+↑↓ = octave), Option+←→ resizes, ⌘C copies, ⌘V pastes the selection at the playhead (pasted notes arrive selected, ready to move), Delete removes — and the 🗑 button in the edit row deletes the selection by touch. Every gesture is one undo step.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
@@ -7526,6 +7527,11 @@ document.getElementById("velseg").addEventListener("click", e => {
   if (!b) return;
   pencilVel = +b.dataset.vel;
   for (const x of document.querySelectorAll("#velseg button")) x.classList.toggle("active", x === b);
+});
+document.getElementById("delbtn").addEventListener("click", () => {
+  const k = deleteSelection();
+  setInfo(k ? "deleted " + k + " note" + (k === 1 ? "" : "s") + " (⟲ restores them)"
+            : "nothing selected — lasso or tap notes first");
 });
 document.getElementById("undobtn").addEventListener("click", () => {
   const u = editUndo.pop();
