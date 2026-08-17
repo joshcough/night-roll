@@ -572,6 +572,12 @@
     cursor: pointer;
   }
   .notegroup .grows { display: flex; flex-direction: column; gap: 7px; }
+#progpanel{max-height:56dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;user-select:text;-webkit-user-select:text}
+.prow{padding:8px 2px;border-bottom:1px solid #2a2a3a}
+.prow b{color:var(--gold);font-size:14px}
+.prow .pchords{display:block;font-family:var(--mono);font-size:15px;margin:2px 0}
+.prow .pnum{display:block;font-family:var(--mono);font-size:12px;opacity:.65}
+.prow small{display:block;font-size:12px;opacity:.75;line-height:1.35}
 #helptabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
 #helptabs button{min-height:40px;padding:8px 14px;border-radius:8px;background:#242433;color:#cfcfe0;border:1px solid #3a3a4e;font-size:14px}
 #helptabs button.on{background:var(--gold);color:#151520;border-color:var(--gold);font-weight:600}
@@ -874,6 +880,7 @@
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
       <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
+      <dt>Progressions (in ◯5)</dt><dd>The Progressions button inside the circle-of-fifths dialog swaps the wheel for a library of chord progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more — written in Roman numerals so they work in any key (use the wheel to translate: put your key at 12 o'clock and read the degrees off the window).</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
@@ -1108,9 +1115,11 @@
     <h2>CIRCLE OF FIFTHS</h2>
     <canvas id="cofcanvas" style="position:static;display:block;margin:0 auto;touch-action:none"></canvas>
     <div id="cofdetail"></div>
+    <div id="progpanel" style="display:none"></div>
     <div class="row" style="margin-top:10px">
       <button id="cofccw">⟲</button>
       <button id="cofcw">⟳</button>
+      <button id="cofprogbtn">Progressions</button>
       <button id="cofclose" style="margin-left:auto">Close</button>
     </div>
   </div>
@@ -5044,6 +5053,48 @@ document.getElementById("mettap").addEventListener("click", () => {
 let cofSf = 0;        // signature the degree window is centered on (-6..6 wraps)
 let cofRot = 0;       // signature whose wedge sits at 12 o'clock (the wheel's rotation)
 let cofDragRot = null; // fractional rotation while a finger is spinning the wheel
+// Progression library (Josh, 2026-08-17): emotions → Roman-numeral recipes.
+// Numerals are major-scale-relative (♭VI = lowered 6th degree), the app's
+// degree convention; lowercase = minor chord. Deliberately key-agnostic.
+const PROG_LIB = [
+  ["Triumphant", "I – IV – V – I", "the textbook full cadence — arrival with banners"],
+  ["Heroic", "I – ♭VII – IV – I", "the Mixolydian rock-hero loop; ♭VII is the swagger"],
+  ["Hopeful", "I – V – vi – IV", "the four-chord anthem — rises, dips minor, lands warm"],
+  ["Bittersweet", "vi – IV – I – V", "same chords as Hopeful, started on the minor — smiling through it"],
+  ["Nostalgic", "I – vi – IV – V", "the 50s doo-wop turnaround; instant sepia"],
+  ["Romantic", "Imaj7 – vi7 – ii7 – V7", "jazz turnaround with the sevenths left in — candlelight"],
+  ["Peaceful", "I – IV – I – IV", "plagal rocking, no leading tone anywhere — nothing needs to happen"],
+  ["Dreamy", "Imaj7 – IVmaj7", "two maj7 chords floating a fourth apart; time gets soft"],
+  ["Wonder", "I – II", "the Lydian lift — the major chord one whole step up opens the sky"],
+  ["Playful", "I – VI7 – II7 – V7", "the ragtime circle of dominants; every chord winks"],
+  ["Yearning", "IV – V – iii – vi", "the JRPG 'royal road' — reaches, almost resolves, aches instead"],
+  ["Anxious", "vi – V – IV – V", "circles the tonic without ever landing on it"],
+  ["Melancholy", "i7 – iv7 – ♭VI – V7", "minor with sevenths — sadness that still moves forward"],
+  ["Sad (epic)", "i – ♭VI – ♭III – ♭VII", "the dark pop loop; grief with scale"],
+  ["Grieving", "i – ♭VII – ♭VI – V", "the Andalusian descent — the bass walks down to the funeral"],
+  ["Lonely", "i – v – i – v", "minor v instead of major V: no leading tone, no one coming"],
+  ["Dark epic", "i – ♭VI – ♭VII – i", "the boss-theme loop; menace in armor"],
+  ["Ominous", "i – ♭II", "the Neapolitan half-step shadow — Jaws lives here"],
+  ["Villainous", "i – ♭vi", "minor chromatic mediant (Cm→A♭m): wrongness with a cape"],
+  ["Creepy", "i – ♯iv°", "tonic against the tritone diminished — the floor isn't real"],
+  ["Battle", "i – ♭VII – ♭VI – ♭VII", "the driving minor loop; run, fight, repeat"],
+  ["Mysterious", "I – ♭VI", "major chromatic mediant (C→A♭): familiar light, unfamiliar room"],
+  ["Tense", "i – ♭II – ♭III – ♭II", "phrygian steps grinding a half-step above home"],
+];
+{
+  const panel = document.getElementById("progpanel");
+  panel.innerHTML = PROG_LIB.map(([mood, prog, why]) =>
+    '<div class="prow"><b>' + mood + '</b><span class="pchords">' + prog + '</span><small>' + why + '</small></div>'
+  ).join("");
+  const btn = document.getElementById("cofprogbtn");
+  btn.addEventListener("click", () => {
+    const showing = panel.style.display !== "none";
+    panel.style.display = showing ? "none" : "block";
+    for (const id of ["cofcanvas", "cofdetail", "cofccw", "cofcw"])
+      document.getElementById(id).style.display = showing ? "" : "none";
+    btn.textContent = showing ? "Progressions" : "Wheel";
+  });
+}
 const cofCanvas = document.getElementById("cofcanvas");
 const cofCtx = cofCanvas.getContext("2d");
 function cofMinor(sf) { return spellPc((((sf * 7) % 12 + 12) % 12 + 9) % 12, sf) + "m"; }

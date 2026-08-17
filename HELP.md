@@ -71,6 +71,9 @@ Toggle on, then drag a box over notes (works in all views). Boxes ADD to the sel
 **◯5 Circle of fifths**
 The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: **drag the wheel** (or ⟲ ⟳) to spin it — put any key at 12 o'clock; **tap a wedge** to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.
 
+**Progressions (in ◯5)**
+The Progressions button inside the circle-of-fifths dialog swaps the wheel for a library of chord progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more — written in Roman numerals so they work in any key (use the wheel to translate: put your key at 12 o'clock and read the degrees off the window).
+
 **find: (pitch finder)**
 Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.
 
