@@ -3667,6 +3667,11 @@ function drumHit(ti, p, when, vel) {
   src.start(when);
 }
 function scheduleNote(ti, n, when, durSec) {
+  // transport-stopped guard: a pump/chase callback already in flight when Stop
+  // hit could still land here, wiring fresh gains to the master — those notes
+  // sat frozen in a suspended context and fired later when a pencil preview
+  // reopened it (Josh: "it just started playing, the cursor's not even moving")
+  if (!playing && !n._preview) return;
   // never start an envelope in the past — WebAudio would skip the attack
   // ramp and slam the oscillator on at full amplitude (audible click)
   when = Math.max(when, audio.currentTime + 0.003);
@@ -3796,7 +3801,7 @@ async function previewNote(ti, pitch) {
   ensureAudio();
   await resumeAudio(); // clock is frozen until the context actually runs
   openMaster(); // master may be faded out from the last stop
-  scheduleNote(ti, {p: pitch, v: 90, ch: 0}, audio.currentTime + 0.01, 0.3);
+  scheduleNote(ti, {p: pitch, v: 90, ch: 0, _preview: true}, audio.currentTime + 0.01, 0.3);
 }
 function buildSchedule() {
   // all tracks scheduled; per-track gain nodes apply mute/solo live
