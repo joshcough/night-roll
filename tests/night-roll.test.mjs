@@ -378,15 +378,15 @@ test("roll zoom-out clamp: floors flush to song extents, fitView lands on them",
   `);
   // stub viewport 800x600, RULER_W 46: 16 quarters + a ruler-width of right pad = 708/16
   assert.equal(run(`pxqFloor()`), (800 - 92) / 16);
-  // 13 pitch rows in 552px = 42.5 → capped at the 32 max row height
-  assert.equal(run(`rowHFloor()`), 32);
+  // 13 pitch rows + 6 rows of air (ROLL_AIR above and below) in 552px = 29.05
+  assert.equal(run(`rowHFloor()`), 552 / 19);
   run(`fitView();`);
   assert.equal(run(`view.pxq`), (800 - 92) / 16);
   assert.equal(run(`view.x`), 0);
-  assert.equal(run(`view.y`), (96 - 72) * 32); // top pitch flush at the top
+  assert.equal(run(`view.y`), (96 - 72 - 3) * (552 / 19)); // top pitch sits ROLL_AIR rows below the ruler
   run(`view.pxq = 2; view.rowH = 3; clampView();`); // zoomed out too far → floors
   assert.equal(run(`view.pxq`), (800 - 92) / 16);
-  assert.equal(run(`view.rowH`), 32);
+  assert.equal(run(`view.rowH`), 552 / 19);
   run(`song = null;`);
   assert.equal(run(`pxqFloor()`), 8); // no song: permissive defaults
   assert.equal(run(`rowHFloor()`), 6);

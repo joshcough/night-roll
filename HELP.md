@@ -13,7 +13,7 @@ Switch between piano roll and engraved sheet music. Same timeline, same everythi
 One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.
 
 **Roll zoom-out limit**
-Pinch-out stops once the whole song is in view — per axis: when every bar fits, further pinch-out only reveals pitch; when every note is visible, it stops, framed with a ruler-width of air. Opening a song lands exactly on this limit.
+Pinch-out stops once the whole song is in view — per axis: when every bar fits, further pinch-out only reveals pitch; when every note is visible — plus a few rows of breathing room above and below, so the top notes never sit against the ruler — it stops. Opening a song lands exactly on this limit.
 
 **Score zoom limit**
 The score stops zooming out where its busiest bar would overflow — engraved notes can't shrink. Mute dense tracks to zoom out further, or use the Roll for the bird's-eye view.
