@@ -948,7 +948,7 @@
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on the pencil grid, and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
-      <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
+      <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
@@ -5100,6 +5100,16 @@ let chordInsDur = 1; // quarters — the Insert dialogs' own duration, independe
 function chordLabel() {
   return CHORD_ROOTS[chordRoot].split("/")[0] + (chordQual === "maj" ? "" : chordQual);
 }
+const CHORD_FLAT = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
+function chordSym(rootPc, qual) { // flat-preferring: ♭VI in Cm is A♭, not G♯
+  return CHORD_FLAT[rootPc] + (qual === "maj" ? "" : qual);
+}
+function stampChordBand(tick, durTicks, sym) { // the matching ruler annotation
+  const bt = barTicks(), qt = beatTicks(), end = tick + durTicks - 1;
+  rollnotes.push(resolveNote({b1: Math.floor(tick / bt) + 1, q1: snapBeat((tick % bt) / qt + 1),
+                              b2: Math.floor(end / bt) + 1, q2: snapBeat((end % bt) / qt + 1),
+                              text: sym, chord: true, added: true}));
+}
 function insertChordAt(tick, rootPc, qual, oct, durQ) {
   if (!editableSong()) return 0;
   const ivs = (CHORD_QUALS.find(([q]) => q === qual) || CHORD_QUALS[0])[1];
@@ -5120,6 +5130,9 @@ function insertChordAt(tick, rootPc, qual, oct, durQ) {
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   selNote = null;
+  stampChordBand(t0, snap, chordSym(rootPc, qual));
+  finalizeNotes();
+  saveLocalNotes();
   playCursor = t0 + snap; // walk forward: the next insert lands right after
   saveEdits();
   computeSongEnd();
@@ -5206,10 +5219,13 @@ function insertProgressionAt(tick, progStr, tonicPc, oct, durQ) {
       if (song.rawNotes) song.rawNotes[selTrack].push({t: t0 + chopS, d: snap, p, v: pencilVel, added: isAdd});
       added.push({ti: selTrack, ni: tr.notes.length - 1});
     }
+    stampChordBand(t0, snap, chordSym((tonicPc + c.pcOff) % 12, c.qual));
     t0 += snap;
   }
   if (!added.length) return 0;
   editUndo.push({kind: "addBatch", items: added}); // the whole progression = one undo
+  finalizeNotes();
+  saveLocalNotes();
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   selNote = null;
