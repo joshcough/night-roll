@@ -644,6 +644,7 @@
     <button data-acc="1">♯</button>
     <button data-acc="-1">♭</button>
   </div>
+  <button id="copybtn" aria-label="Duplicate selected notes">⧉</button>
   <button id="delbtn" aria-label="Delete selected notes">🗑</button>
   <button id="undobtn">⟲</button>
 </div>
@@ -905,7 +906,11 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
-      <dt>Move &amp; resize</dt><dd>On songs you can edit: lasso notes (or tap one), then <b>drag</b> them — up/down transposes, left/right slides in time on the pencil grid, all together (a chord moves as a chord). Drag a selected note's <b>right edge</b> to lengthen or shorten every selected note by the same amount. <b>Option-drag</b> drags out a copy. Keyboard does it all with less hand strain: arrows move (Shift+↑↓ = octave), Option+←→ resizes, ⌘C copies, ⌘V pastes the selection at the playhead (pasted notes arrive selected, ready to move), Delete removes — and the 🗑 button in the edit row deletes the selection by touch. Every gesture is one undo step.</dd>
+      <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on the pencil grid, and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
+      <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
+      <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
+      <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
+      <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲ step.</dd>
     </dl>
     </div>
     <div class="hsec" data-hsec="files">
@@ -7571,6 +7576,12 @@ document.getElementById("velseg").addEventListener("click", e => {
   if (!b) return;
   pencilVel = +b.dataset.vel;
   for (const x of document.querySelectorAll("#velseg button")) x.classList.toggle("active", x === b);
+});
+document.getElementById("copybtn").addEventListener("click", () => {
+  const k = selEditItems().length;
+  if (!k) { setInfo("nothing selected — lasso or tap notes first"); return; }
+  duplicateSelectionInPlace();
+  setInfo("duplicated " + k + " note" + (k === 1 ? "" : "s") + " — drag the copies into place");
 });
 document.getElementById("delbtn").addEventListener("click", () => {
   const k = deleteSelection();

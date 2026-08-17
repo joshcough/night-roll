@@ -97,8 +97,20 @@ On your own songs (never on captures) a dedicated row appears above the footer: 
 **Score entry**
 Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.
 
-**Move & resize**
-On songs you can edit: lasso notes (or tap one), then **drag** them — up/down transposes, left/right slides in time on the pencil grid, all together (a chord moves as a chord). Drag a selected note's **right edge** to lengthen or shorten every selected note by the same amount. **Option-drag** drags out a copy. Keyboard does it all with less hand strain: arrows move (Shift+↑↓ = octave), Option+←→ resizes, ⌘C copies, ⌘V pastes the selection at the playhead (pasted notes arrive selected, ready to move), Delete removes — and the 🗑 button in the edit row deletes the selection by touch. Every gesture is one undo step.
+**Move**
+Select notes (lasso or tap one), then **drag them** — up/down transposes, left/right slides in time on the pencil grid, and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).
+
+**Resize**
+Drag a selected note's **right edge** — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.
+
+**Copy**
+Tap **⧉** in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).
+
+**Delete**
+Tap **🗑** in the edit row — every selected note goes at once. Delete key does the same.
+
+**Undo**
+Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲ step.
 
 ## Annotations
 
