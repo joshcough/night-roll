@@ -4003,8 +4003,9 @@ async function play(fromSec = 0) {
   loopPass = 0;
   loopSeg = currentLoop();
   if (fromSec >= loopSeg.end - 0.01) loopSeg = {start: 0, end: tickToSec(song, songEndTick)};
-  if (rangeSel && rangeSel.b > rangeSel.a) { // Logic-style cycle: a ruler selection
-    // loops playback over just that span and outranks any loop: annotation
+  const cycling = !!(rangeSel && rangeSel.b > rangeSel.a);
+  if (cycling) { // Logic-style cycle: a ruler selection loops playback over just
+    // that span and outranks any loop: annotation
     loopSeg = {start: tickToSec(song, rangeSel.a),
                end: tickToSec(song, Math.min(rangeSel.b, songEndTick))};
     if (fromSec < loopSeg.start - 0.01 || fromSec >= loopSeg.end - 0.01)
@@ -4015,8 +4016,10 @@ async function play(fromSec = 0) {
   if (chipActive()) chipStart(fromSec); // authentic audio rides the same transport
   schedIdx = schedEvents.findIndex(e => e.sec >= fromSec);
   if (schedIdx < 0) schedIdx = schedEvents.length;
-  // chase: a note the cursor lands mid-way through still plays its remainder
-  for (let k = 0; k < schedIdx; k++) {
+  // chase: a note the cursor lands mid-way through still plays its remainder —
+  // but never while cycling: the cycle is a strict window, and tails of notes
+  // from before the range replayed as phantom chords on every wrap (Josh)
+  for (let k = 0; cycling ? false : k < schedIdx; k++) {
     const e = schedEvents[k];
     if (e.sec + e.dur > fromSec + 0.02 && !(e.n.ch === 9 || trackIsDrums(e.ti)))
       scheduleNote(e.ti, e.n, playT0, e.sec + e.dur - fromSec);
@@ -4038,7 +4041,7 @@ async function play(fromSec = 0) {
         // remainder (chip-capture ticks derive from real seconds, so ship's
         // C5 starts a hair before the 1.3 target and vanished on loop)
         const passAbs = loopSeg.end + (loopPass - 1) * segLen - playOffset;
-        for (let k = 0; k < wrapIdx; k++) {
+        for (let k = 0; cycling ? false : k < wrapIdx; k++) {
           const e = schedEvents[k];
           if (e.sec + e.dur > loopSeg.start + 0.02 && !(e.n.ch === 9 || trackIsDrums(e.ti)))
             scheduleNote(e.ti, e.n, playT0 + passAbs, e.sec + e.dur - loopSeg.start);
