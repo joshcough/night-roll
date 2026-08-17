@@ -268,6 +268,17 @@ his behalf.
 
 ## Tooling to-do
 
+- **Playwright e2e suite (Josh, 2026-08-16):** wanted AFTER current
+  editor work settles ("let's get everything working first"). Real
+  pointer-event tests for the gesture layer the vm harness can't see —
+  the lasso-drag-move bug lived exactly there. Run chromium + webkit
+  (webkit ≈ iPad Safari, Josh's main device). Cover: lasso-drag move,
+  right-edge resize, empty-drag box, tap-toggle, 🗑 delete + ⟲, arrows,
+  help tabs. Needs package.json + @playwright/test + browser download;
+  gitignore node_modules/test-results.
+- **32nd-note snap grid (2026-08-16):** TMNT2 scene-2a shows tempo 300 —
+  real 32nd runs on a 16th-only grid; fitBpm halves to 150 once the grid
+  supports 32nds.
 - **Full Synthesia-style piano view — SHIPPED 2026-08-07** (▼ Fall in the
   instrument panel): notes fall down the main canvas into the panel's
   keys, chord symbols and bar numbers ride their lines. Possible later
