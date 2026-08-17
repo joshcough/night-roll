@@ -721,7 +721,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -927,6 +927,59 @@ test("split at cursor / split in half / join — one undo step each", () => {
   assert.equal(run(`splitSelectionAt(playCursor) || splitSelectionHalves()`), 1);
   assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone && n.t >= 1920).map(n => [n.t, n.d])`),
     [[1920, 240], [2160, 240]]);
+  run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = [];`);
+});
+
+test("insert chord: triad and seventh at the cursor, cursor walks, one undo", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/chord-test.mid";
+    song.tracks = [{name: "pulse1", notes: []}];
+    song.rawNotes = null; chopS = 0; selTrack = 0;
+    multiSel = []; multiSelKey = new Set(); selNote = null;
+    editUndo = []; pencilDur = 1; pencilVel = 80; playCursor = 0;
+  `);
+  // Am triad at the cursor (A4=69), quarter note
+  assert.equal(run(`insertChordAt(playCursor, 9, "m", 4)`), 3);
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => [n.t, n.d, n.p])`),
+    [[0, 480, 69], [0, 480, 72], [0, 480, 76]]);
+  assert.equal(val(`playCursor`), 480);
+  // next insert lands right after: Fmaj7 = four notes
+  assert.equal(run(`insertChordAt(playCursor, 5, "maj7", 4)`), 4);
+  assert.deepEqual(val(`song.tracks[0].notes.slice(3).map(n => [n.t, n.p])`),
+    [[480, 65], [480, 69], [480, 72], [480, 76]]);
+  // inserted notes are the selection; one undo removes the whole chord
+  assert.equal(val(`multiSel.length`), 4);
+  run(`editUndoPop()`);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 3);
+  run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = [];`);
+});
+
+test("insert progression: numerals resolve, chords land in slots, one undo", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/prog-test.mid";
+    song.tracks = [{name: "pulse1", notes: []}];
+    song.rawNotes = null; chopS = 0; selTrack = 0;
+    multiSel = []; multiSelKey = new Set(); selNote = null;
+    editUndo = []; pencilDur = 0.5; pencilVel = 80; playCursor = 0;
+  `);
+  // "i – ♭VI – ♭III – ♭VII" in A minor (tonic pc 9, octave 4): Am, F, C, G — eighths
+  assert.equal(run(`insertProgressionAt(0, "i – ♭VI – ♭III – ♭VII", 9, 4)`), 12);
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => [n.t, n.p])`), [
+    [0, 69], [0, 72], [0, 76],        // Am
+    [240, 65], [240, 69], [240, 72],  // F
+    [480, 60], [480, 64], [480, 67],  // C
+    [720, 67], [720, 71], [720, 74],  // G
+  ]);
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.d)`).every(d => d === 240), true);
+  assert.equal(val(`playCursor`), 960);
+  assert.equal(val(`multiSel.length`), 12);
+  // sevenths + diminished parse: "Imaj7 – vi7 – ♯iv°" in C
+  assert.equal(run(`insertProgressionAt(playCursor, "Imaj7 – vi7 – ♯iv°", 0, 4)`), 11);
+  // one undo removes the whole second progression
+  run(`editUndoPop()`);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 12);
   run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = [];`);
 });
 

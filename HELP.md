@@ -72,7 +72,7 @@ Toggle on, then drag a box over notes (works in all views). Boxes ADD to the sel
 The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: **drag the wheel** (or ⟲ ⟳) to spin it — put any key at 12 o'clock; **tap a wedge** to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.
 
 **Progressions (in ◯5)**
-The Progressions button inside the circle-of-fifths dialog swaps the wheel for a library of chord progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more — written in Roman numerals so they work in any key (use the wheel to translate: put your key at 12 o'clock and read the degrees off the window).
+The Progressions button inside the circle-of-fifths dialog swaps the wheel for a library of chord progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more — written in Roman numerals so they work in any key (use the wheel to translate: put your key at 12 o'clock and read the degrees off the window). On songs you can edit, TAP a progression to insert the whole thing at the blue cursor — pick tonic and octave at the top of the list; each chord gets one pencil-duration slot, the notes arrive selected, and the entire progression is one ⟲ step. Stretch or rearrange afterwards with the editor tools.
 
 **find: (pitch finder)**
 Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.
@@ -108,6 +108,9 @@ Drag a selected note's **right edge** — every selected note lengthens or short
 
 **Copy**
 Tap **⧉** in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).
+
+**Insert chord (♫)**
+Tap **♫** in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), and an octave, then Insert — the whole chord lands at the blue cursor on the selected track, for the pencil duration, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge.
 
 **Split**
 Select notes and tap **✂**. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.

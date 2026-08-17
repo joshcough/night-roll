@@ -650,6 +650,7 @@
     <button data-acc="1">♯</button>
     <button data-acc="-1">♭</button>
   </div>
+  <button id="chordbtn" aria-label="Insert a chord at the cursor">♫</button>
   <button id="copybtn" aria-label="Duplicate selected notes">⧉</button>
   <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
   <button id="joinbtn" aria-label="Join selected notes">⁀</button>
@@ -828,6 +829,23 @@
   </div>
 </div>
 
+<div class="overlay" id="chordsheet">
+  <div class="sheet">
+    <h2>INSERT CHORD</h2>
+    <div id="chroots" class="row" style="flex-wrap:wrap;gap:4px"></div>
+    <div id="chquals" class="row" style="flex-wrap:wrap;gap:4px;margin-top:8px"></div>
+    <div class="row" style="margin-top:10px">
+      <span class="lbl">octave</span><select id="choct"></select>
+      <span class="lbl" id="chpreview" style="margin-left:8px;color:var(--gold)"></span>
+    </div>
+    <p class="meta" style="margin:8px 0 0">Inserts at the blue cursor, on the selected track, for the pencil duration — then walks the cursor forward one slot, so repeated inserts build a progression.</p>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="chinsert">Insert</button>
+      <button id="chclose" style="margin-left:auto">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="helpsheet">
   <div class="sheet help">
     <h2>NIGHT ROLL — WHAT YOU CAN DO</h2>
@@ -880,7 +898,7 @@
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
       <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
-      <dt>Progressions (in ◯5)</dt><dd>The Progressions button inside the circle-of-fifths dialog swaps the wheel for a library of chord progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more — written in Roman numerals so they work in any key (use the wheel to translate: put your key at 12 o'clock and read the degrees off the window).</dd>
+      <dt>Progressions (in ◯5)</dt><dd>The Progressions button inside the circle-of-fifths dialog swaps the wheel for a library of chord progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more — written in Roman numerals so they work in any key (use the wheel to translate: put your key at 12 o'clock and read the degrees off the window). On songs you can edit, TAP a progression to insert the whole thing at the blue cursor — pick tonic and octave at the top of the list; each chord gets one pencil-duration slot, the notes arrive selected, and the entire progression is one ⟲ step. Stretch or rearrange afterwards with the editor tools.</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
@@ -918,6 +936,7 @@
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on the pencil grid, and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
+      <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), and an octave, then Insert — the whole chord lands at the blue cursor on the selected track, for the pencil duration, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
@@ -5053,6 +5072,130 @@ document.getElementById("mettap").addEventListener("click", () => {
 let cofSf = 0;        // signature the degree window is centered on (-6..6 wraps)
 let cofRot = 0;       // signature whose wedge sits at 12 o'clock (the wheel's rotation)
 let cofDragRot = null; // fractional rotation while a finger is spinning the wheel
+// Insert-chord (Josh, 2026-08-17): stamp a full chord at the cursor with the
+// pencil duration, cursor walks forward — repeated inserts build a progression.
+const CHORD_QUALS = [
+  ["maj", [0, 4, 7]], ["m", [0, 3, 7]], ["dim", [0, 3, 6]], ["aug", [0, 4, 8]],
+  ["sus2", [0, 2, 7]], ["sus4", [0, 5, 7]], ["6", [0, 4, 7, 9]], ["m6", [0, 3, 7, 9]],
+  ["7", [0, 4, 7, 10]], ["maj7", [0, 4, 7, 11]], ["m7", [0, 3, 7, 10]],
+  ["m7♭5", [0, 3, 6, 10]], ["dim7", [0, 3, 6, 9]],
+];
+const CHORD_ROOTS = ["C", "C♯/D♭", "D", "D♯/E♭", "E", "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"];
+let chordRoot = 0, chordQual = "maj", chordOct = 4;
+function chordLabel() {
+  return CHORD_ROOTS[chordRoot].split("/")[0] + (chordQual === "maj" ? "" : chordQual);
+}
+function insertChordAt(tick, rootPc, qual, oct) {
+  if (!editableSong()) return 0;
+  const ivs = (CHORD_QUALS.find(([q]) => q === qual) || CHORD_QUALS[0])[1];
+  const snap = Math.max(1, Math.round(song.ppq * pencilDur));
+  const t0 = Math.max(0, Math.round(tick / snap) * snap);
+  const base = (oct + 1) * 12 + rootPc;
+  const tr = song.tracks[selTrack], isAdd = !isComposition();
+  const added = [];
+  for (const iv of ivs) {
+    const p = base + iv;
+    if (p < PMIN || p > PMAX) continue;
+    tr.notes.push({t: t0, d: snap, p, v: pencilVel, added: isAdd});
+    if (song.rawNotes) song.rawNotes[selTrack].push({t: t0 + chopS, d: snap, p, v: pencilVel, added: isAdd});
+    added.push({ti: selTrack, ni: tr.notes.length - 1});
+  }
+  if (!added.length) return 0;
+  editUndo.push({kind: "addBatch", items: added});
+  multiSel = added.slice();
+  multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
+  selNote = null;
+  playCursor = t0 + snap; // walk forward: the next insert lands right after
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return added.length;
+}
+{
+  const roots = document.getElementById("chroots"), quals = document.getElementById("chquals");
+  const preview = () => { document.getElementById("chpreview").textContent = chordLabel(); };
+  roots.innerHTML = CHORD_ROOTS.map((r, i) =>
+    '<button data-root="' + i + '" style="min-height:40px">' + r + '</button>').join("");
+  quals.innerHTML = CHORD_QUALS.map(([q]) =>
+    '<button data-qual="' + q + '" style="min-height:40px">' + (q === "maj" ? "maj" : q) + '</button>').join("");
+  const sel = document.getElementById("choct");
+  sel.innerHTML = [2, 3, 4, 5, 6].map(o => '<option' + (o === 4 ? ' selected' : '') + '>' + o + '</option>').join("");
+  sel.addEventListener("change", () => { chordOct = parseInt(sel.value, 10); });
+  const mark = () => {
+    for (const b of roots.children) b.classList.toggle("primary", +b.dataset.root === chordRoot);
+    for (const b of quals.children) b.classList.toggle("primary", b.dataset.qual === chordQual);
+    preview();
+  };
+  roots.addEventListener("click", e => {
+    const b = e.target.closest("button[data-root]");
+    if (b) { chordRoot = +b.dataset.root; mark(); }
+  });
+  quals.addEventListener("click", e => {
+    const b = e.target.closest("button[data-qual]");
+    if (b) { chordQual = b.dataset.qual; mark(); }
+  });
+  document.getElementById("chordbtn").addEventListener("click", () => {
+    if (!editableSong()) { setInfo("chords insert on your own songs — captures are locked"); return; }
+    mark();
+    document.getElementById("chordsheet").classList.add("on");
+  });
+  document.getElementById("chinsert").addEventListener("click", () => {
+    const k = insertChordAt(playCursor, chordRoot, chordQual, chordOct);
+    setInfo(k ? "inserted " + chordLabel() + " (" + k + " notes) — cursor moved to the next slot"
+              : "couldn't insert — check the octave fits the C1..C7 range");
+  });
+  document.getElementById("chclose").addEventListener("click", () =>
+    document.getElementById("chordsheet").classList.remove("on"));
+}
+// Numeral → chord: major-scale-relative degrees, case = quality, suffix refines
+const NUM_DEG = {I: 0, II: 1, III: 2, IV: 3, V: 4, VI: 5, VII: 6};
+const MAJ_STEP = [0, 2, 4, 5, 7, 9, 11];
+function parseNumeral(tok) {
+  const m = tok.match(/^([♭♯#b]?)(vii|vi|v|iv|iii|ii|i)(°|maj7|7|6)?$/i);
+  if (!m) return null;
+  const acc = (m[1] === "♭" || m[1] === "b") ? -1 : m[1] ? 1 : 0;
+  const minor = m[2] === m[2].toLowerCase();
+  const suf = m[3] || "";
+  let qual = minor ? "m" : "maj";
+  if (suf === "°") qual = "dim";
+  else if (suf === "maj7") qual = "maj7";
+  else if (suf === "7") qual = minor ? "m7" : "7";
+  else if (suf === "6") qual = minor ? "m6" : "6";
+  return {pcOff: (MAJ_STEP[NUM_DEG[m[2].toUpperCase()]] + acc + 12) % 12, qual};
+}
+function insertProgressionAt(tick, progStr, tonicPc, oct) {
+  if (!editableSong()) return 0;
+  const chords = progStr.split("–").map(t => parseNumeral(t.trim()));
+  if (!chords.length || chords.some(c => !c)) return 0;
+  const snap = Math.max(1, Math.round(song.ppq * pencilDur));
+  let t0 = Math.max(0, Math.round(tick / snap) * snap);
+  const tr = song.tracks[selTrack], isAdd = !isComposition();
+  const added = [];
+  for (const c of chords) {
+    const ivs = CHORD_QUALS.find(([q]) => q === c.qual)[1];
+    const base = (oct + 1) * 12 + ((tonicPc + c.pcOff) % 12);
+    for (const iv of ivs) {
+      const p = base + iv;
+      if (p < PMIN || p > PMAX) continue;
+      tr.notes.push({t: t0, d: snap, p, v: pencilVel, added: isAdd});
+      if (song.rawNotes) song.rawNotes[selTrack].push({t: t0 + chopS, d: snap, p, v: pencilVel, added: isAdd});
+      added.push({ti: selTrack, ni: tr.notes.length - 1});
+    }
+    t0 += snap;
+  }
+  if (!added.length) return 0;
+  editUndo.push({kind: "addBatch", items: added}); // the whole progression = one undo
+  multiSel = added.slice();
+  multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
+  selNote = null;
+  playCursor = t0;
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return added.length;
+}
 // Progression library (Josh, 2026-08-17): emotions → Roman-numeral recipes.
 // Numerals are major-scale-relative (♭VI = lowered 6th degree), the app's
 // degree convention; lowercase = minor chord. Deliberately key-agnostic.
@@ -5083,9 +5226,27 @@ const PROG_LIB = [
 ];
 {
   const panel = document.getElementById("progpanel");
-  panel.innerHTML = PROG_LIB.map(([mood, prog, why]) =>
-    '<div class="prow"><b>' + mood + '</b><span class="pchords">' + prog + '</span><small>' + why + '</small></div>'
-  ).join("");
+  panel.innerHTML =
+    '<div class="row" style="flex-wrap:wrap;gap:6px;padding:4px 2px 8px">' +
+      '<span class="lbl">tonic</span><select id="pgtonic">' +
+        CHORD_ROOTS.map((r, i) => '<option value="' + i + '">' + r + '</option>').join("") +
+      '</select><span class="lbl">octave</span><select id="pgoct">' +
+        [2, 3, 4, 5, 6].map(o => '<option' + (o === 4 ? ' selected' : '') + '>' + o + '</option>').join("") +
+      '</select><span class="lbl" style="opacity:.7">tap a progression to insert it at the cursor — one pencil-duration slot per chord</span></div>' +
+    PROG_LIB.map(([mood, prog, why], i) =>
+      '<div class="prow" data-prog="' + i + '"><b>' + mood + '</b><span class="pchords">' + prog + '</span><small>' + why + '</small></div>'
+    ).join("");
+  panel.addEventListener("click", e => {
+    const row = e.target.closest(".prow[data-prog]");
+    if (!row) return;
+    if (!editableSong()) { setInfo("progressions insert on your own songs — captures are locked"); return; }
+    const [mood, prog] = PROG_LIB[+row.dataset.prog];
+    const tonicPc = +document.getElementById("pgtonic").value;
+    const oct = parseInt(document.getElementById("pgoct").value, 10);
+    const k = insertProgressionAt(playCursor, prog, tonicPc, oct);
+    setInfo(k ? "inserted " + mood + " in " + CHORD_ROOTS[tonicPc].split("/")[0] + " (" + k + " notes) — stretch or move them from here"
+              : "couldn't insert — check the octave fits C1..C7");
+  });
   const btn = document.getElementById("cofprogbtn");
   btn.addEventListener("click", () => {
     const showing = panel.style.display !== "none";
