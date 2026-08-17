@@ -939,7 +939,7 @@
     <h3>ANNOTATIONS</h3>
     <dl>
       <dt>+ Note</dt><dd>Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.</dd>
-      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: playback loops just that span (any loop: annotation is ignored while a range is selected). Tap the ruler to clear the range and playback is whole-song again.</dd>
+      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: the span glows amber and playback loops just that span (any loop: annotation is ignored while it's armed). Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tap the ruler to clear.</dd>
       <dt>Gold flags</dt><dd>Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.</dd>
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
@@ -2572,11 +2572,11 @@ function drawRuler(W, H) {
     ctx.globalAlpha = 1;
   }
   if (rangeSel) {
-    // Logic's cycle strip: the ruler span glows amber (yellow-orange, not
-    // bright yellow) — this range is what ▶ will loop
+    // amber = Logic's cycle strip (▶ loops this); a band-tap selection keeps
+    // the quiet accent tint — it feeds + Note but never hijacks playback
     const x = RULER_W + rangeSel.a * ppt - view.x;
-    ctx.fillStyle = "#E09A3E";
-    ctx.globalAlpha = 0.75;
+    ctx.fillStyle = rangeSel.cycle ? "#E09A3E" : css("--accent");
+    ctx.globalAlpha = rangeSel.cycle ? 0.75 : 0.3;
     ctx.fillRect(x, 0, (rangeSel.b - rangeSel.a) * ppt, RULER_H);
     ctx.globalAlpha = 1;
   }
@@ -3115,7 +3115,7 @@ canvas.addEventListener("pointermove", e => {
     else if (drag.ruler) { // drag along the ruler = select a beat range
       const a = tickAtX(drag.spos.x, beatTicks());
       const b = tickAtX(evtPos(e).x, beatTicks());
-      rangeSel = a === b ? null : {a: Math.min(a, b), b: Math.max(a, b)};
+      rangeSel = a === b ? null : {a: Math.min(a, b), b: Math.max(a, b), cycle: true}; // drags arm the cycle
       draw();
     }
     else { view.x -= dx; view.y -= dy; followFree = true; clampView(); draw(); }
@@ -4021,7 +4021,9 @@ async function play(fromSec = 0) {
   loopPass = 0;
   loopSeg = currentLoop();
   if (fromSec >= loopSeg.end - 0.01) loopSeg = {start: 0, end: tickToSec(song, songEndTick)};
-  const cycling = !!(rangeSel && rangeSel.b > rangeSel.a);
+  // only a DRAGGED ruler range cycles — tapping a section/chord band also sets
+  // rangeSel (for + Note prefill) and silently outranked loop: annotations (Josh)
+  const cycling = !!(rangeSel && rangeSel.cycle && rangeSel.b > rangeSel.a);
   if (cycling) { // Logic-style cycle: a ruler selection loops playback over just
     // that span and outranks any loop: annotation
     loopSeg = {start: tickToSec(song, rangeSel.a),

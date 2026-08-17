@@ -135,7 +135,7 @@ Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲
 Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.
 
 **Ruler drag**
-Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play **cycles** over it, Logic-style: playback loops just that span (any loop: annotation is ignored while a range is selected). Tap the ruler to clear the range and playback is whole-song again.
+Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play **cycles** over it, Logic-style: the span glows amber and playback loops just that span (any loop: annotation is ignored while it's armed). Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tap the ruler to clear.
 
 **Gold flags**
 Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.
