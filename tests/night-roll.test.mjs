@@ -721,7 +721,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "Move &amp; resize", "helptabs", 'data-hsec="editor"',
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "Move &amp; resize", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -894,6 +894,13 @@ test("m3u playlists: track names parse from the emu-scene format", () => {
     [11, "Dr. Wily's Castle"], // escaped commas in artist survive; order = playlist order
     [12, "Dr. Wily's Castle II"],
   ]);
+});
+
+test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {
+  const { buildHelp } = await import("../tools/build_help.mjs");
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const md = readFileSync(new URL("../HELP.md", import.meta.url), "utf8");
+  assert.equal(md, buildHelp(html), "HELP.md is stale — run: node tools/build_help.mjs");
 });
 
 test("selection editing: move, resize, copy/paste, delete — with undo restoring", () => {
