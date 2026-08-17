@@ -848,6 +848,7 @@
       <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — and plays it.</dd>
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
       <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high.</dd>
+      <dt>Move &amp; resize</dt><dd>On songs you can edit: lasso notes (or tap one), then <b>drag</b> them — up/down transposes, left/right slides in time on the pencil grid, all together (a chord moves as a chord). Drag a selected note's <b>right edge</b> to lengthen or shorten every selected note by the same amount. <b>Option-drag</b> drags out a copy. Keyboard does it all with less hand strain: arrows move (Shift+↑↓ = octave), Option+←→ resizes, ⌘C copies, ⌘V pastes the selection at the playhead (pasted notes arrive selected, ready to move), Delete removes. Every gesture is one undo step.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
@@ -2497,6 +2498,114 @@ function posToTickPitch(pos) {
   const pitch = PMAX - Math.floor((pos.y - RULER_H + view.y) / view.rowH);
   return {tick, pitch};
 }
+// ------------------------------------------------ selection editing (Josh's
+// requests, 2026-08-17: move lasso'd notes in pitch/time, resize many at
+// once, copy chords). Works on editable songs; drag on the roll or arrow
+// keys — keyboard covers everything, easier on the hands than dragging.
+function editableSong() { return !!song && (isComposition() || isLocalDraft() || songKey === null); }
+function selEditItems() { // the notes an edit applies to: lasso selection, else the tapped note
+  const out = [];
+  if (multiSel.length) for (const {ti, ni} of multiSel) {
+    const nn = song.tracks[ti] && song.tracks[ti].notes[ni];
+    if (nn && !nn.gone) out.push({ti, ni, n: nn});
+  }
+  else if (selNote) {
+    const nn = song.tracks[selNote.ti] && song.tracks[selNote.ti].notes[selNote.ni];
+    if (nn && !nn.gone) out.push({ti: selNote.ti, ni: selNote.ni, n: nn});
+  }
+  return out;
+}
+function selEditApply(items, mutate, snapshot) { // mutate + undo + persist + redraw
+  if (!items.length) return false;
+  editUndo.push({kind: "mod", items: items.map(({ti, ni, n}) =>
+    (snapshot && snapshot.find(x => x.ti === ti && x.ni === ni)) || {ti, ni, t: n.t, d: n.d, p: n.p})});
+  for (const it of items) {
+    mutate(it.n);
+    const rn = song.rawNotes && it.n.ri !== undefined && song.rawNotes[it.ti][it.n.ri];
+    if (rn) { rn.t = it.n.t + chopS; rn.d = it.n.d; rn.p = it.n.p; }
+  }
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return true;
+}
+function nudgeSelection(dTicks, dPitch) {
+  if (!editableSong()) return false;
+  const items = selEditItems();
+  if (items.some(({n}) => n.t + dTicks < 0 || n.p + dPitch < PMIN || n.p + dPitch > PMAX)) return false;
+  return selEditApply(items, nn => { nn.t += dTicks; nn.p += dPitch; });
+}
+function resizeSelection(dTicks) { // same delta for every note — a chord shrinks as one
+  if (!editableSong()) return false;
+  const minD = Math.max(24, Math.round(song.ppq / 8));
+  const items = selEditItems();
+  if (!items.length) return false;
+  return selEditApply(items, nn => { nn.d = Math.max(minD, nn.d + dTicks); });
+}
+let noteClipboard = null; // [{dt, p, d, v, ti}] relative to the earliest onset
+function copySelection() {
+  const items = selEditItems();
+  if (!items.length) return 0;
+  const t0 = Math.min(...items.map(({n}) => n.t));
+  noteClipboard = items.map(({ti, n}) => ({dt: n.t - t0, p: n.p, d: n.d, v: n.v || pencilVel, ti}));
+  return noteClipboard.length;
+}
+function pasteClipboard(atTick) {
+  if (!editableSong() || !noteClipboard || !noteClipboard.length) return 0;
+  const snap = Math.max(1, Math.round(song.ppq * pencilDur));
+  const t0 = Math.max(0, Math.round(atTick / snap) * snap);
+  const added = [];
+  for (const c of noteClipboard) {
+    const ti = song.tracks[c.ti] ? c.ti : selTrack;
+    const tr = song.tracks[ti];
+    const isAdd = !isComposition();
+    tr.notes.push({t: t0 + c.dt, d: c.d, p: c.p, v: c.v, added: isAdd});
+    if (song.rawNotes) song.rawNotes[ti].push({t: t0 + c.dt + chopS, d: c.d, p: c.p, v: c.v, added: isAdd});
+    added.push({ti, ni: tr.notes.length - 1});
+  }
+  editUndo.push({kind: "addBatch", items: added});
+  multiSel = added.slice();
+  multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return added.length;
+}
+function deleteSelection() {
+  if (!editableSong()) return 0;
+  const items = selEditItems();
+  if (!items.length) return 0;
+  for (const it of items) {
+    it.n.gone = true;
+    const rn = song.rawNotes && it.n.ri !== undefined && song.rawNotes[it.ti][it.n.ri];
+    if (rn) rn.gone = true;
+  }
+  editUndo.push({kind: "eraseBatch", items: items.map(({ti, ni}) => ({ti, ni}))});
+  multiSel = []; multiSelKey = new Set(); selNote = null;
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return items.length;
+}
+function duplicateSelectionInPlace() { // option-drag: clones become the dragged selection
+  const items = selEditItems();
+  if (!items.length) return false;
+  const added = [];
+  for (const {ti, n: nn} of items) {
+    const tr = song.tracks[ti];
+    const isAdd = !isComposition();
+    tr.notes.push({t: nn.t, d: nn.d, p: nn.p, v: nn.v, added: isAdd});
+    if (song.rawNotes) song.rawNotes[ti].push({t: nn.t + chopS, d: nn.d, p: nn.p, v: nn.v, added: isAdd});
+    added.push({ti, ni: tr.notes.length - 1});
+  }
+  editUndo.push({kind: "addBatch", items: added});
+  multiSel = added.slice();
+  multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
+  return true;
+}
 function hitNote(pos) {
   const {tick, pitch} = posToTickPitch(pos);
   for (let ti = song.tracks.length - 1; ti >= 0; ti--) {
@@ -2697,8 +2806,26 @@ canvas.addEventListener("pointerdown", e => {
   }
   const p = evtPos(e);
   const lasso = lassoMode && !!song && (fallActive() || p.y >= RULER_H); // fall has no ruler band
+  let noteEdit = null;
+  if (!lasso && editableSong() && mode === "select" && viewMode !== "score" && !fallActive() && p.y >= RULER_H) {
+    const hit = hitNote(p);
+    if (hit && (multiSelKey.has(hit.ti + ":" + hit.ni) || !multiSel.length)) {
+      if (!multiSel.length) selNote = hit; // single note is draggable too
+      if (e.altKey) duplicateSelectionInPlace(); // option-drag = drag out a copy
+      const items = selEditItems();
+      if (items.length) {
+        const hn = song.tracks[hit.ti].notes[hit.ni];
+        const tickHere = posToTickPitch(p).tick;
+        const nearEnd = Math.abs(tickHere - (hn.t + hn.d)) < 8 / pxPerTick();
+        noteEdit = {kind: nearEnd && !e.altKey ? "resize" : "move",
+                    orig: items.map(({ti, ni, n: nn}) => ({ti, ni, t: nn.t, d: nn.d, p: nn.p})),
+                    items};
+      }
+    }
+  }
   drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false,
-          lasso, cursor: !lasso && cursorHit(p), ruler: !lasso && !!song && p.y < RULER_H, spos: p};
+          lasso, noteEdit, cursor: !lasso && !noteEdit && cursorHit(p),
+          ruler: !lasso && !noteEdit && !!song && p.y < RULER_H, spos: p};
 });
 canvas.addEventListener("pointermove", e => {
   if (pinch) {
@@ -2737,6 +2864,26 @@ canvas.addEventListener("pointermove", e => {
       lassoRect = {x0: drag.spos.x, y0: drag.spos.y, x1: p.x, y1: p.y};
       draw();
     }
+    else if (drag.noteEdit) { // live group move / resize, snapped to the pencil grid
+      const p = evtPos(e);
+      const snap = Math.max(1, Math.round(song.ppq * pencilDur));
+      const dT = Math.round((p.x - drag.spos.x) / pxPerTick() / snap) * snap;
+      if (drag.noteEdit.kind === "move") {
+        const dP = Math.round((drag.spos.y - p.y) / view.rowH);
+        for (let i = 0; i < drag.noteEdit.items.length; i++) {
+          const it = drag.noteEdit.items[i], o = drag.noteEdit.orig[i];
+          it.n.t = Math.max(0, o.t + dT);
+          it.n.p = Math.min(PMAX, Math.max(PMIN, o.p + dP));
+        }
+      } else {
+        const minD = Math.max(24, Math.round(song.ppq / 8));
+        for (let i = 0; i < drag.noteEdit.items.length; i++) {
+          const it = drag.noteEdit.items[i], o = drag.noteEdit.orig[i];
+          it.n.d = Math.max(minD, o.d + dT);
+        }
+      }
+      draw();
+    }
     else if (drag.cursor) scrubTo(evtPos(e));
     else if (drag.ruler) { // drag along the ruler = select a beat range
       const a = tickAtX(drag.spos.x, beatTicks());
@@ -2759,6 +2906,12 @@ function endPointer(e) {
   }
   if (!drag || drag.id !== e.pointerId) return;
   if (drag.lasso && drag.moved) finalizeLasso();
+  else if (drag.noteEdit && drag.moved) { // commit the gesture: one undo entry, one save
+    const o = drag.noteEdit.orig;
+    const changed = drag.noteEdit.items.some((it, i) =>
+      it.n.t !== o[i].t || it.n.d !== o[i].d || it.n.p !== o[i].p);
+    if (changed) selEditApply(drag.noteEdit.items, () => {}, o);
+  }
   else if (!drag.moved) tap(evtPos(e));
   drag = null;
   if (viewMode === "score" && scoreModel && scoreZoom !== view.pxq) draw(); // re-engrave after pinch
@@ -7377,14 +7530,59 @@ document.getElementById("velseg").addEventListener("click", e => {
 document.getElementById("undobtn").addEventListener("click", () => {
   const u = editUndo.pop();
   if (!u || !song) return;
-  const n = song.tracks[u.ti] && song.tracks[u.ti].notes[u.ni];
-  if (!n) return;
-  n.gone = u.kind === "add"; // undo an add = remove it; undo an erase = restore it
-  if (song.rawNotes && n.ri !== undefined && song.rawNotes[u.ti][n.ri]) song.rawNotes[u.ti][n.ri].gone = n.gone;
+  const setGone = (ti, ni, gone) => {
+    const nn = song.tracks[ti] && song.tracks[ti].notes[ni];
+    if (!nn) return;
+    nn.gone = gone;
+    if (song.rawNotes && nn.ri !== undefined && song.rawNotes[ti][nn.ri]) song.rawNotes[ti][nn.ri].gone = gone;
+  };
+  if (u.kind === "mod") { // restore each note's prior time/duration/pitch
+    for (const it of u.items) {
+      const nn = song.tracks[it.ti] && song.tracks[it.ti].notes[it.ni];
+      if (!nn) continue;
+      nn.t = it.t; nn.d = it.d; nn.p = it.p;
+      const rn = song.rawNotes && nn.ri !== undefined && song.rawNotes[it.ti][nn.ri];
+      if (rn) { rn.t = it.t + chopS; rn.d = it.d; rn.p = it.p; }
+    }
+  } else if (u.kind === "addBatch") { for (const it of u.items) setGone(it.ti, it.ni, true); }
+  else if (u.kind === "eraseBatch") { for (const it of u.items) setGone(it.ti, it.ni, false); }
+  else setGone(u.ti, u.ni, u.kind === "add"); // undo an add = remove it; undo an erase = restore it
   saveEdits();
   computeSongEnd();
   if (viewMode === "score") buildScoreModel();
   draw();
+});
+// keyboard editing — every drag gesture has a key equivalent (easier on the
+// hands): arrows move, shift = octave, alt+arrows resize, cmd-c/v copy/paste
+// at the playhead, delete removes. Ignored while typing in a field.
+document.addEventListener("keydown", e => {
+  if (!song || !editableSong()) return;
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  const grid = Math.max(1, Math.round(song.ppq * pencilDur));
+  const meta = e.metaKey || e.ctrlKey;
+  if (meta && e.key.toLowerCase() === "c") {
+    const k = copySelection();
+    if (k) { setInfo("copied " + k + " note" + (k === 1 ? "" : "s") + " — ⌘V pastes at the playhead"); e.preventDefault(); }
+    return;
+  }
+  if (meta && e.key.toLowerCase() === "v") {
+    const k = pasteClipboard(playCursor);
+    if (k) { setInfo("pasted " + k + " note" + (k === 1 ? "" : "s") + " (selected — arrows move them)"); e.preventDefault(); }
+    return;
+  }
+  if (meta) return; // don't eat browser shortcuts
+  if (e.key === "Backspace" || e.key === "Delete") {
+    if (deleteSelection()) e.preventDefault();
+    return;
+  }
+  if (!selEditItems().length) return;
+  let did = false;
+  if (e.key === "ArrowUp") did = nudgeSelection(0, e.shiftKey ? 12 : 1);
+  else if (e.key === "ArrowDown") did = nudgeSelection(0, e.shiftKey ? -12 : -1);
+  else if (e.key === "ArrowLeft") did = e.altKey ? resizeSelection(-grid) : nudgeSelection(-grid, 0);
+  else if (e.key === "ArrowRight") did = e.altKey ? resizeSelection(grid) : nudgeSelection(grid, 0);
+  if (did) e.preventDefault();
 });
 {
   const fn = document.getElementById("fnnum");

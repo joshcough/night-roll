@@ -721,7 +721,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "Move &amp; resize",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -894,4 +894,41 @@ test("m3u playlists: track names parse from the emu-scene format", () => {
     [11, "Dr. Wily's Castle"], // escaped commas in artist survive; order = playlist order
     [12, "Dr. Wily's Castle II"],
   ]);
+});
+
+test("selection editing: move, resize, copy/paste, delete — with undo restoring", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/edit-test.mid";
+    song.tracks = [{name: "pulse1", notes: [
+      {t: 0, d: 480, p: 60, v: 80}, {t: 0, d: 480, p: 64, v: 80}, {t: 0, d: 480, p: 67, v: 80}]}];
+    song.rawNotes = null; chopS = 0;
+    multiSel = [{ti: 0, ni: 0}, {ti: 0, ni: 1}, {ti: 0, ni: 2}];
+    multiSelKey = new Set(["0:0", "0:1", "0:2"]);
+    selNote = null; editUndo = []; pencilDur = 1; pencilVel = 80; selTrack = 0; playCursor = 0;
+  `);
+  // move the whole chord up a third and one beat right
+  assert.equal(run(`nudgeSelection(480, 4)`), true);
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => [n.t, n.p])`),
+    [[480, 64], [480, 68], [480, 71]]);
+  // shrink every note by half (the chord shortens as one)
+  assert.equal(run(`resizeSelection(-240)`), true);
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.d)`), [240, 240, 240]);
+  // copy, paste at beat 3 (tick 960): a progression from one pencil pass
+  assert.equal(run(`copySelection()`), 3);
+  run(`playCursor = 960;`);
+  assert.equal(run(`pasteClipboard(playCursor)`), 3);
+  assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone).map(n => [n.t, n.p, n.d]).slice(3)`),
+    [[960, 64, 240], [960, 68, 240], [960, 71, 240]]);
+  // paste selected the clones — nudge them down to a new chord
+  assert.equal(run(`nudgeSelection(0, -2)`), true);
+  assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone).map(n => n.p).slice(3)`), [62, 66, 69]);
+  // undo the nudge, then undo the paste
+  run(`document.getElementById("undobtn").click ? null : null;`);
+  run(`(() => { const u = editUndo.pop(); for (const it of u.items) { const nn = song.tracks[it.ti].notes[it.ni]; nn.t = it.t; nn.d = it.d; nn.p = it.p; } })()`);
+  assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone).map(n => n.p).slice(3)`), [64, 68, 71]);
+  // delete the pasted chord
+  assert.equal(run(`deleteSelection()`), 3);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 3);
+  run(`songKey = null; multiSel = []; multiSelKey = new Set(); song.rawNotes = null;`);
 });
