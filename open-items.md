@@ -268,6 +268,18 @@ his behalf.
 
 ## Tooling to-do
 
+- **Chord bands vs moving notes (Josh, 2026-08-17):** inserted/authored
+  chord annotations go stale when the notes under them are edited.
+  Agreed plan, two phases (build when Josh calls for it):
+  1. *Bands ride along* (compositions only): when a move/transpose
+     gesture's selection covers all sounding notes in a band's span,
+     the band moves with it and its label transposes (Cm +2 → Dm).
+     Deterministic — no chord-namer guessing.
+  2. *Stale marker*: after any edit, a band whose label no longer
+     matches what sounds in its span gets a subtle ⚠ tint; tapping it
+     offers "notes here now make G7 — rename?" One tap to accept.
+     Never silently rewrite — on analysis songs bands are Josh's
+     discoveries and must never auto-edit.
 - **Playwright e2e suite (Josh, 2026-08-16):** wanted AFTER current
   editor work settles ("let's get everything working first"). Real
   pointer-event tests for the gesture layer the vm harness can't see —
