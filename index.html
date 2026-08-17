@@ -71,13 +71,14 @@
     font-size: 12px;
     letter-spacing: 0.06em;
     color: var(--gold);
+    /* everything right of the brand + File cluster belongs to the title —
+       centered in THAT space, not the viewport (mirroring the cluster on the
+       right wasted ~280px and still truncated long titles on iPad portrait) */
     position: absolute;
-    left: 50%;
+    left: 270px;
+    right: 10px;
     top: 50%;
-    transform: translate(-50%, -50%);
-    /* centered, so it may grow until it would touch the brand + File cluster
-       (~290px) mirrored on both sides; 42vw floor keeps phones sane */
-    max-width: max(42vw, calc(100vw - 580px));
+    transform: translateY(-50%);
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
