@@ -2949,7 +2949,7 @@ function tickAtX(x, snap) {
   return Math.max(0, Math.round(t / snap) * snap);
 }
 function scrubTo(pos) {
-  const snap = song.ppq / 2; // 8th-note snap
+  const snap = moveSnapTicks(); // 16ths (triplet steps while a T duration is active)
   const tick = (pos.x - RULER_W + view.x) / pxPerTick();
   playCursor = Math.max(0, Math.round(tick / snap) * snap);
   updateSubtitle();
@@ -3228,7 +3228,7 @@ function tap(pos) {
       return;
     }
     const target = hitMark ? hitMark.start
-                 : Math.max(0, Math.round(tick / beatTicks()) * beatTicks()); // snap to beat
+                 : Math.max(0, Math.round(tick / moveSnapTicks()) * moveSnapTicks()); // 16th grid
     if (playing) { stop(); play(tickToSec(song, target)); }
     else { playCursor = target; updateSubtitle(); draw(); }
     return;
@@ -4648,8 +4648,8 @@ function scoreTap(pos) {
       }
     }
   }
-  // empty area: move the cursor to that beat
-  const snap = song.ppq / 2;
+  // empty area: move the cursor there, on the move grid
+  const snap = moveSnapTicks();
   playCursor = Math.max(0, Math.round(scoreXToTick(pos.x) / snap) * snap);
   selNote = null;
   setInfo("—");
