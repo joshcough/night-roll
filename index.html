@@ -633,11 +633,11 @@
     <button data-mode="erase">Erase</button>
   </div>
   <div class="seg" id="durseg" style="display:none">
+    <button data-dur="0.166667">16T</button>
     <button data-dur="0.25">16th</button>
     <button data-dur="0.375">16·</button>
-    <button data-dur="0.5" class="active">8th</button>
     <button data-dur="0.333333">8T</button>
-    <button data-dur="0.166667">16T</button>
+    <button data-dur="0.5" class="active">8th</button>
     <button data-dur="0.75">8·</button>
     <button data-dur="1">1/4</button>
     <button data-dur="1.5">4·</button>
@@ -947,6 +947,7 @@
     <div class="hsec" data-hsec="editor">
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
+      <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration buttons set that grid (16T/16th/16· · 8T/8th/8· · ¼…): pick the smallest unit you're thinking in and draw lengths by feel.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
@@ -2987,9 +2988,26 @@ canvas.addEventListener("pointerdown", e => {
       }
     }
   }
+  let pencil = null; // pencil-drag: the note starts at finger-down and stretches as you drag
+  if (editableSong() && mode === "pencil" && viewMode !== "score" && !fallActive() && !lasso && p.y >= RULER_H) {
+    const {tick, pitch} = posToTickPitch(p);
+    if (pitch >= PMIN && pitch <= PMAX && tick >= 0) {
+      const snap = pencilTicks();
+      const t = Math.round(tick / snap) * snap;
+      const tr = song.tracks[selTrack];
+      const added = !isComposition();
+      tr.notes.push({t, d: snap, p: pitch, v: pencilVel, added});
+      if (song.rawNotes) song.rawNotes[selTrack].push({t: t + chopS, d: snap, p: pitch, v: pencilVel, added});
+      editUndo.push({kind: "add", ti: selTrack, ni: tr.notes.length - 1});
+      previewNote(selTrack, pitch);
+      pencil = {ti: selTrack, ni: tr.notes.length - 1, t, snap};
+      draw();
+    }
+  }
   drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false,
-          lasso, noteEdit, cursor: !lasso && !noteEdit && cursorHit(p),
-          ruler: !lasso && !noteEdit && !!song && p.y < RULER_H, spos: p};
+          lasso, noteEdit, pencil,
+          cursor: !lasso && !noteEdit && !pencil && cursorHit(p),
+          ruler: !lasso && !noteEdit && !pencil && !!song && p.y < RULER_H, spos: p};
 });
 canvas.addEventListener("pointermove", e => {
   if (pinch) {
@@ -3026,6 +3044,14 @@ canvas.addEventListener("pointermove", e => {
     if (drag.lasso) {
       const p = evtPos(e);
       lassoRect = {x0: drag.spos.x, y0: drag.spos.y, x1: p.x, y1: p.y};
+      draw();
+    }
+    else if (drag.pencil) { // stretch the just-penciled note under the finger
+      const pn = drag.pencil, nn = song.tracks[pn.ti].notes[pn.ni];
+      const tickHere = posToTickPitch(evtPos(e)).tick;
+      nn.d = Math.max(pn.snap, Math.round((tickHere - pn.t) / pn.snap) * pn.snap);
+      const rn = song.rawNotes && nn.ri !== undefined && song.rawNotes[pn.ti][nn.ri];
+      if (rn) rn.d = nn.d;
       draw();
     }
     else if (drag.noteEdit) { // 16th grid — or triplet steps while a T duration is active
@@ -3069,7 +3095,18 @@ function endPointer(e) {
     return;
   }
   if (!drag || drag.id !== e.pointerId) return;
-  if (drag.lasso && drag.moved) finalizeLasso();
+  if (drag.pencil) { // tap or stretch — either way the note exists; persist once
+    const pn = drag.pencil;
+    if (song.rawNotes) { // late mirror: rawNotes index for undo/chop bookkeeping
+      const rn = song.rawNotes[pn.ti][song.rawNotes[pn.ti].length - 1];
+      if (rn) song.tracks[pn.ti].notes[pn.ni].ri = song.rawNotes[pn.ti].length - 1;
+    }
+    saveEdits();
+    computeSongEnd();
+    setInfo(noteLabel(pn.ti, pn.ni));
+    draw();
+  }
+  else if (drag.lasso && drag.moved) finalizeLasso();
   else if (drag.noteEdit && drag.moved) { // commit the gesture: one undo entry, one save
     const o = drag.noteEdit.orig;
     const changed = drag.noteEdit.items.some((it, i) =>
@@ -3178,7 +3215,7 @@ function tap(pos) {
     scoreTap(pos);
     return;
   }
-  if (mode === "pencil") {
+  if (mode === "pencil") { // reached only where pencil-drag isn't wired (fall view)
     const {tick, pitch} = posToTickPitch(pos);
     if (pitch < PMIN || pitch > PMAX || tick < 0) return;
     const snap = pencilTicks();
