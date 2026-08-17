@@ -1,4 +1,6 @@
-{ "version": 1, "song": "cool-bmaj-progression", "saved": 1786997372718, "notes": [
+{ "version": 1, "song": "cool-bmaj-progression", "saved": 1787002020941, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
-  {"at":[1,1],"type":"key","key":"B"}
+  {"at":[1,1],"type":"key","key":"B"},
+  {"at":[1,1],"type":"track","track":"pulse2","voice":"sf-guitar"},
+  {"at":[6,3],"type":"loop","loop":"1.1"}
 ] }
