@@ -75,7 +75,9 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    max-width: 42vw;
+    /* centered, so it may grow until it would touch the brand + File cluster
+       (~290px) mirrored on both sides; 42vw floor keeps phones sane */
+    max-width: max(42vw, calc(100vw - 580px));
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
