@@ -98,7 +98,7 @@ On your own songs (never on captures) a dedicated row appears above the footer: 
 Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.
 
 **Move**
-Select notes (lasso or tap one), then **drag them** — up/down transposes, left/right slides in time on the duration segment's grid (pick 16th there for fine moves — it shows in Select mode too), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).
+Select notes (lasso or tap one), then **drag them** — up/down transposes, left/right slides in time on a 16th-note grid, and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).
 
 **Resize**
 Drag a selected note's **right edge** — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.
