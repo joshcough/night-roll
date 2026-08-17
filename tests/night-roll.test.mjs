@@ -721,7 +721,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -894,6 +894,40 @@ test("m3u playlists: track names parse from the emu-scene format", () => {
     [11, "Dr. Wily's Castle"], // escaped commas in artist survive; order = playlist order
     [12, "Dr. Wily's Castle II"],
   ]);
+});
+
+test("split at cursor / split in half / join — one undo step each", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/split-test.mid";
+    song.tracks = [{name: "pulse1", notes: [
+      {t: 0, d: 960, p: 60, v: 80}, {t: 0, d: 960, p: 64, v: 80}, {t: 1920, d: 480, p: 60, v: 80}]}];
+    song.rawNotes = null; chopS = 0;
+    multiSel = [{ti: 0, ni: 0}, {ti: 0, ni: 1}]; multiSelKey = new Set(["0:0", "0:1"]);
+    selNote = null; editUndo = []; pencilDur = 1; pencilVel = 80; selTrack = 0; playCursor = 480;
+  `);
+  // cursor at 480 crosses both selected notes; the note at 1920 is unselected and untouched
+  assert.equal(run(`splitSelectionAt(playCursor)`), 2);
+  assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone).map(n => [n.t, n.d, n.p]).sort((a,b)=>a[0]-b[0]||a[2]-b[2])`),
+    [[0, 480, 60], [0, 480, 64], [480, 480, 60], [480, 480, 64], [1920, 480, 60]]);
+  assert.equal(val(`editUndo.length`), 1);
+  assert.equal(val(`editUndo[0].kind`), "group");
+  // join everything on pitch 60 back into one note
+  run(`multiSel = [{ti:0,ni:0},{ti:0,ni:3}]; multiSelKey = new Set(["0:0","0:3"]);`);
+  assert.equal(run(`joinSelection()`), 2);
+  assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone && n.p === 60).map(n => [n.t, n.d]).sort((a,b)=>a[0]-b[0])`),
+    [[0, 960], [1920, 480]]);
+  // undo the join (one step), then undo the split (one step) — original three notes back
+  run(`editUndoPop()`);
+  run(`editUndoPop()`);
+  assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone).map(n => [n.t, n.d, n.p])`),
+    [[0, 960, 60], [0, 960, 64], [1920, 480, 60]]);
+  // cursor outside the selection: halves mode
+  run(`multiSel = [{ti:0,ni:2}]; multiSelKey = new Set(["0:2"]); playCursor = 0;`);
+  assert.equal(run(`splitSelectionAt(playCursor) || splitSelectionHalves()`), 1);
+  assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone && n.t >= 1920).map(n => [n.t, n.d])`),
+    [[1920, 240], [2160, 240]]);
+  run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = [];`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

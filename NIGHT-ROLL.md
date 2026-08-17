@@ -523,3 +523,19 @@ sync (GitHub Contents API, 409 retry) · key dial · help sheet.
 - Docs: open-items.md (questions/tasks), quizzes.md (protocol + bank),
   score-view-plan.md (score history/limitations), supplemental-learning.md
   (session log = quiz source material).
+
+## Shipping checklist (every user-facing feature, Josh's standing rule)
+
+1. **Help dialog**: add/update the entry in index.html's help sheet
+   (#helpsheet — tabbed; put it in the right section, touch gesture
+   first, keyboard equivalent after).
+2. **Full manual**: run `node tools/build_help.mjs` to regenerate
+   HELP.md from the help sheet. Never edit HELP.md by hand.
+3. **Drift guard**: add a keyword for the feature to the FEATURES list
+   in tests/night-roll.test.mjs (the keyword must appear in the help
+   sheet region). A separate test fails if HELP.md is stale — so a
+   feature with no help entry, or an unregenerated manual, breaks the
+   suite by construction.
+4. Tests green (`node --test tests/*.test.mjs`), browser-verify via
+   claude-in-chrome, commit, push with hash check, kick a Pages build
+   (`gh api -X POST repos/joshcough/night-roll/pages/builds`).

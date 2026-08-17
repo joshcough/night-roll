@@ -106,6 +106,12 @@ Drag a selected note's **right edge** — every selected note lengthens or short
 **Copy**
 Tap **⧉** in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).
 
+**Split**
+Select notes and tap **✂**. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.
+
+**Join**
+Select two or more notes on the same pitch and tap **⁀** — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).
+
 **Delete**
 Tap **🗑** in the edit row — every selected note goes at once. Delete key does the same.
 

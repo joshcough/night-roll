@@ -645,6 +645,8 @@
     <button data-acc="-1">♭</button>
   </div>
   <button id="copybtn" aria-label="Duplicate selected notes">⧉</button>
+  <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
+  <button id="joinbtn" aria-label="Join selected notes">⁀</button>
   <button id="delbtn" aria-label="Delete selected notes">🗑</button>
   <button id="undobtn">⟲</button>
 </div>
@@ -909,6 +911,8 @@
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on the pencil grid, and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
+      <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
+      <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
       <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲ step.</dd>
     </dl>
@@ -2640,6 +2644,76 @@ function duplicateSelectionInPlace() { // option-drag: clones become the dragged
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   return true;
+}
+function splitApply(items, cutFor) { // shared: cut each note at cutFor(note)
+  if (!items.length) return 0;
+  const mod = {kind: "mod", items: items.map(({ti, ni, n}) => ({ti, ni, t: n.t, d: n.d, p: n.p}))};
+  const added = [];
+  for (const {ti, n} of items) {
+    const cut = cutFor(n);
+    const tr = song.tracks[ti], isAdd = !isComposition();
+    tr.notes.push({t: cut, d: n.t + n.d - cut, p: n.p, v: n.v, added: isAdd});
+    if (song.rawNotes) song.rawNotes[ti].push({t: cut + chopS, d: n.t + n.d - cut, p: n.p, v: n.v, added: isAdd});
+    added.push({ti, ni: tr.notes.length - 1});
+    n.d = cut - n.t;
+    const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[ti][n.ri];
+    if (rn) rn.d = n.d;
+  }
+  editUndo.push({kind: "group", entries: [mod, {kind: "addBatch", items: added}]});
+  if (multiSel.length) { // the new halves join the selection
+    multiSel.push(...added);
+    for (const {ti, ni} of added) multiSelKey.add(ti + ":" + ni);
+  }
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return items.length;
+}
+function splitSelectionAt(tick) { // ✂ with the cursor inside: cut there
+  if (!editableSong()) return 0;
+  return splitApply(selEditItems().filter(({n}) => n.t < tick && tick < n.t + n.d), () => tick);
+}
+function splitSelectionHalves() { // ✂ with the cursor elsewhere: cut each note in half
+  if (!editableSong()) return 0;
+  return splitApply(selEditItems().filter(({n}) => n.d >= 2), n => n.t + Math.round(n.d / 2));
+}
+function joinSelection() { // ⁀: merge selected notes of the same track+pitch into one span
+  if (!editableSong()) return 0;
+  const groups = new Map();
+  for (const it of selEditItems()) {
+    const k = it.ti + ":" + it.n.p;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(it);
+  }
+  const mods = [], erased = [];
+  let joined = 0;
+  for (const g of groups.values()) {
+    if (g.length < 2) continue;
+    g.sort((a, b) => a.n.t - b.n.t);
+    const first = g[0], end = Math.max(...g.map(({n}) => n.t + n.d));
+    mods.push({ti: first.ti, ni: first.ni, t: first.n.t, d: first.n.d, p: first.n.p});
+    first.n.d = end - first.n.t;
+    const rn = song.rawNotes && first.n.ri !== undefined && song.rawNotes[first.ti][first.n.ri];
+    if (rn) rn.d = first.n.d;
+    for (const it of g.slice(1)) {
+      it.n.gone = true;
+      const r2 = song.rawNotes && it.n.ri !== undefined && song.rawNotes[it.ti][it.n.ri];
+      if (r2) r2.gone = true;
+      erased.push({ti: it.ti, ni: it.ni});
+    }
+    joined += g.length;
+  }
+  if (!joined) return 0;
+  editUndo.push({kind: "group", entries: [{kind: "mod", items: mods}, {kind: "eraseBatch", items: erased}]});
+  multiSel = multiSel.filter(({ti, ni}) => !song.tracks[ti].notes[ni].gone);
+  multiSelKey = new Set(multiSel.map(({ti, ni}) => ti + ":" + ni));
+  if (selNote && song.tracks[selNote.ti].notes[selNote.ni].gone) selNote = null;
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return joined;
 }
 function hitNote(pos) {
   const {tick, pitch} = posToTickPitch(pos);
@@ -7583,12 +7657,23 @@ document.getElementById("copybtn").addEventListener("click", () => {
   duplicateSelectionInPlace();
   setInfo("duplicated " + k + " note" + (k === 1 ? "" : "s") + " — drag the copies into place");
 });
+document.getElementById("splitbtn").addEventListener("click", () => {
+  let k = splitSelectionAt(playCursor), how = "at the cursor";
+  if (!k) { k = splitSelectionHalves(); how = "in half"; }
+  setInfo(k ? "split " + k + " note" + (k === 1 ? "" : "s") + " " + how
+            : "select notes first — cursor inside splits there, otherwise each splits in half");
+});
+document.getElementById("joinbtn").addEventListener("click", () => {
+  const k = joinSelection();
+  setInfo(k ? "joined " + k + " notes"
+            : "select two or more notes on the same pitch first");
+});
 document.getElementById("delbtn").addEventListener("click", () => {
   const k = deleteSelection();
   setInfo(k ? "deleted " + k + " note" + (k === 1 ? "" : "s") + " (⟲ restores them)"
             : "nothing selected — lasso or tap notes first");
 });
-document.getElementById("undobtn").addEventListener("click", () => {
+function editUndoPop() {
   const u = editUndo.pop();
   if (!u || !song) return;
   const setGone = (ti, ni, gone) => {
@@ -7597,22 +7682,27 @@ document.getElementById("undobtn").addEventListener("click", () => {
     nn.gone = gone;
     if (song.rawNotes && nn.ri !== undefined && song.rawNotes[ti][nn.ri]) song.rawNotes[ti][nn.ri].gone = gone;
   };
-  if (u.kind === "mod") { // restore each note's prior time/duration/pitch
-    for (const it of u.items) {
-      const nn = song.tracks[it.ti] && song.tracks[it.ti].notes[it.ni];
-      if (!nn) continue;
-      nn.t = it.t; nn.d = it.d; nn.p = it.p;
-      const rn = song.rawNotes && nn.ri !== undefined && song.rawNotes[it.ti][nn.ri];
-      if (rn) { rn.t = it.t + chopS; rn.d = it.d; rn.p = it.p; }
-    }
-  } else if (u.kind === "addBatch") { for (const it of u.items) setGone(it.ti, it.ni, true); }
-  else if (u.kind === "eraseBatch") { for (const it of u.items) setGone(it.ti, it.ni, false); }
-  else setGone(u.ti, u.ni, u.kind === "add"); // undo an add = remove it; undo an erase = restore it
+  const applyU = v => {
+    if (v.kind === "group") { for (let i = v.entries.length - 1; i >= 0; i--) applyU(v.entries[i]); }
+    else if (v.kind === "mod") { // restore each note's prior time/duration/pitch
+      for (const it of v.items) {
+        const nn = song.tracks[it.ti] && song.tracks[it.ti].notes[it.ni];
+        if (!nn) continue;
+        nn.t = it.t; nn.d = it.d; nn.p = it.p;
+        const rn = song.rawNotes && nn.ri !== undefined && song.rawNotes[it.ti][nn.ri];
+        if (rn) { rn.t = it.t + chopS; rn.d = it.d; rn.p = it.p; }
+      }
+    } else if (v.kind === "addBatch") { for (const it of v.items) setGone(it.ti, it.ni, true); }
+    else if (v.kind === "eraseBatch") { for (const it of v.items) setGone(it.ti, it.ni, false); }
+    else setGone(v.ti, v.ni, v.kind === "add"); // undo an add = remove it; undo an erase = restore it
+  };
+  applyU(u);
   saveEdits();
   computeSongEnd();
   if (viewMode === "score") buildScoreModel();
   draw();
-});
+}
+document.getElementById("undobtn").addEventListener("click", editUndoPop);
 // keyboard editing — every drag gesture has a key equivalent (easier on the
 // hands): arrows move, shift = octave, alt+arrows resize, cmd-c/v copy/paste
 // at the playhead, delete removes. Ignored while typing in a field.
