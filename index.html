@@ -2823,7 +2823,7 @@ document.addEventListener("touchend", e => {
 
 canvas.addEventListener("pointerdown", e => {
   if (fallActive() && !lassoMode) return; // fall rides the playhead — no pan/zoom; lasso still works
-  canvas.setPointerCapture(e.pointerId);
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {} // Safari can refuse mid-gesture
   if (pinch) return; // third finger: ignore
   if (drag && drag.id !== e.pointerId) {
     pinch = {a: {id: drag.id, x: drag.x, y: drag.y},
@@ -2835,11 +2835,13 @@ canvas.addEventListener("pointerdown", e => {
     return;
   }
   const p = evtPos(e);
-  const lasso = lassoMode && !!song && (fallActive() || p.y >= RULER_H); // fall has no ruler band
+  let lasso = lassoMode && !!song && (fallActive() || p.y >= RULER_H); // fall has no ruler band
   let noteEdit = null;
-  if (!lasso && editableSong() && mode === "select" && viewMode !== "score" && !fallActive() && p.y >= RULER_H) {
+  // a drag that STARTS on a selected note moves the selection even in lasso
+  // mode (drag from empty space still draws a box; a tap still toggles)
+  if (editableSong() && (mode === "select" || lasso) && viewMode !== "score" && !fallActive() && p.y >= RULER_H) {
     const hit = hitNote(p);
-    if (hit && (multiSelKey.has(hit.ti + ":" + hit.ni) || !multiSel.length)) {
+    if (hit && (multiSelKey.has(hit.ti + ":" + hit.ni) || (!multiSel.length && !lasso))) {
       if (!multiSel.length) selNote = hit; // single note is draggable too
       if (e.altKey) duplicateSelectionInPlace(); // option-drag = drag out a copy
       const items = selEditItems();
@@ -2850,6 +2852,7 @@ canvas.addEventListener("pointerdown", e => {
         noteEdit = {kind: nearEnd && !e.altKey ? "resize" : "move",
                     orig: items.map(({ti, ni, n: nn}) => ({ti, ni, t: nn.t, d: nn.d, p: nn.p})),
                     items};
+        lasso = false;
       }
     }
   }
