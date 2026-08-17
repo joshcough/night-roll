@@ -2323,18 +2323,20 @@ function draw() {
   ctx.strokeStyle = css("--grid");
   ctx.beginPath(); ctx.moveTo(RULER_W - 0.5, 0); ctx.lineTo(RULER_W - 0.5, H); ctx.stroke();
   ctx.textAlign = "right";
+  ctx.textBaseline = "middle"; // labels center on their rows (E sat at its row's bottom)
   for (let p = PMIN; p <= PMAX; p++) {
     const pc = p % 12;
     const y = RULER_H + (PMAX - p) * rowH - view.y;
     if (y < RULER_H || y > H) continue;
     if (pc === 0) {
       ctx.fillStyle = css("--text");
-      ctx.fillText("C" + (Math.floor(p/12) - 1), RULER_W - 6, y + rowH - 3);
+      ctx.fillText("C" + (Math.floor(p/12) - 1), RULER_W - 6, y + rowH / 2);
     } else if (view.rowH >= 12 && [2,4,5,7,9,11].includes(pc)) {
-      ctx.fillStyle = css("--grid");
-      ctx.fillText(spellPc(pc), RULER_W - 6, y + rowH - 3);
+      ctx.fillStyle = css("--dim"); // was --grid: nearly invisible
+      ctx.fillText(spellPc(pc), RULER_W - 6, y + rowH / 2);
     }
   }
+  ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
 }
 
@@ -2529,7 +2531,7 @@ function drawRuler(W, H) {
   ctx.strokeStyle = css("--grid");
   ctx.beginPath(); ctx.moveTo(0, RULER_H - 0.5); ctx.lineTo(W, RULER_H - 0.5); ctx.stroke();
   ctx.font = "10px " + css("--mono");
-  ctx.fillStyle = css("--dim");
+  ctx.fillStyle = css("--text"); // bright like the octave labels — dim was hard to read
   ctx.textAlign = "left";
   for (let t = Math.floor(t0 / bt) * bt; t < t1; t += bt) {
     const x = RULER_W + t * ppt - view.x;
