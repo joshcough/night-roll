@@ -654,6 +654,7 @@
   </div>
   <button id="insbtn" aria-label="Insert a chord at the cursor">♫</button>
   <button id="copybtn" aria-label="Duplicate selected notes">⧉</button>
+  <button id="pastebtn" aria-label="Paste the selection at the cursor">📋</button>
   <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
   <button id="joinbtn" aria-label="Join selected notes">⁀</button>
   <button id="delbtn" aria-label="Delete selected notes">🗑</button>
@@ -946,7 +947,7 @@
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on the pencil grid, and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
-      <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
+      <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
@@ -7914,6 +7915,13 @@ document.getElementById("copybtn").addEventListener("click", () => {
   if (!k) { setInfo("nothing selected — lasso or tap notes first"); return; }
   duplicateSelectionInPlace();
   setInfo("duplicated " + k + " note" + (k === 1 ? "" : "s") + " — drag the copies into place");
+});
+document.getElementById("pastebtn").addEventListener("click", () => {
+  if (!editableSong()) { setInfo("paste works on your own songs — captures are locked"); return; }
+  if (selEditItems().length) copySelection(); // selection wins; else reuse the last copy
+  const k = pasteClipboard(playCursor);
+  setInfo(k ? "pasted " + k + " note" + (k === 1 ? "" : "s") + " at the cursor"
+            : "nothing to paste — select notes first (or ⌘C with a keyboard)");
 });
 document.getElementById("splitbtn").addEventListener("click", () => {
   let k = splitSelectionAt(playCursor), how = "at the cursor";
