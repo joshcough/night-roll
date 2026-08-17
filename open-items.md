@@ -266,6 +266,21 @@ his behalf.
   chord: D/A). It cost session time exactly as the drift-check tooling
   request predicted; that request stands, evidenced.
 
+## Composition in progress — Cool Bmaj Progression (Josh, 2026-08-17 night)
+
+Josh's first real multi-voice composition; came out in a flow state
+("I'm not consciously thinking but the thought is there"). State:
+melody alone on pulse1 (fanfare, E–D♯–B triplet turn, long B5 pedal),
+chords on pulse2 (vi ↔ I⁶ sway, Badd9 close — his hearing, correct),
+NEW bass on triangle (root-root-root-fifth ostinato; F♯–E–D♯ walkdowns
+at seams = the melody's turn augmented). Cross-rhythm (triplet melody
+over straight bass) discussed and blessed — steady-layer principle.
+NEXT THREAD (his call, agreed): bass is two bars copy-pasted; vary it
+the way pulse2's chords vary — walkdowns at seams are the model; maybe
+a passing note in bar 3/4 before the payoff. He may also re-voice
+pulse1's instrument. Quiz material: cross-rhythm/steady-layer, pedal
+tone, motivic augmentation, add9 naming from a pedal context.
+
 ## Tooling to-do
 
 - **Chord bands vs moving notes (Josh, 2026-08-17):** inserted/authored
