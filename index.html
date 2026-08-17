@@ -656,6 +656,7 @@
     <button data-acc="-1">♭</button>
   </div>
   <button id="insbtn" aria-label="Insert a chord at the cursor">♫</button>
+  <button id="movebtn" aria-label="Move selection to another track">⇄</button>
   <button id="copybtn" aria-label="Duplicate selected notes">⧉</button>
   <button id="pastebtn" aria-label="Paste the selection at the cursor">📋</button>
   <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
@@ -835,6 +836,17 @@
   </div>
 </div>
 
+<div class="overlay" id="movesheet">
+  <div class="sheet">
+    <h2>MOVE TO TRACK</h2>
+    <div id="mvtracks" class="row" style="flex-wrap:wrap;gap:6px"></div>
+    <div class="row" style="margin-top:12px">
+      <button id="mvdedupe">🧹 Remove stacked duplicates</button>
+      <button id="mvclose" style="margin-left:auto">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="chordsheet">
   <div class="sheet">
     <h2>INSERT</h2>
@@ -953,6 +965,7 @@
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
+      <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). The same sheet has <b>🧹 Remove stacked duplicates</b>: notes sitting at exactly the same start and pitch on one track (usually from ⧉ copies that never got dragged) collapse to the single longest one, song-wide, in one tap — ⟲ restores them.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
@@ -5187,6 +5200,60 @@ function chordLabel() {
   return CHORD_ROOTS[chordRoot].split("/")[0] + (chordQual === "maj" ? "" : chordQual);
 }
 const CHORD_FLAT = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
+function moveSelectionToTrack(target) { // ⇄: selection changes instrument, keeps time+pitch
+  if (!editableSong() || !song.tracks[target]) return 0;
+  const items = selEditItems().filter(({ti}) => ti !== target);
+  if (!items.length) return 0;
+  const tr = song.tracks[target], isAdd = !isComposition();
+  const added = [], erased = [];
+  for (const it of items) {
+    const n = it.n;
+    tr.notes.push({t: n.t, d: n.d, p: n.p, v: n.v, duty: n.duty, added: isAdd});
+    if (song.rawNotes) song.rawNotes[target].push({t: n.t + chopS, d: n.d, p: n.p, v: n.v, added: isAdd});
+    added.push({ti: target, ni: tr.notes.length - 1});
+    n.gone = true;
+    const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[it.ti][n.ri];
+    if (rn) rn.gone = true;
+    erased.push({ti: it.ti, ni: it.ni});
+  }
+  editUndo.push({kind: "group", entries: [{kind: "eraseBatch", items: erased}, {kind: "addBatch", items: added}]});
+  multiSel = added.slice();
+  multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
+  selNote = null;
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return items.length;
+}
+function dedupeSong() { // 🧹: exact same track+start+pitch = stacked clones; keep the longest
+  if (!editableSong()) return 0;
+  const erased = [];
+  song.tracks.forEach((tr, ti) => {
+    const best = new Map();
+    tr.notes.forEach((n, ni) => {
+      if (n.gone) return;
+      const k = n.t + ":" + n.p;
+      const prev = best.get(k);
+      if (!prev) { best.set(k, {ni, d: n.d}); return; }
+      const loser = n.d > prev.d ? prev.ni : ni; // keep the longest
+      if (n.d > prev.d) best.set(k, {ni, d: n.d});
+      const ln = tr.notes[loser];
+      ln.gone = true;
+      const rn = song.rawNotes && ln.ri !== undefined && song.rawNotes[ti][ln.ri];
+      if (rn) rn.gone = true;
+      erased.push({ti, ni: loser});
+    });
+  });
+  if (!erased.length) return 0;
+  editUndo.push({kind: "eraseBatch", items: erased});
+  multiSel = []; multiSelKey = new Set(); selNote = null;
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return erased.length;
+}
 function chordSym(rootPc, qual) { // flat-preferring: ♭VI in Cm is A♭, not G♯
   return CHORD_FLAT[rootPc] + (qual === "maj" ? "" : qual);
 }
@@ -8018,6 +8085,30 @@ document.getElementById("copybtn").addEventListener("click", () => {
   duplicateSelectionInPlace();
   setInfo("duplicated " + k + " note" + (k === 1 ? "" : "s") + " — drag the copies into place");
 });
+document.getElementById("movebtn").addEventListener("click", () => {
+  if (!editableSong()) { setInfo("editing works on your own songs — captures are locked"); return; }
+  const box = document.getElementById("mvtracks");
+  box.innerHTML = song.tracks.map((tr, ti) =>
+    '<button data-mv="' + ti + '" style="min-height:44px"' + (ti === selTrack ? ' class="primary"' : '') + '>' +
+    (tr.name || "track " + (ti + 1)) + '</button>').join("");
+  document.getElementById("movesheet").classList.add("on");
+});
+document.getElementById("mvtracks").addEventListener("click", e => {
+  const b = e.target.closest("button[data-mv]");
+  if (!b) return;
+  const k = moveSelectionToTrack(+b.dataset.mv);
+  document.getElementById("movesheet").classList.remove("on");
+  setInfo(k ? "moved " + k + " note" + (k === 1 ? "" : "s") + " to " + (song.tracks[+b.dataset.mv].name || "track")
+            : "select notes first (lasso or tap), then ⇄");
+});
+document.getElementById("mvdedupe").addEventListener("click", () => {
+  const k = dedupeSong();
+  document.getElementById("movesheet").classList.remove("on");
+  setInfo(k ? "removed " + k + " stacked duplicate" + (k === 1 ? "" : "s") + " (⟲ restores them)"
+            : "no stacked duplicates found");
+});
+document.getElementById("mvclose").addEventListener("click", () =>
+  document.getElementById("movesheet").classList.remove("on"));
 document.getElementById("pastebtn").addEventListener("click", () => {
   if (!editableSong()) { setInfo("paste works on your own songs — captures are locked"); return; }
   if (selEditItems().length) copySelection(); // selection wins; else reuse the last copy

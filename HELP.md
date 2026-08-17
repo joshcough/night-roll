@@ -112,6 +112,9 @@ Tap **⧉** in the edit row: the selection duplicates in place and the COPIES be
 **Insert chord (♫)**
 Tap **♫** in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's **Progression** tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the **Progressions** button in the ◯5 dialog, for browsing while analyzing.
 
+**Move to track (⇄)**
+Select notes and tap **⇄**, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). The same sheet has **🧹 Remove stacked duplicates**: notes sitting at exactly the same start and pitch on one track (usually from ⧉ copies that never got dragged) collapse to the single longest one, song-wide, in one tap — ⟲ restores them.
+
 **Split**
 Select notes and tap **✂**. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.
 
