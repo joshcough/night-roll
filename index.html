@@ -2536,6 +2536,26 @@ function drawRuler(W, H) {
     if (x < RULER_W - 4) continue;
     ctx.fillText(String(Math.round(t / bt) + 1), x + 4, 15);
   }
+  // Logic-style subdivision ticks along the ruler's bottom edge: bars always,
+  // beats when there's room, 16ths when zoomed right in — density-adaptive
+  {
+    const qt = beatTicks();
+    const step = qt * ppt >= 96 ? qt / 4 : qt * ppt >= 14 ? qt : bt;
+    ctx.strokeStyle = css("--dim");
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    for (let t = Math.floor(t0 / step) * step; t < t1; t += step) {
+      const x = Math.round(RULER_W + t * ppt - view.x) + 0.5;
+      if (x < RULER_W) continue;
+      const onBar = Math.abs(t / bt - Math.round(t / bt)) < 1e-6;
+      const onBeat = Math.abs(t / qt - Math.round(t / qt)) < 1e-6;
+      const h = onBar ? 9 : onBeat ? 6 : 3;
+      // ticks live in the number strip (BASE_RULER_H), above any section lanes
+      ctx.moveTo(x, BASE_RULER_H - 1); ctx.lineTo(x, BASE_RULER_H - 1 - h);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
   if (rangeSel) {
     // Logic's cycle strip: the ruler span glows amber (yellow-orange, not
     // bright yellow) — this range is what ▶ will loop
