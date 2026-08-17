@@ -843,9 +843,10 @@
     <div id="chquals" class="row" style="flex-wrap:wrap;gap:4px;margin-top:8px"></div>
     <div class="row" style="margin-top:10px">
       <span class="lbl">octave</span><select id="choct"></select>
+      <span class="lbl">duration</span><select id="chdur"></select>
       <span class="lbl" id="chpreview" style="margin-left:8px;color:var(--gold)"></span>
     </div>
-    <p class="meta" style="margin:8px 0 0">Inserts at the blue cursor, on the selected track, for the pencil duration — then walks the cursor forward one slot, so repeated inserts build a progression.</p>
+    <p class="meta" style="margin:8px 0 0">Inserts at the blue cursor, on the selected track, for the chosen duration — then walks the cursor forward one slot, so repeated inserts build a progression.</p>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="chinsert">Insert</button>
     </div>
@@ -946,7 +947,7 @@
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on the pencil grid, and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
-      <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), and an octave, then Insert — the whole chord lands at the blue cursor on the selected track, for the pencil duration, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: pick a tonic and octave, tap a mood, and the entire progression lands one pencil-duration chord per slot, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
+      <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: pick a tonic, octave, and duration, tap a mood, and the entire progression lands one chord per slot, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
@@ -5092,13 +5093,16 @@ const CHORD_QUALS = [
 ];
 const CHORD_ROOTS = ["C", "C♯/D♭", "D", "D♯/E♭", "E", "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"];
 let chordRoot = 0, chordQual = "maj", chordOct = 4;
+const INS_DURS = [["16th", 0.25], ["8th", 0.5], ["8th.", 0.75], ["quarter", 1],
+                  ["quarter.", 1.5], ["half", 2], ["half.", 3], ["whole", 4]];
+let chordInsDur = 1; // quarters — the Insert dialogs' own duration, independent of the pencil
 function chordLabel() {
   return CHORD_ROOTS[chordRoot].split("/")[0] + (chordQual === "maj" ? "" : chordQual);
 }
-function insertChordAt(tick, rootPc, qual, oct) {
+function insertChordAt(tick, rootPc, qual, oct, durQ) {
   if (!editableSong()) return 0;
   const ivs = (CHORD_QUALS.find(([q]) => q === qual) || CHORD_QUALS[0])[1];
-  const snap = Math.max(1, Math.round(song.ppq * pencilDur));
+  const snap = Math.max(1, Math.round(song.ppq * (durQ || pencilDur)));
   const t0 = Math.max(0, Math.round(tick / snap) * snap);
   const base = (oct + 1) * 12 + rootPc;
   const tr = song.tracks[selTrack], isAdd = !isComposition();
@@ -5132,6 +5136,15 @@ function insertChordAt(tick, rootPc, qual, oct) {
   const sel = document.getElementById("choct");
   sel.innerHTML = [2, 3, 4, 5, 6].map(o => '<option' + (o === 4 ? ' selected' : '') + '>' + o + '</option>').join("");
   sel.addEventListener("change", () => { chordOct = parseInt(sel.value, 10); });
+  const durOpts = v => INS_DURS.map(([lb, q]) =>
+    '<option value="' + q + '"' + (q === v ? ' selected' : '') + '>' + lb + '</option>').join("");
+  const chdur = document.getElementById("chdur");
+  chdur.innerHTML = durOpts(chordInsDur);
+  chdur.addEventListener("change", () => {
+    chordInsDur = parseFloat(chdur.value);
+    const pg = document.getElementById("pgdur");
+    if (pg) pg.value = chdur.value;
+  });
   const mark = () => {
     for (const b of roots.children) b.classList.toggle("primary", +b.dataset.root === chordRoot);
     for (const b of quals.children) b.classList.toggle("primary", b.dataset.qual === chordQual);
@@ -5151,7 +5164,7 @@ function insertChordAt(tick, rootPc, qual, oct) {
     document.getElementById("chordsheet").classList.add("on");
   });
   document.getElementById("chinsert").addEventListener("click", () => {
-    const k = insertChordAt(playCursor, chordRoot, chordQual, chordOct);
+    const k = insertChordAt(playCursor, chordRoot, chordQual, chordOct, chordInsDur);
     setInfo(k ? "inserted " + chordLabel() + " (" + k + " notes) — cursor moved to the next slot"
               : "couldn't insert — check the octave fits the C1..C7 range");
   });
@@ -5174,11 +5187,11 @@ function parseNumeral(tok) {
   else if (suf === "6") qual = minor ? "m6" : "6";
   return {pcOff: (MAJ_STEP[NUM_DEG[m[2].toUpperCase()]] + acc + 12) % 12, qual};
 }
-function insertProgressionAt(tick, progStr, tonicPc, oct) {
+function insertProgressionAt(tick, progStr, tonicPc, oct, durQ) {
   if (!editableSong()) return 0;
   const chords = progStr.split("–").map(t => parseNumeral(t.trim()));
   if (!chords.length || chords.some(c => !c)) return 0;
-  const snap = Math.max(1, Math.round(song.ppq * pencilDur));
+  const snap = Math.max(1, Math.round(song.ppq * (durQ || pencilDur)));
   let t0 = Math.max(0, Math.round(tick / snap) * snap);
   const tr = song.tracks[selTrack], isAdd = !isComposition();
   const added = [];
@@ -5242,7 +5255,9 @@ const PROG_LIB = [
         CHORD_ROOTS.map((r, i) => '<option value="' + i + '">' + r + '</option>').join("") +
       '</select><span class="lbl">octave</span><select id="pgoct">' +
         [2, 3, 4, 5, 6].map(o => '<option' + (o === 4 ? ' selected' : '') + '>' + o + '</option>').join("") +
-      '</select><span class="lbl" style="opacity:.7">tap a progression to insert it at the cursor — one pencil-duration slot per chord</span></div>' +
+      '</select><span class="lbl">duration</span><select id="pgdur">' +
+        INS_DURS.map(([lb, q]) => '<option value="' + q + '"' + (q === 1 ? ' selected' : '') + '>' + lb + '</option>').join("") +
+      '</select><span class="lbl" style="opacity:.7">tap a progression to insert it at the cursor — one chord per slot</span></div>' +
     PROG_LIB.map(([mood, prog, why], i) =>
       '<div class="prow" data-prog="' + i + '"><b>' + mood + '</b><span class="pchords">' + prog + '</span><small>' + why + '</small></div>'
     ).join("");
@@ -5253,7 +5268,9 @@ const PROG_LIB = [
     const [mood, prog] = PROG_LIB[+row.dataset.prog];
     const tonicPc = +document.getElementById("pgtonic").value;
     const oct = parseInt(document.getElementById("pgoct").value, 10);
-    const k = insertProgressionAt(playCursor, prog, tonicPc, oct);
+    chordInsDur = parseFloat(document.getElementById("pgdur").value);
+    document.getElementById("chdur").value = document.getElementById("pgdur").value;
+    const k = insertProgressionAt(playCursor, prog, tonicPc, oct, chordInsDur);
     setInfo(k ? "inserted " + mood + " in " + CHORD_ROOTS[tonicPc].split("/")[0] + " (" + k + " notes) — stretch or move them from here"
               : "couldn't insert — check the octave fits C1..C7");
   });

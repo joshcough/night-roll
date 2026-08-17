@@ -980,6 +980,11 @@ test("insert progression: numerals resolve, chords land in slots, one undo", () 
   // one undo removes the whole second progression
   run(`editUndoPop()`);
   assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 12);
+  // explicit duration overrides the pencil: half-note chords
+  run(`playCursor = 0;`);
+  assert.equal(run(`insertChordAt(0, 0, "maj", 4, 2)`), 3);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).slice(-1)[0].d`), 960);
+  assert.equal(val(`playCursor`), 960);
   run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = [];`);
 });
 
