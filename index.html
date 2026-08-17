@@ -927,7 +927,7 @@
     <h3>ANNOTATIONS</h3>
     <dl>
       <dt>+ Note</dt><dd>Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.</dd>
-      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range first — + Note pre-fills it.</dd>
+      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: playback loops just that span (any loop: annotation is ignored while a range is selected). Tap the ruler to clear the range and playback is whole-song again.</dd>
       <dt>Gold flags</dt><dd>Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.</dd>
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
@@ -2537,9 +2537,11 @@ function drawRuler(W, H) {
     ctx.fillText(String(Math.round(t / bt) + 1), x + 4, 15);
   }
   if (rangeSel) {
+    // Logic's cycle strip: the ruler span glows amber (yellow-orange, not
+    // bright yellow) — this range is what ▶ will loop
     const x = RULER_W + rangeSel.a * ppt - view.x;
-    ctx.fillStyle = css("--accent");
-    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = "#E09A3E";
+    ctx.globalAlpha = 0.75;
     ctx.fillRect(x, 0, (rangeSel.b - rangeSel.a) * ppt, RULER_H);
     ctx.globalAlpha = 1;
   }
@@ -3979,6 +3981,13 @@ async function play(fromSec = 0) {
   loopPass = 0;
   loopSeg = currentLoop();
   if (fromSec >= loopSeg.end - 0.01) loopSeg = {start: 0, end: tickToSec(song, songEndTick)};
+  if (rangeSel && rangeSel.b > rangeSel.a) { // Logic-style cycle: a ruler selection
+    // loops playback over just that span and outranks any loop: annotation
+    loopSeg = {start: tickToSec(song, rangeSel.a),
+               end: tickToSec(song, Math.min(rangeSel.b, songEndTick))};
+    if (fromSec < loopSeg.start - 0.01 || fromSec >= loopSeg.end - 0.01)
+      playOffset = fromSec = loopSeg.start; // cursor outside the cycle starts at its top
+  }
   updateTrackGains();
   song.tracks.forEach((_, ti) => trackGain(ti)); // pre-create so gains exist before first event
   if (chipActive()) chipStart(fromSec); // authentic audio rides the same transport
