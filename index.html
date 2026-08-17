@@ -3030,8 +3030,9 @@ canvas.addEventListener("pointerdown", e => {
   if (editableSong() && mode === "pencil" && viewMode !== "score" && !fallActive() && !lasso && p.y >= RULER_H) {
     const {tick, pitch} = posToTickPitch(p);
     if (pitch >= PMIN && pitch <= PMAX && tick >= 0) {
+      const grid = moveSnapTicks(); // 16ths: start position is finer than the note length
       const snap = pencilTicks();
-      const t = Math.round(tick / snap) * snap;
+      const t = Math.round(tick / grid) * grid;
       const tr = song.tracks[selTrack];
       const added = !isComposition();
       tr.notes.push({t, d: snap, p: pitch, v: pencilVel, added});
@@ -3084,10 +3085,11 @@ canvas.addEventListener("pointermove", e => {
       lassoRect = {x0: drag.spos.x, y0: drag.spos.y, x1: p.x, y1: p.y};
       draw();
     }
-    else if (drag.pencil) { // stretch the just-penciled note under the finger
+    else if (drag.pencil) { // stretch the just-penciled note under the finger, on the fine grid
       const pn = drag.pencil, nn = song.tracks[pn.ti].notes[pn.ni];
+      const g = moveSnapTicks(); // 16ths (or triplet steps) — not the coarse tap length
       const tickHere = posToTickPitch(evtPos(e)).tick;
-      nn.d = Math.max(pn.snap, Math.round((tickHere - pn.t) / pn.snap) * pn.snap);
+      nn.d = Math.max(g, Math.round((tickHere - pn.t) / g) * g);
       const rn = song.rawNotes && nn.ri !== undefined && song.rawNotes[pn.ti][nn.ri];
       if (rn) rn.d = nn.d;
       draw();
