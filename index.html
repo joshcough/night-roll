@@ -1989,6 +1989,7 @@ function setSong(parsed, key) {
   songKey = key;
   declaredTs = null; // meter resets to neutral until this song's notes declare one
   selNote = null;
+  editUndo = []; // undo history belongs to ONE song — stale entries would mutate the wrong notes
   trackState = song.tracks.map(() => ({muted: false, solo: false}));
   selTrack = 0;
   loadEdits();
