@@ -283,15 +283,13 @@ tone, motivic augmentation, add9 naming from a pedal context.
 
 ## Tooling to-do
 
-- **Record button (Josh, 2026-08-18 night):** rides the transport like
-  Play; while recording, taps on the 🎹 instrument-panel keys land as
-  notes on the SELECTED track at the playhead's tick. Design notes:
-  key-down starts the note, key-up sets its duration; snap start to the
-  move grid (16ths/triplets) or keep raw + quantize-after?; count-in
-  applies; whole take = one addBatch undo; the record head should
-  probably also play the song (overdub listening). Future door: WebMIDI
-  for a real keyboard. He called the app "close to a full DAW" — this
-  is the feature that earns it.
+- **Record button — SHIPPED overnight 2026-08-18** (● beside Play,
+  editable songs): key-down/key-up on the 🎹 panel = note start/end on
+  the selected track, grid-snapped (triplets honored), count-in
+  applies, take = one undo, multi-touch chords per-pointer. AWAITING
+  JOSH'S FIRST REAL TAKE — timing feel (snap vs raw + quantize-after)
+  is the thing to judge by ear. Future door: WebMIDI for a real
+  keyboard.
 
 
 
