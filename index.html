@@ -2582,7 +2582,9 @@ function refreshSelInfo() { // one source of truth for the selection readout
   reflectSelVel();
   const pitches = [...new Set(multiSel.map(s => song.tracks[s.ti].notes[s.ni].p))].sort((a, b) => a - b);
   const names = pitches.map(p => pitchName(p, multiSelSf));
-  setInfo(names.join(" · ") + "  (" + multiSel.length + " notes)", names.join(", "));
+  const vels = [...new Set(multiSel.map(s => song.tracks[s.ti].notes[s.ni].v))];
+  const velTxt = vels.length === 1 ? " · vel " + vels[0] : ""; // uniform velocity is worth stating
+  setInfo(names.join(" · ") + "  (" + multiSel.length + " notes" + velTxt + ")", names.join(", "));
   challengeSec = null;
   const cb = document.getElementById("chordbtn");
   cb.textContent = "Chord?";
