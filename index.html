@@ -8318,6 +8318,7 @@ document.getElementById("dpfill").addEventListener("click", () => {
     if (song.rawNotes) song.rawNotes.push([]);
     trackState.push({muted: false, solo: false});
     di = song.tracks.length - 1;
+    saveDraft(); // the chip path saves; this path silently lost the track on reload
     renderTrackbar();
   }
   const from = Math.max(1, parseInt(document.getElementById("dpfrom").value, 10) || 1);
@@ -8344,6 +8345,8 @@ document.getElementById("dpfill").addEventListener("click", () => {
     saveEdits();
     computeSongEnd();
     if (viewMode === "score") buildScoreModel();
+    view.y = 1e9; // the kit lane hangs below the pitch rows — scroll it into view,
+    clampView();  // or a first fill looks like nothing happened (Josh)
     draw();
   }
   document.getElementById("drumsheet").classList.remove("on");
