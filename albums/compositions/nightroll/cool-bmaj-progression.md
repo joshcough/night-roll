@@ -31,6 +31,18 @@ is the `.notes.txt` sibling.
 The data confirms it: long notes 6 → 4, short notes +6, spread over
 three saves across a day. Boredom as the diagnostic, ear as the tool.
 
+## The favorite change (one note, commit 4f1288f, 08-18 01:12)
+
+Both bass walkdowns were identical: B2–F♯3–E3–D♯3. Josh changed the
+FINAL one's second note: **B2–C♯3–E3–D♯3**. His verdict: "that's the
+best part of the whole song." Why it lands, named after the fact:
+contour reversal (descent-from-above becomes rise-leap-settle); the
+C♯ is the add9 — the closing chord's signature color, now sung by the
+bass, resolving 9→3 (C♯→D♯); and because those four notes sit right
+before the loop jump, differentiating them from the bar-4 seam makes
+"continuing" and "coming around" audibly different — a four-note
+TURNAROUND, written by instinct before the turns study ever started.
+
 ## What the song is (Josh's thesis)
 
 **The bass is the real melody.** Inverted texture: pulse1's "melody"
