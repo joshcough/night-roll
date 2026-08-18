@@ -986,7 +986,7 @@
     </div>
     <div class="hsec" data-hsec="editor">
     <dl>
-      <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
+      <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase (tap the active tool again to turn it OFF — then dragging only pans, and no note can be grabbed by accident), durations 16th–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>● Record</dt><dd>On your own songs, ● beside Play arms a take: the transport rolls (count-in applies) and every key you play on the 🎹 instrument panel lands on the SELECTED track at the playhead — hold a key for a long note, slide across keys for runs. Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step.</dd>
       <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration buttons set that grid (16T/16th/16· · 8T/8th/8· · ¼…): pick the smallest unit you're thinking in and draw lengths by feel.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
@@ -6255,16 +6255,19 @@ function localMidiOpen(parsed, name) {
 document.getElementById("modeseg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
-  mode = b.dataset.mode;
-  for (const x of document.querySelectorAll("#modeseg button")) x.classList.toggle("active", x === b);
+  // tapping the active tool AGAIN turns it off (Josh: sometimes you just want
+  // to drag the song around without accidentally moving a note)
+  mode = b.dataset.mode === mode ? null : b.dataset.mode;
+  for (const x of document.querySelectorAll("#modeseg button")) x.classList.toggle("active", x.dataset.mode === mode);
   document.getElementById("durseg").style.display = mode === "pencil" ? "" : "none";
   // velocities show in Select too: with a selection they APPLY to it
-  document.getElementById("velseg").style.display = mode === "erase" ? "none" : "";
+  document.getElementById("velseg").style.display = mode === "pencil" || mode === "select" ? "" : "none";
   document.getElementById("accseg").style.display =
     mode === "pencil" && viewMode === "score" ? "" : "none";
   setInfo(mode === "pencil" ? (viewMode === "score" ? "pencil: tap a staff position — the stave picks the track"
                                                     : "pencil: tap grid to add to selected track") :
-          mode === "erase" ? "erase: tap a note to remove" : "tap a note");
+          mode === "erase" ? "erase: tap a note to remove" :
+          mode === "select" ? "tap a note" : "pan: drag moves the view — notes are safe");
 });
 document.getElementById("durseg").addEventListener("click", e => {
   const b = e.target.closest("button");
