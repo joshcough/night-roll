@@ -66,6 +66,9 @@
   }
   select { max-width: 44vw; }
   header { position: relative; }
+  #recbtn { color: #e66767; font-size: 15px; }
+  #recbtn.rec { background: #e66767; color: #151520; animation: recblink 1.2s ease-in-out infinite; }
+  @keyframes recblink { 50% { opacity: 0.55; } }
   #songcrumb {
     font-family: var(--mono);
     font-size: 12px;
@@ -611,6 +614,7 @@
   <div id="transport">
     <button id="rwbtn" aria-label="Back to start">⏮</button>
     <button class="primary" id="playbtn">▶ Play</button>
+    <button id="recbtn" aria-label="Record onto the selected track" style="display:none">●</button>
     <div id="lcd">
       <div class="lcdseg"><span class="lcdbig" id="lcdbar">1</span><span class="lcdlbl">bar</span></div>
       <div class="lcdseg"><span class="lcdbig" id="lcdbeat">1</span><span class="lcdlbl">beat</span></div>
@@ -983,6 +987,7 @@
     <div class="hsec" data-hsec="editor">
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase, durations 16th–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
+      <dt>● Record</dt><dd>On your own songs, ● beside Play arms a take: the transport rolls (count-in applies) and every key you play on the 🎹 instrument panel lands on the SELECTED track at the playhead — hold a key for a long note, slide across keys for runs. Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step.</dd>
       <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration buttons set that grid (16T/16th/16· · 8T/8th/8· · ¼…): pick the smallest unit you're thinking in and draw lengths by feel.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
@@ -1513,6 +1518,7 @@ function updateEditBtnVis() { // the edit ROW exists only on songs made in the a
   editOn = editable;
   document.getElementById("editrow").classList.toggle("on", editable);
   if (editable) document.getElementById("velseg").style.display = mode === "erase" ? "none" : "";
+  document.getElementById("recbtn").style.display = editable ? "" : "none";
 }
 
 // ---------------------------------------------------------------- rollnotes
@@ -4300,6 +4306,7 @@ async function play(fromSec = 0) {
 }
 function stop() {
   pendingPlay = false; // an explicit stop cancels a queued mid-load play
+  if (recording) recFinish();
   if (!playing) { draw(); return; }
   playCursor = secToTick(song, playSec());
   playing = false;
@@ -6568,7 +6575,7 @@ function instTap(e, dragging) {
   let p, si, f;
   if (instTab === "piano") p = pianoHit(x, y, W, H);
   else ({p, si, f} = guitarHit(x, y, W, H));
-  if (p === undefined || (dragging && p === instLastP)) return;
+  if (p === undefined || (dragging && p === instLastP)) return p;
   instLastP = p;
   instFlash = {p, si, f, until: performance.now() + 350};
   instPlay(p);
@@ -6577,15 +6584,74 @@ function instTap(e, dragging) {
   setInstInfo(pitchName(p, sfDeclaredAt(curTick())) + (deg ? "  ·  degree " + deg : "") + at);
   drawInst();
   setTimeout(drawInst, 400); // clear the flash when idle (playback frames handle it otherwise)
+  return p;
 }
+// ---- record (Josh, 2026-08-18): ● rides the transport; while it runs, keys
+// tapped on this panel land as notes on the SELECTED track at the playhead.
+// Key-down starts the note, key-up (or sliding to another key) ends it;
+// starts/durations snap to the move grid; the whole take is ONE undo step.
+let recording = false, recTake = [], recPending = new Map(); // pointerId → {p, tick}
+function recSnap(t) { const g = moveSnapTicks(); return Math.max(0, Math.round(t / g) * g); }
+function recNoteOn(pid, p) {
+  recNoteOff(pid); // sliding to a new key closes the old one
+  recPending.set(pid, {p, tick: recSnap(secToTick(song, playSec()))});
+}
+function recNoteOff(pid) {
+  const pend = recPending.get(pid);
+  if (!pend) return;
+  recPending.delete(pid);
+  const g = moveSnapTicks();
+  const end = Math.round(secToTick(song, playSec()) / g) * g;
+  const d = Math.max(g, end - pend.tick);
+  const tr = song.tracks[selTrack], isAdd = !isComposition();
+  tr.notes.push({t: pend.tick, d, p: pend.p, v: pencilVel, added: isAdd});
+  if (song.rawNotes) song.rawNotes[selTrack].push({t: pend.tick + chopS, d, p: pend.p, v: pencilVel, added: isAdd});
+  recTake.push({ti: selTrack, ni: tr.notes.length - 1});
+  draw();
+}
+function recFinish() { // called from stop(): close pendings, commit the take
+  for (const pid of [...recPending.keys()]) recNoteOff(pid);
+  recording = false;
+  document.getElementById("recbtn").classList.remove("rec");
+  if (recTake.length) {
+    editUndo.push({kind: "addBatch", items: recTake.slice()});
+    saveEdits();
+    computeSongEnd();
+    if (viewMode === "score") buildScoreModel();
+    setInfo("recorded " + recTake.length + " note" + (recTake.length === 1 ? "" : "s") + " — one ⟲ removes the take");
+  }
+  recTake = [];
+}
+document.getElementById("recbtn").addEventListener("click", async () => {
+  if (recording || playing) { stop(); return; } // ● while rolling = stop (commits the take)
+  if (!song || !editableSong()) { setInfo("recording works on your own songs"); return; }
+  if (!instOpen) { instOpen = true; localStorage.setItem("ff1roll-inst-open", "1"); applyInst(); }
+  recording = true;
+  recTake = [];
+  document.getElementById("recbtn").classList.add("rec");
+  setInfo("recording onto " + (song.tracks[selTrack].name || "track") + " — play the keys; ● or ■ stops");
+  await play(playCursor > 0 ? tickToSec(song, playCursor) : 0);
+  if (!recording && playing) stop(); // ● was released while play() was still waking the audio context
+});
 instCanvas.addEventListener("pointerdown", e => {
   instPtrOn = true;
   instCanvas.setPointerCapture(e.pointerId);
-  instTap(e);
+  const p = instTap(e);
+  if (recording && playing && p !== undefined) recNoteOn(e.pointerId, p);
 });
-instCanvas.addEventListener("pointermove", e => { if (instPtrOn) instTap(e, true); });
-instCanvas.addEventListener("pointerup", () => { instPtrOn = false; instLastP = null; });
-instCanvas.addEventListener("pointercancel", () => { instPtrOn = false; instLastP = null; });
+instCanvas.addEventListener("pointermove", e => {
+  if (!instPtrOn) return;
+  const p = instTap(e, true);
+  if (recording && playing && p !== undefined) recNoteOn(e.pointerId, p);
+});
+instCanvas.addEventListener("pointerup", e => {
+  instPtrOn = false; instLastP = null;
+  recNoteOff(e.pointerId);
+});
+instCanvas.addEventListener("pointercancel", e => {
+  instPtrOn = false; instLastP = null;
+  recNoteOff(e.pointerId);
+});
 // Fall view (Synthesia-style): the MAIN canvas turns into a vertical drop —
 // notes fall down and land on the panel's piano keys the instant they sound
 // (the keys light via the live-pitch set). Time maps through seconds, so
