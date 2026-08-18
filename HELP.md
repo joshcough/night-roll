@@ -119,7 +119,7 @@ Tap **♫** in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, s
 Select notes and tap **⇄**, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). The same sheet has **🧹 Remove stacked duplicates**: notes sitting at exactly the same start and pitch on one track (usually from ⧉ copies that never got dragged) collapse to the single longest one, song-wide, in one tap — ⟲ restores them.
 
 **Drum fill (🥁)**
-Tap **🥁**: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the bar range, Fill — the pattern repeats across those bars on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.
+Tap **🥁**: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e & a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.
 
 **Split**
 Select notes and tap **✂**. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.
