@@ -3396,6 +3396,7 @@ function tap(pos) {
     const n = song.tracks[hit.ti].notes[hit.ni];
     playCursor = n.t; // note tap re-anchors the cursor (and + Note)
     setInfo(noteLabel(hit.ti, hit.ni));
+    reflectSelVel(); // the vol slider doubles as the velocity readout
     previewNote(hit.ti, n.p);
     updateSubtitle();
   } else setInfo("—");
@@ -4789,6 +4790,7 @@ function scoreTap(pos) {
         playCursor = g.tick;
         if (selNote) {
           setInfo(noteLabel(selNote.ti, selNote.ni));
+          reflectSelVel(); // the vol slider doubles as the velocity readout
           previewNote(g.ti, g.pitches[g.pitches.length - 1]);
         }
         updateSubtitle(); draw();
