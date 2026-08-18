@@ -645,10 +645,10 @@
     <button data-dur="2">1/2</button>
     <button data-dur="4">1</button>
   </div>
-  <div class="seg" id="velseg" style="display:none">
-    <button data-vel="52">p</button>
-    <button data-vel="80" class="active">mf</button>
-    <button data-vel="112">f</button>
+  <div class="seg" id="velseg" style="display:none;align-items:center;gap:6px;padding:0 8px">
+    <span class="lbl">vol</span>
+    <input type="range" id="velslider" min="8" max="127" value="80" style="width:110px" aria-label="Velocity">
+    <span class="lbl" id="velval" style="min-width:26px;text-align:right">80</span>
   </div>
   <div class="seg" id="accseg" style="display:none">
     <button data-acc="key" class="active">key</button>
@@ -991,6 +991,7 @@
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the bar range, Fill — the pattern repeats across those bars on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
+      <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection and the slider jumps to its current velocity.</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
       <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲ step.</dd>
     </dl>
@@ -1489,6 +1490,7 @@ function updateEditBtnVis() { // the edit ROW exists only on songs made in the a
   }
   editOn = editable;
   document.getElementById("editrow").classList.toggle("on", editable);
+  if (editable) document.getElementById("velseg").style.display = mode === "erase" ? "none" : "";
 }
 
 // ---------------------------------------------------------------- rollnotes
@@ -2561,6 +2563,13 @@ function toggleSel(hit) { // lasso-mode tap on a note: in/out of the selection
   }
   refreshSelInfo();
 }
+function reflectSelVel() { // slider face shows the selection's velocity
+  const items = selEditItems();
+  if (!items.length) return;
+  const v = items[0].n.v || 80;
+  const sl = document.getElementById("velslider");
+  if (sl) { sl.value = v; document.getElementById("velval").textContent = v; }
+}
 function refreshSelInfo() { // one source of truth for the selection readout
   if (!multiSel.length) {
     document.getElementById("chordbtn").style.display = "none";
@@ -2570,6 +2579,7 @@ function refreshSelInfo() { // one source of truth for the selection readout
   }
   const tMin = Math.min(...multiSel.map(s => song.tracks[s.ti].notes[s.ni].t));
   multiSelSf = sfDeclaredAt(Math.max(0, tMin));
+  reflectSelVel();
   const pitches = [...new Set(multiSel.map(s => song.tracks[s.ti].notes[s.ni].p))].sort((a, b) => a - b);
   const names = pitches.map(p => pitchName(p, multiSelSf));
   setInfo(names.join(" · ") + "  (" + multiSel.length + " notes)", names.join(", "));
@@ -2725,11 +2735,11 @@ function selEditItems() { // the notes an edit applies to: lasso selection, else
 function selEditApply(items, mutate, snapshot) { // mutate + undo + persist + redraw
   if (!items.length) return false;
   editUndo.push({kind: "mod", items: items.map(({ti, ni, n}) =>
-    (snapshot && snapshot.find(x => x.ti === ti && x.ni === ni)) || {ti, ni, t: n.t, d: n.d, p: n.p})});
+    (snapshot && snapshot.find(x => x.ti === ti && x.ni === ni)) || {ti, ni, t: n.t, d: n.d, p: n.p, v: n.v})});
   for (const it of items) {
     mutate(it.n);
     const rn = song.rawNotes && it.n.ri !== undefined && song.rawNotes[it.ti][it.n.ri];
-    if (rn) { rn.t = it.n.t + chopS; rn.d = it.n.d; rn.p = it.n.p; }
+    if (rn) { rn.t = it.n.t + chopS; rn.d = it.n.d; rn.p = it.n.p; rn.v = it.n.v; }
   }
   saveEdits();
   computeSongEnd();
@@ -6172,7 +6182,8 @@ document.getElementById("modeseg").addEventListener("click", e => {
   mode = b.dataset.mode;
   for (const x of document.querySelectorAll("#modeseg button")) x.classList.toggle("active", x === b);
   document.getElementById("durseg").style.display = mode === "pencil" ? "" : "none";
-  document.getElementById("velseg").style.display = mode === "pencil" ? "" : "none";
+  // velocities show in Select too: with a selection they APPLY to it
+  document.getElementById("velseg").style.display = mode === "erase" ? "none" : "";
   document.getElementById("accseg").style.display =
     mode === "pencil" && viewMode === "score" ? "" : "none";
   setInfo(mode === "pencil" ? (viewMode === "score" ? "pencil: tap a staff position — the stave picks the track"
@@ -8206,12 +8217,31 @@ async function moveComposition(destDir) {
     fileStatus("Moved ✓ → " + newKey);
   } catch (err) { fileStatus("Move failed: " + err.message); }
 }
-document.getElementById("velseg").addEventListener("click", e => {
-  const b = e.target.closest("button");
-  if (!b) return;
-  pencilVel = +b.dataset.vel;
-  for (const x of document.querySelectorAll("#velseg button")) x.classList.toggle("active", x === b);
-});
+{ // velocity slider: pencil loudness always; with a selection it LIVE-adjusts
+  // those notes while dragging and commits ONE undo step on release
+  const slider = document.getElementById("velslider"), val = document.getElementById("velval");
+  let velSnap = null; // pre-gesture values for the undo entry
+  slider.addEventListener("input", () => {
+    const v = parseInt(slider.value, 10);
+    val.textContent = v;
+    pencilVel = v;
+    if (mode !== "select" || !editableSong()) return;
+    const items = selEditItems();
+    if (!items.length) return;
+    if (!velSnap) velSnap = items.map(({ti, ni, n}) => ({ti, ni, t: n.t, d: n.d, p: n.p, v: n.v}));
+    for (const it of items) it.n.v = v;
+    draw(); // brightness tracks the drag
+  });
+  slider.addEventListener("change", () => {
+    if (!velSnap) return;
+    const items = selEditItems();
+    if (items.length) {
+      selEditApply(items, () => {}, velSnap);
+      setInfo("set " + items.length + " note" + (items.length === 1 ? "" : "s") + " to velocity " + slider.value);
+    }
+    velSnap = null;
+  });
+}
 document.getElementById("copybtn").addEventListener("click", () => {
   const k = selEditItems().length;
   if (!k) { setInfo("nothing selected — lasso or tap notes first"); return; }
@@ -8367,8 +8397,9 @@ function editUndoPop() {
         const nn = song.tracks[it.ti] && song.tracks[it.ti].notes[it.ni];
         if (!nn) continue;
         nn.t = it.t; nn.d = it.d; nn.p = it.p;
+        if (it.v !== undefined) nn.v = it.v;
         const rn = song.rawNotes && nn.ri !== undefined && song.rawNotes[it.ti][nn.ri];
-        if (rn) { rn.t = it.t + chopS; rn.d = it.d; rn.p = it.p; }
+        if (rn) { rn.t = it.t + chopS; rn.d = it.d; rn.p = it.p; if (it.v !== undefined) rn.v = it.v; }
       }
     } else if (v.kind === "addBatch") { for (const it of v.items) setGone(it.ti, it.ni, true); }
     else if (v.kind === "eraseBatch") { for (const it of v.items) setGone(it.ti, it.ni, false); }
