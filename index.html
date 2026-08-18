@@ -325,7 +325,7 @@
     border: 1px solid var(--grid);
     border-radius: 10px;
     padding: 6px;
-    min-width: 240px;
+    min-width: 280px; /* the Move-to row (label + picker + button) sets the floor */
     max-width: 92vw;
     box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
   }
@@ -1052,8 +1052,8 @@
       <button class="primary" id="frgo">Rename</button>
     </div>
   </div>
-  <div class="row" id="filemoverow" style="display:none">
-    <span class="lbl">move to</span>
+  <div class="row" id="filemoverow" style="display:none;padding-left:10px">
+    <span class="lbl">Move to</span>
     <select id="fmdest"></select>
     <button id="fmgo">Move</button>
   </div>
