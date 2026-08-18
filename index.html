@@ -1016,6 +1016,7 @@
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
+      <dt>Unsaved dot</dt><dd>A gold <b>●</b> after the title means the song has edits that haven't been committed — it appears the moment you change anything and clears when Save &amp; Commit succeeds (the Save sheet's title says which state you're in, too).</dd>
       <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Duplicate, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ♫ Insert chord, 🥁 Drum pattern — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
@@ -4984,6 +4985,20 @@ function updateSongBtn() { // breadcrumb: Album › Title, with the real path di
   const title = document.createElement("span");
   title.textContent = songTitleOf(currentPath);
   songtitleEl.append(crumb, title);
+  if (songDirtyFlag()) { // unsaved edits: the gold dot every editor uses
+    const dot = document.createElement("span");
+    dot.textContent = " ●";
+    dot.style.color = "var(--gold)";
+    dot.setAttribute("aria-label", "Unsaved changes");
+    songtitleEl.appendChild(dot);
+  }
+}
+function songDirtyFlag() { // the draft records dirty; a clean Save clears it
+  if (!song || !isComposition()) return false;
+  try {
+    const d = JSON.parse(localStorage.getItem(draftStoreKey(songKey)) || "null");
+    return !!(d && d.dirty);
+  } catch (e) { return false; }
 }
 function songRow(label, onTap, dim) {
   const row = document.createElement("div");
@@ -7409,6 +7424,7 @@ function saveDraft(clean) { // clean=true right after a successful Save
         return o;
       })})),
   }));
+  updateSongBtn(); // the unsaved dot tracks every edit
 }
 function draftKeys() {
   return Object.keys(localStorage).filter(k => k.startsWith("ff1roll-draft-"))
@@ -8874,7 +8890,8 @@ function openSyncSheet() { // callable even with no song loaded (bad-config reco
   syncReturnToList = false; // notelistSync sets it true right after this runs
   if (song) renderSyncPending();
   const comp = !!song && isComposition();
-  document.querySelector("#syncsheet h2").textContent = comp ? "SAVE & COMMIT" : "SYNC .ROLLNOTES";
+  document.querySelector("#syncsheet h2").textContent =
+    comp ? (songDirtyFlag() ? "SAVE & COMMIT — unsaved changes" : "SAVE & COMMIT — saved") : "SYNC .ROLLNOTES";
   document.getElementById("ghsave").textContent = comp ? "⇪ Commit song + annotations" : "Commit this song";
   document.getElementById("repolink").href = "https://github.com/" + cfg().songsRepo;
   document.getElementById("syncstatus").textContent = !song

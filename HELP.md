@@ -127,6 +127,9 @@ Select notes and tap **✂**. If the blue cursor sits inside them (tap the ruler
 **Join**
 Select two or more notes on the same pitch and tap **⁀** — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).
 
+**Unsaved dot**
+A gold **●** after the title means the song has edits that haven't been committed — it appears the moment you change anything and clears when Save & Commit succeeds (the Save sheet's title says which state you're in, too).
+
 **Edit menu**
 An **Edit ▾** menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Duplicate, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ♫ Insert chord, 🥁 Drum pattern — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).
 
