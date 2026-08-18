@@ -2256,6 +2256,7 @@ function renderTrackbar() {
       if (song.rawNotes) song.rawNotes.push([]);
       trackState.push({muted: false, solo: false});
       selTrack = song.tracks.length - 1;
+      trackExpand = true; // the new chip may land in the overflow rows — show it (Josh's iPad)
       saveDraft();
       renderTrackbar(); buildScoreModel(); updateTrackGains(); draw();
     });
@@ -2272,6 +2273,7 @@ function renderTrackbar() {
         if (song.rawNotes) song.rawNotes.push([]);
         trackState.push({muted: false, solo: false});
         selTrack = song.tracks.length - 1;
+        trackExpand = true; // ditto: never hide the track just added
         saveDraft();
         renderTrackbar(); buildScoreModel(); updateTrackGains(); draw();
         setInfo("drums: rows are GM kit pieces — kick C2, snare D2, hats F♯/A♯2, crash C♯3, toms around G2 (labels in the left gutter)");
