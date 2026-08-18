@@ -999,7 +999,7 @@
     </div>
     <div class="hsec" data-hsec="files">
     <dl>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its the kit gets its own labeled LANE that starts docked under your lowest melodic note — and you can DRAG it anywhere by its labels in the left gutter; the position saves as a normal synced annotation ("lane: N"), so it follows the song to every device. Hats at the top of the lane, kick at the floor. Delete any track from its voice &amp; color menu (tap the selected chip again → ✕ Delete track, tap twice), penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (opens the Save &amp; Commit sheet: on your own songs its button commits the .mid AND the annotations together in one go; on analyzed songs the same door is the annotation Sync — one workflow, and what gets pushed is whatever the mode owns), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its the kit gets its own labeled LANE that starts docked under your lowest melodic note — and you can DRAG it anywhere by its labels in the left gutter; the position saves as a normal synced annotation ("lane: N"), so it follows the song to every device. Hats at the top of the lane, kick at the floor. Delete any track from its voice &amp; color menu (tap the selected chip again → ✕ Delete track, tap twice), penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
@@ -8194,17 +8194,10 @@ document.getElementById("fileimpcommit").addEventListener("click", e => {
     btn.textContent = "Commit import (" + n + ")";
   });
 });
-document.getElementById("filesave").addEventListener("click", async e => {
-  if (!song) return;
-  if (!isComposition()) {
-    fileStatus("Locked — chip captures are regenerable pipeline output. Save As forks a free copy.");
-    return;
-  }
+async function commitCompositionNow(status) { // .mid + annotations, one flow
   const token = localStorage.getItem("ff1roll-ghtoken");
-  if (!token) { fileStatus("No GitHub token stored yet — add one in File → Settings."); return; }
-  const btn = e.currentTarget;
-  btn.disabled = true;
-  fileStatus("Committing " + songKey + "…");
+  if (!token) { status.textContent = "No GitHub token stored yet — add one in File → Settings."; return; }
+  status.textContent = "Committing " + songKey + " (.mid + annotations)…";
   try {
     const h = ghHeaders(token);
     const r1 = await putMidAt(songKey, h);
@@ -8217,9 +8210,17 @@ document.getElementById("filesave").addEventListener("click", async e => {
     markCurrentSongSynced(content, stamp);
     await initCatalog().catch(() => {});
     updateSongBtn();
-    fileStatus("Committed ✓ — in the dropdown now (Pages takes ~1 min to serve the files).");
-  } catch (err) { fileStatus("Save failed: " + err.message); }
-  finally { btn.disabled = false; }
+    renderSyncPending();
+    status.textContent = "Committed ✓ — song and annotations together (Pages takes ~1 min).";
+  } catch (err) { status.textContent = "Save failed: " + err.message; }
+}
+document.getElementById("filesave").addEventListener("click", () => {
+  // one door for both modes (Josh, 2026-08-18): Save opens the sync sheet, which
+  // shows pending annotations; its commit button pushes what the mode owns —
+  // compositions: .mid + annotations together; analyzed songs: annotations only
+  if (!song) return;
+  closeFileMenus();
+  openSyncSheet();
 });
 async function putMidAt(path, h, bytes) { // PUT a .mid (current song unless bytes given), one stale-sha retry
   const data = midiBase64(bytes || writeMidi(song));
@@ -8620,6 +8621,9 @@ function discardPending(key, idx) { // drop one never-synced note from the stash
 function openSyncSheet() { // callable even with no song loaded (bad-config recovery)
   syncReturnToList = false; // notelistSync sets it true right after this runs
   if (song) renderSyncPending();
+  const comp = !!song && isComposition();
+  document.querySelector("#syncsheet h2").textContent = comp ? "SAVE & COMMIT" : "SYNC .ROLLNOTES";
+  document.getElementById("ghsave").textContent = comp ? "⇪ Commit song + annotations" : "Commit this song";
   document.getElementById("repolink").href = "https://github.com/" + cfg().songsRepo;
   document.getElementById("syncstatus").textContent = !song
     ? "No song loaded — if the catalog failed, check File → Settings, then reload."
@@ -8722,6 +8726,11 @@ function takeToken(status) {
 document.getElementById("ghsave").addEventListener("click", async e => {
   const btn = e.currentTarget;
   const status = document.getElementById("syncstatus");
+  if (song && isComposition()) { // writing mode: the ONE button ships everything
+    btn.disabled = true;
+    try { await commitCompositionNow(status); } finally { btn.disabled = false; }
+    return;
+  }
   const token = takeToken(status);
   if (!token) return;
   if (!songKey) { status.textContent = "Local file — no repo path. Use Copy/Download."; return; }
