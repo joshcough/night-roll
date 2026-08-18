@@ -8248,7 +8248,7 @@ document.getElementById("copybtn").addEventListener("click", () => {
   duplicateSelectionInPlace();
   setInfo("duplicated " + k + " note" + (k === 1 ? "" : "s") + " — drag the copies into place");
 });
-const DP_PIECES = [["kick", 36], ["snare", 38], ["hat", 42]];
+const DP_PIECES = [["hat", 42], ["snare", 38], ["kick", 36]]; // hat on top, kick on the bottom — standard order
 let dpPattern = null; // [piece][step] booleans, rebuilt when meter/grid changes
 function dpSteps() { return effTs()[0] * parseInt(document.getElementById("dpdiv").value, 10); }
 function dpDefault() { // a sane backbeat for the current meter: kick on 1 (+mid), snare on the even beats, hat everywhere
@@ -8257,7 +8257,7 @@ function dpDefault() { // a sane backbeat for the current meter: kick on 1 (+mid
   kick[0] = true;
   if (beats >= 4) kick[Math.floor(beats / 2) * div] = true;
   for (let b = 1; b < beats; b += 2) snare[b * div] = true;
-  return [kick, snare, hat];
+  return [hat, snare, kick]; // same order as DP_PIECES
 }
 function dpRender() {
   const n = dpSteps(), div = parseInt(document.getElementById("dpdiv").value, 10);
