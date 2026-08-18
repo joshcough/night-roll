@@ -975,9 +975,10 @@
     </div>
     <div class="hsec" data-hsec="files">
     <dl>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its rows become kit pieces (kick C2, snare D2, closed/open hats F♯2/A♯2, crash C♯3, toms in between — the left gutter labels them while the kit is selected), penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
+      <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
     </dl>
     </div>
@@ -1218,6 +1219,9 @@ async function initCatalog() {
   CATALOG = {};
   for (const a of await res.json()) CATALOG[a.title] = a.songs.map(x => [x.title, x.path]);
 }
+const DRUM_LABELS = {35: "kick2", 36: "kick", 37: "stick", 38: "snare", 40: "snar2",
+  41: "tomF", 42: "hat", 43: "tomL", 44: "hatP", 45: "tom", 46: "hatO",
+  47: "tomM", 48: "tomH", 49: "crash", 51: "ride"}; // GM kit rows, shown while a drum track is selected
 const TRACK_COLORS = ["#d95926","#3987e5","#199e70","#c98500","#d55181","#9085e9","#008300","#e66767",
                       "#0aa2c0","#b44ac0","#8a7d20","#a1653f"]; // 12 before any repeat (Epilogue has 11 tracks)
 // display spelling when NO key has been declared: all sharps, matching the
@@ -1925,6 +1929,14 @@ let lastSubtitle = null;
   if (last2 && last2.includes(SONGS + "ff1"))
     localStorage.setItem("ff1roll-lastsong", remap2(last2));
 })();
+function reflectSongURL(path) { // the address bar always holds a shareable link
+  try {
+    const u = new URL(location.href);
+    if (/^albums\//.test(path)) u.searchParams.set("song", path);
+    else u.searchParams.delete("song"); // local/ drafts don't exist for anyone else
+    history.replaceState(null, "", u);
+  } catch (e) {}
+}
 let hlOn = localStorage.getItem("ff1roll-hl") === "1"; // ⊙ highlight toggle
 function toggleHl() {
   hlOn = !hlOn;
@@ -2133,6 +2145,22 @@ function renderTrackbar() {
       renderTrackbar(); buildScoreModel(); updateTrackGains(); draw();
     });
     bar.appendChild(add);
+    if (!song.tracks.some((_, ti) => trackIsDrums(ti))) { // one kit per song
+      const drums = document.createElement("div");
+      drums.className = "chip";
+      drums.setAttribute("role", "button");
+      drums.textContent = "＋ drums";
+      drums.addEventListener("click", () => {
+        song.tracks.push({name: "drums", notes: []});
+        if (song.rawNotes) song.rawNotes.push([]);
+        trackState.push({muted: false, solo: false});
+        selTrack = song.tracks.length - 1;
+        saveDraft();
+        renderTrackbar(); buildScoreModel(); updateTrackGains(); draw();
+        setInfo("drums: rows are GM kit pieces — kick C2, snare D2, hats F♯/A♯2, crash C♯3, toms around G2 (labels in the left gutter)");
+      });
+      bar.appendChild(drums);
+    }
   }
   updateTrackMore();
 }
@@ -2338,14 +2366,18 @@ function draw() {
   ctx.beginPath(); ctx.moveTo(RULER_W - 0.5, 0); ctx.lineTo(RULER_W - 0.5, H); ctx.stroke();
   ctx.textAlign = "right";
   ctx.textBaseline = "middle"; // labels center on their rows (E sat at its row's bottom)
+  const drumSel = song && trackIsDrums(selTrack);
   for (let p = PMIN; p <= PMAX; p++) {
     const pc = p % 12;
     const y = RULER_H + (PMAX - p) * rowH - view.y;
     if (y < RULER_H || y > H) continue;
-    if (pc === 0) {
+    if (drumSel && DRUM_LABELS[p] && view.rowH >= 9) { // kit-piece names while the kit is selected
       ctx.fillStyle = css("--text");
+      ctx.fillText(DRUM_LABELS[p], RULER_W - 6, y + rowH / 2);
+    } else if (pc === 0) {
+      ctx.fillStyle = drumSel ? css("--dim") : css("--text");
       ctx.fillText("C" + (Math.floor(p/12) - 1), RULER_W - 6, y + rowH / 2);
-    } else if (view.rowH >= 12 && [2,4,5,7,9,11].includes(pc)) {
+    } else if (!drumSel && view.rowH >= 12 && [2,4,5,7,9,11].includes(pc)) {
       ctx.fillStyle = css("--dim"); // was --grid: nearly invisible
       ctx.fillText(spellPc(pc), RULER_W - 6, y + rowH / 2);
     }
@@ -4751,6 +4783,7 @@ function renderSongList(group) {
     const row = songRow(title + (path === currentPath ? "   ✓" : ""), () => {
       currentPath = path;
       localStorage.setItem("ff1roll-lastsong", path);
+      reflectSongURL(path);
       updateSongBtn();
       songsheet.classList.remove("on");
       loadSong(path).catch(e => setInfo(e.message));
@@ -7093,6 +7126,7 @@ function openDraftDoc(d, key) {
   song.savedStamp = d.savedStamp || 0;
   currentPath = key;
   localStorage.setItem("ff1roll-lastsong", key);
+  reflectSongURL(key);
   updateSongBtn();
 }
 function writeMidi(s) { // format-1 SMF: meta track (tempo + meter) + one track per voice
@@ -7122,7 +7156,8 @@ function writeMidi(s) { // format-1 SMF: meta track (tempo + meter) + one track 
     const nm = tr.name || "track" + (ti + 1);
     const body = [...vlq(0), 0xFF, 0x03, nm.length, ...str(nm)];
     let last = 0;
-    const ch = ti & 15;
+    const isKit = /drum|percussion|kit|noise/i.test(tr.name || "");
+    const ch = isKit ? 9 : (ti < 9 ? ti : (ti + 1) & 15); // GM: percussion lives on ch 10 (0-indexed 9)
     for (const e of evs) {
       body.push(...vlq(e.t - last), (e.on ? 0x90 : 0x80) | ch, e.p & 127, e.on ? (e.v & 127) : 64);
       last = e.t;
@@ -7146,6 +7181,7 @@ function createComposition(name, bpm, num, den) {
   setSong(parsed, key);
   currentPath = key;
   localStorage.setItem("ff1roll-lastsong", key);
+  reflectSongURL(key);
   updateSongBtn();
   // the meter is HIS declaration (he chose it in the dialog) — record it
   rollnotes.push(resolveNote({b1: 1, q1: 1, b2: null, q2: null,
@@ -7168,6 +7204,7 @@ function forkCurrentSong(name) {
   setSong(parsed, key);
   currentPath = key;
   localStorage.setItem("ff1roll-lastsong", key);
+  reflectSongURL(key);
   updateSongBtn();
   rollnotes = parseRollnotes(notesText).map(n => Object.assign(n, {added: true})).map(resolveNote);
   rollnotes.push(resolveNote({b1: 1, q1: 1, b2: null, q2: null,
@@ -7256,6 +7293,7 @@ function fsubSongs(group) {
       closeFileMenus();
       currentPath = path;
       localStorage.setItem("ff1roll-lastsong", path);
+      reflectSongURL(path);
       updateSongBtn();
       loadSong(path).catch(err => setInfo(err.message));
     });
@@ -7656,6 +7694,7 @@ function renameImportDraft(oldKey, raw) { // returns the new key; null = name co
       songKey = newKey;
       currentPath = newKey;
       localStorage.setItem("ff1roll-lastsong", newKey);
+      reflectSongURL(newKey);
       updateSongBtn();
     }
   }
@@ -8050,6 +8089,7 @@ async function moveComposition(destDir) {
     songKey = newKey;
     currentPath = newKey;
     localStorage.setItem("ff1roll-lastsong", newKey);
+    reflectSongURL(newKey);
     updateSongBtn();
     updateEditBtnVis();
   };
@@ -8476,9 +8516,11 @@ try { // a capture beacon surviving into a fresh load = the tab was killed mid-c
     return;
   }
   const all = Object.values(CATALOG).flat().map(([, p]) => p);
+  const qsong = new URLSearchParams(location.search).get("song"); // shared link wins
   const last = localStorage.getItem("ff1roll-lastsong");
   // drafts aren't in the manifest but are perfectly loadable (draft-wins path)
-  currentPath = (all.includes(last) || (last && localStorage.getItem("ff1roll-draft-" + last)))
+  currentPath = qsong && /^albums\/[\w\-./]+\.mid$/.test(qsong) ? qsong
+    : (all.includes(last) || (last && localStorage.getItem("ff1roll-draft-" + last)))
     ? last : "albums/final-fantasy-i/songs/overworld.mid";
   updateSongBtn();
   loadSong(currentPath).catch(e => setInfo("load failed — open via a web server (GitHub Pages): " + e.message));

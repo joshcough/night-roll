@@ -721,7 +721,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Pencil drag", "cycles", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Pencil drag", "cycles", "＋ drums", "?song=", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -986,6 +986,16 @@ test("insert progression: numerals resolve, chords land in slots, one undo", () 
   assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).slice(-1)[0].d`), 960);
   assert.equal(val(`playCursor`), 960);
   run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = [];`);
+});
+
+test("writeMidi: drum tracks export on channel 10, others skip it", () => {
+  installSong();
+  const bytes = val(`Array.from(writeMidi({ppq: 480, tempos: [{tick: 0, usq: 500000}], timesig: [4, 4],
+    tracks: [{name: "pulse1", notes: [{t: 0, d: 240, p: 60, v: 80}]},
+             {name: "drums", notes: [{t: 0, d: 120, p: 36, v: 100}]}]}))`);
+  const hex = bytes.map(b => b.toString(16).padStart(2, "0")).join(" ");
+  assert.ok(hex.includes("99 24 64"), "drum note-on on channel 9 (0x99, kick 36, vel 100)");
+  assert.ok(hex.includes("90 3c 50"), "melodic note-on stays channel 0");
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {
