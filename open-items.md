@@ -312,6 +312,16 @@ visit" / C "borrowed + turnaround") assert the harmonic mechanism;
 verify with the now-ear. Also still queued: bass variation in Cool
 Bmaj (the lead voice deserves development).
 
+## Glossary (new doc, 2026-08-18)
+
+glossary.md: terms Josh has ENCOUNTERED vs DEMONSTRATED (his
+distinction — "I've just encountered them... I don't want to say I've
+learned them"). Encountered terms are quiz fodder; passing + deliberate
+use promotes to demonstrated, evidence noted inline. Anchors point at
+bars/beats; FF anchors are deliberately blank "(find one)" slots —
+locating them is analysis homework. Keep it updated when new terms come
+up in sessions; promote honestly.
+
 ## Tooling to-do
 
 - **Record button — SHIPPED overnight 2026-08-18** (● beside Play,
