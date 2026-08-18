@@ -888,7 +888,6 @@
     <h2>MOVE TO TRACK</h2>
     <div id="mvtracks" class="row" style="flex-wrap:wrap;gap:6px"></div>
     <div class="row" style="margin-top:12px">
-      <button id="mvdedupe">🧹 Remove stacked duplicates</button>
       <button id="mvclose" style="margin-left:auto">Close</button>
     </div>
   </div>
@@ -1011,9 +1010,9 @@
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
-      <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
+      <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. Pasting and chord inserts never stack an identical note on top of an existing one, and a ⧉ whose clones you never drag cleans itself up — duplicates simply can't accumulate. (Deliberate unisons BETWEEN tracks are untouched by all of this.) A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
-      <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). The same sheet has <b>🧹 Remove stacked duplicates</b>: notes sitting at exactly the same start and pitch on one track (usually from ⧉ copies that never got dragged) collapse to the single longest one, song-wide, in one tap — ⟲ restores them.</dd>
+      <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). </dd>
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
@@ -2171,6 +2170,7 @@ function setSong(parsed, key) {
   songKey = key;
   _laneTop = null; // lane re-docks per song; a lane: annotation may pin it in loadNotes
   editRedo = [];
+  dupPending = null; // clone bookkeeping never crosses songs
   declaredTs = null; // meter resets to neutral until this song's notes declare one
   selNote = null;
   editUndo = []; // undo history belongs to ONE song — stale entries would mutate the wrong notes
@@ -2543,6 +2543,7 @@ function nameChord(pitches, sf) {
 }
 let challengeSec = null; // chord band armed for a challenge (tap on the ruler)
 function clearMultiSel() {
+  if (typeof sweepStrandedClones === "function") sweepStrandedClones();
   challengeSec = null;
   if (!multiSel.length && !lassoRect) {
     document.getElementById("chordbtn").style.display = "none";
@@ -2869,6 +2870,7 @@ function pasteClipboard(atTick) {
     const ti = song.tracks[c.ti] ? c.ti : selTrack;
     const tr = song.tracks[ti];
     const isAdd = !isComposition();
+    if (tr.notes.some(n => !n.gone && n.t === t0 + c.dt && n.p === c.p)) continue; // never stack an identical note
     tr.notes.push({t: t0 + c.dt, d: c.d, p: c.p, v: c.v, added: isAdd});
     if (song.rawNotes) song.rawNotes[ti].push({t: t0 + c.dt + chopS, d: c.d, p: c.p, v: c.v, added: isAdd});
     added.push({ti, ni: tr.notes.length - 1});
@@ -2899,7 +2901,30 @@ function deleteSelection() {
   draw();
   return items.length;
 }
+let dupPending = null; // ⧉ clones awaiting a move — {clones, origs, entry}
+function sweepStrandedClones() { // a ⧉ that never got dragged left an invisible stack; it evaporates
+  if (!dupPending) return;
+  const {clones, origs, entry} = dupPending;
+  dupPending = null;
+  const stranded = clones.every(({ti, ni}, i) => {
+    const n = song.tracks[ti] && song.tracks[ti].notes[ni];
+    const o = origs[i];
+    return n && !n.gone && n.t === o.t && n.d === o.d && n.p === o.p;
+  });
+  if (!stranded) return; // they moved (or died) — real notes now, leave them be
+  for (const {ti, ni} of clones) {
+    const n = song.tracks[ti].notes[ni];
+    n.gone = true;
+    const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[ti][n.ri];
+    if (rn) rn.gone = true;
+  }
+  const at = editUndo.indexOf(entry);
+  if (at >= 0) editUndo.splice(at, 1); // their undo entry goes with them
+  saveEdits();
+  draw();
+}
 function duplicateSelectionInPlace() { // option-drag: clones become the dragged selection
+  sweepStrandedClones(); // a second ⧉ first clears the last one's stranded clones
   const items = selEditItems();
   if (!items.length) return false;
   const added = [];
@@ -2910,7 +2935,11 @@ function duplicateSelectionInPlace() { // option-drag: clones become the dragged
     if (song.rawNotes) song.rawNotes[ti].push({t: nn.t + chopS, d: nn.d, p: nn.p, v: nn.v, added: isAdd});
     added.push({ti, ni: tr.notes.length - 1});
   }
-  pushUndo({kind: "addBatch", items: added});
+  const entry = {kind: "addBatch", items: added};
+  pushUndo(entry);
+  dupPending = {clones: added.slice(),
+                origs: added.map(({ti, ni}) => { const n = song.tracks[ti].notes[ni]; return {t: n.t, d: n.d, p: n.p}; }),
+                entry};
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   return true;
@@ -5481,34 +5510,6 @@ function moveSelectionToTrack(target) { // ⇄: selection changes instrument, ke
   draw();
   return items.length;
 }
-function dedupeSong() { // 🧹: exact same track+start+pitch = stacked clones; keep the longest
-  if (!editableSong()) return 0;
-  const erased = [];
-  song.tracks.forEach((tr, ti) => {
-    const best = new Map();
-    tr.notes.forEach((n, ni) => {
-      if (n.gone) return;
-      const k = n.t + ":" + n.p;
-      const prev = best.get(k);
-      if (!prev) { best.set(k, {ni, d: n.d}); return; }
-      const loser = n.d > prev.d ? prev.ni : ni; // keep the longest
-      if (n.d > prev.d) best.set(k, {ni, d: n.d});
-      const ln = tr.notes[loser];
-      ln.gone = true;
-      const rn = song.rawNotes && ln.ri !== undefined && song.rawNotes[ti][ln.ri];
-      if (rn) rn.gone = true;
-      erased.push({ti, ni: loser});
-    });
-  });
-  if (!erased.length) return 0;
-  pushUndo({kind: "eraseBatch", items: erased});
-  multiSel = []; multiSelKey = new Set(); selNote = null;
-  saveEdits();
-  computeSongEnd();
-  if (viewMode === "score") buildScoreModel();
-  draw();
-  return erased.length;
-}
 function chordSym(rootPc, qual) { // flat-preferring: ♭VI in Cm is A♭, not G♯
   return CHORD_FLAT[rootPc] + (qual === "maj" ? "" : qual);
 }
@@ -5529,6 +5530,7 @@ function insertChordAt(tick, rootPc, qual, oct, durQ) {
   for (const iv of ivs) {
     const p = base + iv;
     if (p < PMIN || p > PMAX) continue;
+    if (tr.notes.some(n => !n.gone && n.t === t0 && n.p === p)) continue; // never stack
     tr.notes.push({t: t0, d: snap, p, v: pencilVel, added: isAdd});
     if (song.rawNotes) song.rawNotes[selTrack].push({t: t0 + chopS, d: snap, p, v: pencilVel, added: isAdd});
     added.push({ti: selTrack, ni: tr.notes.length - 1});
@@ -5623,6 +5625,7 @@ function insertProgressionAt(tick, progStr, tonicPc, oct, durQ) {
     for (const iv of ivs) {
       const p = base + iv;
       if (p < PMIN || p > PMAX) continue;
+      if (tr.notes.some(n => !n.gone && n.t === t0 && n.p === p)) continue; // never stack
       tr.notes.push({t: t0, d: snap, p, v: pencilVel, added: isAdd});
       if (song.rawNotes) song.rawNotes[selTrack].push({t: t0 + chopS, d: snap, p, v: pencilVel, added: isAdd});
       added.push({ti: selTrack, ni: tr.notes.length - 1});
@@ -8349,7 +8352,48 @@ document.getElementById("fileimpcommit").addEventListener("click", e => {
     btn.textContent = "Commit import (" + n + ")";
   });
 });
-async function commitCompositionNow(status) { // .mid + annotations, one flow
+function notesTxtFor() { // the web-session dump: claude.ai reads text, not .mid binaries
+  const NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const pn = p => NAMES[p % 12] + (Math.floor(p / 12) - 1);
+  const ts = song.timesig || [4, 4];
+  const bt = ts[0] * 4 / ts[1] * song.ppq;
+  let end = 0;
+  song.tracks.forEach(t => t.notes.forEach(n => { if (!n.gone) end = Math.max(end, n.t + n.d); }));
+  const nBars = Math.ceil(end / bt - 0.05);
+  const fmt = x => x.toFixed(2).replace(/\.?0+$/, "");
+  const L = [];
+  L.push("# " + (songKey || "song").split("/").pop() + " — " + ts[0] + "/" + ts[1] + ", " +
+         Math.round(6e7 / song.tempos[0].usq) + "bpm, " + nBars + " bars");
+  L.push("# Format: bar N: beat pitch duration-in-quarter-notes");
+  L.push("# Pitches use sharp spelling; the true key is Josh's to discover — this file states no key.");
+  song.tracks.forEach((tr, ti) => {
+    L.push("");
+    L.push("## track " + (ti + 1) + (tr.name ? " (" + tr.name + ")" : ""));
+    for (let b = 0; b < nBars; b++) {
+      const ns = tr.notes.filter(n => !n.gone && n.t >= b * bt && n.t < (b + 1) * bt);
+      if (!ns.length) continue;
+      L.push("bar " + (b + 1) + ": " + ns.map(n =>
+        fmt((n.t - b * bt) / song.ppq + 1) + " " + pn(n.p) + " " + fmt(n.d / song.ppq)).join(", "));
+    }
+  });
+  return L.join("\n") + "\n";
+}
+async function putSongsText(path, text, h) { // text sibling files in the songs repo
+  const putOnce = async () => {
+    let sha = null;
+    const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
+    if (g.ok) sha = (await g.json()).sha;
+    const body = {message: "Save " + path + " from Night Roll", branch: "main",
+                  content: btoa(unescape(encodeURIComponent(text)))};
+    if (sha) body.sha = sha;
+    return fetch(repoApi("songs") + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
+  };
+  let r = await putOnce();
+  if (r.status === 409) r = await putOnce();
+  return r;
+}
+async function commitCompositionNow(status) { // .mid + annotations + notes.txt, one flow
+  sweepStrandedClones(); // never commit invisible stacks
   const token = localStorage.getItem("ff1roll-ghtoken");
   if (!token) { status.textContent = "No GitHub token stored yet — add one in File → Settings."; return; }
   status.textContent = "Committing " + songKey + " (.mid + annotations)…";
@@ -8361,6 +8405,8 @@ async function commitCompositionNow(status) { // .mid + annotations, one flow
     const content = serializeRollnotesStamped(stamp);
     const r2 = await putRollnotes(songKey.replace(/\.mid$/, "") + ".rollnotes.json", content, h);
     if (!r2.ok) throw new Error(".rollnotes.json HTTP " + r2.status);
+    const r3 = await putSongsText(songKey.replace(/\.mid$/, "") + ".notes.txt", notesTxtFor(), h);
+    if (!r3.ok) throw new Error(".notes.txt HTTP " + r3.status);
     await updateManifest(h, albums => manifestPlace(albums, null, songKey));
     markCurrentSongSynced(content, stamp);
     await initCatalog().catch(() => {});
@@ -8610,12 +8656,6 @@ document.getElementById("mvtracks").addEventListener("click", e => {
   document.getElementById("movesheet").classList.remove("on");
   setInfo(k ? "moved " + k + " note" + (k === 1 ? "" : "s") + " to " + (song.tracks[+b.dataset.mv].name || "track")
             : "select notes first (lasso or tap), then ⇄");
-});
-document.getElementById("mvdedupe").addEventListener("click", () => {
-  const k = dedupeSong();
-  document.getElementById("movesheet").classList.remove("on");
-  setInfo(k ? "removed " + k + " stacked duplicate" + (k === 1 ? "" : "s") + " (⟲ restores them)"
-            : "no stacked duplicates found");
 });
 document.getElementById("mvclose").addEventListener("click", () =>
   document.getElementById("movesheet").classList.remove("on"));

@@ -86,12 +86,13 @@ test("help sheet: tabs switch sections and remember the last one", async ({ page
 });
 
 test("insert dialog stamps a chord and walks the cursor", async ({ page }) => {
+  await page.evaluate(() => { playCursor = 1920; }); // empty bar — inserts skip notes that already exist
   await page.click("#insbtn");
   await page.click('#chquals button[data-qual="maj7"]');
   await page.click("#chinsert");
   const added = (await notes(page)).slice(3);
   expect(added).toHaveLength(4); // maj7 = four notes
-  expect(await page.evaluate(() => playCursor)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => playCursor)).toBeGreaterThan(1920);
   await page.click("#chclose");
 });
 

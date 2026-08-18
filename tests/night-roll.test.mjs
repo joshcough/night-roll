@@ -1029,6 +1029,69 @@ test("redo: replays undone edits; a fresh edit clears redo history", () => {
   run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = []; editRedo = [];`);
 });
 
+test("paste never stacks an identical note; unisons across tracks untouched", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/stack-test.mid";
+    song.tracks = [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]},
+                   {name: "pulse2", notes: [{t: 0, d: 480, p: 60, v: 80}]}];
+    song.rawNotes = null; chopS = 0; selTrack = 0;
+    multiSel = [{ti: 0, ni: 0}]; multiSelKey = new Set(["0:0"]);
+    selNote = null; editUndo = []; editRedo = []; pencilDur = 1; pencilVel = 80; playCursor = 0;
+  `);
+  // paste right back onto itself: nothing stacks
+  assert.equal(run(`copySelection()`), 1);
+  assert.equal(run(`pasteClipboard(0)`), 0);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 1);
+  // paste one beat later works
+  assert.equal(run(`pasteClipboard(480)`), 1);
+  // chord insert over an existing root only adds the missing tones
+  run(`playCursor = 0;`);
+  assert.equal(run(`insertChordAt(0, 0, "maj", 4, 1)`), 2); // C4 exists — only E4+G4 land
+  // the cross-track unison (pulse2's C4) was never touched
+  assert.equal(val(`song.tracks[1].notes.filter(n => !n.gone).length`), 1);
+  run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = []; rollnotes = [];`);
+});
+
+test("stranded ⧉ clones evaporate; dragged clones survive", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/sweep-test.mid";
+    song.tracks = [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]}];
+    song.rawNotes = null; chopS = 0; selTrack = 0;
+    multiSel = [{ti: 0, ni: 0}]; multiSelKey = new Set(["0:0"]);
+    selNote = null; editUndo = []; editRedo = []; dupPending = null; pencilDur = 1; pencilVel = 80;
+  `);
+  // ⧉ then wander off: the untouched clone evaporates, with its undo entry
+  assert.equal(run(`duplicateSelectionInPlace()`), true);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 2);
+  run(`clearMultiSel()`);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 1);
+  assert.equal(val(`editUndo.length`), 0);
+  // ⧉ then MOVE: the clone is a real note and stays
+  run(`multiSel = [{ti: 0, ni: 0}]; multiSelKey = new Set(["0:0"]);`);
+  assert.equal(run(`duplicateSelectionInPlace()`), true);
+  assert.equal(run(`nudgeSelection(480, 0)`), true);
+  run(`clearMultiSel()`);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 2);
+  run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = []; dupPending = null;`);
+});
+
+test("notesTxtFor: text dump matches the pipeline format", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/dump-test.mid";
+    song.timesig = [4, 4];
+    song.tempos = [{tick: 0, usq: 500000}];
+    song.tracks = [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}, {t: 480, d: 240, p: 64, v: 80}]}];
+  `);
+  const txt = val(`notesTxtFor()`);
+  assert.ok(txt.startsWith("# dump-test.mid — 4/4, 120bpm, 1 bars"), txt.split("\n")[0]);
+  assert.ok(txt.includes("## track 1 (pulse1)"));
+  assert.ok(txt.includes("bar 1: 1 C4 1, 2 E4 0.5"));
+  run(`songKey = null;`);
+});
+
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {
   const { buildHelp } = await import("../tools/build_help.mjs");
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
