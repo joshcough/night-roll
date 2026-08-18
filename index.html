@@ -975,7 +975,7 @@
     </div>
     <div class="hsec" data-hsec="files">
     <dl>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its rows become kit pieces (kick C2, snare D2, closed/open hats F♯2/A♯2, crash C♯3, toms in between — the left gutter labels them while the kit is selected), penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (commits .mid + .rollnotes to albums/compositions/nightroll/ — chip captures are locked and refuse Save), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its the kit gets its own LANE at the top of the roll, above the pitch rows — kick, snare, hats, toms, crash, ride, each on a labeled row of its own, so drums never sit on top of your bass, penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
@@ -1222,6 +1222,18 @@ async function initCatalog() {
 const DRUM_LABELS = {35: "kick2", 36: "kick", 37: "stick", 38: "snare", 40: "snar2",
   41: "tomF", 42: "hat", 43: "tomL", 44: "hatP", 45: "tom", 46: "hatO",
   47: "tomM", 48: "tomH", 49: "crash", 51: "ride"}; // GM kit rows, shown while a drum track is selected
+const DRUM_SLOTS = [35, 36, 37, 38, 40, 41, 43, 45, 47, 48, 42, 44, 46, 49, 51]; // kit lane, bottom→top
+function songHasDrums() { return !!song && song.tracks.some((_, ti) => trackIsDrums(ti)); }
+function topRow() { return songHasDrums() ? PMAX + DRUM_SLOTS.length + 1 : PMAX; } // rows above PMAX = the kit lane (+1 gap)
+function noteRow(ti, p) { // display row: drums render in their own lane, never on bass pitch rows
+  if (!trackIsDrums(ti)) return p;
+  const i = DRUM_SLOTS.indexOf(p);
+  return PMAX + 2 + (i < 0 ? DRUM_SLOTS.length - 1 : i);
+}
+function drumStep(p, d) { // vertical moves walk the kit slots, not semitones
+  const i = DRUM_SLOTS.indexOf(p);
+  return DRUM_SLOTS[Math.min(DRUM_SLOTS.length - 1, Math.max(0, (i < 0 ? 0 : i) + d))];
+}
 const TRACK_COLORS = ["#d95926","#3987e5","#199e70","#c98500","#d55181","#9085e9","#008300","#e66767",
                       "#0aa2c0","#b44ac0","#8a7d20","#a1653f"]; // 12 before any repeat (Epilogue has 11 tracks)
 // display spelling when NO key has been declared: all sharps, matching the
@@ -2265,10 +2277,16 @@ function draw() {
   const bt = barTicks();
   const rowH = view.rowH;
 
-  // pitch row banding (black-key rows darker)
-  for (let p = PMIN; p <= PMAX; p++) {
-    const y = RULER_H + (PMAX - p) * rowH - view.y;
+  // pitch row banding (black-key rows darker) + the kit lane above
+  const TOP = topRow();
+  for (let p = PMIN; p <= TOP; p++) {
+    const y = RULER_H + (TOP - p) * rowH - view.y;
     if (y < RULER_H - rowH || y > H) continue;
+    if (p > PMAX) { // kit lane: alternate soft banding, heavy line under the lane
+      if (p === PMAX + 1) { ctx.fillStyle = css("--grid"); ctx.fillRect(RULER_W, y + rowH, W - RULER_W, 1.5); continue; }
+      if ((p - PMAX) % 2 === 0) { ctx.fillStyle = css("--grid-soft"); ctx.fillRect(RULER_W, y, W - RULER_W, rowH); }
+      continue;
+    }
     const pc = p % 12;
     const black = [1,3,6,8,10].includes(pc);
     ctx.fillStyle = black ? css("--grid-soft") : "transparent";
@@ -2306,7 +2324,7 @@ function draw() {
       const x = RULER_W + n.t * ppt - view.x;
       const w = Math.max(3, n.d * ppt - 1);
       if (x + w < RULER_W || x > W) continue;
-      const y = RULER_H + (PMAX - n.p) * rowH - view.y;
+      const y = RULER_H + (topRow() - noteRow(ti, n.p)) * rowH - view.y;
       if (y < RULER_H - rowH || y > H) continue;
       ctx.globalAlpha = 0.55 + 0.45 * (n.v / 127);
       if (findPc !== null && n.p % 12 !== findPc) ctx.globalAlpha *= 0.15; // finder: non-matches recede
@@ -2366,18 +2384,22 @@ function draw() {
   ctx.beginPath(); ctx.moveTo(RULER_W - 0.5, 0); ctx.lineTo(RULER_W - 0.5, H); ctx.stroke();
   ctx.textAlign = "right";
   ctx.textBaseline = "middle"; // labels center on their rows (E sat at its row's bottom)
-  const drumSel = song && trackIsDrums(selTrack);
-  for (let p = PMIN; p <= PMAX; p++) {
+  for (let p = PMIN; p <= topRow(); p++) {
     const pc = p % 12;
-    const y = RULER_H + (PMAX - p) * rowH - view.y;
+    const y = RULER_H + (topRow() - p) * rowH - view.y;
     if (y < RULER_H || y > H) continue;
-    if (drumSel && DRUM_LABELS[p] && view.rowH >= 9) { // kit-piece names while the kit is selected
+    if (p > PMAX) { // kit lane rows carry their piece names
+      const gm = DRUM_SLOTS[p - PMAX - 2];
+      if (gm !== undefined && DRUM_LABELS[gm] && view.rowH >= 9) {
+        ctx.fillStyle = css("--text");
+        ctx.fillText(DRUM_LABELS[gm], RULER_W - 6, y + rowH / 2);
+      }
+      continue;
+    }
+    if (pc === 0) {
       ctx.fillStyle = css("--text");
-      ctx.fillText(DRUM_LABELS[p], RULER_W - 6, y + rowH / 2);
-    } else if (pc === 0) {
-      ctx.fillStyle = drumSel ? css("--dim") : css("--text");
       ctx.fillText("C" + (Math.floor(p/12) - 1), RULER_W - 6, y + rowH / 2);
-    } else if (!drumSel && view.rowH >= 12 && [2,4,5,7,9,11].includes(pc)) {
+    } else if (view.rowH >= 12 && [2,4,5,7,9,11].includes(pc)) {
       ctx.fillStyle = css("--dim"); // was --grid: nearly invisible
       ctx.fillText(spellPc(pc), RULER_W - 6, y + rowH / 2);
     }
@@ -2492,12 +2514,13 @@ function finalizeLasso() {
       }
     }
   } else {
-    const pHi = PMAX - Math.floor((y0 - RULER_H + view.y) / view.rowH);
-    const pLo = PMAX - Math.floor((y1 - RULER_H + view.y) / view.rowH);
+    const rHi = topRow() - Math.floor((y0 - RULER_H + view.y) / view.rowH);
+    const rLo = topRow() - Math.floor((y1 - RULER_H + view.y) / view.rowH);
     song.tracks.forEach((tr, ti) => {
       if (!trackAudible(ti)) return;
       tr.notes.forEach((n, ni) => {
-        if (!n.gone && n.p >= pLo && n.p <= pHi && n.t < t1 && n.t + n.d > t0) addSel(ti, ni);
+        const rw = noteRow(ti, n.p);
+        if (!n.gone && rw >= rLo && rw <= rHi && n.t < t1 && n.t + n.d > t0) addSel(ti, ni);
       });
     });
   }
@@ -2654,9 +2677,9 @@ function evtPos(e) {
   const p = e.touches ? e.touches[0] : e;
   return {x: p.clientX - r.left, y: p.clientY - r.top};
 }
-function posToTickPitch(pos) {
+function posToTickPitch(pos) { // pitch is a DISPLAY ROW (kit lane rows sit above PMAX)
   const tick = (pos.x - RULER_W + view.x) / pxPerTick();
-  const pitch = PMAX - Math.floor((pos.y - RULER_H + view.y) / view.rowH);
+  const pitch = topRow() - Math.floor((pos.y - RULER_H + view.y) / view.rowH);
   return {tick, pitch};
 }
 // ------------------------------------------------ selection editing (Josh's
@@ -2694,8 +2717,14 @@ function selEditApply(items, mutate, snapshot) { // mutate + undo + persist + re
 function nudgeSelection(dTicks, dPitch) {
   if (!editableSong()) return false;
   const items = selEditItems();
-  if (items.some(({n}) => n.t + dTicks < 0 || n.p + dPitch < PMIN || n.p + dPitch > PMAX)) return false;
-  return selEditApply(items, nn => { nn.t += dTicks; nn.p += dPitch; });
+  if (items.some(({ti, n}) => n.t + dTicks < 0 ||
+      (!trackIsDrums(ti) && (n.p + dPitch < PMIN || n.p + dPitch > PMAX)))) return false;
+  let i = 0; // selEditApply mutates in item order — kit notes step slots, not semitones
+  return selEditApply(items, nn => {
+    const ti = items[i++].ti;
+    nn.t += dTicks;
+    nn.p = trackIsDrums(ti) ? drumStep(nn.p, dPitch) : nn.p + dPitch;
+  });
 }
 function resizeSelection(dTicks) { // same delta for every note — a chord shrinks as one
   if (!editableSong()) return false;
@@ -2844,7 +2873,7 @@ function hitNote(pos) {
     const tr = song.tracks[ti];
     for (let ni = 0; ni < tr.notes.length; ni++) {
       const n = tr.notes[ni];
-      if (!n.gone && n.p === pitch && tick >= n.t && tick <= n.t + Math.max(n.d, 8 / pxPerTick())) return {ti, ni};
+      if (!n.gone && noteRow(ti, n.p) === pitch && tick >= n.t && tick <= n.t + Math.max(n.d, 8 / pxPerTick())) return {ti, ni};
     }
   }
   return null;
@@ -2978,9 +3007,18 @@ function pxqFloor() { // px/quarter where bar 1..last bar fill the width, less a
   return Math.min(400, Math.max(8, (wrap.clientWidth - 2 * RULER_W) / (songEndTick / song.ppq)));
 }
 const ROLL_AIR = 3; // rows of breathing room above and below the pitch range at full zoom-out
-function rowHFloor() { // row height where the pitch range + air fills the height, less a ruler-height of bottom padding
+function dispPitchExtent() { // like songPitchExtent, but in display rows (kit lane included)
+  let lo = Infinity, hi = -Infinity;
+  song.tracks.forEach((tr, ti) => tr.notes.forEach(n => {
+    if (n.gone) return;
+    const r = noteRow(ti, n.p);
+    if (r < lo) lo = r; if (r > hi) hi = r;
+  }));
+  return lo <= hi ? {lo: Math.max(PMIN, lo), hi: Math.min(topRow(), hi)} : {lo: 55, hi: 79};
+}
+function rowHFloor() { // row height where the display range + air fills the height, less a ruler-height of bottom padding
   if (!song) return 6;
-  const {lo, hi} = songPitchExtent();
+  const {lo, hi} = dispPitchExtent();
   return Math.min(32, Math.max(4, (wrap.clientHeight - 2 * RULER_H) / (hi - lo + 1 + 2 * ROLL_AIR)));
 }
 function cursorHit(pos) {
@@ -3060,8 +3098,11 @@ canvas.addEventListener("pointerdown", e => {
   }
   let pencil = null; // pencil-drag: the note starts at finger-down and stretches as you drag
   if (editableSong() && mode === "pencil" && viewMode !== "score" && !fallActive() && !lasso && p.y >= RULER_H) {
-    const {tick, pitch} = posToTickPitch(p);
-    if (pitch >= PMIN && pitch <= PMAX && tick >= 0) {
+    const {tick, pitch: row} = posToTickPitch(p);
+    const kit = trackIsDrums(selTrack);
+    const pitch = kit ? (row > PMAX + 1 ? DRUM_SLOTS[Math.min(DRUM_SLOTS.length - 1, row - PMAX - 2)] : -1)
+                      : (row <= PMAX ? row : -1);
+    if (pitch >= (kit ? 0 : PMIN) && pitch <= 127 && tick >= 0) {
       const grid = moveSnapTicks(); // 16ths: start position is finer than the note length
       const snap = pencilTicks();
       const t = Math.round(tick / grid) * grid;
@@ -3103,7 +3144,7 @@ canvas.addEventListener("pointermove", e => {
       const newRowH = Math.min(32, Math.max(floorY, pinch.rowH0 * sy));
       view.y = (pinch.vy + midY) * (newRowH / pinch.rowH0) - midY;
       view.rowH = newRowH;
-      if (newRowH === floorY) view.y = (PMAX - songPitchExtent().hi - ROLL_AIR) * newRowH; // top pitch + air below the ruler
+      if (newRowH === floorY) view.y = (topRow() - dispPitchExtent().hi - ROLL_AIR) * newRowH; // top row + air below the ruler
     }
     clampView(); draw();
     return;
@@ -3135,7 +3176,8 @@ canvas.addEventListener("pointermove", e => {
         for (let i = 0; i < drag.noteEdit.items.length; i++) {
           const it = drag.noteEdit.items[i], o = drag.noteEdit.orig[i];
           it.n.t = Math.max(0, o.t + dT);
-          it.n.p = Math.min(PMAX, Math.max(PMIN, o.p + dP));
+          it.n.p = trackIsDrums(it.ti) ? drumStep(o.p, dP)
+                                       : Math.min(PMAX, Math.max(PMIN, o.p + dP));
         }
       } else {
         const minD = Math.max(24, Math.round(song.ppq / 8));
@@ -3209,7 +3251,7 @@ function fitView() { // on song load: the whole song flush on screen (= the zoom
   view.pxq = pxqFloor();
   view.rowH = rowHFloor();
   view.x = 0;
-  view.y = (PMAX - songPitchExtent().hi - ROLL_AIR) * view.rowH;
+  view.y = (topRow() - dispPitchExtent().hi - ROLL_AIR) * view.rowH;
 }
 function clampView() {
   if (song && view.pxq < minPxq()) view.pxq = minPxq(); // score floor tracks the model
@@ -3224,7 +3266,7 @@ function clampView() {
   view.x = Math.min(maxX, Math.max(minX, view.x));
   const contentH = viewMode === "score" && scoreModel
     ? scoreContentH()
-    : (PMAX - PMIN + 1) * view.rowH;
+    : (topRow() - PMIN + 1) * view.rowH;
   const maxY = contentH - (wrap.clientHeight - RULER_H);
   view.y = Math.min(Math.max(0, maxY), Math.max(0, view.y));
 }
