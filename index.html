@@ -1245,7 +1245,7 @@ async function initCatalog() {
 const DRUM_LABELS = {35: "kick2", 36: "kick", 37: "stick", 38: "snare", 40: "snar2",
   41: "tomF", 42: "hat", 43: "tomL", 44: "hatP", 45: "tom", 46: "hatO",
   47: "tomM", 48: "tomH", 49: "crash", 51: "ride"}; // GM kit rows, shown while a drum track is selected
-const DRUM_SLOTS = [35, 36, 37, 38, 40, 41, 43, 45, 47, 48, 42, 44, 46, 49, 51]; // kit lane, bottom→top
+const DRUM_SLOTS = [42, 44, 46, 49, 51, 48, 47, 45, 43, 41, 40, 38, 37, 36, 35]; // kit lane, top→bottom: hats first (Josh), kick at the floor
 function songHasDrums() { return !!song && song.tracks.some((_, ti) => trackIsDrums(ti)); }
 function topRow() { return PMAX; }
 function botRow() { return songHasDrums() ? PMIN - DRUM_SLOTS.length - 1 : PMIN; } // kit lane hangs below the pitch rows (+1 gap)
