@@ -45,7 +45,13 @@ C♯ is the add9 — the closing chord's signature color, now sung by the
 bass, resolving 9→3 (C♯→D♯); and because those four notes sit right
 before the loop jump, differentiating them from the bar-4 seam makes
 "continuing" and "coming around" audibly different — a four-note
-TURNAROUND, written by instinct before the turns study ever started.
+TURNAROUND, written before the turns study ever started. And the C♯
+wasn't blind instinct — Josh's own account: "I knew I had to put that
+add9 in the bass because the chords and the melody were doing it...
+I just had a feeling that I had to, and I tried it." Deliberate
+propagation of the signature color into the last voice lacking it —
+motivic saturation at the cadence, where every voice agreeing reads
+as arrival, not redundancy.
 
 ## What the song is (Josh's thesis)
 
