@@ -320,6 +320,21 @@
   #implist .row { flex-wrap: nowrap; }
   #implist .st { font-family: var(--mono); font-size: 11px; line-height: 1.35; color: var(--dim); flex: 1; min-width: 0; white-space: normal; }
 
+  #editsheet {
+    display: none;
+    position: absolute;
+    z-index: 60;
+    background: var(--panel2);
+    border: 1px solid var(--grid);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 230px;
+    max-width: 92vw;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  }
+  #editsheet.on { display: block; }
+  #editsheet .fitem { display: block; width: 100%; text-align: left; border: 0; background: none; border-radius: 6px; min-height: 42px; padding: 8px 10px; font-family: var(--mono); font-size: 13px; color: var(--text); cursor: pointer; }
+  #editsheet .fitem:active { background: var(--panel); }
   #filesheet {
     display: none;
     position: absolute;
@@ -596,6 +611,7 @@
 <header>
   <div class="brand">NIGHT <span>//</span> ROLL</div>
   <button id="filesheetbtn">File ▾</button>
+  <button id="editsheetbtn" style="display:none">Edit ▾</button>
   <span id="songcrumb"></span>
   <!-- accept threads two iOS quirks: listing only extensions grays out .nsf (no
        registered type), while NO accept summons the photo-library sheet.
@@ -669,7 +685,8 @@
   <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
   <button id="joinbtn" aria-label="Join selected notes">⁀</button>
   <button id="delbtn" aria-label="Delete selected notes">🗑</button>
-  <button id="undobtn">⟲</button>
+  <button id="undobtn" aria-label="Undo">⟲</button>
+  <button id="redobtn" aria-label="Redo">⟳</button>
 </div>
 <div id="instpanel">
   <div id="instwrap"><canvas id="instcanvas"></canvas></div>
@@ -987,7 +1004,7 @@
     <div class="hsec" data-hsec="editor">
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase (tap the active tool again to turn it OFF — then dragging only pans, and no note can be grabbed by accident), durations 16th–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
-      <dt>● Record</dt><dd>On your own songs, ● beside Play arms a take: the transport rolls (count-in applies) and every key you play on the 🎹 instrument panel lands on the SELECTED track at the playhead — hold a key for a long note, slide across keys for runs. Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step.</dd>
+      <dt>● Record</dt><dd>On your own songs: tap the chip of the track you want to record onto, then ● beside Play arms the take — the 🎹 panel opens, ● blinks red, the transport rolls (count-in applies), and every key you play lands on that track at the playhead — hold a key for a long note, slide across keys for runs. Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step.</dd>
       <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration buttons set that grid (16T/16th/16· · 8T/8th/8· · ¼…): pick the smallest unit you're thinking in and draw lengths by feel.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
@@ -998,6 +1015,7 @@
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the bar range, Fill — the pattern repeats across those bars on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
+      <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Duplicate, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ♫ Insert chord, 🥁 Drum pattern — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
       <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲ step.</dd>
@@ -1019,6 +1037,22 @@
       <button class="primary" id="helpclose">Close</button>
     </div>
   </div>
+</div>
+
+<div id="editsheet">
+  <button class="fitem" id="emUndo">⟲  Undo</button>
+  <button class="fitem" id="emRedo">⟳  Redo</button>
+  <div class="fdiv"></div>
+  <button class="fitem" id="emDup">⧉  Duplicate in place</button>
+  <button class="fitem" id="emPaste">📋  Paste at cursor</button>
+  <button class="fitem" id="emDelete">🗑  Delete selection</button>
+  <div class="fdiv"></div>
+  <button class="fitem" id="emSplit">✂  Split at cursor</button>
+  <button class="fitem" id="emJoin">⁀  Join notes</button>
+  <button class="fitem" id="emMove">⇄  Move to track…</button>
+  <div class="fdiv"></div>
+  <button class="fitem" id="emChord">♫  Insert chord…</button>
+  <button class="fitem" id="emFill">🥁  Drum pattern…</button>
 </div>
 
 <div id="filesheet">
@@ -1519,6 +1553,7 @@ function updateEditBtnVis() { // the edit ROW exists only on songs made in the a
   document.getElementById("editrow").classList.toggle("on", editable);
   if (editable) document.getElementById("velseg").style.display = mode === "erase" ? "none" : "";
   document.getElementById("recbtn").style.display = editable ? "" : "none";
+  document.getElementById("editsheetbtn").style.display = editable ? "" : "none";
 }
 
 // ---------------------------------------------------------------- rollnotes
@@ -2133,6 +2168,7 @@ function setSong(parsed, key) {
   song.baseTempos = song.tempos.map(t => ({...t})); // tempo: directives rebuild from this
   songKey = key;
   _laneTop = null; // lane re-docks per song; a lane: annotation may pin it in loadNotes
+  editRedo = [];
   declaredTs = null; // meter resets to neutral until this song's notes declare one
   selNote = null;
   editUndo = []; // undo history belongs to ONE song — stale entries would mutate the wrong notes
@@ -2782,7 +2818,7 @@ function selEditItems() { // the notes an edit applies to: lasso selection, else
 }
 function selEditApply(items, mutate, snapshot) { // mutate + undo + persist + redraw
   if (!items.length) return false;
-  editUndo.push({kind: "mod", items: items.map(({ti, ni, n}) =>
+  pushUndo({kind: "mod", items: items.map(({ti, ni, n}) =>
     (snapshot && snapshot.find(x => x.ti === ti && x.ni === ni)) || {ti, ni, t: n.t, d: n.d, p: n.p, v: n.v})});
   for (const it of items) {
     mutate(it.n);
@@ -2835,7 +2871,7 @@ function pasteClipboard(atTick) {
     if (song.rawNotes) song.rawNotes[ti].push({t: t0 + c.dt + chopS, d: c.d, p: c.p, v: c.v, added: isAdd});
     added.push({ti, ni: tr.notes.length - 1});
   }
-  editUndo.push({kind: "addBatch", items: added});
+  pushUndo({kind: "addBatch", items: added});
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   saveEdits();
@@ -2853,7 +2889,7 @@ function deleteSelection() {
     const rn = song.rawNotes && it.n.ri !== undefined && song.rawNotes[it.ti][it.n.ri];
     if (rn) rn.gone = true;
   }
-  editUndo.push({kind: "eraseBatch", items: items.map(({ti, ni}) => ({ti, ni}))});
+  pushUndo({kind: "eraseBatch", items: items.map(({ti, ni}) => ({ti, ni}))});
   multiSel = []; multiSelKey = new Set(); selNote = null;
   saveEdits();
   computeSongEnd();
@@ -2872,7 +2908,7 @@ function duplicateSelectionInPlace() { // option-drag: clones become the dragged
     if (song.rawNotes) song.rawNotes[ti].push({t: nn.t + chopS, d: nn.d, p: nn.p, v: nn.v, added: isAdd});
     added.push({ti, ni: tr.notes.length - 1});
   }
-  editUndo.push({kind: "addBatch", items: added});
+  pushUndo({kind: "addBatch", items: added});
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   return true;
@@ -2891,7 +2927,7 @@ function splitApply(items, cutFor) { // shared: cut each note at cutFor(note)
     const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[ti][n.ri];
     if (rn) rn.d = n.d;
   }
-  editUndo.push({kind: "group", entries: [mod, {kind: "addBatch", items: added}]});
+  pushUndo({kind: "group", entries: [mod, {kind: "addBatch", items: added}]});
   if (multiSel.length) { // the new halves join the selection
     multiSel.push(...added);
     for (const {ti, ni} of added) multiSelKey.add(ti + ":" + ni);
@@ -2937,7 +2973,7 @@ function joinSelection() { // ⁀: merge selected notes of the same track+pitch 
     joined += g.length;
   }
   if (!joined) return 0;
-  editUndo.push({kind: "group", entries: [{kind: "mod", items: mods}, {kind: "eraseBatch", items: erased}]});
+  pushUndo({kind: "group", entries: [{kind: "mod", items: mods}, {kind: "eraseBatch", items: erased}]});
   multiSel = multiSel.filter(({ti, ni}) => !song.tracks[ti].notes[ni].gone);
   multiSelKey = new Set(multiSel.map(({ti, ni}) => ti + ":" + ni));
   if (selNote && song.tracks[selNote.ti].notes[selNote.ni].gone) selNote = null;
@@ -3200,7 +3236,7 @@ canvas.addEventListener("pointerdown", e => {
       const added = !isComposition();
       tr.notes.push({t, d: snap, p: pitch, v: pencilVel, added});
       if (song.rawNotes) song.rawNotes[selTrack].push({t: t + chopS, d: snap, p: pitch, v: pencilVel, added});
-      editUndo.push({kind: "add", ti: selTrack, ni: tr.notes.length - 1});
+      pushUndo({kind: "add", ti: selTrack, ni: tr.notes.length - 1});
       previewNote(selTrack, pitch);
       pencil = {ti: selTrack, ni: tr.notes.length - 1, t, snap};
       draw();
@@ -3445,7 +3481,7 @@ function tap(pos) {
     const added = !isComposition(); // in a composition the note IS the song, not an overlay
     tr.notes.push({t, d: snap, p: pitch, v: pencilVel, added});
     if (song.rawNotes) song.rawNotes[selTrack].push({t: t + chopS, d: snap, p: pitch, v: pencilVel, added});
-    editUndo.push({kind: "add", ti: selTrack, ni: tr.notes.length - 1});
+    pushUndo({kind: "add", ti: selTrack, ni: tr.notes.length - 1});
     saveEdits();
     previewNote(selTrack, pitch);
     setInfo(noteLabel(selTrack, tr.notes.length - 1));
@@ -3459,7 +3495,7 @@ function tap(pos) {
       en.gone = true;
       if (song.rawNotes && en.ri !== undefined && song.rawNotes[hit.ti][en.ri]) song.rawNotes[hit.ti][en.ri].gone = true;
       if (selNote && selNote.ti === hit.ti && selNote.ni === hit.ni) selNote = null;
-      editUndo.push({kind: "erase", ti: hit.ti, ni: hit.ni});
+      pushUndo({kind: "erase", ti: hit.ti, ni: hit.ni});
       saveEdits(); draw();
     }
     return;
@@ -3846,6 +3882,11 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
     menu.appendChild(del);
   }
 }
+document.addEventListener("pointerdown", e => { // tap-away closes the Edit menu
+  const es = document.getElementById("editsheet");
+  if (es.classList.contains("on") && !es.contains(e.target) && e.target.id !== "editsheetbtn")
+    es.classList.remove("on");
+}, {capture: true});
 document.addEventListener("pointerdown", e => { // tap-away closes the voice menu
   const menu = document.getElementById("voicemenu");
   if (!menu.classList.contains("on")) return;
@@ -4817,7 +4858,7 @@ function scorePencil(pos) {
   const added = !isComposition();
   tr.notes.push({t, d: snap, p: pitch, v: pencilVel, added});
   if (song.rawNotes) song.rawNotes[st.ti].push({t: t + chopS, d: snap, p: pitch, v: pencilVel, added});
-  editUndo.push({kind: "add", ti: st.ti, ni: tr.notes.length - 1});
+  pushUndo({kind: "add", ti: st.ti, ni: tr.notes.length - 1});
   saveEdits();
   previewNote(st.ti, pitch);
   renderTrackbar();
@@ -4841,7 +4882,7 @@ function scoreErase(pos) {
       en.gone = true;
       if (song.rawNotes && en.ri !== undefined && song.rawNotes[ti][en.ri]) song.rawNotes[ti][en.ri].gone = true;
       if (selNote && selNote.ti === ti && selNote.ni === ni) selNote = null;
-      editUndo.push({kind: "erase", ti, ni});
+      pushUndo({kind: "erase", ti, ni});
       saveEdits();
       buildScoreModel();
       draw();
@@ -5428,7 +5469,7 @@ function moveSelectionToTrack(target) { // ⇄: selection changes instrument, ke
     if (rn) rn.gone = true;
     erased.push({ti: it.ti, ni: it.ni});
   }
-  editUndo.push({kind: "group", entries: [{kind: "eraseBatch", items: erased}, {kind: "addBatch", items: added}]});
+  pushUndo({kind: "group", entries: [{kind: "eraseBatch", items: erased}, {kind: "addBatch", items: added}]});
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   selNote = null;
@@ -5458,7 +5499,7 @@ function dedupeSong() { // 🧹: exact same track+start+pitch = stacked clones; 
     });
   });
   if (!erased.length) return 0;
-  editUndo.push({kind: "eraseBatch", items: erased});
+  pushUndo({kind: "eraseBatch", items: erased});
   multiSel = []; multiSelKey = new Set(); selNote = null;
   saveEdits();
   computeSongEnd();
@@ -5491,7 +5532,7 @@ function insertChordAt(tick, rootPc, qual, oct, durQ) {
     added.push({ti: selTrack, ni: tr.notes.length - 1});
   }
   if (!added.length) return 0;
-  editUndo.push({kind: "addBatch", items: added});
+  pushUndo({kind: "addBatch", items: added});
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   selNote = null;
@@ -5588,7 +5629,7 @@ function insertProgressionAt(tick, progStr, tonicPc, oct, durQ) {
     t0 += snap;
   }
   if (!added.length) return 0;
-  editUndo.push({kind: "addBatch", items: added}); // the whole progression = one undo
+  pushUndo({kind: "addBatch", items: added}); // the whole progression = one undo
   finalizeNotes();
   saveLocalNotes();
   multiSel = added.slice();
@@ -6617,7 +6658,7 @@ function recFinish() { // called from stop(): close pendings, commit the take
   recording = false;
   document.getElementById("recbtn").classList.remove("rec");
   if (recTake.length) {
-    editUndo.push({kind: "addBatch", items: recTake.slice()});
+    pushUndo({kind: "addBatch", items: recTake.slice()});
     saveEdits();
     computeSongEnd();
     if (viewMode === "score") buildScoreModel();
@@ -7457,8 +7498,31 @@ const fileStatus = s => {
   document.getElementById("filestatus").textContent = s;
 };
 const filesheet = document.getElementById("filesheet");
+document.getElementById("editsheetbtn").addEventListener("click", e => {
+  const sheet = document.getElementById("editsheet");
+  if (sheet.classList.contains("on")) { closeFileMenus(); return; }
+  closeFileMenus();
+  const r = e.currentTarget.getBoundingClientRect();
+  sheet.style.left = Math.max(6, Math.min(r.left, window.innerWidth - 250)) + "px";
+  sheet.style.top = (r.bottom + 6) + "px";
+  sheet.classList.add("on");
+});
+{ // menu items proxy the edit-row buttons — same guards, same messages
+  const proxy = (id, fn) => document.getElementById(id).addEventListener("click", () => { closeFileMenus(); fn(); });
+  proxy("emUndo", editUndoPop);
+  proxy("emRedo", editRedoPop);
+  proxy("emDup", () => document.getElementById("copybtn").click());
+  proxy("emPaste", () => document.getElementById("pastebtn").click());
+  proxy("emDelete", () => document.getElementById("delbtn").click());
+  proxy("emSplit", () => document.getElementById("splitbtn").click());
+  proxy("emJoin", () => document.getElementById("joinbtn").click());
+  proxy("emMove", () => document.getElementById("movebtn").click());
+  proxy("emChord", () => document.getElementById("insbtn").click());
+  proxy("emFill", () => document.getElementById("drumfillbtn").click());
+}
 document.getElementById("filesheetbtn").addEventListener("click", e => {
   if (filesheet.classList.contains("on")) { closeFileMenus(); return; }
+  closeFileMenus();
   filesub.classList.remove("on");
   document.getElementById("filenewform").style.display = "none";
   document.getElementById("filesaveasform").style.display = "none";
@@ -7507,6 +7571,7 @@ const filesub = document.getElementById("filesub");
 function closeFileMenus() {
   filesheet.classList.remove("on");
   filesub.classList.remove("on");
+  document.getElementById("editsheet").classList.remove("on");
 }
 function fsubItem(label, onTap, dim) {
   const b = document.createElement("button");
@@ -8462,7 +8527,7 @@ document.getElementById("dpfill").addEventListener("click", () => {
     }
   }
   if (added.length) {
-    editUndo.push({kind: "addBatch", items: added});
+    pushUndo({kind: "addBatch", items: added});
     saveEdits();
     computeSongEnd();
     if (viewMode === "score") buildScoreModel();
@@ -8523,9 +8588,31 @@ document.getElementById("delbtn").addEventListener("click", () => {
   setInfo(k ? "deleted " + k + " note" + (k === 1 ? "" : "s") + " (⟲ restores them)"
             : "nothing selected — lasso or tap notes first");
 });
+let editRedo = [];
+function pushUndo(entry) { editUndo.push(entry); editRedo = []; } // a fresh edit forks history
+function invertEdit(u) { // the entry that would undo an applyU(u), captured NOW
+  if (u.kind === "group") return {kind: "group", entries: u.entries.map(invertEdit).reverse()};
+  if (u.kind === "mod") return {kind: "mod", items: u.items.map(({ti, ni}) => {
+    const n = song.tracks[ti].notes[ni];
+    return {ti, ni, t: n.t, d: n.d, p: n.p, v: n.v};
+  })};
+  if (u.kind === "addBatch") return {kind: "eraseBatch", items: u.items};
+  if (u.kind === "eraseBatch") return {kind: "addBatch", items: u.items};
+  return {ti: u.ti, ni: u.ni, kind: u.kind === "add" ? "erase" : "add"};
+}
+function editRedoPop() {
+  const r = editRedo.pop();
+  if (!r || !song) return;
+  editUndo.push(invertEdit(r)); // plain push: redo must not clear its own stack
+  applyEditEntry(r);
+}
 function editUndoPop() {
   const u = editUndo.pop();
   if (!u || !song) return;
+  editRedo.push(invertEdit(u));
+  applyEditEntry(u);
+}
+function applyEditEntry(u) {
   const setGone = (ti, ni, gone) => {
     const nn = song.tracks[ti] && song.tracks[ti].notes[ni];
     if (!nn) return;
@@ -8554,6 +8641,7 @@ function editUndoPop() {
   draw();
 }
 document.getElementById("undobtn").addEventListener("click", editUndoPop);
+document.getElementById("redobtn").addEventListener("click", editRedoPop);
 // keyboard editing — every drag gesture has a key equivalent (easier on the
 // hands): arrows move, shift = octave, alt+arrows resize, cmd-c/v copy/paste
 // at the playhead, delete removes. Ignored while typing in a field.

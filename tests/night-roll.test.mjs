@@ -721,7 +721,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Pencil drag", "cycles", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Pencil drag", "cycles", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Edit ▾", "⟳ Redo", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -996,6 +996,37 @@ test("writeMidi: drum tracks export on channel 10, others skip it", () => {
   const hex = bytes.map(b => b.toString(16).padStart(2, "0")).join(" ");
   assert.ok(hex.includes("99 24 64"), "drum note-on on channel 9 (0x99, kick 36, vel 100)");
   assert.ok(hex.includes("90 3c 50"), "melodic note-on stays channel 0");
+});
+
+test("redo: replays undone edits; a fresh edit clears redo history", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/redo-test.mid";
+    song.tracks = [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]}];
+    song.rawNotes = null; chopS = 0; selTrack = 0;
+    multiSel = [{ti: 0, ni: 0}]; multiSelKey = new Set(["0:0"]);
+    selNote = null; editUndo = []; editRedo = []; pencilDur = 1; pencilVel = 80; playCursor = 0;
+  `);
+  // move up a third, undo, redo — the move comes back
+  assert.equal(run(`nudgeSelection(0, 4)`), true);
+  run(`editUndoPop()`);
+  assert.equal(val(`song.tracks[0].notes[0].p`), 60);
+  run(`editRedoPop()`);
+  assert.equal(val(`song.tracks[0].notes[0].p`), 64);
+  // undo again, then a FRESH edit forks history: redo stack clears
+  run(`editUndoPop()`);
+  assert.equal(run(`nudgeSelection(480, 0)`), true);
+  assert.equal(val(`editRedo.length`), 0);
+  run(`editRedoPop()`); // no-op
+  assert.deepEqual(val(`[song.tracks[0].notes[0].t, song.tracks[0].notes[0].p]`), [480, 60]);
+  // delete → undo → redo round-trip through batch kinds
+  run(`multiSel = [{ti: 0, ni: 0}]; multiSelKey = new Set(["0:0"]);`);
+  assert.equal(run(`deleteSelection()`), 1);
+  run(`editUndoPop()`);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 1);
+  run(`editRedoPop()`);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 0);
+  run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = []; editRedo = [];`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

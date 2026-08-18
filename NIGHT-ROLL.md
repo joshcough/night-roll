@@ -536,6 +536,9 @@ sync (GitHub Contents API, 409 retry) · key dial · help sheet.
    sheet region). A separate test fails if HELP.md is stale — so a
    feature with no help entry, or an unregenerated manual, breaks the
    suite by construction.
-4. Tests green (`node --test tests/*.test.mjs`), browser-verify via
-   claude-in-chrome, commit, push with hash check, kick a Pages build
-   (`gh api -X POST repos/joshcough/night-roll/pages/builds`).
+4. Tests green: `npm test` (vm suite) and `npm run test:e2e`
+   (Playwright gesture suite, chromium + webkit ≈ iPad Safari; WebAudio
+   is stubbed in e2e — a real AudioContext stalls 20s in headless).
+   Browser-verify via claude-in-chrome, commit, push with hash check;
+   the push-triggered Pages build deploys on its own (manual kicks
+   collide with it and email failure noise — only kick if it hangs).

@@ -1,0 +1,85 @@
+// Shared setup for the gesture specs: load the app, spin up a scratch
+// composition, seed notes, and translate ticks/pitches to canvas pixels.
+// No token is ever stored — every repo-write path stays inert by design.
+export async function openApp(page) {
+  // headless chromium stalls ~20s constructing a real AudioContext (no audio
+  // device) — one stall per pointerdown that previews a note. Gesture tests
+  // don't need sound: stub the whole WebAudio surface with inert fakes.
+  await page.addInitScript(() => {
+    const param = () => ({ value: 0, setValueAtTime() {}, cancelScheduledValues() {},
+      linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} });
+    const node = () => ({ connect() { return node(); }, disconnect() {}, start() {}, stop() {},
+      gain: param(), frequency: param(), buffer: null, type: "sine",
+      addEventListener() {}, setPeriodicWave() {} });
+    class FakeCtx {
+      constructor() { this.state = "running"; this.sampleRate = 44100; this.destination = node(); this._t0 = performance.now(); }
+      get currentTime() { return (performance.now() - this._t0) / 1000; }
+      resume() { return Promise.resolve(); }
+      close() { this.state = "closed"; return Promise.resolve(); }
+      createGain() { return node(); }
+      createOscillator() { return node(); }
+      createBufferSource() { return node(); }
+      createBuffer(ch, len, sr) { return { getChannelData: () => new Float32Array(len || 1) }; }
+      createPeriodicWave() { return {}; }
+      createDynamicsCompressor() { const n = node(); n.threshold = param(); n.knee = param(); n.ratio = param(); n.attack = param(); n.release = param(); return n; }
+      decodeAudioData(buf) { return Promise.resolve({ getChannelData: () => new Float32Array(1), duration: 0.01, length: 1, sampleRate: 44100 }); }
+    }
+    window.AudioContext = FakeCtx;
+    window.webkitAudioContext = FakeCtx;
+  });
+  await page.goto("/index.html");
+  // app globals are top-level `let` — not window properties; probe bare identifiers
+  await page.waitForFunction(() => { try { return !!song; } catch (e) { return false; } }, null, { timeout: 15000 });
+}
+
+export async function newComposition(page, name = "e2e-scratch") {
+  await page.evaluate(n => {
+    for (const k of Object.keys(localStorage)) if (k.includes("e2e-scratch")) localStorage.removeItem(k);
+    createComposition(n, 120, 4, 4);
+  }, name);
+}
+
+export async function seedChord(page) { // C major at bar 1, quarter notes
+  await page.evaluate(() => {
+    song.tracks[0].notes.push(
+      { t: 0, d: 480, p: 60, v: 80 }, { t: 0, d: 480, p: 64, v: 80 }, { t: 0, d: 480, p: 67, v: 80 });
+    draw();
+  });
+}
+
+export async function selectAll(page) {
+  await page.evaluate(() => {
+    multiSel = song.tracks[0].notes.map((_, ni) => ({ ti: 0, ni }));
+    multiSelKey = new Set(multiSel.map(s => "0:" + s.ni));
+    draw();
+  });
+}
+
+// canvas-pixel position of a tick/pitch on the roll (viewport coordinates)
+export async function noteXY(page, tick, pitch, ti = 0) {
+  return page.evaluate(([tk, p, t]) => {
+    const r = canvas.getBoundingClientRect();
+    return {
+      x: r.left + RULER_W + (tk / song.ppq) * view.pxq - view.x,
+      y: r.top + RULER_H + (topRow() - noteRow(t, p)) * view.rowH - view.y + view.rowH / 2,
+    };
+  }, [tick, pitch, ti]);
+}
+
+export async function drag(page, from, to, steps = 8) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps });
+  await page.mouse.up();
+}
+
+export async function notes(page, ti = 0) {
+  return page.evaluate(t =>
+    song.tracks[t].notes.filter(n => !n.gone).map(n => ({ t: n.t, d: n.d, p: n.p, v: n.v })), ti);
+}
+
+export async function cleanup(page) {
+  await page.evaluate(() => {
+    for (const k of Object.keys(localStorage)) if (k.includes("e2e-scratch")) localStorage.removeItem(k);
+  });
+}

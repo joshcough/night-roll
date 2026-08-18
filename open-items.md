@@ -305,14 +305,15 @@ tone, motivic augmentation, add9 naming from a pedal context.
      offers "notes here now make G7 — rename?" One tap to accept.
      Never silently rewrite — on analysis songs bands are Josh's
      discoveries and must never auto-edit.
-- **Playwright e2e suite (Josh, 2026-08-16):** wanted AFTER current
-  editor work settles ("let's get everything working first"). Real
-  pointer-event tests for the gesture layer the vm harness can't see —
-  the lasso-drag-move bug lived exactly there. Run chromium + webkit
-  (webkit ≈ iPad Safari, Josh's main device). Cover: lasso-drag move,
-  right-edge resize, empty-drag box, tap-toggle, 🗑 delete + ⟲, arrows,
-  help tabs. Needs package.json + @playwright/test + browser download;
-  gitignore node_modules/test-results.
+- **Playwright e2e suite — SHIPPED overnight 2026-08-18** (Josh's
+  green light "work on playwright tests tonight"): `npm run test:e2e`,
+  10 gesture specs × chromium + webkit (≈ iPad Safari) in ~10s —
+  lasso-drag move, edge resize, tool-off panning, pencil tap+drag,
+  🗑/⧉/📋, help tabs, chord insert, drum fill + lane dock, velocity
+  slider. Key discovery: headless chromium stalls ~20s constructing an
+  AudioContext (no device) — e2e stubs the WebAudio surface (fake ctx
+  in tests/e2e/helpers.mjs). Tests store no token: repo-write paths
+  provably inert. Extend per feature alongside the vm suite.
 - **32nd-note snap grid (2026-08-16):** TMNT2 scene-2a shows tempo 300 —
   real 32nd runs on a 16th-only grid; fitBpm halves to 150 once the grid
   supports 32nds.

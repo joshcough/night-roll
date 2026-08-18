@@ -1,0 +1,23 @@
+{
+  "name": "night-roll",
+  "version": "0.0.0",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node --test tests/night-roll.test.mjs tests/nsf.test.mjs",
+    "test:e2e": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joshcough/night-roll.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joshcough/night-roll/issues"
+  },
+  "homepage": "https://github.com/joshcough/night-roll#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  },
+  "private": true
+}
