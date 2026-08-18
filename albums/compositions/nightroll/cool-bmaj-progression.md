@@ -9,6 +9,10 @@ is the `.notes.txt` sibling.
 
 ## The versions (git archaeology, app-parser verified)
 
+Caveat: git sees SAVES, not edits — Josh iterated in the device draft
+between commits, so each row bundles everything since the previous
+Save, and timestamps are save-times, not when the idea happened.
+
 | commit | when | what changed |
 |---|---|---|
 | `981d362` | 08-17 16:07 | The raw take: everything on pulse1 (87 notes, 60bpm). Played on guitar in one pass after ~15 min of jamming — "one instrument to me." |
