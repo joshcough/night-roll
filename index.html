@@ -3961,7 +3961,9 @@ function trackIsDrums(ti) {
 function drumHit(ti, p, when, vel) {
   const g = audio.createGain();
   g.connect(trackGain(ti));
-  const v = 0.55 * (0.3 + 0.7 * vel / 127);
+  // kit balance (Josh 2026-08-18: "the hi-hat was dominating" — noise reads
+  // far louder than a sine thump at equal amplitude): kick/toms up, hats down
+  const v = 0.75 * (0.3 + 0.7 * vel / 127);
   if (p <= 36 || (p >= 41 && p <= 47 && p !== 42 && p !== 44 && p !== 46)) { // kick & toms: pitched thump
     const o = audio.createOscillator();
     o.type = "triangle";
@@ -3981,7 +3983,7 @@ function drumHit(ti, p, when, vel) {
   for (let k = 0; k < ch.length; k++) ch[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / ch.length, 1.5);
   const src = audio.createBufferSource();
   src.buffer = buf;
-  g.gain.value = v * (len < 0.06 ? 0.45 : 0.85);
+  g.gain.value = v * (len < 0.06 ? 0.22 : 0.62); // closed hats well under snares/cymbals
   src.connect(g);
   src.start(when);
 }
