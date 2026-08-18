@@ -886,6 +886,11 @@
 <div class="overlay" id="movesheet">
   <div class="sheet">
     <h2>MOVE TO TRACK</h2>
+    <div id="mvfromrow" class="row" style="flex-wrap:wrap;gap:6px;display:none">
+      <span class="lbl">move only</span>
+      <div id="mvfrom" class="row" style="flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="row"><span class="lbl">to</span></div>
     <div id="mvtracks" class="row" style="flex-wrap:wrap;gap:6px"></div>
     <div class="row" style="margin-top:12px">
       <button id="mvclose" style="margin-left:auto">Close</button>
@@ -1012,7 +1017,7 @@
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. Pasting and chord inserts never stack an identical note on top of an existing one, and a ⧉ whose clones you never drag cleans itself up — duplicates simply can't accumulate. (Deliberate unisons BETWEEN tracks are untouched by all of this.) A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
-      <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). </dd>
+      <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
@@ -5507,9 +5512,11 @@ function chordLabel() {
   return CHORD_ROOTS[chordRoot].split("/")[0] + (chordQual === "maj" ? "" : chordQual);
 }
 const CHORD_FLAT = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
+let mvFromFilter = null; // ti, or null = the whole selection
 function moveSelectionToTrack(target) { // ⇄: selection changes instrument, keeps time+pitch
   if (!editableSong() || !song.tracks[target]) return 0;
-  const items = selEditItems().filter(({ti}) => ti !== target);
+  const items = selEditItems().filter(({ti}) => ti !== target &&
+    (mvFromFilter === null || ti === mvFromFilter));
   if (!items.length) return 0;
   const tr = song.tracks[target], isAdd = !isComposition();
   const added = [], erased = [];
@@ -8671,7 +8678,27 @@ document.getElementById("movebtn").addEventListener("click", () => {
   box.innerHTML = song.tracks.map((tr, ti) =>
     '<button data-mv="' + ti + '" style="min-height:44px"' + (ti === selTrack ? ' class="primary"' : '') + '>' +
     (tr.name || "track " + (ti + 1)) + '</button>').join("");
+  // selection spanning several tracks (unison doubles): offer a source filter,
+  // so Josh moves ONLY pulse2's copy instead of both (2026-08-18)
+  mvFromFilter = null;
+  const counts = new Map();
+  for (const {ti} of selEditItems()) counts.set(ti, (counts.get(ti) || 0) + 1);
+  const fromRow = document.getElementById("mvfromrow"), from = document.getElementById("mvfrom");
+  if (counts.size > 1) {
+    const total = [...counts.values()].reduce((a, b) => a + b, 0);
+    from.innerHTML = '<button data-mf="all" class="primary" style="min-height:44px">all (' + total + ')</button>' +
+      [...counts.entries()].map(([ti, n]) =>
+        '<button data-mf="' + ti + '" style="min-height:44px">' +
+        (song.tracks[ti].name || "track " + (ti + 1)) + " (" + n + ")</button>").join("");
+    fromRow.style.display = "";
+  } else fromRow.style.display = "none";
   document.getElementById("movesheet").classList.add("on");
+});
+document.getElementById("mvfrom").addEventListener("click", e => {
+  const b = e.target.closest("button[data-mf]");
+  if (!b) return;
+  mvFromFilter = b.dataset.mf === "all" ? null : +b.dataset.mf;
+  for (const x of document.querySelectorAll("#mvfrom button")) x.classList.toggle("primary", x === b);
 });
 document.getElementById("mvtracks").addEventListener("click", e => {
   const b = e.target.closest("button[data-mv]");
