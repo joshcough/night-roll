@@ -281,6 +281,18 @@ a passing note in bar 3/4 before the payoff. He may also re-voice
 pulse1's instrument. Quiz material: cross-rhythm/steady-layer, pedal
 tone, motivic augmentation, add9 naming from a pedal context.
 
+## Composition — NEXT THREAD (Josh, 2026-08-18): B-part study, then write one
+
+Cool Bmaj has intro + A (with variation) and Josh loves it ("the bass
+is the real melody" — inverted texture, his diagnosis). He wants a B
+part but names A/B contrast as his songwriting weak spot. Agreed plan:
+FF1 analysis sessions with ONE standing question — what makes B parts
+work against their A parts — THEN write the B. Starting material: his
+own Overworld section labels (A "G home" / B "Am visit" / C "borrowed
++ turnaround") already assert one mechanism (harmonic departure);
+verify it, and contrast with other songs' B moves. Also still queued:
+bass variation in Cool Bmaj (the lead voice deserves development).
+
 ## Tooling to-do
 
 - **Record button — SHIPPED overnight 2026-08-18** (● beside Play,
