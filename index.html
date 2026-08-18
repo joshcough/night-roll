@@ -961,7 +961,7 @@
     </div>
     <div class="hsec" data-hsec="tracks">
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment, and its menu row SAYS what it resolves to for this track — "auto: pulse 50%", or "auto: chip" when the game's own sound is available), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -3731,6 +3731,12 @@ function sfPreloadForSong() { // warm every pitch a sampled track actually plays
     ps.forEach(p => sfDecode(file, p));
   });
 }
+function autoVoiceLabel(ti) { // what "auto" actually resolves to for THIS track
+  if (chipActive() && chip.buffers && song.tracks[ti] && chip.buffers[song.tracks[ti].name])
+    return "chip — the game's own sound";
+  const v = voiceType(ti);
+  return (VOICES.find(([id]) => id === v) || [, v])[1];
+}
 function trackVoice(ti) {
   const v = song.tracks[ti] && song.tracks[ti].voice;
   return v && v !== "auto" ? v : voiceType(ti);
@@ -3840,7 +3846,8 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
   head.append(hlbl, close);
   menu.appendChild(head);
   const cur = tr.voice || "auto";
-  const curLabel = (VOICES.find(([id]) => id === cur) || [, cur])[1];
+  const curLabel = cur === "auto" ? "auto: " + autoVoiceLabel(ti)
+    : (VOICES.find(([id]) => id === cur) || [, cur])[1];
   if (voiceMenuGroup === null) { // level 1: the instrument families
     for (const [title, vs] of VOICE_GROUPS) {
       const b = document.createElement("button");
@@ -3861,7 +3868,8 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
     for (const [v, label] of (group ? group[1] : [])) {
       const b = document.createElement("button");
       b.className = "fitem";
-      b.textContent = (cur === v ? "✓ " : "   ") + label;
+      const shown = v === "auto" ? "auto: " + autoVoiceLabel(ti) : label;
+      b.textContent = (cur === v ? "✓ " : "   ") + shown;
       b.addEventListener("click", () => {
         tr.voice = v === "auto" ? undefined : v;
         saveVoices();
