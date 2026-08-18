@@ -125,7 +125,7 @@ Select notes and tap **✂**. If the blue cursor sits inside them (tap the ruler
 Select two or more notes on the same pitch and tap **⁀** — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).
 
 **Velocity**
-The **vol slider** in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection and the slider jumps to its current velocity.
+The **vol slider** in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").
 
 **Delete**
 Tap **🗑** in the edit row — every selected note goes at once. Delete key does the same.
