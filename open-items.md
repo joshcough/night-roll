@@ -286,12 +286,31 @@ tone, motivic augmentation, add9 naming from a pedal context.
 Cool Bmaj has intro + A (with variation) and Josh loves it ("the bass
 is the real melody" — inverted texture, his diagnosis). He wants a B
 part but names A/B contrast as his songwriting weak spot. Agreed plan:
-FF1 analysis sessions with ONE standing question — what makes B parts
-work against their A parts — THEN write the B. Starting material: his
-own Overworld section labels (A "G home" / B "Am visit" / C "borrowed
-+ turnaround") already assert one mechanism (harmonic departure);
-verify it, and contrast with other songs' B moves. Also still queued:
-bass variation in Cool Bmaj (the lead voice deserves development).
+FF1 analysis sessions with a standing question — what makes B parts
+work against their A parts — THEN write the B.
+
+**Josh's pre-analysis hypothesis (2026-08-18, to be tested not
+assumed):** harmonic departure isn't enough — B contrast lives at
+least as much in RHYTHM changes, especially bass and accompaniment.
+Evidence from his own song: the A part's identity IS its gallop bass;
+new chords over the same gallop would still read as A.
+
+**Listening protocol for each B section:**
+1. Score every contrast dimension separately: harmony/key, bass
+   rhythm, accompaniment texture, melody register/density.
+2. Then the discriminating question: which SINGLE change, if
+   reverted, would break the contrast? That separates "things that
+   happen to differ" from "the thing doing the work."
+3. Expect the answer to vary by song — the rhythm-carried Bs are the
+   ones that teach Cool Bmaj's B part.
+4. Same treatment for the TURNS (often the C part — his Overworld "C:
+   borrowed + turnaround"): what a turn changes, and what it does
+   that a B doesn't — setting up the return home vs departing from it.
+
+Starting material: his own Overworld labels (A "G home" / B "Am
+visit" / C "borrowed + turnaround") assert the harmonic mechanism;
+verify with the now-ear. Also still queued: bass variation in Cool
+Bmaj (the lead voice deserves development).
 
 ## Tooling to-do
 
