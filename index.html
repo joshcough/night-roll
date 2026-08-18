@@ -966,7 +966,7 @@
     </div>
     <div class="hsec" data-hsec="tracks">
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment, and its menu row SAYS what it resolves to for this track — "auto: pulse 50%", or "auto: chip" when the game's own sound is available), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment, and its menu row SAYS what it resolves to for this track — "auto: pulse 50%", or "auto: chip" when the game's own sound is available), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after, and loudness-matched to the chip voices automatically — a violin at the same velocity as a pulse now sits at the same level, so velocity stays a musical choice instead of a mixing workaround. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -3720,7 +3720,20 @@ function sfDecode(file, p) { // idempotent: one async decode per (instrument, pi
     const arr = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
     return new Promise((res, rej) =>
-      audio.decodeAudioData(arr.buffer, b => { bank.buffers[p] = b; res(); }, rej));
+      audio.decodeAudioData(arr.buffer, b => {
+        // loudness-match to the chip voices (Josh 2026-08-18: "pulse 50% is way
+        // louder than a violin — almost impossible to hear at the same
+        // velocity"): RMS of the sample's first half-second vs the square
+        // wave's RMS at its VOICE_AMP trim (0.5). Each note self-calibrates.
+        const ch = b.getChannelData(0);
+        const n = Math.min(ch.length, Math.ceil(b.sampleRate * 0.5));
+        let sum = 0;
+        for (let i = 0; i < n; i++) sum += ch[i] * ch[i];
+        const rms = Math.sqrt(sum / Math.max(1, n));
+        b._norm = Math.min(5, Math.max(0.5, 0.35 / Math.max(0.01, rms)));
+        bank.buffers[p] = b;
+        res();
+      }, rej));
   }).catch(() => { /* missing note or bad fetch: the triangle fallback carries it */ });
   return bank.pending[p];
 }
@@ -4000,7 +4013,7 @@ function scheduleNote(ti, n, when, durSec) {
     if (buf) {
       const src = audio.createBufferSource();
       src.buffer = buf;
-      const vel = n.v / 127; // sampled voices: same linear chip-true dynamics
+      const vel = (n.v / 127) * (buf._norm || 1); // linear dynamics × loudness-match (see sfDecode)
       g.gain.setValueAtTime(vel, when);
       g.gain.setValueAtTime(vel, Math.max(when + 0.01, end - 0.04));
       g.gain.linearRampToValueAtTime(0, end + 0.09); // release past the gate
