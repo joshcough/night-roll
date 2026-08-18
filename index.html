@@ -966,7 +966,7 @@
     </div>
     <div class="hsec" data-hsec="tracks">
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment, and its menu row SAYS what it resolves to for this track — "auto: pulse 50%", or "auto: chip" when the game's own sound is available), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after, and loudness-matched to the chip voices automatically — a violin at the same velocity as a pulse now sits at the same level, so velocity stays a musical choice instead of a mixing workaround. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all). Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment, and its menu row SAYS what it resolves to for this track — "auto: pulse 50%", or "auto: chip" when the game's own sound is available), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after, and loudness-matched to the chip voices automatically — a violin at the same velocity as a pulse now sits at the same level, so velocity stays a musical choice instead of a mixing workaround. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all), and a <b>vol</b> fader above it sets the track's own volume (0–150%), live while you drag — the mixer answer when one instrument dominates. Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -1630,7 +1630,8 @@ function jsonToRawNote(j) { // schema entry -> the raw shape the deriver expects
     case "timesig": n.text = "timesig: " + (j.timesig || ""); break;
     case "tempo": n.text = "tempo: " + j.bpm; break;
     case "track": n.text = "track: " + (j.track || "") +
-      (j.voice ? " voice=" + j.voice : "") + (j.color ? " color=" + j.color : ""); break;
+      (j.voice ? " voice=" + j.voice : "") + (j.color ? " color=" + j.color : "") +
+      (j.vol !== undefined ? " vol=" + j.vol : ""); break;
     case "loop": n.text = "loop: " + (j.loop || ""); break;
     case "chop": n.text = "chop: " + (j.chop || ""); break;
     default: n.text = j.text || "";
@@ -1680,9 +1681,11 @@ function deriveNoteTypes(out) {
         const [k, v] = kv.split("=");
         if (k === "voice") d.voice = v;
         if (k === "color") d.color = v;
+        if (k === "vol") d.vol = Math.min(1.5, Math.max(0, parseFloat(v)));
       }
       n.trackdir = d;
-      n.text = "track: " + d.name + (d.voice ? " voice=" + d.voice : "") + (d.color ? " color=" + d.color : "");
+      n.text = "track: " + d.name + (d.voice ? " voice=" + d.voice : "") + (d.color ? " color=" + d.color : "") +
+               (d.vol !== undefined && isFinite(d.vol) ? " vol=" + d.vol : "");
     } else delete n.trackdir;
   });
   return out.filter(n => n.text);
@@ -1703,6 +1706,7 @@ function noteToJSON(n) { // enriched-or-stashed note -> schema entry (text prefi
       const [k, v] = kv.split("=");
       if (k === "voice") j.voice = v;
       if (k === "color") j.color = v;
+      if (k === "vol") j.vol = parseFloat(v);
     }
     return j;
   }
@@ -1822,7 +1826,7 @@ function finalizeNotes() {
     }
   }
   if (song) { // track: directives — per-track voice & color, synced like any note
-    song.tracks.forEach(tr => { delete tr.voice; delete tr.color; });
+    song.tracks.forEach(tr => { delete tr.voice; delete tr.color; delete tr.vol; });
     laneOverride = null; // "lane: N" directive — the kit lane's pinned row, synced like any note
     for (const n of rollnotes) {
       const ln = n.text.match(/^lane:\s*(-?\d+)\s*$/);
@@ -1833,6 +1837,7 @@ function finalizeNotes() {
       if (ti < 0) continue;
       if (n.trackdir.voice) song.tracks[ti].voice = n.trackdir.voice;
       if (n.trackdir.color) song.tracks[ti].color = n.trackdir.color;
+      if (n.trackdir.vol !== undefined) song.tracks[ti].vol = n.trackdir.vol;
     }
     renderTrackbar();
     sfPreloadForSong(); // sampled voices: fetch + decode this song's pitches now, not at first note
@@ -3626,10 +3631,11 @@ function trackGain(ti) {
   }
   return trackGains[ti];
 }
+function trackVol(ti) { const v = song.tracks[ti] && song.tracks[ti].vol; return v === undefined ? 1 : v; }
 function updateTrackGains() {
   if (!audio) return;
   song.tracks.forEach((_, ti) => {
-    if (trackGains[ti]) trackGains[ti].gain.setValueAtTime(trackAudible(ti) ? 1 : 0, audio.currentTime);
+    if (trackGains[ti]) trackGains[ti].gain.setValueAtTime(trackAudible(ti) ? trackVol(ti) : 0, audio.currentTime);
   });
 }
 function voiceType(ti) {
@@ -3781,15 +3787,16 @@ function saveVoices() { // upsert this track's "track:" directive — a normal
   const ti = voiceMenuTi;
   const tr = song.tracks[ti];
   const name = tr.name || "tr" + (ti + 1);
-  const chosen = {voice: tr.voice, color: tr.color};
+  const chosen = {voice: tr.voice, color: tr.color, vol: tr.vol};
   rollnotes = rollnotes.filter(n => !(n.trackdir && n.trackdir.name.toLowerCase() === name.toLowerCase()));
   const parts = [];
   if (chosen.voice && chosen.voice !== "auto") parts.push("voice=" + chosen.voice);
   if (chosen.color) parts.push("color=" + chosen.color);
+  if (chosen.vol !== undefined && chosen.vol !== 1) parts.push("vol=" + chosen.vol);
   if (parts.length) {
     rollnotes.push(resolveNote({b1: 1, q1: 1, b2: null, q2: null,
       text: "track: " + name + " " + parts.join(" "),
-      trackdir: {name, voice: chosen.voice, color: chosen.color}, added: true}));
+      trackdir: {name, voice: chosen.voice, color: chosen.color, vol: chosen.vol}, added: true}));
   }
   finalizeNotes(); // re-applies (or reverts) voice/color from the directives
   saveLocalNotes();
@@ -3914,6 +3921,26 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
       menu.appendChild(b);
     }
   }
+  const vw = document.createElement("div");
+  vw.style.cssText = "padding:8px 10px 0;display:flex;align-items:center;gap:8px";
+  const vlbl = document.createElement("span");
+  vlbl.style.cssText = "font-family:var(--mono);font-size:11px;color:var(--dim);flex:none";
+  const fader = document.createElement("input");
+  fader.type = "range";
+  fader.min = "0"; fader.max = "1.5"; fader.step = "0.05";
+  fader.value = String(tr.vol === undefined ? 1 : tr.vol);
+  fader.style.cssText = "flex:1";
+  fader.setAttribute("aria-label", "Track volume");
+  const vshow = () => { vlbl.textContent = "vol " + Math.round((+fader.value) * 100) + "%"; };
+  vshow();
+  fader.addEventListener("input", () => { // live while dragging — hear it immediately
+    tr.vol = +fader.value === 1 ? undefined : +fader.value;
+    vshow();
+    updateTrackGains();
+  });
+  fader.addEventListener("change", () => { saveVoices(); }); // persist as the track: annotation
+  vw.append(vlbl, fader);
+  menu.appendChild(vw);
   const sw = document.createElement("div");
   sw.style.cssText = "padding:8px 10px";
   // ONE color control (Josh 2026-08-15: swatch shortcuts were noise) — a

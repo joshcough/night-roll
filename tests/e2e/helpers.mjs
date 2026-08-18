@@ -6,8 +6,8 @@ export async function openApp(page) {
   // device) — one stall per pointerdown that previews a note. Gesture tests
   // don't need sound: stub the whole WebAudio surface with inert fakes.
   await page.addInitScript(() => {
-    const param = () => ({ value: 0, setValueAtTime() {}, cancelScheduledValues() {},
-      linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} });
+    const param = () => ({ value: 0, setValueAtTime(v) { this.value = v; }, cancelScheduledValues() {},
+      linearRampToValueAtTime(v) { this.value = v; }, exponentialRampToValueAtTime(v) { this.value = v; } });
     const node = () => ({ connect() { return node(); }, disconnect() {}, start() {}, stop() {},
       gain: param(), frequency: param(), buffer: null, type: "sine",
       addEventListener() {}, setPeriodicWave() {} });

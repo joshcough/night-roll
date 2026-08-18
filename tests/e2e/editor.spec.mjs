@@ -120,6 +120,25 @@ test("Edit menu: undo and redo round-trip a delete", async ({ page }) => {
   expect(await notes(page)).toHaveLength(0);
 });
 
+test("track volume fader: live gain, persists as a vol= annotation", async ({ page }) => {
+  await page.evaluate(() => {
+    ensureAudio();
+    song.tracks.forEach((_, ti) => trackGain(ti));
+    openVoiceMenu(1, document.querySelector("#trackrow .chip"));
+  });
+  const fader = page.locator('#voicemenu input[aria-label="Track volume"]');
+  await fader.fill("0.5");
+  await fader.dispatchEvent("input");
+  await fader.dispatchEvent("change");
+  const res = await page.evaluate(() => ({
+    gain: trackGains[1].gain.value,
+    json: JSON.parse(serializeRollnotes()).notes.find(n => n.type === "track" && n.track === "pulse2"),
+  }));
+  expect(res.gain).toBeCloseTo(0.5, 5);
+  expect(res.json.vol).toBeCloseTo(0.5, 5);
+  await page.evaluate(() => document.getElementById("voicemenu").classList.remove("on"));
+});
+
 test("velocity slider live-adjusts a selection with one undo step", async ({ page }) => {
   await selectAll(page);
   await page.evaluate(() => {
