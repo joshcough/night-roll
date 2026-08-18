@@ -3941,6 +3941,7 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
       menu.classList.remove("on");
       saveDraft();
       renderTrackbar(); buildScoreModel(); updateTrackGains(); computeSongEnd(); draw();
+      requestAnimationFrame(renderTrackbar); // second pass: chip wrap settles (iPad left ＋ stranded on row 2)
       setInfo("track deleted (undo history cleared — Save is what makes it permanent)");
     });
     menu.appendChild(del);
