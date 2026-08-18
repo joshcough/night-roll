@@ -2248,7 +2248,9 @@ function renderTrackbar() {
     const add = document.createElement("div");
     add.className = "chip";
     add.setAttribute("role", "button");
-    add.textContent = "＋ track";
+    add.textContent = "＋";
+    add.setAttribute("aria-label", "Add track");
+    add.title = "Add track";
     add.addEventListener("click", () => {
       song.tracks.push({name: "voice" + (song.tracks.length + 1), notes: []});
       if (song.rawNotes) song.rawNotes.push([]);
@@ -2262,7 +2264,9 @@ function renderTrackbar() {
       const drums = document.createElement("div");
       drums.className = "chip";
       drums.setAttribute("role", "button");
-      drums.textContent = "＋ drums";
+      drums.textContent = "＋🥁";
+      drums.setAttribute("aria-label", "Add drum track");
+      drums.title = "Add drum track";
       drums.addEventListener("click", () => {
         song.tracks.push({name: "drums", notes: []});
         if (song.rawNotes) song.rawNotes.push([]);
