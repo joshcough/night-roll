@@ -685,6 +685,7 @@
   <select id="findsel" aria-label="Highlight a pitch class" style="max-width:110px">
     <option value="">find: off</option>
   </select>
+  <button id="octbtn" style="display:none" aria-label="Toggle octave numbers in the selection readout">8va</button>
   <button id="chordbtn" style="display:none">Chord?</button>
   <select id="keysel" aria-label="Key tonic">
     <option value="" id="keyunset">key: not set (C)</option>
@@ -946,7 +947,7 @@
     <dl>
       <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — and plays it.</dd>
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
-      <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high.</dd>
+      <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the <b>8va</b> button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
@@ -2573,6 +2574,7 @@ function reflectSelVel() { // slider face shows the selection's velocity
 function refreshSelInfo() { // one source of truth for the selection readout
   if (!multiSel.length) {
     document.getElementById("chordbtn").style.display = "none";
+    document.getElementById("octbtn").style.display = "none";
     setInfo("lasso: nothing selected");
     draw();
     return;
@@ -2581,7 +2583,10 @@ function refreshSelInfo() { // one source of truth for the selection readout
   multiSelSf = sfDeclaredAt(Math.max(0, tMin));
   reflectSelVel();
   const pitches = [...new Set(multiSel.map(s => song.tracks[s.ti].notes[s.ni].p))].sort((a, b) => a - b);
-  const names = pitches.map(p => pitchName(p, multiSelSf));
+  // 8va off = chord-reading mode: pitch classes only, octave duplicates collapsed
+  const names = selOctaves
+    ? pitches.map(p => pitchName(p, multiSelSf))
+    : [...new Set(pitches.map(p => p % 12))].map(pc => spellPc(pc, multiSelSf));
   const vels = [...new Set(multiSel.map(s => song.tracks[s.ti].notes[s.ni].v))];
   const velTxt = vels.length === 1 ? " · vel " + vels[0] : ""; // uniform velocity is worth stating
   setInfo(names.join(" · ") + "  (" + multiSel.length + " notes" + velTxt + ")", names.join(", "));
@@ -2589,8 +2594,17 @@ function refreshSelInfo() { // one source of truth for the selection readout
   const cb = document.getElementById("chordbtn");
   cb.textContent = "Chord?";
   cb.style.display = "";
+  const ob = document.getElementById("octbtn");
+  ob.style.display = "";
+  ob.classList.toggle("primary", selOctaves);
   draw();
 }
+let selOctaves = localStorage.getItem("ff1roll-seloct") !== "0"; // 8va: octave numbers in the readout
+document.getElementById("octbtn").addEventListener("click", () => {
+  selOctaves = !selOctaves;
+  localStorage.setItem("ff1roll-seloct", selOctaves ? "1" : "0");
+  refreshSelInfo();
+});
 function fallHitNote(pos) { // reverse of drawFall's geometry
   const W = wrap.clientWidth, H = wrap.clientHeight;
   const nowSec = playing ? playSec() : tickToSec(song, playCursor);

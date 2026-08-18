@@ -66,7 +66,7 @@ Inspector shows pitch, bar & beat (counted 1e&a), length, velocity, track — an
 When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.
 
 **⊞ Lasso**
-Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high.
+Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the **8va** button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks.
 
 **◯5 Circle of fifths**
 The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: **drag the wheel** (or ⟲ ⟳) to spin it — put any key at 12 o'clock; **tap a wedge** to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.
