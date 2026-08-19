@@ -902,6 +902,17 @@
   </div>
 </div>
 
+<div class="overlay" id="confirmsheet" style="z-index:80">
+  <div class="sheet">
+    <h2 id="cfTitle">CONFIRM</h2>
+    <p id="cfBody" style="white-space:pre-wrap;font-size:15px;line-height:1.45"></p>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="cfOk">OK</button>
+      <button id="cfCancel" style="margin-left:auto">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="chordsheet">
   <div class="sheet">
     <h2>INSERT</h2>
@@ -1835,6 +1846,13 @@ function finalizeNotes() {
   if (song) { // track: directives — per-track voice & color, synced like any note
     song.tracks.forEach(tr => { delete tr.voice; delete tr.color; delete tr.vol; });
     laneOverride = null; // "lane: N" directive — the kit lane's pinned row, synced like any note
+    { // duplicate track: directives accumulate (upsert removes a SYNCED copy
+      // in memory only; the repo file resurrects it on load — web-session
+      // handoff 2026-08-18). Last-wins per track name, earlier copies drop.
+      const lastFor = new Map();
+      for (const n of rollnotes) if (n.trackdir) lastFor.set(n.trackdir.name.toLowerCase(), n);
+      rollnotes = rollnotes.filter(n => !n.trackdir || lastFor.get(n.trackdir.name.toLowerCase()) === n);
+    }
     for (const n of rollnotes) {
       const ln = n.text.match(/^lane:\s*(-?\d+)\s*$/);
       if (ln) laneOverride = Math.min(PMAX - 4, Math.max(PMIN - 2, +ln[1]));
@@ -1868,20 +1886,32 @@ function finalizeNotes() {
       ? "key: " + partials.join(", ") + " — tonic stored, NOT applied"
       : "key: not set (C)";
   }
-  // sections + chords: depth from containment; lane colors by label (same
-  // label = same color, so a recurring chord keeps its color across the song)
+  // sections and chords NEVER share a row (Josh's redesign, 2026-08-18):
+  // each type stacks by containment within its OWN group — sections on top,
+  // chords below — so a section and a chord with identical spans can't
+  // collide. An empty group contributes zero rows.
   const secs = rollnotes.filter(n => n.section || n.chord);
   secs.forEach(s => { if (s.end === null || s.end <= s.start) s.end = s.start + bt; });
-  let maxDepth = -1;
   sectionColors = {};
   let ci = 0;
-  for (const s of secs) {
-    s.depth = secs.filter(t => t !== s && t.start <= s.start && t.end >= s.end &&
-                               (t.start < s.start || t.end > s.end)).length;
-    maxDepth = Math.max(maxDepth, s.depth);
+  const depthWithin = group => {
+    let max = -1;
+    for (const s of group) {
+      s.depth = group.filter(t => t !== s && t.start <= s.start && t.end >= s.end &&
+                                  (t.start < s.start || t.end > s.end)).length;
+      max = Math.max(max, s.depth);
+    }
+    return max + 1; // row count (0 when the group is empty)
+  };
+  const secGroup = secs.filter(n => n.section);
+  const chGroup = secs.filter(n => n.chord && !n.section);
+  const secRows = depthWithin(secGroup);
+  const chRows = depthWithin(chGroup);
+  for (const s of secGroup) s.lane = s.depth;
+  for (const c of chGroup) c.lane = secRows + c.depth;
+  for (const s of secs)
     if (!(s.text in sectionColors)) sectionColors[s.text] = TRACK_COLORS[ci++ % TRACK_COLORS.length];
-  }
-  RULER_H = BASE_RULER_H + (maxDepth + 1) * LANE_H;
+  RULER_H = BASE_RULER_H + (secRows + chRows) * LANE_H;
 }
 async function loadNotes() {
   const gen = loadGen; // abandon if another song starts loading mid-fetch
@@ -2052,6 +2082,22 @@ let lastSubtitle = null;
   if (last2 && last2.includes(SONGS + "ff1"))
     localStorage.setItem("ff1roll-lastsong", remap2(last2));
 })();
+function appConfirm(title, body, okLabel, cancelLabel) { // non-blocking confirm:
+  // window.confirm freezes the main thread AND every automation/CDP command
+  // (the invisible-dialog page-freeze class, found by Josh 2026-08-19)
+  return new Promise(res => {
+    const sheet = document.getElementById("confirmsheet");
+    document.getElementById("cfTitle").textContent = title;
+    document.getElementById("cfBody").textContent = body;
+    const ok = document.getElementById("cfOk"), cancel = document.getElementById("cfCancel");
+    ok.textContent = okLabel || "OK";
+    cancel.textContent = cancelLabel || "Cancel";
+    const done = v => { sheet.classList.remove("on"); ok.onclick = cancel.onclick = null; res(v); };
+    ok.onclick = () => done(true);
+    cancel.onclick = () => done(false);
+    sheet.classList.add("on");
+  });
+}
 function reflectSongURL(path) { // the address bar always holds a shareable link
   try {
     const u = new URL(location.href);
@@ -2165,10 +2211,10 @@ async function loadSongInner(path) {
       if (r.ok) repoStamp = (JSON.parse(await r.text()).saved || 0);
     } catch (err) { /* offline / not yet saved: draft wins */ }
     if (d && repoStamp > (d.savedStamp || 0)) {
-      if (!d.dirty || window.confirm(
-        "This song was saved from another device more recently than this draft.\n\n" +
-        "OK = use the newer save (this device's unsaved changes are discarded)\n" +
-        "Cancel = keep this device's draft")) {
+      if (!d.dirty || await appConfirm("NEWER SAVE EXISTS",
+        "This song was saved from another device more recently than this draft.",
+        "Use the newer save (discard this device's changes)",
+        "Keep this device's draft")) {
         for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"])
           localStorage.removeItem(pre + path);
         // fall through to the normal repo load below
@@ -2778,7 +2824,7 @@ function drawRuler(W, H) {
     const x = RULER_W + rangeSel.a * ppt - view.x;
     ctx.fillStyle = rangeSel.cycle ? "#E09A3E" : css("--accent");
     ctx.globalAlpha = rangeSel.cycle ? 0.75 : 0.3;
-    ctx.fillRect(x, 0, (rangeSel.b - rangeSel.a) * ppt, RULER_H);
+    ctx.fillRect(x, 0, (rangeSel.b - rangeSel.a) * ppt, BASE_RULER_H); // number strip only — lanes stay readable
     ctx.globalAlpha = 1;
   }
   for (const n of rollnotes) {
@@ -2786,7 +2832,7 @@ function drawRuler(W, H) {
     const x = RULER_W + n.start * ppt - view.x;
     const w = (n.end - n.start) * ppt;
     if (x + w < RULER_W || x > W) continue;
-    const y = BASE_RULER_H + n.depth * LANE_H;
+    const y = BASE_RULER_H + n.lane * LANE_H;
     const color = sectionColors[n.text] || css("--accent");
     ctx.fillStyle = color;
     ctx.globalAlpha = 0.3;
@@ -3491,7 +3537,7 @@ function tap(pos) {
     const ppt = pxPerTick();
     if (pos.y >= BASE_RULER_H) { // section lanes
       const lane = Math.floor((pos.y - BASE_RULER_H) / LANE_H);
-      const sec = rollnotes.find(n => (n.section || n.chord) && n.depth === lane && tick >= n.start && tick < n.end);
+      const sec = rollnotes.find(n => (n.section || n.chord) && n.lane === lane && tick >= n.start && tick < n.end);
       if (sec) {
         rangeSel = {a: sec.start, b: sec.end};
         playCursor = sec.start;
@@ -3630,6 +3676,7 @@ document.addEventListener("pointerdown", function warm() {
   document.removeEventListener("pointerdown", warm);
   ensureAudio();
   resumeAudio();
+  if (sfPreloadPending) sfPreloadForSong(); // the boot-time preload deferred to this gesture
 }, {capture: true});
 function trackGain(ti) {
   if (!trackGains[ti]) {
@@ -3767,12 +3814,19 @@ function sfDecode(file, p) { // idempotent: one async decode per (instrument, pi
   }).catch(() => { /* missing note or bad fetch: the triangle fallback carries it */ });
   return bank.pending[p];
 }
+let sfPreloadPending = false;
 function sfPreloadForSong() { // warm every pitch a sampled track actually plays
   if (!song) return;
+  // NEVER construct the AudioContext at page load: with no user gesture, the
+  // constructor can block the main thread for many seconds on machines with
+  // external audio interfaces (the intermittent page-freeze class, and the
+  // 20s hang Playwright measured in headless). First touch warms the context
+  // (the pointerdown handler below) and re-runs this preload.
+  if (!audio) { sfPreloadPending = true; return; }
+  sfPreloadPending = false;
   song.tracks.forEach((tr, ti) => {
     const file = sfFileFor(trackVoice(ti));
     if (!file) return;
-    ensureAudio(); // decode works on a suspended context; playback still waits for a gesture
     const ps = new Set();
     for (const n of tr.notes) if (!n.gone) ps.add(n.p);
     ps.add(69); // the preview pitch

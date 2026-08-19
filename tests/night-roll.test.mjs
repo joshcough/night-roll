@@ -170,9 +170,11 @@ test("chord directives: parse, attached note, round-trip", () => {
   assert.equal(g7.chord, true);
   assert.equal(g7.cnote, "no 5th — the bass supplies it");
   assert.equal(run(`rollnotes.find(n => n.text === "C").cnote`), undefined);
-  // chords band like sections: nested inside A, one level down
-  assert.equal(g7.depth, 1);
-  assert.equal(val(`rollnotes.find(n => n.section).depth`), 0);
+  // lane groups (2026-08-19 redesign): chords stack in their OWN group below
+  // the sections group — depth is within-type, lane is the display row
+  assert.equal(g7.depth, 0);
+  assert.equal(g7.lane, 1); // one section row above, chords start below it
+  assert.equal(val(`rollnotes.find(n => n.section).lane`), 0);
   // sections stay sections, chords stay chords
   assert.ok(!g7.section);
   const once = run(`serializeRollnotes()`);
