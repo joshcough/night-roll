@@ -18,8 +18,8 @@ session start alongside the quiz.)
    Gm-vs-C7 open, prologue key untested; older per-song queue below.
 
 **App — built, awaiting Josh:**
-6. `midi-input` branch — Web MIDI → ● Record (Jamstik, real velocities,
-   chords). Plug in, test in desktop Chrome, then "merge it".
+6. ✅ MERGED 2026-08-19 — Web MIDI → ● Record is on main. Awaiting
+   Josh's Jamstik field test (desktop Chrome; Safari has no Web MIDI).
 
 **App — design work wanted before code:**
 7. Context-aware drum generation (Drummer-style; full requirements
@@ -27,12 +27,15 @@ session start alongside the quiz.)
 8. Drums in the score view (percussion clef conventions below).
 9. iPhone top-row treatment (chips unreachable on phones).
 
-**App — implementation-ready, medium:**
-10. Chord bands follow moved notes (phase 1 ride-along + phase 2 stale
-    marker, plan below).
-11. Tombstone architecture for deleted synced annotations (the general
-    fix; track: directives already guarded by last-wins dedupe).
-12. 32nd-note snap grid (TMNT2 fitBpm 300→150 labeling).
+**App — implementation-ready, medium:** ALL SHIPPED 2026-08-19 —
+10. ✅ Chord bands ride rigid moves (label transposes) + ⚠ stale marker.
+11. ✅ Tombstones: deleted synced annotations stay deleted across
+    reloads; cleared on Sync.
+12. ✅ Adaptive 32nd grid (Josh's spec: only when the song HAS 32nds or
+    you pick the 32nd duration). REMAINING pipeline half: fitBpm could
+    label TMNT2-style 32nd-run captures 150 instead of 300 now that
+    the editor grid can hold them — capture-side change, re-capture
+    required, treat separately.
 
 **Someday:**
 13. music21 private answer key (guardrails below; useful at ~10
