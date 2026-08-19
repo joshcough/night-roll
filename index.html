@@ -1675,9 +1675,9 @@ function deriveNoteTypes(out) {
     const bm = n.text.match(/^tempo:\s*(\d+(?:\.\d+)?)\s*$/i);
     if (bm) { n.tempodir = +bm[1]; n.text = "tempo: " + bm[1]; }
     else delete n.tempodir;
-    const trm = n.text.match(/^track:\s*(\S+)((?:\s+\w+=\S+)*)\s*$/i);
+    const trm = n.text.match(/^track:\s*(.+?)((?:\s+\w+=\S+)*)\s*$/i); // name may contain spaces
     if (trm) {
-      const d = {name: trm[1]};
+      const d = {name: trm[1].trim()};
       for (const kv of trm[2].trim().split(/\s+/).filter(Boolean)) {
         const [k, v] = kv.split("=");
         if (k === "voice") d.voice = v;
@@ -1701,8 +1701,8 @@ function noteToJSON(n) { // enriched-or-stashed note -> schema entry (text prefi
   if ((m = t.match(/^key:\s*(.+)$/is))) { j.type = "key"; j.key = m[1].trim(); return j; }
   if ((m = t.match(/^timesig:\s*(.+)$/is))) { j.type = "timesig"; j.timesig = m[1].trim(); return j; }
   if ((m = t.match(/^tempo:\s*(\d+(?:\.\d+)?)\s*$/i))) { j.type = "tempo"; j.bpm = +m[1]; return j; }
-  if ((m = t.match(/^track:\s*(\S+)((?:\s+\w+=\S+)*)\s*$/i))) {
-    j.type = "track"; j.track = m[1];
+  if ((m = t.match(/^track:\s*(.+?)((?:\s+\w+=\S+)*)\s*$/i))) {
+    j.type = "track"; j.track = m[1].trim();
     for (const kv of m[2].trim().split(/\s+/).filter(Boolean)) {
       const [k, v] = kv.split("=");
       if (k === "voice") j.voice = v;
@@ -1840,6 +1840,7 @@ function finalizeNotes() {
       if (n.trackdir.color) song.tracks[ti].color = n.trackdir.color;
       if (n.trackdir.vol !== undefined) song.tracks[ti].vol = n.trackdir.vol;
     }
+    updateTrackGains(); // live nodes follow re-applied faders immediately
     renderTrackbar();
     sfPreloadForSong(); // sampled voices: fetch + decode this song's pitches now, not at first note
   }
