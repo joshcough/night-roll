@@ -1012,7 +1012,7 @@
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
       <dt>Sections</dt><dd>Colored bands in the ruler (A, B…). Make one: select a range, + Note, tick "section", give it a short label. Nest them by containment. Tap a band to select its whole range. Sections and chords each get their OWN row group (sections above, chords below), so a section and a chord covering the same bars never fight for a lane.</dd>
-      <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band.</dd>
+      <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection that carries a band's every note takes the band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), and a band whose notes no longer spell its label gets a ⚠: tap it to see what the notes read now, rename in ☰ Notes if you agree. The app never rewrites your labels.</dd>
       <dt>Chop</dt><dd>Trim a song without touching the file: put the cursor at the cut, + Note, "Chop", pick "everything before this beat" or "this beat to the end". The chopped part vanishes entirely and bars renumber (chop a 2-bar intro and old bar 3 becomes bar 1 — your annotations shift with it). Delete the chop in ☰ Notes to restore. Made for cleaning up freshly imported captures.</dd>
     </dl>
 
@@ -1539,6 +1539,7 @@ function loadEdits() {
   updateClearBtn();
 }
 function saveEdits() {
+  if (typeof updateChordStale === "function") updateChordStale(); // every note edit re-checks band labels
   if (isComposition()) { // composition: the notes ARE the song — draft it whole
     saveDraft();
     computeSongEnd();
@@ -1915,6 +1916,7 @@ function finalizeNotes() {
     }
     return max + 1; // row count (0 when the group is empty)
   };
+  updateChordStale();
   const secGroup = secs.filter(n => n.section);
   const chGroup = secs.filter(n => n.chord && !n.section);
   const secRows = depthWithin(secGroup);
@@ -2856,7 +2858,7 @@ function drawRuler(W, H) {
     ctx.clip();
     ctx.fillStyle = css("--text");
     ctx.font = "10px " + css("--mono");
-    ctx.fillText(n.text + (n.cnote ? " ✱" : ""), Math.max(x, RULER_W) + 5, y + 11);
+    ctx.fillText((n.stale ? "⚠ " : "") + n.text + (n.cnote ? " ✱" : ""), Math.max(x, RULER_W) + 5, y + 11);
     ctx.restore();
   }
   for (const n of rollnotes) {
@@ -2902,15 +2904,85 @@ function selEditItems() { // the notes an edit applies to: lasso selection, else
   }
   return out;
 }
+function updateChordStale() { // Phase 2 (open-items plan): a chord band whose
+  // label no longer matches what SOUNDS in its span gets a stale flag —
+  // marked, never rewritten; renaming stays Josh's call in ☰ Notes
+  if (!song || !isComposition()) return;
+  for (const band of rollnotes) {
+    delete band.stale;
+    if (!band.chord || band.section || !(band.end > band.start)) continue;
+    const pitches = [];
+    song.tracks.forEach((tr, ti) => {
+      if (trackIsDrums(ti)) return;
+      for (const n of tr.notes)
+        if (!n.gone && n.t < band.end && n.t + n.d > band.start) pitches.push(n.p);
+    });
+    if (!pitches.length) continue;
+    const read = nameChord(pitches, sfDeclaredAt(band.start));
+    if (read && !read.includes("one pitch class") &&
+        read.split(" ")[0] !== band.text.split("/")[0].trim())
+      band.stale = read;
+  }
+}
+function transposeChordLabel(text, dP) { // "G#m" + 2 → "A#m"; spelling flat-preferred like inserts
+  const m = text.match(/^([A-G])([#b♯♭]?)(.*)$/);
+  if (!m) return text;
+  const pc = (LETTER_PC[m[1]] + (m[2] === "#" || m[2] === "♯" ? 1 : m[2] === "b" || m[2] === "♭" ? -1 : 0) + 1200 + dP) % 12;
+  return CHORD_FLAT[pc] + m[3];
+}
+function ridealongChordBands(pre, post) { // Phase 1 (open-items plan): a rigid
+  // move whose selection covers ALL sounding notes in a chord band's span
+  // carries the band along — position slides, label transposes. Deterministic;
+  // never runs on analysis songs (their bands are Josh's findings).
+  if (!isComposition() || !pre.length) return;
+  const dT = post[0].n.t - pre[0].t, dP = post[0].n.p - pre[0].p;
+  if (dT === 0 && dP === 0) return;
+  for (let i = 0; i < pre.length; i++) // rigid translation only
+    if (post[i].n.t - pre[i].t !== dT || post[i].n.p - pre[i].p !== dP || post[i].n.d !== pre[i].d) return;
+  const movedKeys = new Set(post.map(({ti, ni}) => ti + ":" + ni));
+  let changed = false;
+  for (const band of rollnotes) {
+    if (!band.chord || band.section) continue;
+    // every sounding melodic note in the band's ORIGINAL span must be in the selection
+    let covered = false, any = false;
+    outer: for (let ti = 0; ti < song.tracks.length; ti++) {
+      if (trackIsDrums(ti)) continue;
+      const tr = song.tracks[ti];
+      for (let ni = 0; ni < tr.notes.length; ni++) {
+        const n = tr.notes[ni];
+        if (n.gone) continue;
+        const preItem = pre.find((p, k) => post[k].ti === ti && post[k].ni === ni);
+        const t = preItem ? preItem.t : n.t; // selected notes compare at their PRE position
+        const d = preItem ? preItem.d : n.d;
+        if (t >= band.end || t + d <= band.start) continue;
+        any = true;
+        if (!movedKeys.has(ti + ":" + ni)) { covered = false; break outer; }
+        covered = true;
+      }
+    }
+    if (!any || !covered) continue;
+    const bt = barTicks(), qt = beatTicks();
+    const ns = band.start + dT, ne = band.end + dT;
+    if (ns < 0) continue;
+    band.b1 = Math.floor(ns / bt) + 1; band.q1 = snapBeat((ns % bt) / qt + 1);
+    band.b2 = Math.floor((ne - 1) / bt) + 1; band.q2 = snapBeat((((ne - 1) % bt)) / qt + 1);
+    if (dP !== 0) band.text = transposeChordLabel(band.text, dP);
+    band.added = true; // the change must persist and sync
+    changed = true;
+  }
+  if (changed) { finalizeNotes(); saveLocalNotes(); }
+}
 function selEditApply(items, mutate, snapshot) { // mutate + undo + persist + redraw
   if (!items.length) return false;
-  pushUndo({kind: "mod", items: items.map(({ti, ni, n}) =>
-    (snapshot && snapshot.find(x => x.ti === ti && x.ni === ni)) || {ti, ni, t: n.t, d: n.d, p: n.p, v: n.v})});
+  const pre = items.map(({ti, ni, n}) =>
+    (snapshot && snapshot.find(x => x.ti === ti && x.ni === ni)) || {ti, ni, t: n.t, d: n.d, p: n.p, v: n.v});
+  pushUndo({kind: "mod", items: pre});
   for (const it of items) {
     mutate(it.n);
     const rn = song.rawNotes && it.n.ri !== undefined && song.rawNotes[it.ti][it.n.ri];
     if (rn) { rn.t = it.n.t + chopS; rn.d = it.n.d; rn.p = it.n.p; rn.v = it.n.v; }
   }
+  ridealongChordBands(pre, items);
   saveEdits();
   computeSongEnd();
   if (viewMode === "score") buildScoreModel();
@@ -3554,7 +3626,8 @@ function tap(pos) {
         rangeSel = {a: sec.start, b: sec.end};
         playCursor = sec.start;
         setInfo((sec.chord ? "chord " : "section ") + sec.text + " · bar " + sec.b1 + "–" + (sec.b2 || sec.b1) +
-                (sec.cnote ? " · ✱ " + sec.cnote.split("\n")[0] : ""));
+                (sec.cnote ? " · ✱ " + sec.cnote.split("\n")[0] : "") +
+                (sec.stale ? " · ⚠ notes here now read " + sec.stale + " — rename in ☰ Notes if you agree" : ""));
         if (sec.chord) { // arm the challenge — evidence only on request, never volunteered
           challengeSec = sec;
           const cb = document.getElementById("chordbtn");

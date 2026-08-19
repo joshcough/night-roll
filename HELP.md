@@ -171,7 +171,7 @@ Some songs loop back past an intro (not to bar 1). When you discover one, write 
 Colored bands in the ruler (A, B…). Make one: select a range, + Note, tick "section", give it a short label. Nest them by containment. Tap a band to select its whole range. Sections and chords each get their OWN row group (sections above, chords below), so a section and a chord covering the same bars never fight for a lane.
 
 **Chords**
-Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band.
+Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection that carries a band's every note takes the band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), and a band whose notes no longer spell its label gets a ⚠: tap it to see what the notes read now, rename in ☰ Notes if you agree. The app never rewrites your labels.
 
 **Chop**
 Trim a song without touching the file: put the cursor at the cut, + Note, "Chop", pick "everything before this beat" or "this beat to the end". The chopped part vanishes entirely and bars renumber (chop a 2-bar intro and old bar 3 becomes bar 1 — your annotations shift with it). Delete the chop in ☰ Notes to restore. Made for cleaning up freshly imported captures.

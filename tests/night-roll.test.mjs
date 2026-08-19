@@ -1142,6 +1142,36 @@ test("attached notes on all annotation types round-trip", () => {
   run(`rollnotes = [];`);
 });
 
+test("chord bands ride rigid moves; stale flag when notes stop matching", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/band-ride.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [{name: "pulse1", notes: [
+        {t: 0, d: 480, p: 60, v: 80}, {t: 0, d: 480, p: 64, v: 80}, {t: 0, d: 480, p: 67, v: 80}]}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = deriveNoteTypes([
+      {b1: 1, q1: 1, b2: 1, q2: 2, text: "chord: C", added: true},
+    ]).map(resolveNote);
+    finalizeNotes();
+    multiSel = [{ti: 0, ni: 0}, {ti: 0, ni: 1}, {ti: 0, ni: 2}];
+    multiSelKey = new Set(["0:0", "0:1", "0:2"]);
+  `);
+  // rigid move up 2 semitones and one beat right: band slides AND transposes
+  assert.equal(run(`nudgeSelection(480, 2)`), true);
+  const band = val(`(() => { const b = rollnotes.find(n => n.chord); return {text: b.text, b1: b.b1, q1: b.q1}; })()`);
+  assert.equal(band.text, "D");
+  assert.equal(band.b1, 1);
+  assert.equal(band.q1, 2);
+  // now move ONE note out from under the band: no ride, but the label goes stale
+  run(`multiSel = [{ti: 0, ni: 1}]; multiSelKey = new Set(["0:1"]);`);
+  assert.equal(run(`nudgeSelection(0, 1)`), true); // E→F over a D label
+  const after = val(`(() => { const b = rollnotes.find(n => n.chord); return {text: b.text, stale: b.stale || null}; })()`);
+  assert.equal(after.text, "D"); // never rewritten
+  assert.ok(after.stale); // but flagged
+  run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
+});
+
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {
   const { buildHelp } = await import("../tools/build_help.mjs");
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
