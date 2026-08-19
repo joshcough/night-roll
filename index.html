@@ -4950,15 +4950,18 @@ function renderMeasure(mi) {
       const vnotes = [];
       for (const e of events) {
         let vn;
+        // dots MUST ride the constructor: Dot.buildAndAttach draws the glyph but
+        // adds NO ticks, so every dotted figure ran a beat ahead of its stave-
+        // mates and the playhead (Josh: notes engraved well before 2.4)
         if (e.rest) {
           vn = new VF.StaveNote({clef: st.clef === "percussion" ? "percussion" : st.clef,
                                  keys: [st.clef === "bass" ? "d/3" : st.clef === "percussion" ? "f/4" : "b/4"],
-                                 duration: e.dur + "r"});
+                                 duration: e.dur + "r", dots: e.dots || 0});
           if (hideRests) { vn.setStyle({fillStyle: "rgba(0,0,0,0)", strokeStyle: "rgba(0,0,0,0)"}); e.hidden = true; }
         } else if (st.drums) {
-          vn = new VF.StaveNote({clef: "percussion", keys: e.keys, duration: e.dur, stem_direction: stemDir});
+          vn = new VF.StaveNote({clef: "percussion", keys: e.keys, duration: e.dur, stem_direction: stemDir, dots: e.dots || 0});
         } else {
-          vn = new VF.StaveNote({clef: st.clef, keys: e.pitches.map(p => vexKey(p, spell)), duration: e.dur, auto_stem: true});
+          vn = new VF.StaveNote({clef: st.clef, keys: e.pitches.map(p => vexKey(p, spell)), duration: e.dur, auto_stem: true, dots: e.dots || 0});
         }
         if (!e.hidden) vn.setStyle({fillStyle: st.color, strokeStyle: st.color});
         for (let dd = 0; dd < e.dots; dd++) VF.Dot.buildAndAttach([vn], {all: true});
