@@ -1027,7 +1027,7 @@
     </div>
     <div class="hsec" data-hsec="editor">
     <dl>
-      <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase (tap the active tool again to turn it OFF — then dragging only pans, and no note can be grabbed by accident), durations 32nd–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps, and the grid only goes 32nd-fine when the song actually contains 32nds (or you pick the 32nd duration to add one) (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
+      <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase (tap the active tool again to turn it OFF — then dragging only pans, and no note can be grabbed by accident), durations 32nd–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps, and the grid only goes 32nd-fine when the song actually CONTAINS 32nds — to add the first one, pencil it on the beat (the grid upgrades the moment it exists) and drag it where it belongs (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>● Record</dt><dd>On your own songs: tap the chip of the track you want to record onto, then ● beside Play arms the take — the 🎹 panel opens, ● blinks red, the transport rolls (count-in applies), and every key you play lands on that track at the playhead — hold a key for a long note, slide across keys for runs — or play a REAL MIDI device (a Jamstik, a keyboard): the browser's MIDI input records with your actual velocities, chords included (Chrome/Edge on the computer; Safari/iPad has no Web MIDI). Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step.</dd>
       <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration buttons set that grid (16T/16th/16· · 8T/8th/8· · ¼…): pick the smallest unit you're thinking in and draw lengths by feel.</dd>
       <dt>Drum chart (score view)</dt><dd>The kit renders as a real percussion staff at the BOTTOM of the score: percussion clef, positions are roles not pitches (kick in the bottom space, snare in the third, toms by size, hats above the top line), x-noteheads for hats and cymbals, stems up for hands and down for feet. Read-only for now — kit entry lives in the roll's drum lane; lasso and tap work on the chart like anywhere else.</dd>
@@ -1483,16 +1483,21 @@ let _has32 = null; // cached: does the song contain 32nd-resolution material?
 function songHas32nds() {
   if (_has32 !== null) return _has32;
   const q8 = Math.round(song.ppq / 8), q4 = Math.round(song.ppq / 4);
-  _has32 = song.tracks.some(tr => tr.notes.some(n => !n.gone &&
-    ((n.t % q4 !== 0 && n.t % q8 === 0) || (n.d % q4 !== 0 && n.d % q8 === 0 && n.d < q4 * 2))));
+  _has32 = song.tracks.some((tr, ti) => {
+    const drums = trackIsDrums(ti); // a drum HIT's duration is synthesis detail,
+    // not rhythm (the fill writes 60-tick hits) — only its onset counts
+    return tr.notes.some(n => !n.gone &&
+      ((n.t % q4 !== 0 && n.t % q8 === 0) ||
+       (!drums && n.d % q4 !== 0 && n.d % q8 === 0 && n.d < q4 * 2)));
+  });
   return _has32;
 }
 function moveSnapTicks() { // 16th grid normally; triplet steps while a T duration
-  // is active; 32nds ONLY when the song contains them or you're adding one
-  // (Josh's spec 2026-08-19 — the fine grid appears exactly when it's real)
+  // is active; 32nds ONLY when the song actually CONTAINS them (Josh's final
+  // spec: presence is the only trigger — to bootstrap, pencil a 32nd on the
+  // beat and the whole grid upgrades so you can drag it to the offbeat)
   if (isTripletDur(pencilDur)) return Math.max(1, Math.round(song.ppq * pencilDur));
-  const g = (pencilDur === 0.125 || songHas32nds()) ? 0.125 : 0.25;
-  return Math.max(1, Math.round(song.ppq * g));
+  return Math.max(1, Math.round(song.ppq * (songHas32nds() ? 0.125 : 0.25)));
 }
 let pencilVel = 80;       // p/mf/f from the velocity segment
 let pencilAcc = "key";    // score entry accidental: "key" follows the signature, else -1/0/1
@@ -2857,16 +2862,20 @@ function drawRuler(W, H) {
   if (rangeSel) {
     // amber = Logic's cycle strip (▶ loops this); a band-tap selection keeps
     // the quiet accent tint — it feeds + Note but never hijacks playback
-    const x = RULER_W + rangeSel.a * ppt - view.x;
+    const rsx = viewMode === "score" && scoreModel ? scoreTickToX(rangeSel.a) : RULER_W + rangeSel.a * ppt - view.x;
+    const rse = viewMode === "score" && scoreModel ? scoreTickToX(rangeSel.b) : RULER_W + rangeSel.b * ppt - view.x;
     ctx.fillStyle = rangeSel.cycle ? "#E09A3E" : css("--accent");
     ctx.globalAlpha = rangeSel.cycle ? 0.75 : 0.3;
-    ctx.fillRect(x, 0, (rangeSel.b - rangeSel.a) * ppt, BASE_RULER_H); // number strip only — lanes stay readable
+    ctx.fillRect(rsx, 0, rse - rsx, BASE_RULER_H); // number strip only — lanes stay readable
     ctx.globalAlpha = 1;
   }
+  // in score view, band edges follow the ENGRAVED positions (scoreTickToX,
+  // the playhead's own map) — linear time put "A part" a hair off its notes
+  const tickX = t => viewMode === "score" && scoreModel ? scoreTickToX(t) : RULER_W + t * ppt - view.x;
   for (const n of rollnotes) {
     if (!n.section && !n.chord) continue;
-    const x = RULER_W + n.start * ppt - view.x;
-    const w = (n.end - n.start) * ppt;
+    const x = tickX(n.start);
+    const w = tickX(n.end) - x;
     if (x + w < RULER_W || x > W) continue;
     const y = BASE_RULER_H + n.lane * LANE_H;
     const color = sectionColors[n.text] || css("--accent");
