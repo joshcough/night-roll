@@ -649,6 +649,7 @@
 </div>
 <div id="rollwrap"><canvas id="roll"></canvas></div>
 <div id="editrow">
+  <button id="panelhide2" aria-label="Hide bottom controls" style="padding:8px 8px">▾</button>
   <div class="seg" id="modeseg">
     <button data-mode="select">Select</button>
     <button data-mode="pencil">Pencil</button>
@@ -1564,6 +1565,7 @@ function updateEditBtnVis() { // the edit ROW exists only on songs made in the a
   document.getElementById("editrow").classList.toggle("on", editable);
   if (editable) document.getElementById("velseg").style.display =
     (mode === "pencil" || mode === "select") ? "" : "none";
+  document.getElementById("panelhide").style.display = editable ? "none" : ""; // ▾ rides the topmost row
   document.getElementById("recbtn").style.display = editable ? "" : "none";
   document.getElementById("editsheetbtn").style.display = editable ? "" : "none";
 }
@@ -6299,6 +6301,7 @@ document.getElementById("chordbtn").addEventListener("click", () => {
     window.dispatchEvent(new Event("resize")); // canvas reclaims the space
   };
   document.getElementById("panelhide").addEventListener("click", () => setHidden(true, true));
+  document.getElementById("panelhide2").addEventListener("click", () => setHidden(true, true));
   document.getElementById("panelshow").addEventListener("click", () => {
     setHidden(false, true);
     // editrow's display is owned by the editable toggle; restore its state
