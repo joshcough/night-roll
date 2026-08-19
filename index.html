@@ -4013,13 +4013,29 @@ function drumHit(ti, p, when, vel) {
   if (p <= 36 || (p >= 41 && p <= 47 && p !== 42 && p !== 44 && p !== 46)) { // kick & toms: pitched thump
     const o = audio.createOscillator();
     o.type = "triangle";
-    const f0 = p <= 36 ? 110 : 150 + (p - 41) * 18;
+    // kick starts its sweep high (160Hz) so SOMETHING lives in the band small
+    // speakers can reproduce — a pure 110→44Hz thump vanishes on an iPad
+    // (Josh 2026-08-18: "I can't hear it at all. I should feel it or something")
+    const f0 = p <= 36 ? 160 : 150 + (p - 41) * 18;
     o.frequency.setValueAtTime(f0, when);
-    o.frequency.exponentialRampToValueAtTime(f0 * 0.4, when + 0.12);
+    o.frequency.exponentialRampToValueAtTime(p <= 36 ? 45 : f0 * 0.4, when + 0.12);
     g.gain.setValueAtTime(v, when);
     g.gain.exponentialRampToValueAtTime(0.001, when + 0.16);
     o.connect(g);
     o.start(when); o.stop(when + 0.2);
+    if (p <= 36) { // beater click: the transient that reads as "kick" on small speakers
+      const len = Math.ceil(audio.sampleRate * 0.008);
+      const buf = audio.createBuffer(1, len, audio.sampleRate);
+      const ch = buf.getChannelData(0);
+      for (let k = 0; k < len; k++) ch[k] = (Math.random() * 2 - 1) * (1 - k / len);
+      const click = audio.createBufferSource();
+      click.buffer = buf;
+      const cg = audio.createGain();
+      cg.gain.value = v * 0.55;
+      click.connect(cg);
+      cg.connect(g);
+      click.start(when);
+    }
     return;
   }
   // snare / hats / cymbals: noise burst, length by GM pitch
