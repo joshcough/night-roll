@@ -982,7 +982,7 @@
     </div>
     <div class="hsec" data-hsec="tracks">
     <dl>
-      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment, and its menu row SAYS what it resolves to for this track — "auto: pulse 50%", or "auto: chip" when the game's own sound is available), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after, and loudness-matched to the chip voices automatically — a violin at the same velocity as a pulse now sits at the same level, so velocity stays a musical choice instead of a mixing workaround. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all), and a <b>vol</b> fader above it sets the track's own volume (0–150%), live while you drag — the mixer answer when one instrument dominates. Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
+      <dt>Track chips (top)</dt><dd>Tap a chip to select its track. <b>M</b> mutes — hides the track and silences it together, instantly, even mid-playback; tap M again to bring it back. <b>S</b> solos (only soloed tracks play). One tap each, any time. Tap the selected chip AGAIN for the voice &amp; color menu, organized by family: NES / waves (pulses, triangle, sine, saw; auto = the classic assignment, and its menu row SAYS what it resolves to for this track — "auto: pulse 50%", or "auto: chip" when the game's own sound is available), then real sampled instruments — Keys &amp; mallets (piano, electric piano, harpsichord, celesta, music box, vibraphone, marimba, glockenspiel), Guitar &amp; bass, Strings (solo violin/viola/cello/contrabass, the full section, pizzicato, harp), Winds (flute, piccolo, clarinet, oboe, saxes), Brass (trumpet, trombone, french horn, tuba, section), Organ &amp; choir — 36 FluidR3 soundfont instruments, each fetched only when a track uses it and cached after, and loudness-matched to the chip voices automatically — a violin at the same velocity as a pulse now sits at the same level, so velocity stays a musical choice instead of a mixing workaround. Tap a family to open it, ‹ to go back; the menu opens in the current voice's family — and its color — the wide bar at the bottom shows the track's current color and opens a full color picker (any color at all), and a <b>vol</b> fader above it sets the track's own volume (0–150%), live while you drag — the mixer answer when one instrument dominates. On your own songs the menu also RENAMES the track (type a name, tap Rename): voice, color, and volume settings migrate with it, and Save bakes the name into the .mid. Name a track "drums" (or "kit"/"percussion") and it becomes a drum track. Both save as a normal synced annotation ("track: pulse1 voice=piano") — playback and display only, the MIDI is never touched. Many tracks wrap onto more rows; a ▾ appears beside the last chip when they overflow — first row always shows, ▾ reveals the rest, ▴ tucks them away (the transport stays pinned to the top row). The ◂ at the far left slides the whole chip cluster away when the row feels busy; ▸ brings it back (remembered). ▶ Play and ⏮ sit on this row; the 𝄞/▦ view toggle lives bottom-left in the footer.</dd>
       <dt>S</dt><dd>Solo: hide everyone else instead.</dd>
     </dl>
 
@@ -3986,6 +3986,26 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
       menu.appendChild(b);
     }
   }
+  if (isComposition() || isLocalDraft()) { // rename lives where the track's other identity does
+    const rw = document.createElement("div");
+    rw.style.cssText = "padding:8px 10px 0;display:flex;align-items:center;gap:6px";
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.value = tr.name || "";
+    inp.style.cssText = "flex:1;min-width:0;min-height:36px";
+    inp.setAttribute("aria-label", "Track name");
+    const go = document.createElement("button");
+    go.textContent = "Rename";
+    go.style.cssText = "min-height:36px;flex:none";
+    go.addEventListener("click", () => {
+      const err = renameTrack(ti, inp.value);
+      if (err) { setInfo(err); return; }
+      setInfo("track renamed to “" + inp.value.trim() + "” — Save bakes it into the song");
+      buildVoiceMenu(ti);
+    });
+    rw.append(inp, go);
+    menu.appendChild(rw);
+  }
   const vw = document.createElement("div");
   vw.style.cssText = "padding:8px 10px 0;display:flex;align-items:center;gap:8px";
   const vlbl = document.createElement("span");
@@ -5650,6 +5670,31 @@ function chordLabel() {
 }
 const CHORD_FLAT = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
 let mvFromFilter = null; // ti, or null = the whole selection
+function renameTrack(ti, newName) { // compositions/local drafts only — analysis songs regenerate from NSF
+  newName = (newName || "").trim();
+  if (!newName) return "name is empty";
+  if (!isComposition() && !isLocalDraft()) return "captures are locked — track names come from the pipeline";
+  if (song.tracks.some((t, i) => i !== ti && (t.name || "") .toLowerCase() === newName.toLowerCase()))
+    return "another track is already called that";
+  const oldName = song.tracks[ti].name || "tr" + (ti + 1);
+  song.tracks[ti].name = newName;
+  delete song.tracks[ti].drums; // drum-ness derives from the name; re-derive
+  for (const n of rollnotes) { // migrate EVERY matching directive, stale dupes included
+    if (!n.trackdir || n.trackdir.name.toLowerCase() !== oldName.toLowerCase()) continue;
+    n.trackdir.name = newName;
+    n.text = "track: " + newName + (n.trackdir.voice ? " voice=" + n.trackdir.voice : "") +
+             (n.trackdir.color ? " color=" + n.trackdir.color : "") +
+             (n.trackdir.vol !== undefined && isFinite(n.trackdir.vol) ? " vol=" + n.trackdir.vol : "");
+    n.added = true; // the migrated directive must persist and sync
+  }
+  finalizeNotes();
+  saveLocalNotes();
+  saveDraft(); // the .mid bakes the name on the next Save & Commit
+  renderTrackbar();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return null;
+}
 function moveSelectionToTrack(target) { // ⇄: selection changes instrument, keeps time+pitch
   if (!editableSong() || !song.tracks[target]) return 0;
   const items = selEditItems().filter(({ti}) => ti !== target &&

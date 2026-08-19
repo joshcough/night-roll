@@ -1094,6 +1094,30 @@ test("notesTxtFor: text dump matches the pipeline format", () => {
   run(`songKey = null;`);
 });
 
+test("renameTrack: directives migrate (dupes included), name collisions refused", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/rn-test.mid";
+    song.tracks = [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]},
+                   {name: "pulse2", notes: []}];
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = [];
+    rollnotes = deriveNoteTypes([
+      {b1: 1, q1: 1, b2: null, q2: null, text: "track: pulse1 voice=sawtooth", added: false},
+      {b1: 1, q1: 1, b2: null, q2: null, text: "track: pulse1 voice=sawtooth vol=1.1", added: true},
+    ]).map(resolveNote);
+    finalizeNotes();
+  `);
+  assert.equal(run(`renameTrack(0, "pulse2")`), "another track is already called that");
+  assert.equal(run(`renameTrack(0, "top")`), null);
+  assert.equal(val(`song.tracks[0].name`), "top");
+  // every directive migrated (load-time dedupe may collapse them, but none may point at the old name)
+  assert.equal(val(`rollnotes.filter(n => n.trackdir && n.trackdir.name === "pulse1").length`), 0);
+  assert.ok(val(`rollnotes.some(n => n.trackdir && n.trackdir.name === "top")`));
+  // settings survived the migration
+  assert.equal(val(`song.tracks[0].voice`), "sawtooth");
+  run(`songKey = null; rollnotes = [];`);
+});
+
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {
   const { buildHelp } = await import("../tools/build_help.mjs");
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
