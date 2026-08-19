@@ -1,15 +1,14 @@
-{ "version": 1, "song": "cool-bmaj-progression", "saved": 1787106952418, "notes": [
+{ "version": 1, "song": "cool-bmaj-progression", "saved": 1787157375625, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
-  {"at":[1,1],"text":"lane: 37"},
+  {"at":[1,1],"type":"lane","lane":37},
   {"at":[1,1],"type":"tempo","bpm":75},
-  {"at":[1,1],"type":"track","track":"triangle","voice":"square"},
-  {"at":[1,1],"type":"track","track":"pulse1","voice":"sawtooth"},
   {"at":[1,1],"type":"track","track":"pulse1","voice":"sawtooth","vol":1.1},
   {"at":[1,1],"type":"key","key":"G#m"},
   {"at":[1,1],"type":"track","track":"pulse2","voice":"sf-guitar","vol":0.7},
   {"at":[1,1],"type":"track","track":"voice5","voice":"sf-trumpet","color":"#f80001"},
   {"at":[1,1],"to":[2,3],"type":"section","label":"Intro"},
   {"at":[1,1],"to":[2,3],"type":"chord","chord":"B"},
+  {"at":[1,1],"type":"track","track":"Bass","voice":"square"},
   {"at":[2,4],"to":[3,3],"type":"chord","chord":"G#m"},
   {"at":[2,4],"to":[6,3],"type":"section","label":"A part"},
   {"at":[3,4],"to":[4,3],"type":"chord","chord":"B"},
