@@ -943,7 +943,7 @@
 
     <div class="hsec" data-hsec="views">
     <dl>
-      <dt>▾ Hide controls</dt><dd>The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Remembered per device.</dd>
+      <dt>▾ Hide controls</dt><dd>The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Phones start folded automatically; your explicit choice is remembered per device.</dd>
       <dt>𝄞 Score / ▦ Roll</dt><dd>Switch between piano roll and engraved sheet music. Same timeline, same everything else. Your choice is remembered.</dd>
       <dt>Drag / pinch</dt><dd>One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.</dd>
       <dt>Roll zoom-out limit</dt><dd>Pinch-out stops once the whole song is in view — per axis: when every bar fits, further pinch-out only reveals pitch; when every note is visible — plus a few rows of breathing room above and below, so the top notes never sit against the ruler — it stops. Opening a song lands exactly on this limit.</dd>
@@ -6291,20 +6291,25 @@ document.getElementById("chordbtn").addEventListener("click", () => {
 });
 
 { // phone: the edit row + footer can eat the whole screen — fold them away
-  const setHidden = h => {
+  const setHidden = (h, persist) => {
     document.querySelector("footer").style.display = h ? "none" : "";
     document.getElementById("editrow").style.display = h ? "none" : "";
     document.getElementById("panelshow").style.display = h ? "" : "none";
-    localStorage.setItem("ff1roll-panelhide", h ? "1" : "0");
+    if (persist) localStorage.setItem("ff1roll-panelhide", h ? "1" : "0");
     window.dispatchEvent(new Event("resize")); // canvas reclaims the space
   };
-  document.getElementById("panelhide").addEventListener("click", () => setHidden(true));
+  document.getElementById("panelhide").addEventListener("click", () => setHidden(true, true));
   document.getElementById("panelshow").addEventListener("click", () => {
-    setHidden(false);
+    setHidden(false, true);
     // editrow's display is owned by the editable toggle; restore its state
     document.getElementById("editrow").style.display = "";
   });
-  if (localStorage.getItem("ff1roll-panelhide") === "1") setHidden(true);
+  // phones start folded (a hand-sized screen is for the music, not the
+  // buttons); an explicit tap becomes the remembered choice. iPads and up
+  // start open. min(screen dims) < 500 CSS px ≈ every phone, no iPad.
+  const stored = localStorage.getItem("ff1roll-panelhide");
+  const phone = Math.min(screen.width, screen.height) < 500;
+  if (stored === null ? phone : stored === "1") setHidden(true, false);
 }
 const viewbtn = document.getElementById("viewbtn");
 function applyViewMode() {
