@@ -1030,6 +1030,7 @@
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase (tap the active tool again to turn it OFF — then dragging only pans, and no note can be grabbed by accident), durations 32nd–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps, and the grid only goes 32nd-fine when the song actually contains 32nds (or you pick the 32nd duration to add one) (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>● Record</dt><dd>On your own songs: tap the chip of the track you want to record onto, then ● beside Play arms the take — the 🎹 panel opens, ● blinks red, the transport rolls (count-in applies), and every key you play lands on that track at the playhead — hold a key for a long note, slide across keys for runs — or play a REAL MIDI device (a Jamstik, a keyboard): the browser's MIDI input records with your actual velocities, chords included (Chrome/Edge on the computer; Safari/iPad has no Web MIDI). Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step.</dd>
       <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration buttons set that grid (16T/16th/16· · 8T/8th/8· · ¼…): pick the smallest unit you're thinking in and draw lengths by feel.</dd>
+      <dt>Drum chart (score view)</dt><dd>The kit renders as a real percussion staff at the BOTTOM of the score: percussion clef, positions are roles not pitches (kick in the bottom space, snare in the third, toms by size, hats above the top line), x-noteheads for hats and cymbals, stems up for hands and down for feet. Read-only for now — kit entry lives in the roll's drum lane; lasso and tap work on the chart like anywhere else.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
@@ -4721,6 +4722,22 @@ function keySpelling(sf) {
   }
   return map;
 }
+// Drum-chart conventions (handoff spec): staff positions are ROLES, not
+// pitches — kick bottom space, snare 3rd space, toms by size, hats above the
+// top line; x-heads for metal; stems up = hands, down = feet.
+const DRUM_SCORE = {
+  35: {key: "f/4", x: false, hand: false}, 36: {key: "f/4", x: false, hand: false}, // kicks
+  44: {key: "d/4", x: true,  hand: false},                                          // hat pedal
+  37: {key: "c/5", x: true,  hand: true},                                           // side stick
+  38: {key: "c/5", x: false, hand: true}, 40: {key: "c/5", x: false, hand: true},   // snares
+  41: {key: "a/4", x: false, hand: true}, 43: {key: "a/4", x: false, hand: true},   // floor toms
+  45: {key: "d/5", x: false, hand: true}, 47: {key: "d/5", x: false, hand: true},   // mid toms
+  48: {key: "e/5", x: false, hand: true}, 50: {key: "e/5", x: false, hand: true},   // high toms
+  42: {key: "g/5", x: true,  hand: true}, 46: {key: "g/5", x: true,  hand: true},   // hats
+  49: {key: "a/5", x: true,  hand: true},                                           // crash
+  51: {key: "f/5", x: true,  hand: true},                                           // ride
+};
+function drumScoreRole(gm) { return DRUM_SCORE[gm] || {key: "c/5", x: true, hand: true}; }
 function vexKey(pitch, spell) {
   const s = spell[pitch % 12];
   const naturalPc = LETTER_PC[s.letter];
@@ -4830,6 +4847,59 @@ function buildScoreModel() {
     }
     staves.push({ti, clef, color: trackColor(ti), measures});
   });
+  // the kit staff — ALWAYS at the bottom (Josh's ruling), percussion clef,
+  // hands and feet as separate voices so stems read up/down at a glance
+  song.tracks.forEach((tr, ti) => {
+    if (!trackIsDrums(ti) || !trackAudible(ti)) return;
+    if (!tr.notes.length) return;
+    const streams = {hands: new Map(), feet: new Map()};
+    for (let ni = 0; ni < tr.notes.length; ni++) {
+      const n = tr.notes[ni];
+      if (n.gone) continue;
+      const role = drumScoreRole(n.p);
+      const qt = Math.round(n.t / grid) * grid;
+      const lane = role.hand ? streams.hands : streams.feet;
+      const cur = lane.get(qt);
+      const key = role.key + (role.x ? "/x2" : "");
+      if (cur) { if (!cur.keys.includes(key)) { cur.keys.push(key); cur.refs.push({ti, ni}); } }
+      else lane.set(qt, {start: qt, dur: grid, keys: [key], refs: [{ti, ni}]});
+    }
+    const toMeasures = (lane, fillRests) => {
+      const evs = [...lane.values()].sort((a, b) => a.start - b.start);
+      for (let k = 0; k + 1 < evs.length; k++)
+        if (evs[k].start + evs[k].dur > evs[k + 1].start) evs[k].dur = evs[k + 1].start - evs[k].start;
+      const ms = Array.from({length: nMeasures}, () => []);
+      let pos = 0;
+      for (const e of evs) {
+        const mi = Math.floor(e.start / bt);
+        if (mi >= nMeasures) break;
+        if (fillRests && e.start > pos) { // rests in the hands voice keep the meter legible
+          let f = pos;
+          while (f < e.start - 1) {
+            const rmi = Math.floor(f / bt);
+            if (rmi >= nMeasures) break;
+            const rEnd = Math.min(e.start, (rmi + 1) * bt);
+            for (const p of durationPieces(rEnd - f, song.ppq)) {
+              ms[rmi].push({rest: true, start: f, dur: p.dur, dots: p.dots});
+              f += p.ticks;
+              if (f >= rEnd - 1) break;
+            }
+            f = Math.max(f, rEnd);
+          }
+        }
+        const cap = Math.min(e.dur, (mi + 1) * bt - e.start); // hits never tie across barlines
+        for (const p of durationPieces(cap, song.ppq)) {
+          ms[mi].push({rest: false, start: e.start, dur: p.dur, dots: p.dots, keys: e.keys, refs: e.refs});
+          break; // one engraved piece per hit
+        }
+        pos = Math.max(pos, e.start + e.dur);
+      }
+      return ms;
+    };
+    staves.push({ti, clef: "percussion", drums: true, color: trackColor(ti),
+                 measures: toMeasures(streams.hands, true),
+                 measuresFeet: toMeasures(streams.feet, true)}); // feet rests engrave invisibly — they only space the voice
+  });
   // zoom floor from the densest measure: VexFlow treats the justify width as
   // a suggestion, so a bar needs ~20px per glyph or it spills past its barline
   let maxEv = 1;
@@ -4868,7 +4938,7 @@ function renderMeasure(mi) {
   m.staves.forEach((st, si) => {
     const y = SCORE_TOP + si * STAVE_H;
     const stave = new VF.Stave(SCORE_PAD, y, mw, {fill_style: "#3A4569"});
-    if (keyChanged) {
+    if (keyChanged && !st.drums) {
       // cancelKey draws naturals for the outgoing signature (essential when
       // the new key is C, whose own signature is empty)
       try { stave.addKeySignature(SF_MAJOR[sfM] || "C", SF_MAJOR[sfPrev] || "C"); }
@@ -4876,25 +4946,41 @@ function renderMeasure(mi) {
     }
     stave.setContext(ctx2).draw();
     if (si === 0) noteStartXc = stave.getNoteStartX();
+    const mkVoice = (events, stemDir, hideRests) => { // stemDir null = melodic auto
+      const vnotes = [];
+      for (const e of events) {
+        let vn;
+        if (e.rest) {
+          vn = new VF.StaveNote({clef: st.clef === "percussion" ? "percussion" : st.clef,
+                                 keys: [st.clef === "bass" ? "d/3" : st.clef === "percussion" ? "f/4" : "b/4"],
+                                 duration: e.dur + "r"});
+          if (hideRests) { vn.setStyle({fillStyle: "rgba(0,0,0,0)", strokeStyle: "rgba(0,0,0,0)"}); e.hidden = true; }
+        } else if (st.drums) {
+          vn = new VF.StaveNote({clef: "percussion", keys: e.keys, duration: e.dur, stem_direction: stemDir});
+        } else {
+          vn = new VF.StaveNote({clef: st.clef, keys: e.pitches.map(p => vexKey(p, spell)), duration: e.dur, auto_stem: true});
+        }
+        if (!e.hidden) vn.setStyle({fillStyle: st.color, strokeStyle: st.color});
+        for (let dd = 0; dd < e.dots; dd++) VF.Dot.buildAndAttach([vn], {all: true});
+        e.vn = vn;
+        vnotes.push(vn);
+      }
+      const voice = new VF.Voice({num_beats: effTs()[0], beat_value: effTs()[1]});
+      voice.setMode(VF.Voice.Mode.SOFT);
+      voice.addTickables(vnotes);
+      return {voice, vnotes};
+    };
+    if (st.drums) { // hands (stems up) + feet (stems down), two voices, one staff
+      const hands = st.measures[mi] || [], feet = (st.measuresFeet && st.measuresFeet[mi]) || [];
+      if (!hands.length && !feet.length) { timeMap.push({tick: mi * m.bt, x: SCORE_PAD}); return; }
+      const vH = mkVoice(hands, 1), vF = mkVoice(feet, -1, true);
+      built.push({st, si, stave, voice: vH.voice, voice2: vF.voice,
+                  vnotes: vH.vnotes, vnotes2: vF.vnotes, events: hands.concat(feet)});
+      return;
+    }
     const events = st.measures[mi] || [];
     if (!events.length) { timeMap.push({tick: mi * m.bt, x: SCORE_PAD}); return; }
-    const vnotes = [];
-    for (const e of events) {
-      let vn;
-      if (e.rest) {
-        vn = new VF.StaveNote({clef: st.clef, keys: [st.clef === "bass" ? "d/3" : "b/4"], duration: e.dur + "r"});
-        vn.setStyle({fillStyle: st.color, strokeStyle: st.color});
-      } else {
-        vn = new VF.StaveNote({clef: st.clef, keys: e.pitches.map(p => vexKey(p, spell)), duration: e.dur, auto_stem: true});
-        vn.setStyle({fillStyle: st.color, strokeStyle: st.color});
-      }
-      for (let dd = 0; dd < e.dots; dd++) VF.Dot.buildAndAttach([vn], {all: true});
-      e.vn = vn;
-      vnotes.push(vn);
-    }
-    const voice = new VF.Voice({num_beats: effTs()[0], beat_value: effTs()[1]});
-    voice.setMode(VF.Voice.Mode.SOFT);
-    voice.addTickables(vnotes);
+    const {voice, vnotes} = mkVoice(events, null);
     VF.Accidental.applyAccidentals([voice], SF_MAJOR[sfM] || "C");
     built.push({st, si, stave, voice, vnotes, events});
   });
@@ -4906,17 +4992,22 @@ function renderMeasure(mi) {
     // softmaxFactor > default skews spacing toward duration-proportional,
     // shrinking the playhead's crawl-then-sprint across dotted figures
     const fmt = new VF.Formatter({softmaxFactor: 10});
-    for (const b of built) fmt.joinVoices([b.voice]);
-    fmt.format(built.map(b => b.voice),
+    for (const b of built) fmt.joinVoices(b.voice2 ? [b.voice, b.voice2] : [b.voice]);
+    fmt.format(built.flatMap(b => b.voice2 ? [b.voice, b.voice2] : [b.voice]),
                mw - (built[0].stave.getNoteStartX() - SCORE_PAD) - 14);
   }
-  for (const {st, si, stave, voice, vnotes, events} of built) {
+  for (const {st, si, stave, voice, voice2, vnotes, vnotes2, events} of built) {
     voice.draw(ctx2, stave);
+    if (voice2) voice2.draw(ctx2, stave);
     // rests must break beams — beaming only the notes bridges beams straight
     // across rest gaps (spaghetti in syncopated 16th patterns)
     let beams;
-    try { beams = VF.Beam.generateBeams(vnotes, {beam_rests: false}); }
+    const beamOpts = st.drums ? {beam_rests: false, maintain_stem_directions: true} : {beam_rests: false};
+    try { beams = VF.Beam.generateBeams(vnotes, beamOpts); }
     catch (e) { beams = VF.Beam.generateBeams(vnotes.filter(v => !v.isRest())); }
+    if (vnotes2 && vnotes2.length) {
+      try { beams = beams.concat(VF.Beam.generateBeams(vnotes2, beamOpts)); } catch (e) {}
+    }
     beams.forEach(b => {
       b.setStyle({fillStyle: st.color, strokeStyle: st.color});
       b.setContext(ctx2).draw();
@@ -4936,7 +5027,8 @@ function renderMeasure(mi) {
       const bx = e.vn.getBoundingBox();
       if (!e.rest && bx) {
         geo.push({tick: e.start, x0: bx.x - 2, x1: bx.x + bx.w + 2, y0: bx.y - 2, y1: bx.y + bx.h + 2,
-                  refs: e.refs, pitches: e.pitches, ti: st.ti});
+                  refs: e.refs, ti: st.ti,
+                  pitches: e.pitches || e.refs.map(r => song.tracks[r.ti].notes[r.ni].p)});
       }
       if (si === 0 || !timeMap.some(tm => tm.tick === e.start)) {
         timeMap.push({tick: e.start, x: e.vn.getAbsoluteX()});
@@ -4980,7 +5072,7 @@ function renderIntro() { // pinned-at-start clef / key / time column
     const y = SCORE_TOP + si * STAVE_H;
     const stave = new VF.Stave(0, y, SCORE_INTRO_W, {fill_style: "#3A4569"});
     stave.addClef(st.clef);
-    if (m.sf !== 0) stave.addKeySignature(m.keyName);
+    if (m.sf !== 0 && !st.drums) stave.addKeySignature(m.keyName); // roles, not pitches
     if (declaredTs) stave.addTimeSignature(declaredTs[0] + "/" + declaredTs[1]);
     stave.setContext(ctx2).draw();
   });
@@ -5144,6 +5236,7 @@ function scorePencil(pos) {
   if (!scoreModel || !scoreModel.staves.length) return;
   const {si, sy} = scoreStaveAt(pos);
   const st = scoreModel.staves[si];
+  if (st.drums) { setInfo("kit entry lives in the roll (its lane) — score shows the chart"); return; }
   const probe = new VF.Stave(0, 0, 100); // VexFlow's own line geometry
   const topLineY = probe.getYForLine(0);
   const step = (probe.getYForLine(1) - topLineY) / 2; // line-to-space distance

@@ -24,7 +24,10 @@ session start alongside the quiz.)
 **App — design work wanted before code:**
 7. Context-aware drum generation (Drummer-style; full requirements
    below — seeds, one-tap reroll, constrained randomness).
-8. Drums in the score view (percussion clef conventions below).
+8. ✅ Drums in the score view — SHIPPED v1 2026-08-19 (percussion
+   clef, role positions, x-heads, hands-up/feet-down voices, kit staff
+   at the bottom). Read-only: score-side kit ENTRY still open; open-hat
+   "o" marks and flams someday.
 9. iPhone top-row treatment (chips unreachable on phones).
 
 **App — implementation-ready, medium:** ALL SHIPPED 2026-08-19 —
