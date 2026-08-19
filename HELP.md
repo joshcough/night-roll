@@ -6,6 +6,9 @@ Everything here is also in the app: File → Help.
 
 ## Views
 
+**▾ Hide controls**
+The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Remembered per device.
+
 **𝄞 Score / ▦ Roll**
 Switch between piano roll and engraved sheet music. Same timeline, same everything else. Your choice is remembered.
 

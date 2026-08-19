@@ -21,6 +21,7 @@ test("drag moves the whole selection as a chord (lasso mode stays on)", async ({
 });
 
 test("dragging a selected note's right edge resizes every selected note", async ({ page }) => {
+  await page.evaluate(() => document.querySelector('#modeseg button[data-mode="select"]').click());
   await selectAll(page);
   const edge = await noteXY(page, 470, 64); // within the 8px-in-ticks grab zone of t+d=480
   const px16 = await page.evaluate(() => (240 / song.ppq) * view.pxq);
@@ -28,10 +29,7 @@ test("dragging a selected note's right edge resizes every selected note", async 
   expect((await notes(page)).map(n => n.d)).toEqual([240, 240, 240]);
 });
 
-test("with no tool armed, dragging over a note only pans", async ({ page }) => {
-  await page.evaluate(() => {
-    document.querySelector('#modeseg button[data-mode="select"]').click(); // toggles OFF
-  });
+test("with no tool armed (the default), dragging over a note only pans", async ({ page }) => {
   const from = await noteXY(page, 240, 64);
   const before = await page.evaluate(() => view.x);
   await drag(page, from, { x: from.x - 90, y: from.y });
@@ -140,6 +138,7 @@ test("track volume fader: live gain, persists as a vol= annotation", async ({ pa
 });
 
 test("velocity slider live-adjusts a selection with one undo step", async ({ page }) => {
+  await page.evaluate(() => document.querySelector('#modeseg button[data-mode="select"]').click());
   await selectAll(page);
   await page.evaluate(() => {
     const sl = document.getElementById("velslider");
