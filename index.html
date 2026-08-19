@@ -4912,9 +4912,12 @@ function buildScoreModel() {
   // zoom floor from the densest measure: VexFlow treats the justify width as
   // a suggestion, so a bar needs ~20px per glyph or it spills past its barline
   let maxEv = 1;
-  for (const st of staves) for (const m of st.measures) maxEv = Math.max(maxEv, m.length);
+  for (const st of staves) for (let k = 0; k < st.measures.length; k++) {
+    const n = st.measures[k].length + (st.measuresFeet ? st.measuresFeet[k].length : 0);
+    maxEv = Math.max(maxEv, n);
+  }
   const quartersPerBar = bt / song.ppq;
-  const pxqMin = Math.min(120, Math.max(24, Math.ceil((maxEv * 20 + 40) / quartersPerBar)));
+  const pxqMin = Math.min(140, Math.max(24, Math.ceil((maxEv * 24 + 72) / quartersPerBar)));
   scoreModel = {nMeasures, bt, sf: sf0, keyName: SF_MAJOR[sf0] || "C", staves, pxqMin};
 }
 
@@ -5061,7 +5064,12 @@ function renderMeasure(mi) {
     else dedup.push(tm);
   }
   let hx = -Infinity;
-  for (const tm of dedup) { tm.x = Math.max(tm.x, hx + 0.5); hx = tm.x; }
+  const xCap = SCORE_PAD + mw - 4; // dense bars can engrave past their barline
+  for (const tm of dedup) { tm.x = Math.min(Math.max(tm.x, hx + 0.5), xCap); hx = tm.x; }
+  // the cap can flatten the tail; re-spread the flattened run backwards so
+  // motion stays strictly forward into the next measure
+  for (let i = dedup.length - 2; i >= 0; i--)
+    if (dedup[i].x >= dedup[i + 1].x) dedup[i].x = dedup[i + 1].x - 0.5;
   const entry = {canvas: c, geo, timeMap: dedup, mw, noteStartX: noteStartXc, keyChanged};
   scoreCache.set(key, entry);
   if (scoreCache.size > 60) scoreCache.delete(scoreCache.keys().next().value);
