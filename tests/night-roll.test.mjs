@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Pencil drag", "cycles", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Edit ▾", "⟳ Redo", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Edit ▾", "⟳ Redo", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1116,6 +1116,30 @@ test("renameTrack: directives migrate (dupes included), name collisions refused"
   // settings survived the migration
   assert.equal(val(`song.tracks[0].voice`), "sawtooth");
   run(`songKey = null; rollnotes = [];`);
+});
+
+test("attached notes on all annotation types round-trip", () => {
+  installSong();
+  run(`song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}], tracks: [{name: "t", notes: []}]};
+    songKey = "albums/compositions/nightroll/attach-test.mid";`);
+  run(`rollnotes = deriveNoteTypes([
+    {b1: 1, q1: 1, b2: null, q2: null, text: "key: Bb?\\nwhole-tone material", added: true},
+    {b1: 2, q1: 1, b2: null, q2: null, text: "tempo: 75\\nfelt right slower", added: true},
+    {b1: 3, q1: 1, b2: null, q2: null, text: "loop: 2.4\\nseam = drum entry", added: true},
+    {b1: 4, q1: 1, b2: null, q2: null, text: "plain note\\nsecond line stays", added: true},
+  ]).map(resolveNote); finalizeNotes();`);
+  assert.equal(val(`rollnotes.find(n => n.keypartial).cnote`), "whole-tone material");
+  assert.equal(val(`rollnotes.find(n => n.tempodir).cnote`), "felt right slower");
+  assert.equal(val(`rollnotes.find(n => n.loopTo !== undefined).cnote`), "seam = drum entry");
+  assert.equal(run(`String(rollnotes.find(n => n.text.startsWith("plain")).cnote)`), "undefined");
+  assert.ok(val(`rollnotes.find(n => n.text.startsWith("plain")).text`).includes("second line"));
+  const json = JSON.parse(run(`serializeRollnotes()`));
+  assert.equal(json.notes.find(n => n.type === "key").note, "whole-tone material");
+  assert.equal(json.notes.find(n => n.type === "tempo").note, "felt right slower");
+  assert.equal(json.notes.find(n => n.type === "loop").note, "seam = drum entry");
+  run(`rollnotes = parseRollnotesJSON(serializeRollnotes()).map(resolveNote); finalizeNotes();`);
+  assert.equal(val(`rollnotes.find(n => n.tempodir).cnote`), "felt right slower");
+  run(`rollnotes = [];`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

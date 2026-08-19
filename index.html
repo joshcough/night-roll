@@ -1005,6 +1005,7 @@
     <div class="hsec" data-hsec="annot">
     <h3>ANNOTATIONS</h3>
     <dl>
+      <dt>Attached notes on ANY annotation</dt><dd>Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the text box below the value rides along (for sections, the first line is the label and the rest is the note). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.</dd>
       <dt>+ Note</dt><dd>Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.</dd>
       <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: the span glows amber and playback loops just that span (any loop: annotation is ignored while it's armed). Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tap the ruler to clear.</dd>
       <dt>Gold flags</dt><dd>Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.</dd>
@@ -1641,16 +1642,17 @@ function jsonToRawNote(j) { // schema entry -> the raw shape the deriver expects
   const n = {b1: +at[0] || 1, q1: at[1] !== undefined ? +at[1] : 1,
              b2: j.to ? +j.to[0] : null,
              q2: j.to && j.to[1] !== undefined ? +j.to[1] : null, text: ""};
+  const att = j.note ? "\n" + j.note : "";
   switch (j.type) {
-    case "section": n.text = "section: " + (j.label || ""); break;
-    case "chord": n.text = "chord: " + (j.chord || "") + (j.note ? "\n" + j.note : ""); break;
-    case "key": n.text = "key: " + (j.key || ""); break;
-    case "timesig": n.text = "timesig: " + (j.timesig || ""); break;
-    case "tempo": n.text = "tempo: " + j.bpm; break;
+    case "section": n.text = "section: " + (j.label || "") + att; break;
+    case "chord": n.text = "chord: " + (j.chord || "") + att; break;
+    case "key": n.text = "key: " + (j.key || "") + att; break;
+    case "timesig": n.text = "timesig: " + (j.timesig || "") + att; break;
+    case "tempo": n.text = "tempo: " + j.bpm + att; break;
     case "track": n.text = "track: " + (j.track || "") +
       (j.voice ? " voice=" + j.voice : "") + (j.color ? " color=" + j.color : "") +
-      (j.vol !== undefined ? " vol=" + j.vol : ""); break;
-    case "loop": n.text = "loop: " + (j.loop || ""); break;
+      (j.vol !== undefined ? " vol=" + j.vol : "") + att; break;
+    case "loop": n.text = "loop: " + (j.loop || "") + att; break;
     case "chop": n.text = "chop: " + (j.chop || ""); break;
     default: n.text = j.text || "";
   }
@@ -1665,15 +1667,22 @@ function parseRollnotesJSON(text) {
 function deriveNoteTypes(out) {
   out.forEach(n => {
     n.text = n.text.trim();
-    const m = n.text.match(/^section:\s*(.+)/s);
-    if (m) { n.section = true; n.text = m[1].split("\n")[0].trim(); }
-    const cm = n.text.match(/^chord:\s*(.+)/s);
-    if (cm) { // first line = symbol; any further lines = attached note
-      n.chord = true;
-      const body = cm[1].split("\n");
+    // EVERY typed annotation may carry an attached note: first line is the
+    // value, remaining lines are the note — where doubt and reasoning live
+    // (web-handoff 2026-08-18; generalizes what chords always had)
+    const typed = /^(section|chord|key|timesig|tempo|track|loop):/i.test(n.text);
+    if (typed && n.text.includes("\n")) {
+      const body = n.text.split("\n");
       n.text = body[0].trim();
       const note = body.slice(1).join("\n").trim();
       if (note) n.cnote = note;
+    }
+    const m = n.text.match(/^section:\s*(.+)/s);
+    if (m) { n.section = true; n.text = m[1].trim(); }
+    const cm = n.text.match(/^chord:\s*(.+)/s);
+    if (cm) {
+      n.chord = true;
+      n.text = cm[1].trim();
     }
     const kp = n.text.match(/^key:\s*([A-G][#b]?(?:\/[A-G][#b]?)?)\s*\?\s*$/i);
     if (kp) { // partial: tonic stored, mode pending — never applied to the staff
@@ -1713,11 +1722,12 @@ function noteToJSON(n) { // enriched-or-stashed note -> schema entry (text prefi
   if (n.b2) j.to = (n.q2 !== null && n.q2 !== undefined) ? [n.b2, n.q2] : [n.b2];
   const t = n.text || "";
   let m;
-  if (n.section) { j.type = "section"; j.label = t; return j; }
-  if (n.chord) { j.type = "chord"; j.chord = t; if (n.cnote) j.note = n.cnote; return j; }
-  if ((m = t.match(/^key:\s*(.+)$/is))) { j.type = "key"; j.key = m[1].trim(); return j; }
-  if ((m = t.match(/^timesig:\s*(.+)$/is))) { j.type = "timesig"; j.timesig = m[1].trim(); return j; }
-  if ((m = t.match(/^tempo:\s*(\d+(?:\.\d+)?)\s*$/i))) { j.type = "tempo"; j.bpm = +m[1]; return j; }
+  const withNote = j2 => { if (n.cnote) j2.note = n.cnote; return j2; };
+  if (n.section) { j.type = "section"; j.label = t; return withNote(j); }
+  if (n.chord) { j.type = "chord"; j.chord = t; return withNote(j); }
+  if ((m = t.match(/^key:\s*(.+)$/is))) { j.type = "key"; j.key = m[1].trim(); return withNote(j); }
+  if ((m = t.match(/^timesig:\s*(.+)$/is))) { j.type = "timesig"; j.timesig = m[1].trim(); return withNote(j); }
+  if ((m = t.match(/^tempo:\s*(\d+(?:\.\d+)?)\s*$/i))) { j.type = "tempo"; j.bpm = +m[1]; return withNote(j); }
   if ((m = t.match(/^track:\s*(.+?)((?:\s+\w+=\S+)*)\s*$/i))) {
     j.type = "track"; j.track = m[1].trim();
     for (const kv of m[2].trim().split(/\s+/).filter(Boolean)) {
@@ -1726,9 +1736,9 @@ function noteToJSON(n) { // enriched-or-stashed note -> schema entry (text prefi
       if (k === "color") j.color = v;
       if (k === "vol") j.vol = parseFloat(v);
     }
-    return j;
+    return withNote(j);
   }
-  if ((m = t.match(/^loop:\s*(.+)$/is))) { j.type = "loop"; j.loop = m[1].trim(); return j; }
+  if ((m = t.match(/^loop:\s*(.+)$/is))) { j.type = "loop"; j.loop = m[1].trim(); return withNote(j); }
   if ((m = t.match(/^chop:\s*(start|end)\s*$/i))) { j.type = "chop"; j.chop = m[1].toLowerCase(); return j; }
   j.text = t;
   return j;
@@ -3423,8 +3433,8 @@ canvas.addEventListener("pointermove", e => {
     }
     else if (drag.cursor) scrubTo(evtPos(e));
     else if (drag.ruler) { // drag along the ruler = select a beat range
-      const a = tickAtX(drag.spos.x, beatTicks());
-      const b = tickAtX(evtPos(e).x, beatTicks());
+      const a = tickAtX(drag.spos.x, moveSnapTicks()); // 16ths (triplet steps with a T duration)
+      const b = tickAtX(evtPos(e).x, moveSnapTicks());
       rangeSel = a === b ? null : {a: Math.min(a, b), b: Math.max(a, b), cycle: true}; // drags arm the cycle
       draw();
     }
@@ -7380,7 +7390,9 @@ function openEditor(note, presetType) {
     setBeatPair("nq1", "ns1", (dt % barTicks()) / beatTicks() + 1);
   }
   document.getElementById("ntext").value =
-    type === "chord" ? (note && note.cnote || "") : note && type !== "key" ? note.text : "";
+    ["chord", "key", "tempo", "timesig", "loop"].includes(type) ? (note && note.cnote || "")
+    : type === "section" ? (note ? note.text + (note.cnote ? "\n" + note.cnote : "") : "")
+    : note ? note.text : "";
   if (type === "chord") setChordWidget(note ? note.text : "");
   if (type === "key" && note) {
     const nm = (note.text.match(/^key:\s*(\S+(?:\s+[a-z]+)?)/i) || [])[1] || "";
@@ -7469,15 +7481,15 @@ document.getElementById("nsave").addEventListener("click", () => {
     if (mode) {
       const full = keyNameFor(pc, mode);
       fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
-               text: "key: " + full.name, keydir: full.sf, added: true};
+               text: "key: " + full.name, keydir: full.sf, cnote: text || undefined, added: true};
     } else { // tonic only: stored, not applied — asserted spelling if chosen
       const tonic = sp || tonicLabel(pc);
       fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
-               text: "key: " + tonic + "?", keypartial: tonic, added: true};
+               text: "key: " + tonic + "?", keypartial: tonic, cnote: text || undefined, added: true};
     }
   } else if (type === "tempo") {
     const bpm = Math.max(20, Math.min(400, +document.getElementById("ntempo").value || 120));
-    fresh = {b1, q1, b2: null, q2: null, text: "tempo: " + bpm, tempodir: bpm, added: true};
+    fresh = {b1, q1, b2: null, q2: null, text: "tempo: " + bpm, tempodir: bpm, cnote: text || undefined, added: true};
   } else if (type === "timesig") {
     const num = +document.getElementById("ntsnum").value, den = +document.getElementById("ntsden").value;
     const oldTs = effTs();
@@ -7496,13 +7508,13 @@ document.getElementById("nsave").addEventListener("click", () => {
     if (tsChanged) convertAnchors(oldTs, [num, den]);
     rollnotes = rollnotes.filter(n => !(n.tsdir)); // one meter per song
     fresh = {b1: tsChanged ? 1 : b1, q1: tsChanged ? 1 : q1, b2: null, q2: null,
-             text: "timesig: " + num + "/" + den, tsdir: [num, den], added: true};
+             text: "timesig: " + num + "/" + den, tsdir: [num, den], cnote: text || undefined, added: true};
   } else if (type === "loop") {
     const lb = Math.max(1, +document.getElementById("nlb").value || 1);
     const lq = getBeatPair("nlq", "nls");
     // one loop point per song: a new one replaces any local one
     rollnotes = rollnotes.filter(n => !(n.added && n.loopTo !== undefined));
-    fresh = {b1, q1, b2: null, q2: null, text: "loop: " + lb + "." + lq, added: true};
+    fresh = {b1, q1, b2: null, q2: null, text: "loop: " + lb + "." + lq, cnote: text || undefined, added: true};
   } else if (type === "chop") {
     const cmode = document.getElementById("nchopmode").value;
     const dispTick = (b1 - 1) * barTicks() + (q1 - 1) * beatTicks();
@@ -7532,7 +7544,8 @@ document.getElementById("nsave").addEventListener("click", () => {
   } else if (type === "section") {
     localStorage.setItem("ff1roll-dragtype", "section");
     fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
-             text: text.split("\n")[0], section: true, added: true};
+             text: text.split("\n")[0], section: true, added: true,
+             cnote: text.split("\n").slice(1).join("\n").trim() || undefined};
   } else {
     fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null, text, added: true};
   }
