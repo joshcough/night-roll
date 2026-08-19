@@ -524,6 +524,23 @@ sync (GitHub Contents API, 409 retry) · key dial · help sheet.
   score-view-plan.md (score history/limitations), supplemental-learning.md
   (session log = quiz source material).
 
+## Query tools (tools/*.mjs — deterministic, facts only)
+
+For any session (web sessions especially) that needs to READ music
+without eyeballing dumps. All load through the app's own parser via
+tests/harness.mjs (one parser, no drift), de-duplicate stacked notes by
+default, and take `--json`. They report what IS in the file — never a
+chord name, key inference, or note classification; findings are Josh's.
+
+    node tools/at.mjs <song> <bar.beat> [--span <bar.beat>]
+    node tools/span.mjs <song> <from> <to>        # + pitch-class set (no drums)
+    node tools/pitch-census.mjs <song> [--track T] # PCs present/absent, duration-weighted
+    node tools/song-diff.mjs <old.mid> <new.mid>
+    node tools/annotations.mjs <song> [--type T]   # + anomaly flags
+    node tools/loop-targets.mjs <song>|--all       # loop-target methodology
+
+<song> = a bare name (resolved under albums/) or a path.
+
 ## Shipping checklist (every user-facing feature, Josh's standing rule)
 
 1. **Help dialog**: add/update the entry in index.html's help sheet
