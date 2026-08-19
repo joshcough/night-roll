@@ -893,6 +893,7 @@
     <div class="row"><span class="lbl">to</span></div>
     <div id="mvtracks" class="row" style="flex-wrap:wrap;gap:6px"></div>
     <div class="row" style="margin-top:12px">
+      <button id="mvdedupe">🧹 Remove duplicate notes (whole song)</button>
       <button id="mvclose" style="margin-left:auto">Close</button>
     </div>
   </div>
@@ -1015,7 +1016,7 @@
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
-      <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. Pasting and chord inserts never stack an identical note on top of an existing one, and a ⧉ whose clones you never drag cleans itself up — duplicates simply can't accumulate. (Deliberate unisons BETWEEN tracks are untouched by all of this.) A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
+      <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. Pasting and chord inserts never stack an identical note on top of an existing one, and a ⧉ whose clones you never drag cleans itself up — new duplicates can't accumulate. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
       <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
@@ -5596,6 +5597,37 @@ function moveSelectionToTrack(target) { // ⇄: selection changes instrument, ke
   draw();
   return items.length;
 }
+function dedupeSong() { // 🧹 back by demand (Josh 2026-08-18: old drafts keep
+  // re-saving pre-guard stacks over the cleaned repo file — HE runs it, HE
+  // saves). Whole song, every track; exact same start+pitch WITHIN one track
+  // collapses to the longest; cross-track unisons untouched by construction.
+  if (!editableSong()) return 0;
+  const erased = [];
+  song.tracks.forEach((tr, ti) => {
+    const best = new Map();
+    tr.notes.forEach((n, ni) => {
+      if (n.gone) return;
+      const k = n.t + ":" + n.p;
+      const prev = best.get(k);
+      if (!prev) { best.set(k, {ni, d: n.d}); return; }
+      const loser = n.d > prev.d ? prev.ni : ni;
+      if (n.d > prev.d) best.set(k, {ni, d: n.d});
+      const ln = tr.notes[loser];
+      ln.gone = true;
+      const rn = song.rawNotes && ln.ri !== undefined && song.rawNotes[ti][ln.ri];
+      if (rn) rn.gone = true;
+      erased.push({ti, ni: loser});
+    });
+  });
+  if (!erased.length) return 0;
+  pushUndo({kind: "eraseBatch", items: erased});
+  multiSel = []; multiSelKey = new Set(); selNote = null;
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return erased.length;
+}
 function chordSym(rootPc, qual) { // flat-preferring: ♭VI in Cm is A♭, not G♯
   return CHORD_FLAT[rootPc] + (qual === "maj" ? "" : qual);
 }
@@ -8763,6 +8795,12 @@ document.getElementById("mvtracks").addEventListener("click", e => {
   document.getElementById("movesheet").classList.remove("on");
   setInfo(k ? "moved " + k + " note" + (k === 1 ? "" : "s") + " to " + (song.tracks[+b.dataset.mv].name || "track")
             : "select notes first (lasso or tap), then ⇄");
+});
+document.getElementById("mvdedupe").addEventListener("click", () => {
+  const k = dedupeSong();
+  document.getElementById("movesheet").classList.remove("on");
+  setInfo(k ? "removed " + k + " duplicate note" + (k === 1 ? "" : "s") + " — SAVE to make it stick (⟲ restores them)"
+            : "no duplicates found anywhere");
 });
 document.getElementById("mvclose").addEventListener("click", () =>
   document.getElementById("movesheet").classList.remove("on"));
