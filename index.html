@@ -3750,7 +3750,10 @@ function sfDecode(file, p) { // idempotent: one async decode per (instrument, pi
           for (let i = start; i < start + win; i++) sum += ch[i] * ch[i];
           peakRms = Math.max(peakRms, Math.sqrt(sum / win));
         }
-        b._norm = Math.min(3.5, Math.max(0.4, 0.32 / Math.max(0.02, peakRms)));
+        // cap raised 3.5→8 (2026-08-18): these samples need ~10× to reach the
+        // chip voices' level — 3.5 left every sampled instrument ~4× under
+        // the pulses, which no fader inside 0–150% could recover
+        b._norm = Math.min(8, Math.max(0.4, 0.32 / Math.max(0.02, peakRms)));
         bank.buffers[p] = b;
         res();
       }, rej));
