@@ -17,6 +17,15 @@ is deployment. Built for iPad-in-bed ergonomics, works anywhere.
 - **Annotations (`.rollnotes`)** — plain-text sidecar per song: beat-anchored
   notes, section bands, key changes, loop points. Edited in-app (with
   dictation), synced to this repo via the GitHub Contents API.
+- **Composing** — it grew into a small DAW (2026-08): pencil/drag note entry
+  on a 16th/triplet grid, multi-note selection editing (move, resize, split,
+  join, velocity), chord & progression insertion, a drum kit with its own
+  lane and pattern fill, per-track volume/voice/rename, record from the
+  on-screen piano, and one-button Save & Commit of .mid + annotations +
+  a text dump web sessions can read.
+- **Query tools** — `tools/*.mjs` answer factual questions (what sounds at
+  bar 2.4, pitch-class census, song diffs, annotation anomalies) through
+  the app's own parser. Facts only; findings stay the analyst's.
 - **Analysis-first design** — the app never reveals keys or chords on its
   own; signatures and spellings render only what the analyst has recorded.
   Discovery is the point.

@@ -80,6 +80,29 @@ chrome each.)
   questions drawn from the previous session's material.
 - `supplemental-learning.md` — session log, quiz source material.
 - `NIGHT-ROLL.md` — the app's feature reference, if he mentions a tool.
+- `glossary.md` — terms Josh has ENCOUNTERED vs DEMONSTRATED; quiz fodder.
+  Promote honestly, add new terms as they come up in session.
+
+## Query tools — USE THESE instead of eyeballing dumps
+
+`tools/*.mjs` run in the container (`node tools/at.mjs …`) and answer
+factual questions through the app's own parser. A 2026-08-18 session made
+multiple factual errors reasoning over raw dumps (asserted a chord span
+wrongly, claimed a note that wasn't there); these scripts exist to delete
+that error class. They report what IS — never a chord name, key inference,
+or note classification. Findings stay Josh's.
+
+    node tools/at.mjs <song> <bar.beat> [--span <bar.beat>]  # sounding notes; onset vs SUSTAINS
+    node tools/span.mjs <song> <from> <to>                   # events + pitch-class SET (drums excluded)
+    node tools/pitch-census.mjs <song> [--track T]           # PCs present/ABSENT, duration-weighted
+    node tools/song-diff.mjs <old.mid> <new.mid>             # per-track added/removed/changed
+    node tools/annotations.mjs <song> [--type T]             # resolved dump + anomaly flags
+    node tools/loop-targets.mjs <song>|--all                 # loop anchor/target + what sounds there
+
+`<song>` is a bare name (`overworld`, `cool-bmaj-progression`) or a path.
+All take `--json`. Stacked duplicate notes are de-duplicated by default.
+If a question is answerable by one of these, run it — do not answer from
+memory or from reading the dump by eye.
 
 ## Session shape
 
