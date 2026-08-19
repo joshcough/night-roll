@@ -6308,7 +6308,8 @@ document.getElementById("chordbtn").addEventListener("click", () => {
   // buttons); an explicit tap becomes the remembered choice. iPads and up
   // start open. min(screen dims) < 500 CSS px ≈ every phone, no iPad.
   const stored = localStorage.getItem("ff1roll-panelhide");
-  const phone = Math.min(screen.width, screen.height) < 500;
+  const scr = (typeof screen !== "undefined" && screen) || {width: 1024, height: 768};
+  const phone = Math.min(scr.width, scr.height) < 500;
   if (stored === null ? phone : stored === "1") setHidden(true, false);
 }
 const viewbtn = document.getElementById("viewbtn");
