@@ -4,6 +4,43 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## THE MENU — everything on deck (consolidated 2026-08-19)
+
+**Music (the point of all of this):**
+1. B-part study → write Cool Bmaj's B section (protocol below; rhythm
+   hypothesis; turns/C-parts included). THE composition thread.
+2. Bass variation in Cool Bmaj — the lead voice's two verbatim bars.
+3. Rename his tracks in-app (top/chords/bass/counter — feature shipped
+   2026-08-19, names settled in the 08-18 handoff). Josh's two minutes.
+4. The `top` voice question — back to square (matched pair with bass)
+   or keep sawtooth separation? Josh's ear call, parked.
+5. FF1 analysis thread: prologue F#–C tritone (THE NEXT MOVE), 6.1
+   Gm-vs-C7 open, prologue key untested; older per-song queue below.
+
+**App — built, awaiting Josh:**
+6. `midi-input` branch — Web MIDI → ● Record (Jamstik, real velocities,
+   chords). Plug in, test in desktop Chrome, then "merge it".
+
+**App — design work wanted before code:**
+7. Context-aware drum generation (Drummer-style; full requirements
+   below — seeds, one-tap reroll, constrained randomness).
+8. Drums in the score view (percussion clef conventions below).
+9. iPhone top-row treatment (chips unreachable on phones).
+
+**App — implementation-ready, medium:**
+10. Chord bands follow moved notes (phase 1 ride-along + phase 2 stale
+    marker, plan below).
+11. Tombstone architecture for deleted synced annotations (the general
+    fix; track: directives already guarded by last-wins dedupe).
+12. 32nd-note snap grid (TMNT2 fitBpm 300→150 labeling).
+
+**Someday:**
+13. music21 private answer key (guardrails below; useful at ~10
+    annotated songs).
+14. Instrument-panel piano zoom (parked until fat-fingers bite).
+15. Guitar audio input (monophonic pitch tracking) — superseded for
+    now by the Jamstik/MIDI path, kept as the amp-and-cable dream.
+
 ## RESTART CONTEXT — updated 2026-08-15 late night (the seven-hour app marathon)
 
 **Analysis thread unchanged:** prologue F#–C tritone is still THE NEXT
