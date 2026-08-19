@@ -70,6 +70,20 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   `encountered` 2026-08-18. Anchor: Cool Bmaj final walkdown — descent
   becomes rise-leap-settle via one note. FF: *(find one)*.
 
+- **motif** — a short recurring musical idea. Any length, any prominence,
+  recurring anywhere; no memorability claim built in. — `encountered`
+  2026-08-18 (track-naming discussion). Anchor: *(find one)*.
+- **leitmotif** — a motif attached to a character, place, or idea,
+  recurring across a whole work (the Wagner sense; Uematsu across a
+  game's score). Josh's working sense of "motif" was actually this —
+  which is why "motif" felt like an overclaim for pulse1. —
+  `encountered` 2026-08-18. Anchor: *(find one — FF1's recurring
+  prelude arpeggio is a promising hunt)*.
+- **hook** — the catchy part, the bit that catches the listener. —
+  **`demonstrated`** 2026-08-18: distinguished it correctly and
+  unprompted, and used it to REJECT a wrong track name ("pulse1 isn't
+  the hook"). Anchor: his call that Cool Bmaj's hook is the bass.
+
 ## Harmony
 
 - **add9** — a triad plus the 9th (2nd), color without the 7th. —
@@ -84,6 +98,7 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   chromatically) from tonic toward the dominant; grief's bassline. —
   `encountered` 2026-08-17 (progression library: Grieving). Anchor:
   *(none in Josh's songs yet)*. FF: *(find one)*.
+
 
 ## Form
 

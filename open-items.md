@@ -322,6 +322,38 @@ bars/beats; FF anchors are deliberately blank "(find one)" slots —
 locating them is analysis homework. Keep it updated when new terms come
 up in sessions; promote honestly.
 
+## Design-stage / future (from the 2026-08-18 web-session handoff)
+
+- **Context-aware drum generation — DESIGN STAGE, do not implement**
+  (Josh explicit). Full concept + requirements live in the handoff and
+  are preserved here: Logic-Drummer-style generate-and-judge; Night
+  Roll DECLARES structure (sections/chords/loops) so a generator can be
+  structurally aware without inference. Value order: section-aware
+  fills → follow-the-bass kick → harmonic-rhythm accents → density
+  controls. Hard requirements: reroll = one action, undo = one step,
+  SEEDS so a liked take three rerolls back is recoverable, constrained
+  randomness (fixed skeleton, variation only in negotiable parts),
+  fill vocabulary curated empirically by what Josh keeps.
+- **Drums in the score view**: percussion clef, fixed staff ROLES not
+  pitches (kick bottom space, snare 3rd space, hats above top line),
+  x-heads for cymbals/hats, stems up = hands / down = feet. RULED: kit
+  staff always at the BOTTOM. DRUM_SLOTS/DRUM_LABELS exist; needs a
+  GM→staff-position/notehead table. VexFlow supports both natively.
+- **music21 as Claude's private answer key** (Josh approved): output to
+  Claude only, never Josh; hypothesis not ground truth (chip corpus is
+  its weak case); hints must still route through the derivation.
+  Becomes useful at ~10 annotated songs; Humdrum/kern for corpus-wide
+  pattern queries.
+- **Tombstone architecture for deleted synced annotations**: the
+  general fix behind the duplicate-directive bug (deletions of synced
+  notes only exist in memory; localStorage persists added notes only).
+  The load-time last-wins dedupe (shipped 2026-08-19) covers track:
+  directives; deleting OTHER synced annotation types before a Sync
+  still resurrects on reload. Design: tombstone list in localStorage
+  the loader subtracts, cleared on Sync.
+- **MIDI input branch (`midi-input`, built+parked)**: Web MIDI →
+  ● Record with real velocities (Jamstik). Josh testing before merge.
+
 ## Tooling to-do
 
 - **iPhone treatment (Josh, 2026-08-18, "eventually"):** track chips

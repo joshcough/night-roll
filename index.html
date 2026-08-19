@@ -1654,6 +1654,7 @@ function jsonToRawNote(j) { // schema entry -> the raw shape the deriver expects
       (j.vol !== undefined ? " vol=" + j.vol : "") + att; break;
     case "loop": n.text = "loop: " + (j.loop || "") + att; break;
     case "chop": n.text = "chop: " + (j.chop || ""); break;
+    case "lane": n.text = "lane: " + j.lane; break;
     default: n.text = j.text || "";
   }
   return n;
@@ -1740,6 +1741,7 @@ function noteToJSON(n) { // enriched-or-stashed note -> schema entry (text prefi
   }
   if ((m = t.match(/^loop:\s*(.+)$/is))) { j.type = "loop"; j.loop = m[1].trim(); return withNote(j); }
   if ((m = t.match(/^chop:\s*(start|end)\s*$/i))) { j.type = "chop"; j.chop = m[1].toLowerCase(); return j; }
+  if ((m = t.match(/^lane:\s*(-?\d+)\s*$/))) { j.type = "lane"; j.lane = +m[1]; return j; }
   j.text = t;
   return j;
 }
