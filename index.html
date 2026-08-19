@@ -3627,7 +3627,7 @@ document.addEventListener("pointerdown", function warm() {
 function trackGain(ti) {
   if (!trackGains[ti]) {
     trackGains[ti] = audio.createGain();
-    trackGains[ti].gain.value = trackAudible(ti) ? 1 : 0;
+    trackGains[ti].gain.value = trackAudible(ti) ? trackVol(ti) : 0; // faders survive the stop/play rebuild
     trackGains[ti].connect(master);
   }
   return trackGains[ti];
