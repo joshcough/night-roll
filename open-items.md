@@ -324,6 +324,14 @@ up in sessions; promote honestly.
 
 ## Tooling to-do
 
+- **iPhone treatment (Josh, 2026-08-18, "eventually"):** track chips
+  are unreachable on a phone — the top row shows only ⏮ + ▶ pushed
+  hard left; the chip cluster gets no room. The bottom panel already
+  auto-folds on phones; the top row needs its own phone answer
+  (stacked layout? chips behind a single ☰ button? transport-first
+  with chips in a drawer?). min-dimension <500px is the existing
+  phone gate to reuse.
+
 - **Record button — SHIPPED overnight 2026-08-18** (● beside Play,
   editable songs): key-down/key-up on the 🎹 panel = note start/end on
   the selected track, grid-snapped (triplets honored), count-in
