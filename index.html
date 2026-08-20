@@ -2468,7 +2468,7 @@ function drawRangeTints(W, H) {
       ctx.globalAlpha = 1;
     }
   }
-  if (rangeSel) {
+  if (rangeSel && !rangeSel.off) { // parked cycle: body tint hides with it, back on re-arm
     const x = RULER_W + rangeSel.a * ppt - view.x;
     ctx.fillStyle = css("--accent");
     ctx.globalAlpha = 0.12;
