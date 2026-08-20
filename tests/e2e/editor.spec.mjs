@@ -232,3 +232,18 @@ test("double-tap a band opens its annotation editor", async ({ page }) => {
   await page.mouse.click(mid.x, mid.y); // second tap within the window
   expect(await page.evaluate(() => document.getElementById("noteeditor").classList.contains("on"))).toBe(true);
 });
+
+test("LCD readouts open their annotations: tempo, meter, key", async ({ page }) => {
+  const editorOn = () => page.evaluate(() => document.getElementById("noteeditor").classList.contains("on"));
+  const editorType = () => page.evaluate(() => document.getElementById("ntype").value);
+  const close = () => page.evaluate(() => document.getElementById("ncancel").click());
+  await page.evaluate(() => document.getElementById("lcdtempo").click());
+  expect(await editorOn()).toBe(true);
+  expect(await editorType()).toBe("tempo");
+  await close();
+  await page.evaluate(() => document.getElementById("lcdmeter").click());
+  expect(await editorType()).toBe("timesig");
+  await close();
+  await page.evaluate(() => document.getElementById("lcdkey").click());
+  expect(await editorType()).toBe("key");
+});

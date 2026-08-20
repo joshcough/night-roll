@@ -972,7 +972,7 @@
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
-      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). The meter·key segment is tappable whenever it shows a "?" — it opens the editor preset to answer it: Time signature if the meter is unset (it wins when both are), Key change otherwise; a stored partial opens its own note with the tonic already filled.</dd>
+      <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). Every readout is a door: tap the tempo to open the tempo annotation governing the cursor (or declare the first one), tap the meter to open the time signature, tap the key to open the key change ruling the cursor — a stored partial opens its own note with the tonic already filled.</dd>
       <dt>Blue cursor</dt><dd>Play starts here. Tap the bar ruler to place it, or drag its handle (triangle under the ruler). Tapping any note also moves it there.</dd>
     </dl>
 
@@ -2191,20 +2191,32 @@ function updateLCD() {
   document.getElementById("lcdtempo").textContent = String(bpm);
   document.getElementById("lcdmeter").textContent = meter;
   document.getElementById("lcdkey").textContent = key;
-  // a "?" is an invitation: the segment taps open the editor that answers it
-  document.getElementById("lcdmkseg").classList.toggle("tappable",
-    meter.includes("?") || key.includes("?"));
-  // tempo is tappable on the app's own songs — authoring, not analysis
-  document.getElementById("lcdtemposeg").classList.toggle("tappable", isComposition());
+  // both segments are doors to their annotations (Josh, 2026-08-19)
+  document.getElementById("lcdmkseg").classList.toggle("tappable", true);
+  document.getElementById("lcdtemposeg").classList.toggle("tappable", true);
+}
+function governingAt(match) { // latest matching annotation at or before the cursor
+  const t = curTick();
+  let hit = null;
+  for (const n of rollnotes)
+    if (match(n) && n.start <= t && (!hit || n.start >= hit.start)) hit = n;
+  return hit;
 }
 document.getElementById("lcdtemposeg").addEventListener("click", () => {
-  if (song && isComposition()) openEditor(null, "tempo");
+  if (!song) return; // edit the tempo ruling the cursor, or declare the first one
+  openEditor(governingAt(n => n.tempodir !== undefined), "tempo");
 });
-document.getElementById("lcdmkseg").addEventListener("click", () => {
+// meter and key are independent targets in the shared segment (Josh, 2026-08-19)
+document.getElementById("lcdmeter").addEventListener("click", e => {
   if (!song) return;
-  if (!declaredTs) { openEditor(null, "timesig"); return; } // meter first: the easier ruling
-  const partial = rollnotes.find(n => n.keypartial);
-  if (keyNameAt(curTick()) === null) openEditor(partial || null, partial ? undefined : "key");
+  e.stopPropagation();
+  openEditor(governingAt(n => !!n.tsdir), "timesig");
+});
+document.getElementById("lcdkey").addEventListener("click", e => {
+  if (!song) return;
+  e.stopPropagation();
+  const kn = governingAt(n => n.keydir !== undefined || n.keypartial);
+  openEditor(kn, kn ? undefined : "key");
 });
 function updateSubtitle() {
   updateLCD(); // rides every cursor/playhead update
