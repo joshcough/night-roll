@@ -9955,11 +9955,28 @@ try { // a capture beacon surviving into a fresh load = the tab was killed mid-c
   const qsong = new URLSearchParams(location.search).get("song"); // shared link wins
   const last = localStorage.getItem("ff1roll-lastsong");
   // drafts aren't in the manifest but are perfectly loadable (draft-wins path)
+  const loadable = p => all.includes(p) || (p && localStorage.getItem("ff1roll-draft-" + p));
   currentPath = qsong && /^albums\/[\w\-./]+\.mid$/.test(qsong) ? qsong
-    : (all.includes(last) || (last && localStorage.getItem("ff1roll-draft-" + last)))
-    ? last : "albums/final-fantasy-i/songs/overworld.mid";
+    : loadable(last) ? last : "albums/final-fantasy-i/songs/overworld.mid";
   updateSongBtn();
-  loadSong(currentPath).catch(e => setInfo("load failed — open via a web server (GitHub Pages): " + e.message));
+  // a dead link (moved/renamed song in ?song= or a stale last-song) must not
+  // strand you on a blank page: warn, then fall back to something that exists
+  const bootFallback = why => {
+    const fb = loadable(last) && last !== currentPath ? last : "albums/final-fantasy-i/songs/overworld.mid";
+    setInfo("⚠ " + why + " — opening " + fb.split("/").pop() + " instead (the song may have moved: use Open…)");
+    currentPath = fb;
+    updateSongBtn();
+    return loadSong(fb);
+  };
+  if (qsong && !loadable(currentPath)) {
+    bootFallback("that link's song isn't in the catalog: " + currentPath)
+      .catch(e => setInfo("load failed — open via a web server (GitHub Pages): " + e.message));
+  } else {
+    loadSong(currentPath).catch(e => {
+      if (/fetch failed/.test(e.message)) return bootFallback("couldn't load " + currentPath).catch(() => setInfo("load failed: " + e.message));
+      setInfo("load failed — open via a web server (GitHub Pages): " + e.message);
+    });
+  }
 })();
 </script>
 </body>
