@@ -1034,7 +1034,7 @@
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> to change its length, or its <b>left edge</b> to move the start while the end stays put — every selected note adjusts by the same amount, so "play this chord half as long" is one gesture. Notes too small on screen to have edge zones are all move-handle — zoom in to resize them. Keyboard: Option+←→.</dd>
-      <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. Pasting and chord inserts never stack an identical note on top of an existing one, and a ⧉ whose clones you never drag cleans itself up — new duplicates can't accumulate. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
+      <dt>Copy</dt><dd>A real copy and a real paste: <b>⧉</b> copies whatever is lasso'd (or tapped), <b>📋</b> pastes it at the blue cursor — and the copy SURVIVES scrolling, changing selection, even changing tools, so "lasso bar 3, scroll to bar 16, paste" is exactly three gestures. ⌘C fills the same clipboard. Pasting and chord inserts never stack an identical note on an existing one. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → 📋 at each cursor stop. Buttons that can't do anything right now are grayed — no selection grays copy/delete/split/join/⇄, an empty clipboard grays paste, empty histories gray ⟲⟳. With a keyboard there's also Option-drag (drags out an in-place copy) and ⌘C/⌘V.</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
       <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
@@ -1069,7 +1069,7 @@
   <button class="fitem" id="emUndo">⟲  Undo</button>
   <button class="fitem" id="emRedo">⟳  Redo</button>
   <div class="fdiv"></div>
-  <button class="fitem" id="emDup">⧉  Duplicate in place</button>
+  <button class="fitem" id="emDup">⧉  Copy selection</button>
   <button class="fitem" id="emPaste">📋  Paste at cursor</button>
   <button class="fitem" id="emDelete">🗑  Delete selection</button>
   <div class="fdiv"></div>
@@ -2493,6 +2493,7 @@ function drawRangeTints(W, H) {
 function pxPerTick() { return view.pxq / song.ppq; }
 function draw() {
   if (instOpen) drawInst(); // panel repaints on every app repaint (incl. playback frames)
+  if (typeof updateEditButtons === "function") updateEditButtons(); // cached — cheap on every frame
   if (!song) return;
   const W = wrap.clientWidth, H = wrap.clientHeight;
   ctx.fillStyle = css("--bg");
@@ -9201,10 +9202,10 @@ async function moveComposition(destDir) {
   });
 }
 document.getElementById("copybtn").addEventListener("click", () => {
-  const k = selEditItems().length;
+  const k = copySelection();
   if (!k) { setInfo("nothing selected — lasso or tap notes first"); return; }
-  duplicateSelectionInPlace();
-  setInfo("duplicated " + k + " note" + (k === 1 ? "" : "s") + " — drag the copies into place");
+  setInfo("copied " + k + " note" + (k === 1 ? "" : "s") + " — move the cursor anywhere, 📋 pastes there");
+  updateEditButtons();
 });
 const DP_PIECES = [["hat", 42], ["snare", 38], ["kick", 36]]; // hat on top, kick on the bottom — standard order
 let dpPattern = null; // [piece][step] booleans, rebuilt when meter/grid changes
@@ -9375,10 +9376,9 @@ document.getElementById("mvclose").addEventListener("click", () =>
   document.getElementById("movesheet").classList.remove("on"));
 document.getElementById("pastebtn").addEventListener("click", () => {
   if (!editableSong()) { setInfo("paste works on your own songs — captures are locked"); return; }
-  if (selEditItems().length) copySelection(); // selection wins; else reuse the last copy
-  const k = pasteClipboard(playCursor);
+  const k = pasteClipboard(playCursor); // pastes the last ⧉/⌘C copy — surviving any scrolling
   setInfo(k ? "pasted " + k + " note" + (k === 1 ? "" : "s") + " at the cursor"
-            : "nothing to paste — select notes first (or ⌘C with a keyboard)");
+            : "nothing copied yet — select notes and tap ⧉ (or ⌘C) first");
 });
 document.getElementById("splitbtn").addEventListener("click", () => {
   let k = splitSelectionAt(playCursor), how = "at the cursor";
@@ -9397,6 +9397,20 @@ document.getElementById("delbtn").addEventListener("click", () => {
             : "nothing selected — lasso or tap notes first");
 });
 let editRedo = [];
+let editBtnCache = "";
+function updateEditButtons() { // disabled = "this can't do anything right now"
+  const sel = song ? selEditItems().length : 0;
+  const st = [!editUndo.length, !editRedo.length, !sel, !(noteClipboard && noteClipboard.length)];
+  const key = st.join("|");
+  if (key === editBtnCache) return;
+  editBtnCache = key;
+  const set = (id, off) => { const b = document.getElementById(id); if (b) b.disabled = off; };
+  set("undobtn", st[0]); set("emUndo", st[0]);
+  set("redobtn", st[1]); set("emRedo", st[1]);
+  for (const id of ["copybtn", "emDup", "delbtn", "emDelete", "splitbtn", "emSplit",
+                    "joinbtn", "emJoin", "movebtn", "emMove"]) set(id, st[2]);
+  set("pastebtn", st[3]); set("emPaste", st[3]);
+}
 function pushUndo(entry) { editUndo.push(entry); editRedo = []; } // a fresh edit forks history
 function invertEdit(u) { // the entry that would undo an applyU(u), captured NOW
   if (u.kind === "group") return {kind: "group", entries: u.entries.map(invertEdit).reverse()};

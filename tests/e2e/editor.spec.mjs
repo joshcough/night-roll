@@ -61,16 +61,35 @@ test("🗑 deletes the selection; ⟲ restores it", async ({ page }) => {
   expect(await notes(page)).toHaveLength(3);
 });
 
-test("⧉ duplicates in place and 📋 pastes at the cursor", async ({ page }) => {
+test("⧉ copies, 📋 pastes at the cursor — surviving a dead selection, never stacking", async ({ page }) => {
   await selectAll(page);
   await page.click("#copybtn");
-  expect(await notes(page)).toHaveLength(6);
-  await page.click("#undobtn");
-  await selectAll(page);
-  await page.evaluate(() => { playCursor = 960; });
+  expect(await notes(page)).toHaveLength(3); // a real copy adds nothing
+  await page.evaluate(() => { clearMultiSel(); playCursor = 960; }); // selection dies (the scroll case)
   await page.click("#pastebtn");
   const pasted = (await notes(page)).filter(n => n.t === 960);
   expect(pasted.map(n => n.p).sort((a, b) => a - b)).toEqual([60, 64, 67]);
+  await page.click("#pastebtn"); // identical paste refuses to stack
+  expect(await notes(page)).toHaveLength(6);
+});
+
+test("buttons gray out when they can't act", async ({ page }) => {
+  const dis = id => page.evaluate(i => document.getElementById(i).disabled, id);
+  await page.evaluate(() => { clearMultiSel(); noteClipboard = null; editUndo = []; editRedo = []; draw(); });
+  expect(await dis("copybtn")).toBe(true);
+  expect(await dis("pastebtn")).toBe(true);
+  expect(await dis("delbtn")).toBe(true);
+  expect(await dis("undobtn")).toBe(true);
+  expect(await dis("redobtn")).toBe(true);
+  await selectAll(page);
+  await page.evaluate(() => draw());
+  expect(await dis("copybtn")).toBe(false);
+  await page.click("#copybtn");
+  expect(await dis("pastebtn")).toBe(false);
+  await page.click("#delbtn"); // delete pushes undo
+  expect(await dis("undobtn")).toBe(false);
+  await page.click("#undobtn"); // undo fills redo
+  expect(await dis("redobtn")).toBe(false);
 });
 
 test("help sheet: tabs switch sections and remember the last one", async ({ page }) => {
