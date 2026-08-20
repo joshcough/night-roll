@@ -88,6 +88,10 @@
     "path": "albums/compositions/CM6-G7b9.mid"
    },
    {
+    "title": "Cool B Maj With B Part",
+    "path": "albums/compositions/cool-b-maj-with-b-part.mid"
+   },
+   {
     "title": "Key Change Test (07-26)",
     "path": "albums/compositions/KeyChangeTest-07-26.mid"
    }
@@ -298,10 +302,6 @@
  {
   "title": "Night Roll Sketches",
   "songs": [
-   {
-    "title": "Cool B Maj With B Part",
-    "path": "albums/compositions/nightroll/cool-b-maj-with-b-part.mid"
-   },
    {
     "title": "Cool Bmaj Progression",
     "path": "albums/compositions/nightroll/cool-bmaj-progression.mid"
