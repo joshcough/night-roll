@@ -1008,7 +1008,7 @@
     <dl>
       <dt>Attached notes on ANY annotation</dt><dd>Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the text box below the value rides along (for sections, the first line is the label and the rest is the note). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.</dd>
       <dt>+ Note</dt><dd>Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.</dd>
-      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: the span glows amber and playback loops just that span (any loop: annotation is ignored while it's armed). Ruler drags snap to 16ths. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tapping the ruler <b>parks</b> the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode.</dd>
+      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: the span glows amber and playback loops just that span (any loop: annotation is ignored while it's armed). Ruler drags snap to 16ths. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tapping the ruler <b>parks</b> the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode. On your own songs, drag a section or chord band by its <b>edge</b> (in its ruler lane) to move that boundary — snaps to 16ths, saves like any other edit.</dd>
       <dt>Gold flags</dt><dd>Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.</dd>
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
@@ -1033,7 +1033,7 @@
       <dt>Drum chart (score view)</dt><dd>The kit renders as a real percussion staff at the BOTTOM of the score: percussion clef, positions are roles not pitches (kick in the bottom space, snare in the third, toms by size, hats above the top line), x-noteheads for hats and cymbals, stems up for hands and down for feet. Read-only for now — kit entry lives in the roll's drum lane; lasso and tap work on the chart like anywhere else.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
-      <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> — every selected note lengthens or shortens by the same amount, so "play this chord half as long" is one gesture. Keyboard: Option+←→.</dd>
+      <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> to change its length, or its <b>left edge</b> to move the start while the end stays put — every selected note adjusts by the same amount, so "play this chord half as long" is one gesture. Notes too small on screen to have edge zones are all move-handle — zoom in to resize them. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>Tap <b>⧉</b> in the edit row: the selection duplicates in place and the COPIES become the selection — drag them (or arrow-key them) to where they go. For copies that land far away, use <b>📋</b> instead: it stamps a copy of the selection at the blue cursor (tap the ruler to place it first) — or, with nothing selected, pastes whatever ⌘C last copied. Pasting and chord inserts never stack an identical note on top of an existing one, and a ⧉ whose clones you never drag cleans itself up — new duplicates can't accumulate. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → drag → repeat. With a keyboard there's also Option-drag (drags out a copy) and ⌘C/⌘V (pastes at the playhead, pasted notes arrive selected).</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
       <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
@@ -1808,6 +1808,16 @@ function sfDeclaredAt(tick) { // sf if the user has declared a key governing thi
     } else if (!open || r.start > open.start) open = r;
   }
   return ranged ? ranged.sf : open ? open.sf : null;
+}
+function setAnchorBQ(n, tick) { // start anchor from a tick
+  const bt = barTicks(), qt = beatTicks(), t = Math.max(0, tick);
+  n.b1 = Math.floor(t / bt) + 1;
+  n.q1 = snapBeat((t % bt) / qt + 1);
+}
+function setEndBQ(n, tick) { // q2 is the INCLUSIVE end beat (resolveNote adds one)
+  const bt = barTicks(), qt = beatTicks(), t = Math.max(qt, tick) - qt;
+  n.b2 = Math.floor(t / bt) + 1;
+  n.q2 = snapBeat((t % bt) / qt + 1);
 }
 function resolveNote(n) {
   const bt = barTicks();
@@ -2985,22 +2995,12 @@ function ridealongChordBands(pre, post) { // Phase 1 (open-items plan): a rigid
   song.tracks.forEach(tr => tr.notes.forEach(n => { if (!n.gone) total++; }));
   if (total > 0 && movedKeys.size >= total) {
     const bt = barTicks(), qt = beatTicks();
-    const setAnchor = (n, tick) => {
-      const t = Math.max(0, tick);
-      n.b1 = Math.floor(t / bt) + 1;
-      n.q1 = snapBeat((t % bt) / qt + 1);
-    };
-    const setEnd = (n, tick) => {
-      const t = Math.max(qt, tick) - qt; // q2 is the INCLUSIVE end beat (resolveNote adds one)
-      n.b2 = Math.floor(t / bt) + 1;
-      n.q2 = snapBeat((t % bt) / qt + 1);
-    };
     for (const n of rollnotes) {
       const pinned = n.start === 0 && (n.tsdir || n.trackdir || n.tempodir !== undefined ||
         n.keydir !== undefined || n.keypartial || /^lane:/.test(n.text));
       if (!pinned && dT !== 0) {
-        setAnchor(n, n.start + dT);
-        if (n.b2) setEnd(n, n.end + dT);
+        setAnchorBQ(n, n.start + dT);
+        if (n.b2) setEndBQ(n, n.end + dT);
       }
       if (n.loopTo !== undefined && dT !== 0) {
         n.loopTo = Math.max(0, n.loopTo + dT);
@@ -3478,8 +3478,10 @@ canvas.addEventListener("pointerdown", e => {
       if (items.length) {
         const hn = song.tracks[hit.ti].notes[hit.ni];
         const tickHere = posToTickPitch(p).tick;
-        const nearEnd = Math.abs(tickHere - (hn.t + hn.d)) < 8 / pxPerTick();
-        noteEdit = {kind: nearEnd && !e.altKey ? "resize" : "move",
+        const edgeOk = hn.d * pxPerTick() >= 24 && !e.altKey; // tiny notes are all move handle
+        const nearEnd = edgeOk && Math.abs(tickHere - (hn.t + hn.d)) < 8 / pxPerTick();
+        const nearStart = edgeOk && !nearEnd && Math.abs(tickHere - hn.t) < 8 / pxPerTick();
+        noteEdit = {kind: nearEnd ? "resize" : nearStart ? "resizeL" : "move",
                     orig: items.map(({ti, ni, n: nn}) => ({ti, ni, t: nn.t, d: nn.d, p: nn.p})),
                     items};
         lasso = false;
@@ -3515,10 +3517,21 @@ canvas.addEventListener("pointerdown", e => {
       draw();
     }
   }
+  let bandEdge = null; // grab a section/chord band by its edge (own songs, roll view)
+  if (editableSong() && viewMode !== "score" && !fallActive() && !noteEdit && !pencil &&
+      p.y >= BASE_RULER_H && p.y < RULER_H) {
+    const laneAt = Math.floor((p.y - BASE_RULER_H) / LANE_H);
+    const tk = posToTickPitch(p).tick, ppt = pxPerTick();
+    const band = rollnotes.find(n => (n.section || n.chord) && n.lane === laneAt &&
+      (Math.abs((n.start - tk) * ppt) < 10 || Math.abs((n.end - tk) * ppt) < 10));
+    if (band) bandEdge = {n: band,
+      side: Math.abs((band.end - tk) * ppt) <= Math.abs((band.start - tk) * ppt) ? "end" : "start",
+      s0: band.start, e0: band.end};
+  }
   drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false,
-          lasso, noteEdit, pencil,
-          cursor: !lasso && !noteEdit && !pencil && cursorHit(p),
-          ruler: !lasso && !noteEdit && !pencil && !!song && p.y < RULER_H, spos: p};
+          lasso, noteEdit, pencil, bandEdge,
+          cursor: !lasso && !noteEdit && !pencil && !bandEdge && cursorHit(p),
+          ruler: !lasso && !noteEdit && !pencil && !bandEdge && !!song && p.y < RULER_H, spos: p};
 });
 canvas.addEventListener("pointermove", e => {
   if (pinch) {
@@ -3583,6 +3596,14 @@ canvas.addEventListener("pointermove", e => {
           it.n.p = trackIsDrums(it.ti) ? drumStep(o.p, -dP) // lane rows run opposite to slot order
                                        : Math.min(PMAX, Math.max(PMIN, o.p + dP));
         }
+      } else if (drag.noteEdit.kind === "resizeL") { // left edge: end stays put
+        const minD = Math.max(24, Math.round(song.ppq / 8));
+        for (let i = 0; i < drag.noteEdit.items.length; i++) {
+          const it = drag.noteEdit.items[i], o = drag.noteEdit.orig[i];
+          const nt = Math.max(0, Math.min(o.t + dT, o.t + o.d - minD));
+          it.n.t = nt;
+          it.n.d = o.d + (o.t - nt);
+        }
       } else {
         const minD = Math.max(24, Math.round(song.ppq / 8));
         for (let i = 0; i < drag.noteEdit.items.length; i++) {
@@ -3590,6 +3611,14 @@ canvas.addEventListener("pointermove", e => {
           it.n.d = Math.max(minD, o.d + dT);
         }
       }
+      draw();
+    }
+    else if (drag.bandEdge) {
+      const be = drag.bandEdge, n = be.n;
+      const tk = tickAtX(evtPos(e).x, Math.round(song.ppq / 4)); // 16ths, like ruler selects
+      if (be.side === "end") setEndBQ(n, Math.max(be.s0 + beatTicks(), tk));
+      else setAnchorBQ(n, Math.min(Math.max(0, tk), be.e0 - beatTicks()));
+      resolveNote(n);
       draw();
     }
     else if (drag.cursor) scrubTo(evtPos(e));
@@ -3642,6 +3671,13 @@ function endPointer(e) {
     const changed = drag.noteEdit.items.some((it, i) =>
       it.n.t !== o[i].t || it.n.d !== o[i].d || it.n.p !== o[i].p);
     if (changed) selEditApply(drag.noteEdit.items, () => {}, o);
+  }
+  else if (drag.bandEdge && drag.moved) {
+    const n = drag.bandEdge.n;
+    n.added = true; // edited spans must persist and sync
+    finalizeNotes();
+    saveLocalNotes();
+    setInfo((n.chord ? "chord " : "section ") + n.text + " · bar " + n.b1 + "–" + (n.b2 || n.b1));
   }
   else if (!drag.moved) tap(evtPos(e));
   drag = null;

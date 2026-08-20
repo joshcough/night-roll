@@ -186,3 +186,31 @@ test("full-song move drags sections and the loop along (intro-cut workflow)", as
   expect(rn.find(n => n.sec).q1).toBe(2);
   expect(rn.find(n => n.text.startsWith("loop")).text).toBe("loop: 1.3");
 });
+
+test("left edge of a selected note drags the start; the end stays put", async ({ page }) => {
+  await page.evaluate(() => document.querySelector('#modeseg button[data-mode="select"]').click());
+  await selectAll(page);
+  const edge = await noteXY(page, 8, 64); // near t=0, inside the left grab zone
+  const px16 = await page.evaluate(() => (240 / song.ppq) * view.pxq);
+  await drag(page, edge, { x: edge.x + px16, y: edge.y });
+  expect((await notes(page)).map(n => ({ t: n.t, d: n.d }))).toEqual([
+    { t: 240, d: 240 }, { t: 240, d: 240 }, { t: 240, d: 240 }]); // t+d unchanged at 480
+});
+
+test("dragging a section band's right edge moves its boundary and persists", async ({ page }) => {
+  await page.evaluate(() => {
+    rollnotes = deriveNoteTypes([
+      { b1: 1, q1: 1, b2: 1, q2: 2, text: "section: A", added: true },
+    ]).map(resolveNote);
+    finalizeNotes(); draw();
+  });
+  const bandXY = tk => page.evaluate(t => {
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + RULER_W + (t / song.ppq) * view.pxq - view.x,
+             y: r.top + BASE_RULER_H + LANE_H / 2 };
+  }, tk);
+  const end = await page.evaluate(() => rollnotes[0].end);
+  await drag(page, await bandXY(end), await bandXY(end + 960)); // out two beats
+  expect(await page.evaluate(() => ({ q2: rollnotes[0].q2, added: rollnotes[0].added })))
+    .toEqual({ q2: 4, added: true });
+});
