@@ -165,7 +165,7 @@ Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play
 Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.
 
 **☰ Notes**
-Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Changes to synced notes need a Sync to become permanent.
+Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Shortcut: **double-tap** a section or chord band in the ruler to open that annotation directly. Changes to synced notes need a Sync to become permanent.
 
 **Loop points**
 Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is **loop: B.Q** (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.

@@ -214,3 +214,21 @@ test("dragging a section band's right edge moves its boundary and persists", asy
   expect(await page.evaluate(() => ({ q2: rollnotes[0].q2, added: rollnotes[0].added })))
     .toEqual({ q2: 4, added: true });
 });
+
+test("double-tap a band opens its annotation editor", async ({ page }) => {
+  await page.evaluate(() => {
+    rollnotes = deriveNoteTypes([
+      { b1: 1, q1: 1, b2: 1, q2: 2, text: "section: A", added: true },
+    ]).map(resolveNote);
+    finalizeNotes(); draw();
+  });
+  const mid = await page.evaluate(() => {
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + RULER_W + (rollnotes[0].start + rollnotes[0].end) / 2 / song.ppq * view.pxq - view.x,
+             y: r.top + BASE_RULER_H + LANE_H / 2 };
+  });
+  await page.mouse.click(mid.x, mid.y);
+  expect(await page.evaluate(() => document.getElementById("noteeditor").classList.contains("on"))).toBe(false);
+  await page.mouse.click(mid.x, mid.y); // second tap within the window
+  expect(await page.evaluate(() => document.getElementById("noteeditor").classList.contains("on"))).toBe(true);
+});
