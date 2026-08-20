@@ -1,4 +1,4 @@
-{ "version": 1, "song": "cool-b-maj-with-b-part", "saved": 1787228229781, "notes": [
+{ "version": 1, "song": "cool-b-maj-with-b-part", "saved": 1787231082658, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":37},
   {"at":[1,1],"type":"key","key":"G#m"},
@@ -18,7 +18,7 @@
   {"at":[6,4],"to":[7,3],"type":"chord","chord":"G#m"},
   {"at":[6,4],"to":[10,3],"type":"section","label":"A part again"},
   {"at":[7,4],"to":[8,3],"type":"chord","chord":"B"},
-  {"at":[8,4],"to":[9,3],"type":"chord","chord":"G#m7"},
+  {"at":[8,4],"to":[9,3],"type":"chord","chord":"C#m"},
   {"at":[9,4],"to":[10,3],"type":"chord","chord":"Badd9"},
   {"at":[10,4],"to":[10,4],"type":"section","label":"Break"},
   {"at":[11,1],"to":[12,4],"type":"section","label":"Deceptive A part"},
