@@ -449,6 +449,16 @@ re-arms instead of dying (his bar-7-to-9 case); ruler drags snap to
 16ths (32nd snapping made his B-part section edge land a 16th off —
 worth re-dragging that edge, Josh); full-song moves carry annotations.
 
+## Awaiting Josh's field verdicts (2026-08-19 marathon session)
+
+- **Hold-to-grab dwell is 230ms** — tune up/down after real iPad use.
+- Logic-style always-from-top cycle play — he suspects he may want
+  mid-span audition back ("i can ask to change it later").
+- New since his last load: real copy/paste (⧉ must be tapped before 📋
+  works — old lasso→paste habit now grays paste), button graying,
+  hold-to-grab, band edge drag, left-edge resize, double-tap bands,
+  LCD taps, chord extension chips, on-demand Check labels.
+
 ## Tooling to-do
 
 - **iPhone treatment (Josh, 2026-08-18, "eventually"):** track chips
