@@ -402,6 +402,26 @@ up in sessions; promote honestly.
 - **MIDI input branch (`midi-input`, built+parked)**: Web MIDI →
   ● Record with real velocities (Jamstik). Josh testing before merge.
 
+## From the 2026-08-19 web handoff
+
+- **Lasso is the core composition gesture** (Josh: "I used the lasso a
+  lot") — pencil is for the first idea, lasso+transpose for everything
+  after. Composition-ergonomics priority signal: invest there, not in
+  note entry. iPad pencil chord entry is slow; the untested unblock is
+  ● Record + the Jamstik (merged, awaiting his field test).
+- **Loop annotations corpus gap — JOSH'S CALL, optional:** only 5 of 19
+  FF1 songs carry loop: annotations (the rest loop end→1.1, targets
+  recorded in CUTS.md but not queryable). A script could write the 14
+  annotations from CUTS.md; value = loop-targets --all becomes a full
+  corpus view of every voice at every loop target (his tonic evidence).
+- Song threads: trumpet (voice5) deliberately HELD OUT of the whole B
+  section (A-part enters on chord 3 — a card not yet played); drums
+  stop before the B part.
+- Query tools verdict from the field: zero factual errors in a full
+  session (a first); ✱ inline notes and duration-weighted census called
+  out as better than spec. Equal-span anomaly retired (false positive
+  since the lane redesign).
+
 ## Tooling to-do
 
 - **iPhone treatment (Josh, 2026-08-18, "eventually"):** track chips

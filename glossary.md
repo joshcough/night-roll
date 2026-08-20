@@ -113,6 +113,28 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   *(none in Josh's songs yet)*. FF: *(find one)*.
 
 
+- **Neapolitan** — the major chord built on ♭2 (A major in G♯ minor);
+  classic pivot/pre-dominant color. — `encountered` 2026-08-19: Josh
+  found A♮ as one of only two non-diatonic pitches in his whole song,
+  read G♮ as approach and A♮ as structural, and proposed the pivot —
+  the web session supplied only the name. Anchor: cool-b-maj-with-
+  b-part, the Breaks' C♯–E–A bass and the key change it foreshadows.
+  FF: *(find one)*.
+- **Pivot chord** — a chord belonging to both keys, used as the door
+  between them. — **`demonstrated`** 2026-08-19: Josh derived
+  independently that C♯m is iv of G♯ minor AND iii of A major, then
+  used it at the Turn as the road home. Anchor: cool-b-maj-with-b-part
+  18.4.
+- **Sequence** — a figure restated at successively different pitch
+  levels. — `encountered` 2026-08-19. Anchor: the Turn's bass
+  (G♯–F♯–E, A–G♯–E, G♯–F♯–D♯, F♯–E–C♯ — the same shape walking down),
+  written because the melody needed TIME. His own verdict: best bass
+  writing in the piece. FF: *(find one)*.
+- **Chromatic voice leading** — connecting chords by moving every
+  voice a half step (Am→G♯m: A→G♯, C→B, E→D♯) — the smoothest join
+  between triads sharing no tones. — `encountered` 2026-08-19. Anchor:
+  cool-b-maj-with-b-part, the B part's exit. FF: *(find one)*.
+
 ## Form
 
 - **Turnaround** — the moment before a repeat that sets up the RETURN

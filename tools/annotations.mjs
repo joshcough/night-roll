@@ -34,10 +34,8 @@ for (const n of doc.rollnotes) {
   if ((n.section || n.chord) && n.end > doc.endTick + doc.barTicks)
     anomalies.push(`"${n.text}" span ends past the song (${fmtBQ(doc, n.end)})`);
 }
-const bands = doc.rollnotes.filter(n => n.section || n.chord);
-for (const a of bands) for (const b of bands)
-  if (a !== b && a.section && b.chord && a.start === b.start && a.end === b.end)
-    anomalies.push(`section "${a.text}" and chord "${b.text}" have identical spans (${fmtBQ(doc, a.start)}–${fmtBQ(doc, a.end)})`);
+// (equal-span section/chord pairs used to collide in the ruler; the
+// 2026-08-19 lane-group redesign made them structurally fine — not an anomaly)
 
 outJson(json, {song: doc.path, annotations: rows, anomalies}, o => {
   let s = `${o.song}\n`;

@@ -67,6 +67,31 @@ voice-leading problem, not chosen from a menu. The fix chain:
    finished. The turn's last chord (C#m add9, ✱ noted in the app) is
    iv of G#m: the return engineered twice over.
 
+## The derivation (from the web-session record — the path IS the find)
+
+1. **Closed-loop diagnosis:** a perfect loop is a closed system — the A
+   part's strength and its resistance to continuation are the same
+   property. The work therefore lived at the loop seam.
+2. **Two foreign notes in the whole song:** G♮ (approach — a leading
+   tone into G♯, delivers you home) and **A♮ (structural)**. The break's
+   bass already spelled C♯–E–A: the A-major exit was hiding inside the
+   break before the B part existed. A major on ♭2 of G♯ minor is the
+   NEAPOLITAN — Josh proposed the pivot; the session supplied the name.
+3. **Making A a tonic, not a color:** time on it + REMOVING G♮ (the
+   note that drags you home). Smallest change, largest effect.
+4. **C♯m derived as a true pivot** — iv of G♯m and iii of A major —
+   before being spent at the Turn.
+5. **E7 → Am** chosen over a plain return (deceptive flavor), with
+   Am → G♯m as chromatic voice leading: every voice a half step.
+6. **Harmonic rhythm compressed** into the return (F♯m a bar, E7/Am a
+   half-bar each) — one of the five B-contrast dimensions, found by
+   hand before the study existed.
+7. **The register diagnosis:** the "lost" ending wasn't harmony — the
+   melody peaked at A6 against a B5 loop target, a major-seventh cliff
+   no final chord could fix. Hence the Turn (see above), whose bass
+   went SEQUENTIAL because the melody needed room, and whose bar-19
+   run D♯–C♯–B–A♯ hands the leading tone straight to pulse1's landing.
+
 ## Process notes
 
 Eight hours, many iterations. "Some ideas just popped in my head
