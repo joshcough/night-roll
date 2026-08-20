@@ -1163,12 +1163,17 @@ test("chord bands ride rigid moves; stale flag when notes stop matching", () => 
   assert.equal(band.text, "D");
   assert.equal(band.b1, 1);
   assert.equal(band.q1, 2);
-  // now move ONE note out from under the band: no ride, but the label goes stale
+  // now move ONE note out from under the band: no ride — and no unsolicited
+  // flag either (label review is on-demand only; Josh's rule)
   run(`multiSel = [{ti: 0, ni: 1}]; multiSelKey = new Set(["0:1"]);`);
   assert.equal(run(`nudgeSelection(0, 1)`), true); // E→F over a D label
+  assert.equal(val(`rollnotes.find(n => n.chord).stale || null`), null); // silent until asked
+  run(`updateChordStale()`); // the Check-labels button's path
   const after = val(`(() => { const b = rollnotes.find(n => n.chord); return {text: b.text, stale: b.stale || null}; })()`);
   assert.equal(after.text, "D"); // never rewritten
-  assert.ok(after.stale); // but flagged
+  assert.ok(after.stale); // flagged because we ASKED
+  run(`nudgeSelection(0, 1)`); // any note edit retires review flags
+  assert.equal(val(`rollnotes.find(n => n.chord).stale || null`), null);
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 

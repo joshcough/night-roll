@@ -1013,7 +1013,7 @@
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
       <dt>Sections</dt><dd>Colored bands in the ruler (A, B…). Make one: select a range, + Note, tick "section", give it a short label. Nest them by containment. Tap a band to select its whole range. Sections and chords each get their OWN row group (sections above, chords below), so a section and a chord covering the same bars never fight for a lane.</dd>
-      <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection of EVERY note in the song takes the entire annotation layer with it — sections, chords, the loop point and its target — with chord and key labels transposing on vertical moves (global facts like meter and tempo keep their bar-1 anchor); that's how you cut an intro and slide everything left without orphaning your analysis. Moving a selection that carries one band's every note takes that band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), and a band whose notes no longer spell its label gets a ⚠: tap it to see what the notes read now, rename in ☰ Notes if you agree. The app never rewrites your labels.</dd>
+      <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection of EVERY note in the song takes the entire annotation layer with it — sections, chords, the loop point and its target — with chord and key labels transposing on vertical moves (global facts like meter and tempo keep their bar-1 anchor); that's how you cut an intro and slide everything left without orphaning your analysis. Moving a selection that carries one band's every note takes that band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), When YOU ask for it — the <b>Check labels</b> button in ☰ Notes' CHORDS group — the app compares each label against what sounds in its span and flags mismatches (⚠ on the band, the reading in the list). It never volunteers this and never rewrites your labels; any note edit clears the flags. The check hears EVERY pitch sounding in the span, so passing tones and dense textures can read as "no standard chord match" — a flag is a nudge to listen, not a verdict.</dd>
       <dt>Chop</dt><dd>Trim a song without touching the file: put the cursor at the cut, + Note, "Chop", pick "everything before this beat" or "this beat to the end". The chopped part vanishes entirely and bars renumber (chop a 2-bar intro and old bar 3 becomes bar 1 — your annotations shift with it). Delete the chop in ☰ Notes to restore. Made for cleaning up freshly imported captures.</dd>
     </dl>
 
@@ -1558,7 +1558,9 @@ function loadEdits() {
   updateClearBtn();
 }
 function saveEdits() {
-  if (typeof updateChordStale === "function") updateChordStale(); // every note edit re-checks band labels
+  // label review is on-demand only (Josh, 2026-08-19: unsolicited verdicts are
+  // not in the spirit of the project) — edits just retire any review flags
+  rollnotes.forEach(n => { if (n.stale) delete n.stale; });
   if (isComposition()) { // composition: the notes ARE the song — draft it whole
     saveDraft();
     computeSongEnd();
@@ -1945,7 +1947,6 @@ function finalizeNotes() {
     }
     return max + 1; // row count (0 when the group is empty)
   };
-  updateChordStale();
   const secGroup = secs.filter(n => n.section);
   const chGroup = secs.filter(n => n.chord && !n.section);
   const secRows = depthWithin(secGroup);
@@ -3759,7 +3760,7 @@ function tap(pos) {
         playCursor = sec.start;
         setInfo((sec.chord ? "chord " : "section ") + sec.text + " · bar " + sec.b1 + "–" + (sec.b2 || sec.b1) +
                 (sec.cnote ? " · ✱ " + sec.cnote.split("\n")[0] : "") +
-                (sec.stale ? " · ⚠ notes here now read " + sec.stale + " — rename in ☰ Notes if you agree" : ""));
+                (sec.stale ? " · notes here now read " + sec.stale + " — rename in ☰ Notes if you agree" : ""));
         if (sec.chord) { // arm the challenge — evidence only on request, never volunteered
           challengeSec = sec;
           const cb = document.getElementById("chordbtn");
@@ -6472,6 +6473,26 @@ function renderNoteList() {
       notelistSheet.classList.remove("on");
       openEditor(null, g.type);
     });
+    if (g.type === "chord" && mine.length && isComposition()) {
+      // on-demand label review — the app NEVER volunteers this (Josh's rule:
+      // findings are his; a report he asked for is a tool, one he didn't is an answer)
+      const chk = document.createElement("button");
+      chk.className = "gadd";
+      chk.style.width = "auto";
+      chk.style.padding = "0 8px";
+      chk.textContent = "Check labels";
+      chk.addEventListener("click", e => {
+        e.stopPropagation();
+        updateChordStale();
+        const flagged = rollnotes.filter(n => n.stale).length;
+        renderNoteList();
+        document.getElementById("notelistStatus").textContent = flagged
+          ? flagged + " label(s) don't match what sounds in their span — shown below and as ⚠ on the bands. Your labels; rename or ignore. Any note edit clears the flags."
+          : "Every chord label matches what sounds in its span.";
+        draw();
+      });
+      head.appendChild(chk);
+    }
     head.appendChild(add);
     const grows = document.createElement("div");
     grows.className = "grows";
@@ -6486,7 +6507,7 @@ function renderNoteList() {
                           (n.chopdir ? " raw" : ""); // chop anchors are pre-chop capture coordinates
       const body = document.createElement("span");
       body.className = "body";
-      body.textContent = n.text;
+      body.textContent = n.text + (n.stale ? " — reads: " + n.stale : "");
       if ((n.section || n.chord) && sectionColors[n.text]) {
         const dot = document.createElement("span");
         dot.textContent = "■ ";
