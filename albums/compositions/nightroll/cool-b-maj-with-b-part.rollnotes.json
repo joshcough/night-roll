@@ -1,4 +1,4 @@
-{ "version": 1, "song": "cool-b-maj-with-b-part", "saved": 1787189322529, "notes": [
+{ "version": 1, "song": "cool-b-maj-with-b-part", "saved": 1787189833165, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":37},
   {"at":[1,1],"type":"tempo","bpm":75},
@@ -27,7 +27,7 @@
   {"at":[12,4.5],"type":"key","key":"A"},
   {"at":[13,1],"to":[13,1],"type":"section","label":"Break"},
   {"at":[13,2],"to":[14,1],"type":"chord","chord":"A6"},
-  {"at":[13,2],"to":[17,4.75],"type":"section","label":"B part"},
+  {"at":[13,2],"to":[18,1],"type":"section","label":"B part"},
   {"at":[14,2],"to":[15,1],"type":"chord","chord":"C#m"},
   {"at":[15,2],"to":[16,1],"type":"chord","chord":"F#m"},
   {"at":[16,2],"to":[16,3],"type":"chord","chord":"E7"},
