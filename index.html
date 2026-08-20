@@ -2565,21 +2565,25 @@ function draw() {
   });
   ctx.globalAlpha = 1;
 
-  // playhead / cursor
+  function cursorHandle(x) { // Logic-sized triangle under the ruler, made for fingers
+    ctx.beginPath();
+    ctx.moveTo(x - 11, RULER_H);
+    ctx.lineTo(x + 11, RULER_H);
+    ctx.lineTo(x, RULER_H + 14);
+    ctx.fill();
+  }
+  // playhead / cursor — same triangle either way, gold while rolling
   if (playing) {
     const tick = secToTick(song, playSec());
     const x = RULER_W + tick * ppt - view.x;
     ctx.fillStyle = css("--gold");
     ctx.fillRect(x, 0, 1.5, H);
+    cursorHandle(x);
   } else {
     const x = RULER_W + playCursor * ppt - view.x;
     ctx.fillStyle = css("--accent");
     ctx.fillRect(x - 1, 0, 2.5, H);
-    ctx.beginPath(); // grab handle — Logic-sized, made for fingers
-    ctx.moveTo(x - 11, RULER_H);
-    ctx.lineTo(x + 11, RULER_H);
-    ctx.lineTo(x, RULER_H + 14);
-    ctx.fill();
+    cursorHandle(x);
   }
 
   drawLasso();
@@ -4757,7 +4761,7 @@ let scoreModel = null;      // built per song
 let scoreCache = new Map(); // measureIndex -> {canvas, geo:[{tick,x0,x1,y0,y1,ti,ni,pitch}], timeMap:[{tick,x}]}
 let scoreZoom = 0;          // pxq the cache was built at
 let scoreIntro = null;      // cached clef/key/time column
-const STAVE_H = 100, SCORE_TOP = 6, SCORE_PAD = 50, SCORE_INTRO_W = 100;
+const STAVE_H = 100, SCORE_TOP = 18, SCORE_PAD = 50, SCORE_INTRO_W = 100; // TOP clears the triangle handle: high ledger lines were kissing it
 
 const SF_MAJOR = {0:"C",1:"G",2:"D",3:"A",4:"E",5:"B",6:"F#",7:"C#","-1":"F","-2":"Bb","-3":"Eb","-4":"Ab","-5":"Db","-6":"Gb","-7":"Cb"};
 const LETTERS = "CDEFGAB";
@@ -5246,18 +5250,23 @@ function drawScore(W, H) {
   }
   drawScorePencilGuides(W, H);
   drawLasso();
-  // playhead / cursor — both interpolate notehead-to-notehead (scoreTickToX)
+  // playhead / cursor — both interpolate notehead-to-notehead (scoreTickToX),
+  // same Logic-sized triangle as the roll, gold while rolling
+  const drawHandle = x => {
+    ctx.beginPath();
+    ctx.moveTo(x - 11, RULER_H); ctx.lineTo(x + 11, RULER_H); ctx.lineTo(x, RULER_H + 14);
+    ctx.fill();
+  };
   if (playing) {
     const x = scoreTickToX(secToTick(song, playSec()));
     ctx.fillStyle = css("--gold");
     ctx.fillRect(x, 0, 1.5, H);
+    drawHandle(x);
   } else {
     const x = scoreTickToX(playCursor);
     ctx.fillStyle = css("--accent");
     ctx.fillRect(x - 1, 0, 2.5, H);
-    ctx.beginPath();
-    ctx.moveTo(x - 6, RULER_H); ctx.lineTo(x + 6, RULER_H); ctx.lineTo(x, RULER_H + 7);
-    ctx.fill();
+    drawHandle(x);
   }
 }
 
