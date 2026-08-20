@@ -1,4 +1,4 @@
-{ "version": 1, "song": "cool-b-maj-with-b-part", "saved": 1787227749519, "notes": [
+{ "version": 1, "song": "cool-b-maj-with-b-part", "saved": 1787228229781, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":37},
   {"at":[1,1],"type":"key","key":"G#m"},
