@@ -684,6 +684,8 @@
   <button id="drumfillbtn" aria-label="Fill a drum pattern">🥁</button>
   <button id="copybtn" aria-label="Duplicate selected notes">⧉</button>
   <button id="pastebtn" aria-label="Paste the selection at the cursor">📋</button>
+  <button id="octupbtn" aria-label="Selection up an octave">▲8</button>
+  <button id="octdownbtn" aria-label="Selection down an octave">▼8</button>
   <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
   <button id="joinbtn" aria-label="Join selected notes">⁀</button>
   <button id="delbtn" aria-label="Delete selected notes">🗑</button>
@@ -1037,7 +1039,7 @@
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> to change its length, or its <b>left edge</b> to move the start while the end stays put — every selected note adjusts by the same amount, so "play this chord half as long" is one gesture. Notes too small on screen to have edge zones are all move-handle — zoom in to resize them. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>A real copy and a real paste: <b>⧉</b> copies whatever is lasso'd (or tapped), <b>📋</b> pastes it at the blue cursor — and the copy SURVIVES scrolling, changing selection, even changing tools, so "lasso bar 3, scroll to bar 16, paste" is exactly three gestures. ⌘C fills the same clipboard. Pasting and chord inserts never stack an identical note on an existing one. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → 📋 at each cursor stop. Buttons that can't do anything right now are grayed — no selection grays copy/delete/split/join/⇄, an empty clipboard grays paste, empty histories gray ⟲⟳. With a keyboard there's also Option-drag (drags out an in-place copy) and ⌘C/⌘V.</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
-      <dt>Transpose</dt><dd>Lasso notes → Edit ▾ → <b>▲/▼ Octave</b> jumps the selection ±12 without dragging. For a WHOLE track, open its voice &amp; color menu (tap the selected chip again) — the <b>octave ▼/▲ 8va</b> row shifts every note on that track, one tap per octave, each tap one ⟲ step. "What if the bass lived three octaves up?" is three taps, no lassoing, no muting. Notes at the range edge stay put; the drum track never transposes (kit pitches are instruments, not notes).</dd>
+      <dt>Transpose</dt><dd>Lasso notes → <b>▲8/▼8</b> in the edit row (or Edit ▾ → ▲/▼ Octave) jumps the selection ±12 without dragging. For a WHOLE track, open its voice &amp; color menu (tap the selected chip again) — the <b>octave ▼/▲ 8va</b> row shifts every note on that track, one tap per octave, each tap one ⟲ step. "What if the bass lived three octaves up?" is three taps, no lassoing, no muting. Notes at the range edge stay put; the drum track never transposes (kit pitches are instruments, not notes).</dd>
       <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
@@ -8370,8 +8372,8 @@ document.getElementById("editsheetbtn").addEventListener("click", e => {
   proxy("emSplit", () => document.getElementById("splitbtn").click());
   proxy("emJoin", () => document.getElementById("joinbtn").click());
   proxy("emMove", () => document.getElementById("movebtn").click());
-  proxy("emOctUp", () => { if (nudgeSelection(0, 12)) setInfo("selection up an octave (⟲ undoes)"); });
-  proxy("emOctDown", () => { if (nudgeSelection(0, -12)) setInfo("selection down an octave (⟲ undoes)"); });
+  proxy("emOctUp", () => document.getElementById("octupbtn").click());
+  proxy("emOctDown", () => document.getElementById("octdownbtn").click());
   proxy("emChord", () => document.getElementById("insbtn").click());
   proxy("emFill", () => document.getElementById("drumfillbtn").click());
 }
@@ -9543,6 +9545,14 @@ document.getElementById("pastebtn").addEventListener("click", () => {
   setInfo(k ? "pasted " + k + " note" + (k === 1 ? "" : "s") + " at the cursor"
             : "nothing copied yet — select notes and tap ⧉ (or ⌘C) first");
 });
+document.getElementById("octupbtn").addEventListener("click", () => {
+  if (nudgeSelection(0, 12)) setInfo("selection up an octave (⟲ undoes)");
+  else setInfo("nothing selected — lasso or tap notes first");
+});
+document.getElementById("octdownbtn").addEventListener("click", () => {
+  if (nudgeSelection(0, -12)) setInfo("selection down an octave (⟲ undoes)");
+  else setInfo("nothing selected — lasso or tap notes first");
+});
 document.getElementById("splitbtn").addEventListener("click", () => {
   let k = splitSelectionAt(playCursor), how = "at the cursor";
   if (!k) { k = splitSelectionHalves(); how = "in half"; }
@@ -9571,7 +9581,8 @@ function updateEditButtons() { // disabled = "this can't do anything right now"
   set("undobtn", st[0]); set("emUndo", st[0]);
   set("redobtn", st[1]); set("emRedo", st[1]);
   for (const id of ["copybtn", "emDup", "delbtn", "emDelete", "splitbtn", "emSplit",
-                    "joinbtn", "emJoin", "movebtn", "emMove", "emOctUp", "emOctDown"]) set(id, st[2]);
+                    "joinbtn", "emJoin", "movebtn", "emMove", "emOctUp", "emOctDown",
+                    "octupbtn", "octdownbtn"]) set(id, st[2]);
   set("pastebtn", st[3]); set("emPaste", st[3]);
 }
 function pushUndo(entry) { editUndo.push(entry); editRedo = []; } // a fresh edit forks history

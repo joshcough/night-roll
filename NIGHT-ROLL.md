@@ -524,6 +524,12 @@ sync (GitHub Contents API, 409 retry) · key dial · help sheet.
   score-view-plan.md (score history/limitations), supplemental-learning.md
   (session log = quiz source material).
 
+## UI convention: menu/row parity (Josh's rule, 2026-08-20)
+
+Every command in the Edit ▾ menu has a corresponding icon button in the
+edit row, and vice versa — the menu is the labeled version of the row,
+never a superset. Shipping a new edit command means shipping both.
+
 ## Query tools (tools/*.mjs — deterministic, facts only)
 
 For any session (web sessions especially) that needs to READ music
