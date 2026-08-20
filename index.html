@@ -778,6 +778,7 @@
       <div class="chiprow" id="nchordroot"></div>
       <div class="chiprow" id="nchordacc"></div>
       <div class="chiprow" id="nchordqual"></div>
+      <div class="chiprow" id="nchordext"></div>
       <div class="row">
         <span class="lbl">/bass</span>
         <select id="nchordbass"></select>
@@ -1013,7 +1014,7 @@
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Shortcut: <b>double-tap</b> a section or chord band in the ruler to open that annotation directly. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
       <dt>Sections</dt><dd>Colored bands in the ruler (A, B…). Make one: select a range, + Note, tick "section", give it a short label. Nest them by containment. Tap a band to select its whole range. Sections and chords each get their OWN row group (sections above, chords below), so a section and a chord covering the same bars never fight for a lane.</dd>
-      <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection of EVERY note in the song takes the entire annotation layer with it — sections, chords, the loop point and its target — with chord and key labels transposing on vertical moves (global facts like meter and tempo keep their bar-1 anchor); that's how you cut an intro and slide everything left without orphaning your analysis. Moving a selection that carries one band's every note takes that band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), When YOU ask for it — the <b>Check labels</b> button in ☰ Notes' CHORDS group — the app compares each label against what sounds in its span and flags mismatches (⚠ on the band, the reading in the list). It never volunteers this and never rewrites your labels; any note edit clears the flags. The check hears EVERY pitch sounding in the span, so passing tones and dense textures can read as "no standard chord match" — a flag is a nudge to listen, not a verdict.</dd>
+      <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · extensions · /bass) or type the symbol. Bare root = major, m = minor (Gm). The quality row picks ONE (maj/m/dim/aug/sus2/sus4/5); the extensions row STACKS — tap 7 and add9 on top of m for Cm7add9, tap again to remove one. Anything the chips can't spell, type into the box — the label is free text and typing always wins. Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection of EVERY note in the song takes the entire annotation layer with it — sections, chords, the loop point and its target — with chord and key labels transposing on vertical moves (global facts like meter and tempo keep their bar-1 anchor); that's how you cut an intro and slide everything left without orphaning your analysis. Moving a selection that carries one band's every note takes that band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), When YOU ask for it — the <b>Check labels</b> button in ☰ Notes' CHORDS group — the app compares each label against what sounds in its span and flags mismatches (⚠ on the band, the reading in the list). It never volunteers this and never rewrites your labels; any note edit clears the flags. The check hears EVERY pitch sounding in the span, so passing tones and dense textures can read as "no standard chord match" — a flag is a nudge to listen, not a verdict.</dd>
       <dt>Chop</dt><dd>Trim a song without touching the file: put the cursor at the cut, + Note, "Chop", pick "everything before this beat" or "this beat to the end". The chopped part vanishes entirely and bars renumber (chop a 2-bar intro and old bar 3 becomes bar 1 — your annotations shift with it). Delete the chop in ☰ Notes to restore. Made for cleaning up freshly imported captures.</dd>
     </dl>
 
@@ -7643,24 +7644,46 @@ document.getElementById("ntype").addEventListener("change", applyEditorType);
 // chord widget: chips compose the symbol; typing in the box is equally valid
 // (chips re-highlight to match). Vocabulary = the lasso chord namer's, so
 // annotations and "Chord?" reveals always speak the same language.
-const CHORD_QUALITIES = ["maj", "m", "7", "maj7", "m7", "dim", "dim7", "m7b5", "aug",
-                         "6", "m6", "sus4", "sus2", "5", "9", "m9", "maj9", "add9", "7b9"];
+// base quality (pick one) + extensions (stack as many as the chord needs):
+// Cm7add9 = root C, base m, extensions 7 + add9 (Josh, 2026-08-19)
+const CHORD_BASES = ["maj", "m", "dim", "aug", "sus2", "sus4", "5"];
+const CHORD_EXTS = ["6", "7", "maj7", "9", "maj9", "11", "13", "add9", "add11", "b5", "b9", "#9", "#11"];
+function chordQualParse(rest) { // "m7add9" -> {base, exts} or null if anything is left over
+  let base = "maj";
+  for (const b of CHORD_BASES) {
+    if (b !== "maj" && rest.startsWith(b) && !rest.startsWith("maj")) { base = b; rest = rest.slice(b.length); break; }
+  }
+  const exts = [];
+  const byLen = [...CHORD_EXTS].sort((a, c) => c.length - a.length);
+  outer: while (rest.length) {
+    for (const x of byLen) {
+      if (rest.startsWith(x) && !exts.includes(x)) { exts.push(x); rest = rest.slice(x.length); continue outer; }
+    }
+    return null; // unknown token: chips stand down, the typed text stands
+  }
+  return {base, exts};
+}
+function chordQualCompose(base, exts) {
+  return (base === "maj" ? "" : base) + CHORD_EXTS.filter(x => exts.includes(x)).join("");
+}
 const BASS_SPELLINGS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb",
                         "G", "G#", "Ab", "A", "A#", "Bb", "B"];
-const chordSel = {root: null, acc: "", qual: "maj"};
+const chordSel = {root: null, acc: "", base: "maj", exts: []};
 function refreshChordChips() {
   for (const b of document.querySelectorAll("#nchordroot button"))
     b.classList.toggle("active", b.dataset.v === chordSel.root);
   for (const b of document.querySelectorAll("#nchordacc button"))
     b.classList.toggle("active", chordSel.root !== null && b.dataset.v === chordSel.acc);
   for (const b of document.querySelectorAll("#nchordqual button"))
-    b.classList.toggle("active", b.dataset.v === chordSel.qual);
+    b.classList.toggle("active", chordSel.base !== null && b.dataset.v === chordSel.base);
+  for (const b of document.querySelectorAll("#nchordext button"))
+    b.classList.toggle("active", chordSel.base !== null && chordSel.exts.includes(b.dataset.v));
 }
 function composeChord() {
-  if (!chordSel.root || chordSel.qual === null) return; // incomplete/unknown — leave the box alone
+  if (!chordSel.root || chordSel.base === null) return; // incomplete/unknown — leave the box alone
   const bass = document.getElementById("nchordbass").value;
   document.getElementById("nchordsym").value = chordSel.root + chordSel.acc +
-    (chordSel.qual === "maj" ? "" : chordSel.qual) + (bass ? "/" + bass : "");
+    chordQualCompose(chordSel.base, chordSel.exts) + (bass ? "/" + bass : "");
 }
 function parseChordSym(sym) {
   return (sym || "").trim().match(/^([A-G])([#b]?)([^/\s]*)(?:\/([A-G][#b]?))?(?:\s+\((.*)\))?$/);
@@ -7669,8 +7692,9 @@ function setChordWidget(sym) {
   const m = parseChordSym(sym);
   chordSel.root = m ? m[1] : null;
   chordSel.acc = m ? m[2] : "";
-  chordSel.qual = !m || m[3] === "" ? (m ? "maj" : "maj")
-                : CHORD_QUALITIES.includes(m[3]) ? m[3] : null; // unknown quality: chips stand down
+  const q = m ? chordQualParse(m[3]) : {base: "maj", exts: []};
+  chordSel.base = q ? q.base : null; // unknown quality: chips stand down
+  chordSel.exts = q ? q.exts : [];
   document.getElementById("nchordbass").value = m && m[4] ? m[4] : "";
   document.getElementById("nchordsym").value = sym || "";
   refreshChordChips();
@@ -7688,7 +7712,8 @@ function setChordWidget(sym) {
   };
   mkRow("nchordroot", "CDEFGAB".split("").map(l => [l, l]));
   mkRow("nchordacc", [["b", "♭"], ["", "♮"], ["#", "♯"]]);
-  mkRow("nchordqual", CHORD_QUALITIES.map(q => [q, q]));
+  mkRow("nchordqual", CHORD_BASES.map(q => [q, q]));
+  mkRow("nchordext", CHORD_EXTS.map(q => [q, q]));
   const bass = document.getElementById("nchordbass");
   const none = document.createElement("option");
   none.value = ""; none.textContent = "—";
@@ -7701,7 +7726,7 @@ function setChordWidget(sym) {
   document.getElementById("nchordroot").addEventListener("click", e => {
     if (!e.target.dataset.v) return;
     chordSel.root = e.target.dataset.v;
-    if (chordSel.qual === null) chordSel.qual = "maj";
+    if (chordSel.base === null) { chordSel.base = "maj"; chordSel.exts = []; }
     refreshChordChips(); composeChord();
   });
   document.getElementById("nchordacc").addEventListener("click", e => {
@@ -7711,7 +7736,15 @@ function setChordWidget(sym) {
   });
   document.getElementById("nchordqual").addEventListener("click", e => {
     if (!e.target.dataset.v) return;
-    chordSel.qual = e.target.dataset.v;
+    chordSel.base = e.target.dataset.v;
+    if (chordSel.exts === null) chordSel.exts = [];
+    refreshChordChips(); composeChord();
+  });
+  document.getElementById("nchordext").addEventListener("click", e => { // extensions STACK
+    if (!e.target.dataset.v) return;
+    if (chordSel.base === null) chordSel.base = "maj";
+    const x = e.target.dataset.v, i = chordSel.exts.indexOf(x);
+    if (i >= 0) chordSel.exts.splice(i, 1); else chordSel.exts.push(x);
     refreshChordChips(); composeChord();
   });
   bass.addEventListener("change", composeChord);
@@ -7720,7 +7753,9 @@ function setChordWidget(sym) {
     const m = parseChordSym(sym.value);
     chordSel.root = m ? m[1] : null;
     chordSel.acc = m ? m[2] : "";
-    chordSel.qual = m ? (m[3] === "" ? "maj" : CHORD_QUALITIES.includes(m[3]) ? m[3] : null) : null;
+    const q = m ? chordQualParse(m[3]) : null;
+    chordSel.base = q ? q.base : null;
+    chordSel.exts = q ? q.exts : [];
     if (m) bass.value = m[4] || "";
     refreshChordChips();
   });
