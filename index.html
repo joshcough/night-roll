@@ -1037,12 +1037,13 @@
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> to change its length, or its <b>left edge</b> to move the start while the end stays put — every selected note adjusts by the same amount, so "play this chord half as long" is one gesture. Notes too small on screen to have edge zones are all move-handle — zoom in to resize them. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>A real copy and a real paste: <b>⧉</b> copies whatever is lasso'd (or tapped), <b>📋</b> pastes it at the blue cursor — and the copy SURVIVES scrolling, changing selection, even changing tools, so "lasso bar 3, scroll to bar 16, paste" is exactly three gestures. ⌘C fills the same clipboard. Pasting and chord inserts never stack an identical note on an existing one. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → 📋 at each cursor stop. Buttons that can't do anything right now are grayed — no selection grays copy/delete/split/join/⇄, an empty clipboard grays paste, empty histories gray ⟲⟳. With a keyboard there's also Option-drag (drags out an in-place copy) and ⌘C/⌘V.</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
+      <dt>Transpose</dt><dd>Lasso notes → Edit ▾ → <b>▲/▼ Octave</b> jumps the selection ±12 without dragging. For a WHOLE track, open its voice &amp; color menu (tap the selected chip again) — the <b>octave ▼/▲ 8va</b> row shifts every note on that track, one tap per octave, each tap one ⟲ step. "What if the bass lived three octaves up?" is three taps, no lassoing, no muting. Notes at the range edge stay put; the drum track never transposes (kit pitches are instruments, not notes).</dd>
       <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Unsaved dot</dt><dd>A gold <b>●</b> after the title means the song has edits that haven't been committed — it appears the moment you change anything and clears when Save &amp; Commit succeeds (the Save sheet's title says which state you're in, too).</dd>
-      <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Duplicate, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ♫ Insert chord, 🥁 Drum pattern — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
+      <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Duplicate, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ▲▼ Octave up/down (the whole selection jumps ±12 — no sliding), ♫ Insert chord, 🥁 Drum pattern — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
       <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲ step.</dd>
@@ -1077,6 +1078,8 @@
   <button class="fitem" id="emSplit">✂  Split at cursor</button>
   <button class="fitem" id="emJoin">⁀  Join notes</button>
   <button class="fitem" id="emMove">⇄  Move to track…</button>
+  <button class="fitem" id="emOctUp">▲  Octave up</button>
+  <button class="fitem" id="emOctDown">▼  Octave down</button>
   <div class="fdiv"></div>
   <button class="fitem" id="emChord">♫  Insert chord…</button>
   <button class="fitem" id="emFill">🥁  Drum pattern…</button>
@@ -4339,6 +4342,25 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
   fader.addEventListener("change", () => { saveVoices(); }); // persist as the track: annotation
   vw.append(vlbl, fader);
   menu.appendChild(vw);
+  if (editableSong() && !trackIsDrums(ti)) { // whole-track octave shifts (Josh, 2026-08-20)
+    const ow = document.createElement("div");
+    ow.style.cssText = "display:flex;align-items:center;gap:8px;padding:6px 10px";
+    const olbl = document.createElement("span");
+    olbl.textContent = "octave";
+    olbl.style.cssText = "font-size:12px;color:var(--dim)";
+    const mk = (txt, dP) => {
+      const b = document.createElement("button");
+      b.textContent = txt;
+      b.style.cssText = "flex:1;min-height:38px";
+      b.addEventListener("click", () => {
+        const k = transposeTrack(ti, dP);
+        if (k) setInfo((tr.name || "track") + " " + (dP > 0 ? "up" : "down") + " an octave — " + k + " notes (one ⟲ undoes it)");
+      });
+      return b;
+    };
+    ow.append(olbl, mk("▼ 8va", -12), mk("▲ 8va", 12));
+    menu.appendChild(ow);
+  }
   const sw = document.createElement("div");
   sw.style.cssText = "padding:8px 10px";
   // ONE color control (Josh 2026-08-15: swatch shortcuts were noise) — a
@@ -4390,6 +4412,16 @@ document.addEventListener("pointerdown", e => { // tap-away closes the voice men
   if (menu.contains(e.target) || e.target.closest(".chip")) return;
   menu.classList.remove("on");
 }, {capture: true});
+function transposeTrack(ti, dP) { // ±12 per tap from the voice menu
+  if (!editableSong()) { setInfo("transposing works on your own songs — captures are locked"); return 0; }
+  if (trackIsDrums(ti)) { setInfo("kit pitches are instruments, not notes — the drum track doesn't transpose"); return 0; }
+  const items = song.tracks[ti].notes
+    .map((n, ni) => ({ti, ni, n}))
+    .filter(({n}) => !n.gone && n.p + dP >= PMIN && n.p + dP <= PMAX);
+  if (!items.length) { setInfo("no notes can move that far — already at the range edge"); return 0; }
+  selEditApply(items, n => { n.p += dP; }); // one undo step, chord-ride aware
+  return items.length;
+}
 function trackIsDrums(ti) {
   const tr = song.tracks[ti];
   if (tr.drums === undefined)
@@ -8338,6 +8370,8 @@ document.getElementById("editsheetbtn").addEventListener("click", e => {
   proxy("emSplit", () => document.getElementById("splitbtn").click());
   proxy("emJoin", () => document.getElementById("joinbtn").click());
   proxy("emMove", () => document.getElementById("movebtn").click());
+  proxy("emOctUp", () => { if (nudgeSelection(0, 12)) setInfo("selection up an octave (⟲ undoes)"); });
+  proxy("emOctDown", () => { if (nudgeSelection(0, -12)) setInfo("selection down an octave (⟲ undoes)"); });
   proxy("emChord", () => document.getElementById("insbtn").click());
   proxy("emFill", () => document.getElementById("drumfillbtn").click());
 }
@@ -9537,7 +9571,7 @@ function updateEditButtons() { // disabled = "this can't do anything right now"
   set("undobtn", st[0]); set("emUndo", st[0]);
   set("redobtn", st[1]); set("emRedo", st[1]);
   for (const id of ["copybtn", "emDup", "delbtn", "emDelete", "splitbtn", "emSplit",
-                    "joinbtn", "emJoin", "movebtn", "emMove"]) set(id, st[2]);
+                    "joinbtn", "emJoin", "movebtn", "emMove", "emOctUp", "emOctDown"]) set(id, st[2]);
   set("pastebtn", st[3]); set("emPaste", st[3]);
 }
 function pushUndo(entry) { editUndo.push(entry); editRedo = []; } // a fresh edit forks history

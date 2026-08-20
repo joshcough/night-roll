@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "extensions row STACKS", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "extensions row STACKS", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1239,6 +1239,30 @@ test("chord quality parse/compose: bases + stacked extensions round-trip", () =>
     assert.equal(val(`chordQualCompose(${JSON.stringify(base)}, ${JSON.stringify(exts)})`), q);
   }
   assert.equal(val(`chordQualParse("weird") || null`), null); // unknown: chips stand down
+});
+
+test("transposeTrack: whole track ±12, one undo step, drums refuse", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/oct-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [
+        {name: "bass", notes: [{t: 0, d: 480, p: 40, v: 90}, {t: 480, d: 480, p: 43, v: 90}]},
+        {name: "drums", notes: [{t: 0, d: 60, p: 36, v: 100}]}]};
+    song.tracks[1].drums = true;
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = []; finalizeNotes();
+  `);
+  assert.equal(val(`transposeTrack(0, 12)`), 2);
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p)`), [52, 55]);
+  assert.equal(val(`transposeTrack(0, 12)`), 2); // stacking taps stack octaves
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p)`), [64, 67]);
+  run(`editUndoPop()`); // each tap is exactly one step
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p)`), [52, 55]);
+  run(`editUndoPop()`);
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p)`), [40, 43]);
+  assert.equal(val(`transposeTrack(1, 12)`), 0); // kit pitches are instruments
+  run(`songKey = null; rollnotes = [];`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

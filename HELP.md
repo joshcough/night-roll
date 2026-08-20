@@ -121,6 +121,9 @@ A real copy and a real paste: **⧉** copies whatever is lasso'd (or tapped), **
 **Insert chord (♫)**
 Tap **♫** in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's **Progression** tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the **Progressions** button in the ◯5 dialog, for browsing while analyzing.
 
+**Transpose**
+Lasso notes → Edit ▾ → **▲/▼ Octave** jumps the selection ±12 without dragging. For a WHOLE track, open its voice & color menu (tap the selected chip again) — the **octave ▼/▲ 8va** row shifts every note on that track, one tap per octave, each tap one ⟲ step. "What if the bass lived three octaves up?" is three taps, no lassoing, no muting. Notes at the range edge stay put; the drum track never transposes (kit pitches are instruments, not notes).
+
 **Move to track (⇄)**
 Select notes and tap **⇄**, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a **move only** row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all.
 
@@ -137,7 +140,7 @@ Select two or more notes on the same pitch and tap **⁀** — they merge into o
 A gold **●** after the title means the song has edits that haven't been committed — it appears the moment you change anything and clears when Save & Commit succeeds (the Save sheet's title says which state you're in, too).
 
 **Edit menu**
-An **Edit ▾** menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Duplicate, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ♫ Insert chord, 🥁 Drum pattern — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).
+An **Edit ▾** menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Duplicate, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ▲▼ Octave up/down (the whole selection jumps ±12 — no sliding), ♫ Insert chord, 🥁 Drum pattern — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).
 
 **Velocity**
 The **vol slider** in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").
