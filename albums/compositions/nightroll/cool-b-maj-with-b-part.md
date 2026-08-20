@@ -92,6 +92,17 @@ voice-leading problem, not chosen from a menu. The fix chain:
    went SEQUENTIAL because the melody needed room, and whose bar-19
    run D♯–C♯–B–A♯ hands the leading tone straight to pulse1's landing.
 
+## What Josh loves most (his words, day after)
+
+> "The melody was subtle through the whole song and then soared at the
+> end. It's unexpected and beautiful."
+
+The soar works BECAUSE of the restraint: sixteen bars of the melody
+refusing the upper register is what made the angel unexpected. And the
+same move forced the Turn — the payoff wrote a register check the loop
+couldn't cash, so the song's best moment created the problem that
+produced its best bar and a half.
+
 ## Process notes
 
 Eight hours, many iterations. "Some ideas just popped in my head
