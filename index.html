@@ -1050,7 +1050,7 @@
     </div>
     <div class="hsec" data-hsec="files">
     <dl>
-      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (opens the Save &amp; Commit sheet: on your own songs its button commits the .mid AND the annotations together in one go; on analyzed songs the same door is the annotation Sync — one workflow, and what gets pushed is whatever the mode owns), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its the kit gets its own labeled LANE that starts docked under your lowest melodic note — and you can DRAG it anywhere by its labels in the left gutter; the position saves as a normal synced annotation ("lane: N"), so it follows the song to every device. Hats at the top of the lane, kick at the floor. Delete any track from its voice &amp; color menu (tap the selected chip again → ✕ Delete track, tap twice), penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
+      <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (opens the Save &amp; Commit sheet: on your own songs its button commits the .mid AND the annotations together in one go; on analyzed songs the same door is the annotation Sync — one workflow, and what gets pushed is whatever the mode owns), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Revert to repo copy… (the escape hatch: discards THIS device's draft, unsynced annotations, and deletions for the open song, then loads the repo's last save — for when local edits went somewhere you can't undo your way out of), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together). A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its the kit gets its own labeled LANE that starts docked under your lowest melodic note — and you can DRAG it anywhere by its labels in the left gutter; the position saves as a normal synced annotation ("lane: N"), so it follows the song to every device. Hats at the top of the lane, kick at the floor. Delete any track from its voice &amp; color menu (tap the selected chip again → ✕ Delete track, tap twice), penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
@@ -1092,6 +1092,7 @@
   <button class="fitem" id="filesave">Save (commit)</button>
   <button class="fitem" id="filesaveas">Save As…</button>
   <button class="fitem" id="filerename">Rename…</button>
+  <button class="fitem" id="filerevert">Revert to repo copy…</button>
   <button class="fitem" id="fileimpcommit" style="display:none">Commit import</button>
   <div class="fdiv"></div>
   <button class="fitem" id="filedlmid">Download .mid</button>
@@ -1812,6 +1813,14 @@ function sfDeclaredAt(tick) { // sf if the user has declared a key governing thi
     } else if (!open || r.start > open.start) open = r;
   }
   return ranged ? ranged.sf : open ? open.sf : null;
+}
+function annoSnapshot() { // full annotation-layer state, INCLUDING added flags
+  return JSON.stringify(rollnotes.map(n => ({j: noteToJSON(n), a: !!n.added})));
+}
+function annoRestore(str) {
+  const arr = JSON.parse(str);
+  rollnotes = deriveNoteTypes(arr.map(e => jsonToRawNote(e.j))).map(resolveNote);
+  rollnotes.forEach((n, i) => { n.added = arr[i].a; });
 }
 function setAnchorBQ(n, tick) { // start anchor from a tick
   const bt = barTicks(), qt = beatTicks(), t = Math.max(0, tick);
@@ -3001,6 +3010,15 @@ function ridealongChordBands(pre, post) { // Phase 1 (open-items plan): a rigid
   for (let i = 0; i < pre.length; i++) // rigid translation only
     if (post[i].n.t - pre[i].t !== dT || post[i].n.p - pre[i].p !== dP || post[i].n.d !== pre[i].d) return;
   const movedKeys = new Set(post.map(({ti, ni}) => ti + ":" + ni));
+  // any annotation mutation below joins the move's OWN undo entry, so one ⟲
+  // brings notes AND annotations back together (Josh hit the half-undo, 2026-08-20)
+  const annoBefore = annoSnapshot();
+  const mergeAnnoUndo = () => {
+    const last = editUndo[editUndo.length - 1];
+    const a = {kind: "anno", json: annoBefore};
+    if (last) editUndo[editUndo.length - 1] = {kind: "group", entries: [last, a]};
+    else editUndo.push(a);
+  };
   // FULL-SONG carry (Josh's intro-cut workflow, 2026-08-19): a rigid move
   // that takes EVERY sounding note drags the whole annotation layer along —
   // sections, chords, loop (anchor AND target), plain notes. Global facts
@@ -3035,6 +3053,7 @@ function ridealongChordBands(pre, post) { // Phase 1 (open-items plan): a rigid
       }
       n.added = true; // carried annotations must persist and sync
     }
+    mergeAnnoUndo();
     finalizeNotes();
     saveLocalNotes();
     setInfo("moved the whole song — every annotation came along" +
@@ -3071,7 +3090,7 @@ function ridealongChordBands(pre, post) { // Phase 1 (open-items plan): a rigid
     band.added = true; // the change must persist and sync
     changed = true;
   }
-  if (changed) { finalizeNotes(); saveLocalNotes(); }
+  if (changed) { mergeAnnoUndo(); finalizeNotes(); saveLocalNotes(); }
 }
 function selEditApply(items, mutate, snapshot) { // mutate + undo + persist + redraw
   if (!items.length) return false;
@@ -3573,7 +3592,7 @@ canvas.addEventListener("pointerdown", e => {
       (Math.abs((n.start - tk) * ppt) < 10 || Math.abs((n.end - tk) * ppt) < 10));
     if (band) bandEdge = {n: band,
       side: Math.abs((band.end - tk) * ppt) <= Math.abs((band.start - tk) * ppt) ? "end" : "start",
-      s0: band.start, e0: band.end};
+      s0: band.start, e0: band.end, pre: annoSnapshot()};
   }
   drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false,
           lasso, noteEdit, pencil, bandEdge, pendingEdit, pendingPencil,
@@ -3744,6 +3763,7 @@ function endPointer(e) {
   else if (drag.bandEdge && drag.moved) {
     const n = drag.bandEdge.n;
     n.added = true; // edited spans must persist and sync
+    pushUndo({kind: "anno", json: drag.bandEdge.pre}); // edge drags undo like any edit now
     finalizeNotes();
     saveLocalNotes();
     setInfo((n.chord ? "chord " : "section ") + n.text + " · bar " + n.b1 + "–" + (n.b2 || n.b1));
@@ -8631,6 +8651,26 @@ async function renameRepoTitle(key, title, h) { // album.json songs override + m
     return changed;
   });
 }
+document.getElementById("filerevert").addEventListener("click", async () => {
+  // the escape hatch (Josh, 2026-08-20): drop EVERYTHING this device thinks it
+  // knows about the song — draft, local annotations, deletions, sync stamps —
+  // and load the repo's last save as the truth
+  if (!songKey) { setInfo("open a song first"); return; }
+  if (songKey.startsWith("local/")) { setInfo("local imports have no repo copy to revert to"); return; }
+  const ok = await appConfirm("REVERT TO REPO COPY",
+    "Discards this device's draft, unsynced annotations, and deletions for THIS song. " +
+    "The repo's last save becomes what you see. This cannot be undone on this device.",
+    "Revert — use the repo's copy", "Cancel");
+  if (!ok) return;
+  for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-",
+                     "ff1roll-tombs-", "ff1roll-lastsync-"])
+    localStorage.removeItem(pre + songKey);
+  editUndo = []; editRedo = [];
+  const k = songKey;
+  songKey = null; // force a clean load path
+  await loadSong(k);
+  setInfo("reverted — this device now shows the repo's copy of the song");
+});
 document.getElementById("filedlmid").addEventListener("click", () => {
   if (!song) return;
   const a = document.createElement("a");
@@ -9509,6 +9549,7 @@ function invertEdit(u) { // the entry that would undo an applyU(u), captured NOW
   })};
   if (u.kind === "addBatch") return {kind: "eraseBatch", items: u.items};
   if (u.kind === "eraseBatch") return {kind: "addBatch", items: u.items};
+  if (u.kind === "anno") return {kind: "anno", json: annoSnapshot()}; // current state, like mod
   return {ti: u.ti, ni: u.ni, kind: u.kind === "add" ? "erase" : "add"};
 }
 function editRedoPop() {
@@ -9541,6 +9582,11 @@ function applyEditEntry(u) {
         const rn = song.rawNotes && nn.ri !== undefined && song.rawNotes[it.ti][nn.ri];
         if (rn) { rn.t = it.t + chopS; rn.d = it.d; rn.p = it.p; if (it.v !== undefined) rn.v = it.v; }
       }
+    } else if (v.kind === "anno") { // restore the whole annotation layer
+      annoRestore(v.json);
+      finalizeNotes();
+      saveLocalNotes();
+      if (viewMode === "score") buildScoreModel();
     } else if (v.kind === "addBatch") { for (const it of v.items) setGone(it.ti, it.ni, true); }
     else if (v.kind === "eraseBatch") { for (const it of v.items) setGone(it.ti, it.ni, false); }
     else setGone(v.ti, v.ni, v.kind === "add"); // undo an add = remove it; undo an erase = restore it
