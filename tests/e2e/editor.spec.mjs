@@ -342,3 +342,33 @@ test("ruler taps keep the lasso; ➗ divides into triplets", async ({ page }) =>
   await page.click("#undobtn");
   expect((await notes(page)).length).toBe(3);
 });
+
+test("Drummer: generate, reroll, take chips replay, one undo restores", async ({ page }) => {
+  await page.evaluate(() => {
+    song.tracks[0].notes.push({ t: 1920, d: 1920, p: 64, v: 80 }); // melody sounds in bar 2 too
+    song.tracks.push({ name: "triangle", notes: [{ t: 0, d: 960, p: 45, v: 90 }, { t: 1920, d: 1440, p: 41, v: 90 }] });
+    if (song.rawNotes) song.rawNotes.push([]);
+    trackState.push({ muted: false, solo: false });
+    renderTrackbar(); computeSongEnd();
+  });
+  await page.evaluate(() => openDrummer());
+  await page.evaluate(() => { document.getElementById("drfrom").value = 1; document.getElementById("drto").value = 2; });
+  const kit = () => page.evaluate(() => {
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return di < 0 ? [] : song.tracks[di].notes.filter(n => !n.gone).map(n => ({ t: n.t, p: n.p, v: n.v }));
+  });
+  await page.click("#drgen");
+  const take1 = await kit();
+  expect(take1.length).toBeGreaterThan(8);
+  expect(take1.find(h => h.t === 0 && h.p === 36)).toBeTruthy(); // kick on 1
+  await page.click("#drgen"); // reroll: different take, still one generation live
+  const take2 = await kit();
+  expect(take2.map(h => h.v).join()).not.toBe(take1.map(h => h.v).join());
+  await page.evaluate(() => { // tap take 1's chip: exact replay
+    document.querySelector("#drtakes button").click();
+  });
+  expect(await kit()).toEqual(take1);
+  await page.click("#drclose");
+  await page.click("#undobtn"); // one step back to take 2's state
+  expect(await kit()).toEqual(take2);
+});

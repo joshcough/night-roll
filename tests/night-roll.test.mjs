@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "extensions row STACKS", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1301,6 +1301,64 @@ test("rulerSnapX: bar lines are magnetic in pixels; 16ths elsewhere", () => {
   run(`view.pxq = 60;`); // zoomed out: same 14px radius = more ticks
   assert.equal(at(233), 1920); // ~7px shy of bar 2 (240px)
   run(`songKey = null;`);
+});
+
+test("Drummer: deterministic, skeleton fixed, breaks silent, one group undo", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/drummer-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [
+        {name: "pulse1", notes: [ // melody sounds in bars 1-2; bar 3 is bass-only (a break)
+          {t: 0, d: 1920, p: 72, v: 80}, {t: 1920, d: 1920, p: 74, v: 80}]},
+        {name: "triangle", notes: [ // bass: offbeat onset + a LONG note (agogic target)
+          {t: 0, d: 960, p: 45, v: 90}, {t: 1200, d: 240, p: 43, v: 90},
+          {t: 1920, d: 1440, p: 41, v: 90}, {t: 3840, d: 1920, p: 40, v: 90}]}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = deriveNoteTypes([
+      {b1: 2, q1: 1, b2: 2, q2: 4, text: "section: B", added: true},
+    ]).map(resolveNote);
+    finalizeNotes();
+    computeSongEnd();
+  `);
+  const gen = seed => val(`(() => {
+    const k = drGenerate(${seed}, 3, 1, 3);
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return {k, hits: song.tracks[di].notes.filter(n => !n.gone).map(n => ({t: n.t, p: n.p, v: n.v}))};
+  })()`);
+  const a = gen(12345), b = gen(12345);
+  assert.deepEqual(a.hits, b.hits); // same seed, same everything — and idempotent (replaces itself)
+  const kick1 = a.hits.find(h => h.t === 0 && h.p === 36);
+  assert.ok(kick1, "kick on beat 1"); // fixed skeleton
+  assert.ok(a.hits.find(h => h.t === 480 && h.p === 38), "backbeat snare on 2");
+  assert.ok(a.hits.find(h => h.t === 1920 && h.p === 49), "crash on the section boundary downbeat");
+  assert.ok(!a.hits.some(h => h.t >= 3840), "bar 3 is a break (bass only) — the drummer lays out");
+  const hats = a.hits.filter(h => h.p === 42), snares = a.hits.filter(h => h.p === 38 && h.v >= 100);
+  assert.ok(hats.length && snares.length && Math.max(...hats.map(h => h.v)) < Math.min(...snares.map(h => h.v)),
+    "hats stay under the backbeat snares");
+  const c = gen(99999);
+  assert.notDeepEqual(c.hits.map(h => h.v), a.hits.map(h => h.v)); // different seed, different take
+  // one ⟲ restores what was there: hand-place a hit, generate over it, undo
+  run(`(() => {
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    song.tracks[di].notes.push({t: 240, d: 60, p: 51, v: 77, added: false}); // a hand-placed ride
+  })()`);
+  const before = val(`editUndo.length`);
+  assert.ok(val(`drGenerate(555, 3, 1, 3)`) > 0);
+  assert.equal(val(`editUndo.length`), before + 1); // ONE step
+  assert.equal(val(`(() => {
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return song.tracks[di].notes.filter(n => !n.gone && n.p === 51).length;
+  })()`), 0); // replaced
+  run(`editUndoPop()`);
+  assert.equal(val(`(() => {
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return song.tracks[di].notes.filter(n => !n.gone && n.p === 51 && n.v === 77).length;
+  })()`), 1); // the hand-placed ride came back
+  // meter change inside the range refuses honestly
+  run(`rollnotes.push(resolveNote(deriveNoteTypes([{b1: 2, q1: 1, text: "timesig: 3/4", added: true}])[0])); finalizeNotes();`);
+  assert.equal(val(`drGenerate(1, 3, 1, 3)`), 0);
+  run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

@@ -372,16 +372,22 @@ up in sessions; promote honestly.
 
 ## Design-stage / future (from the 2026-08-18 web-session handoff)
 
-- **Context-aware drum generation — DESIGN STAGE, do not implement**
-  (Josh explicit). Full concept + requirements live in the handoff and
-  are preserved here: Logic-Drummer-style generate-and-judge; Night
-  Roll DECLARES structure (sections/chords/loops) so a generator can be
-  structurally aware without inference. Value order: section-aware
-  fills → follow-the-bass kick → harmonic-rhythm accents → density
-  controls. Hard requirements: reroll = one action, undo = one step,
-  SEEDS so a liked take three rerolls back is recoverable, constrained
-  randomness (fixed skeleton, variation only in negotiable parts),
-  fill vocabulary curated empirically by what Josh keeps.
+- **Context-aware drum generation — BUILT ON BRANCH `drummer`
+  (2026-08-20, Josh green-lit overnight; advisor-reviewed design).**
+  v1 shipped to the branch: idempotent replace-in-range as one group
+  undo (hand drums back in one ⟲), per-bar PRNG substreams (range
+  changes can't scramble liked bars), take chips snapshotting the full
+  (seed, energy, range) tuple, fixed skeleton + meter table, velocity
+  table with the hats-under-snare ceiling, follow-the-bass kicks,
+  chord-downbeat accents, agogic snare on bass long notes, 5-entry
+  fill vocabulary incl. the negative fill (75% per boundary, crash on
+  arrival), sustain-aware break silence with label override, meter-
+  change refusal. AWAITING JOSH'S FIELD TEST before merge.
+  **v2 queue (advisor):** layering mode ("keep my kicks, regenerate
+  hats"); fill length via per-section annotation; bass-track picker;
+  swing/humanize; ride-vs-hat per section; per-instrument density;
+  seed provenance as an annotation; tom-groove styles; half-time feel.
+  Fill vocabulary to be curated empirically by what Josh keeps.
 - **Drums in the score view**: percussion clef, fixed staff ROLES not
   pitches (kick bottom space, snare 3rd space, hats above top line),
   x-heads for cymbals/hats, stems up = hands / down = feet. RULED: kit

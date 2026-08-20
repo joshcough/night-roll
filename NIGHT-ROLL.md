@@ -529,6 +529,23 @@ sync (GitHub Contents API, 409 retry) · key dial · help sheet.
 Every command in the Edit ▾ menu has a corresponding icon button in the
 edit row, and vice versa — the menu is the labeled version of the row,
 never a superset. Shipping a new edit command means shipping both.
+## Drummer (branch `drummer`, awaiting field test)
+
+drGenerate(seed, energy, fromBar, toBar) in index.html: deterministic
+kit generation. Design invariants (advisor-reviewed, 2026-08-20):
+every generation is the same idempotent operation — erase all kit
+notes in the bar range + add the new take, pushed as ONE
+group{eraseBatch, addBatch} undo entry (no generation-identity
+bookkeeping exists to go stale). Randomness is per-bar substreams
+(drumRng(seed, barIndex)), so extending the range never reshuffles
+bars already liked. The skeleton (kick on 1, meter-table backbeat) is
+fixed; seeds only vary hats/ghosts/extra kicks/fill choice. Breaks =
+bars where nothing but the bass SOUNDS (sustain-aware), or a section
+labeled "break" — the drummer lays out. Fills own their window (the
+skeleton yields inside it) and fire on 75% of section/loop boundaries,
+crash on the arrival downbeat. Velocity table keeps hats ≥25 under
+the bar's backbeat snare (cap 76). Take chips are session-ephemeral UI
+snapshots of (seed, energy, from, to) — the winning take IS the notes.
 
 ## Query tools (tools/*.mjs — deterministic, facts only)
 
