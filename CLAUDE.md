@@ -36,7 +36,10 @@ before touching the player.
 - **Keys/analyses are Josh's discoveries.** Never pre-fill answers,
   name chords for him, or seed analysis. Tools report facts; findings
   are his. (Query tools in tools/ embody this — use them, extend them
-  in the same spirit.)
+  in the same spirit.) Corollary (his ruling, 2026-08-19): even fact
+  reports must be ON-DEMAND — an analysis he asked for is a tool, one
+  he didn't is an answer. No feature may volunteer verdicts about his
+  annotations or music (the chord-label check is a button, not ambient).
 - **Annotations + the .mid are the only real state.** No feature state
   in localStorage that belongs to the song (lane pins, voices, volumes
   → track:/lane: annotations). Device-local prefs (UI toggles) may use
