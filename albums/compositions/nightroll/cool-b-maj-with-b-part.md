@@ -30,6 +30,14 @@ Form-level deceptive resolution: promise, denial, fulfillment. He
 named the section "Deceptive A part" without knowing the textbook
 term — the concept reinvented from inside. (Glossary: demonstrated.)
 
+**Provenance of the breaks (Josh):** learned from Megadeth — Hangar 18,
+which he analyzed ~2025, uses little breaks as bridges between parts.
+His read: Megadeth NEEDED theirs (gluing key/rhythm changes that didn't
+join naturally); his transitions all fit — the breaks were elective,
+"an interesting dimension," then drafted into the deception scheme.
+Influence abstracted from its source and redeployed for a new purpose —
+and from a metal analysis that predates Night Roll entirely.
+
 ## The revelation
 
 > "Once I got that E7 and A minor and I made the melody actually do
