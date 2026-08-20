@@ -958,7 +958,7 @@
     <dl>
       <dt>▾ Hide controls</dt><dd>The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Phones start folded automatically; your explicit choice is remembered per device.</dd>
       <dt>𝄞 Score / ▦ Roll</dt><dd>Switch between piano roll and engraved sheet music. Same timeline, same everything else. Your choice is remembered.</dd>
-      <dt>Drag / pinch</dt><dd>One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Two fingers moving TOGETHER pan — and that works with pencil or select armed, so a sweeping two-finger scroll never pencils a stray note or drags one along; anything the first finger started is rolled back the instant the second finger lands. Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.</dd>
+      <dt>Drag / pinch</dt><dd>One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Two fingers moving TOGETHER pan — and that works with pencil or select armed; anything the first finger started is rolled back the instant the second finger lands. With an Apple Pencil (or one finger), <b>hold to grab</b>: dwell about a quarter second on a note before it drags, and the pencil tool only places a note on a clean tap or a dwell — a fast passing stroke always PANS, so sweeping across the song never moves a note or plants a stray one. A mouse grabs instantly (pressing a mouse button is already deliberate). Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.</dd>
       <dt>Roll zoom-out limit</dt><dd>Pinch-out stops once the whole song is in view — per axis: when every bar fits, further pinch-out only reveals pitch; when every note is visible — plus a few rows of breathing room above and below, so the top notes never sit against the ruler — it stops. Opening a song lands exactly on this limit.</dd>
       <dt>Score zoom limit</dt><dd>The score stops zooming out where its busiest bar would overflow — engraved notes can't shrink. Mute dense tracks to zoom out further, or use the Roll for the bird's-eye view.</dd>
     </dl>
@@ -3466,11 +3466,22 @@ document.addEventListener("touchend", e => {
   lastTapEnd = now;
 }, {passive: false, capture: true});
 
+function placePencilNote(pp) { // deferred pencil: called by the dwell timer or a clean tap
+  const tr = song.tracks[selTrack];
+  const added = !isComposition();
+  tr.notes.push({t: pp.t, d: pp.snap, p: pp.pitch, v: pencilVel, added});
+  if (song.rawNotes) song.rawNotes[selTrack].push({t: pp.t + chopS, d: pp.snap, p: pp.pitch, v: pencilVel, added});
+  pushUndo({kind: "add", ti: selTrack, ni: tr.notes.length - 1});
+  previewNote(selTrack, pp.pitch);
+  draw();
+  return {ti: selTrack, ni: tr.notes.length - 1, t: pp.t, snap: pp.snap};
+}
 canvas.addEventListener("pointerdown", e => {
   if (fallActive() && !lassoMode) return; // fall rides the playhead — no pan/zoom; lasso still works
   try { canvas.setPointerCapture(e.pointerId); } catch (err) {} // Safari can refuse mid-gesture
   if (pinch) return; // third finger: ignore
   if (drag && drag.id !== e.pointerId) {
+    clearTimeout(drag.holdTimer);
     // the first finger wasn't a scroll after all — undo whatever it started
     // (a second finger means "pan/zoom", even with pencil or select armed)
     if (drag.pencil) { // remove the just-penciled note and its undo entry
@@ -3504,8 +3515,9 @@ canvas.addEventListener("pointerdown", e => {
     return;
   }
   const p = evtPos(e);
+  const instantGrab = e.pointerType === "mouse"; // pen/finger must dwell; a mouse press is already deliberate
   let lasso = lassoMode && !!song && (fallActive() || p.y >= RULER_H); // fall has no ruler band
-  let noteEdit = null;
+  let noteEdit = null, pendingEdit = null;
   // a drag that STARTS on a selected note moves the selection even in lasso
   // mode (drag from empty space still draws a box; a tap still toggles)
   if (editableSong() && (mode === "select" || lasso) && viewMode !== "score" && !fallActive() && p.y >= RULER_H) {
@@ -3520,9 +3532,10 @@ canvas.addEventListener("pointerdown", e => {
         const edgeOk = hn.d * pxPerTick() >= 24 && !e.altKey; // tiny notes are all move handle
         const nearEnd = edgeOk && Math.abs(tickHere - (hn.t + hn.d)) < 8 / pxPerTick();
         const nearStart = edgeOk && !nearEnd && Math.abs(tickHere - hn.t) < 8 / pxPerTick();
-        noteEdit = {kind: nearEnd ? "resize" : nearStart ? "resizeL" : "move",
-                    orig: items.map(({ti, ni, n: nn}) => ({ti, ni, t: nn.t, d: nn.d, p: nn.p})),
-                    items};
+        pendingEdit = {kind: nearEnd ? "resize" : nearStart ? "resizeL" : "move",
+                       orig: items.map(({ti, ni, n: nn}) => ({ti, ni, t: nn.t, d: nn.d, p: nn.p})),
+                       items};
+        if (instantGrab) { noteEdit = pendingEdit; pendingEdit = null; }
         lasso = false;
       }
     }
@@ -3535,7 +3548,7 @@ canvas.addEventListener("pointerdown", e => {
       return;
     }
   }
-  let pencil = null; // pencil-drag: the note starts at finger-down and stretches as you drag
+  let pencil = null, pendingPencil = null; // pencil-drag: note at finger-down, stretch as you drag
   if (editableSong() && mode === "pencil" && viewMode !== "score" && !fallActive() && !lasso && p.y >= RULER_H) {
     const {tick, pitch: row} = posToTickPitch(p);
     const kit = trackIsDrums(selTrack);
@@ -3546,14 +3559,8 @@ canvas.addEventListener("pointerdown", e => {
       const grid = moveSnapTicks(); // 16ths: start position is finer than the note length
       const snap = pencilTicks();
       const t = Math.round(tick / grid) * grid;
-      const tr = song.tracks[selTrack];
-      const added = !isComposition();
-      tr.notes.push({t, d: snap, p: pitch, v: pencilVel, added});
-      if (song.rawNotes) song.rawNotes[selTrack].push({t: t + chopS, d: snap, p: pitch, v: pencilVel, added});
-      pushUndo({kind: "add", ti: selTrack, ni: tr.notes.length - 1});
-      previewNote(selTrack, pitch);
-      pencil = {ti: selTrack, ni: tr.notes.length - 1, t, snap};
-      draw();
+      pendingPencil = {pitch, t, snap}; // created on dwell or a clean tap — never by a fast stroke
+      if (instantGrab) pencil = placePencilNote(pendingPencil), pendingPencil = null;
     }
   }
   let bandEdge = null; // grab a section/chord band by its edge (own songs, roll view)
@@ -3568,9 +3575,19 @@ canvas.addEventListener("pointerdown", e => {
       s0: band.start, e0: band.end};
   }
   drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false,
-          lasso, noteEdit, pencil, bandEdge,
-          cursor: !lasso && !noteEdit && !pencil && !bandEdge && cursorHit(p),
-          ruler: !lasso && !noteEdit && !pencil && !bandEdge && !!song && p.y < RULER_H, spos: p};
+          lasso, noteEdit, pencil, bandEdge, pendingEdit, pendingPencil,
+          cursor: !lasso && !noteEdit && !pendingEdit && !pencil && !pendingPencil && !bandEdge && cursorHit(p),
+          ruler: !lasso && !noteEdit && !pendingEdit && !pencil && !pendingPencil && !bandEdge && !!song && p.y < RULER_H,
+          spos: p};
+  if (pendingEdit || pendingPencil) { // hold-to-grab: dwell arms the edit; a fast stroke pans
+    const d = drag;
+    d.holdTimer = setTimeout(() => {
+      if (drag !== d || d.moved) return; // gone, or already panning
+      if (d.pendingEdit) { d.noteEdit = d.pendingEdit; d.pendingEdit = null; }
+      else if (d.pendingPencil) { d.pencil = placePencilNote(d.pendingPencil); d.pendingPencil = null; }
+      draw();
+    }, 230);
+  }
 });
 canvas.addEventListener("pointermove", e => {
   if (pinch) {
@@ -3606,6 +3623,10 @@ canvas.addEventListener("pointermove", e => {
   if (!drag || drag.id !== e.pointerId) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 8) drag.moved = true;
+  if (drag.moved && (drag.pendingEdit || drag.pendingPencil)) {
+    drag.pendingEdit = drag.pendingPencil = null; // moved before the dwell: it's a scroll
+    clearTimeout(drag.holdTimer);
+  }
   if (drag.moved) {
     if (drag.lasso) {
       const p = evtPos(e);
@@ -3684,6 +3705,11 @@ function endPointer(e) {
     return;
   }
   if (!drag || drag.id !== e.pointerId) return;
+  clearTimeout(drag.holdTimer);
+  if (drag.pendingPencil && !drag.moved && !drag.pencil) { // released before the dwell: a tap still pencils
+    drag.pencil = placePencilNote(drag.pendingPencil);
+    drag.pendingPencil = null;
+  }
   if (drag.lane) { // pin the lane where it was dropped — as a synced lane: annotation
     if (drag.moved && songKey) {
       const old = rollnotes.find(n => /^lane:\s*-?\d+\s*$/.test(n.text));

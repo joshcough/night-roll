@@ -284,3 +284,49 @@ test("two-finger drag pans even with pencil armed (no note lands)", async ({ pag
   expect(after.x).toBeGreaterThan(before.x); // fingers left -> view scrolled right
   expect(after.n).toBe(before.n); // the pencil's finger-down note was rolled back
 });
+
+test("pen: fast stroke over a note pans; a dwell grabs it (hold-to-drag)", async ({ page }) => {
+  await page.evaluate(() => document.querySelector('#modeseg button[data-mode="select"]').click());
+  await selectAll(page);
+  await page.evaluate(() => { view.pxq = 600; clampView(); draw(); });
+  const start = await noteXY(page, 240, 64);
+  const pen = (type, x, y) => page.evaluate(([tp, px, py]) => {
+    canvas.dispatchEvent(new PointerEvent(tp, { pointerId: 7, pointerType: "pen",
+      clientX: px, clientY: py, isPrimary: true, bubbles: true }));
+  }, [type, x, y]);
+  // fast stroke: down, immediately sweep, up — the selection must not move
+  await pen("pointerdown", start.x, start.y);
+  for (let i = 1; i <= 5; i++) await pen("pointermove", start.x - i * 30, start.y);
+  await pen("pointerup", start.x - 150, start.y);
+  expect((await notes(page)).map(n => n.t)).toEqual([0, 0, 0]);
+  // dwell: down, wait past the hold, then sweep — now it drags
+  const s2 = await noteXY(page, 240, 64);
+  await pen("pointerdown", s2.x, s2.y);
+  await page.waitForTimeout(320);
+  const px16 = await page.evaluate(() => (240 / song.ppq) * view.pxq);
+  for (let i = 1; i <= 4; i++) await pen("pointermove", s2.x + (px16 / 4) * i, s2.y);
+  await pen("pointerup", s2.x + px16, s2.y);
+  expect((await notes(page)).map(n => n.t)).toEqual([240, 240, 240]);
+});
+
+test("pen pencil: fast stroke adds nothing; a tap or a dwell adds a note", async ({ page }) => {
+  await page.evaluate(() => document.querySelector('#modeseg button[data-mode="pencil"]').click());
+  await page.evaluate(() => { view.pxq = 600; clampView(); draw(); });
+  const spot = await noteXY(page, 480, 70); // empty row
+  const pen = (type, x, y) => page.evaluate(([tp, px, py]) => {
+    canvas.dispatchEvent(new PointerEvent(tp, { pointerId: 8, pointerType: "pen",
+      clientX: px, clientY: py, isPrimary: true, bubbles: true }));
+  }, [type, x, y]);
+  await pen("pointerdown", spot.x, spot.y); // fast sweep: no note
+  for (let i = 1; i <= 5; i++) await pen("pointermove", spot.x - i * 30, spot.y);
+  await pen("pointerup", spot.x - 150, spot.y);
+  expect(await notes(page)).toHaveLength(3);
+  await pen("pointerdown", spot.x, spot.y); // clean tap: note lands on release
+  await pen("pointerup", spot.x, spot.y);
+  expect(await notes(page)).toHaveLength(4);
+  const spot2 = await noteXY(page, 960, 70);
+  await pen("pointerdown", spot2.x, spot2.y); // dwell: note lands via the timer, then stretches
+  await page.waitForTimeout(320);
+  await pen("pointerup", spot2.x, spot2.y);
+  expect(await notes(page)).toHaveLength(5);
+});
