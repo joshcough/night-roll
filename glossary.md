@@ -94,6 +94,19 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   resolving up to the 3 (C♯→D♯ in B) is why the spice lands instead of
   hanging. — `encountered` 2026-08-18. Anchor: Cool Bmaj final bass
   notes. FF: *(find one)*.
+- **Modal mixture / parallel minor** — borrowing chords from the same-
+  tonic opposite mode (A minor's chords inside A major). Darkens without
+  leaving home. — `encountered` 2026-08-19. Anchor: cool-b-maj-with-
+  b-part, bar 16.4 — the gut-found Am inside the A-major B part, which
+  also happens to neighbor G♯m by a half step and aims the exit home.
+  FF: *(find one)*.
+- **Deceptive resolution** — set up an arrival, then land elsewhere;
+  the textbook case is one chord (V promising home, delivering vi), but
+  it scales to whole sections. — **`demonstrated`** 2026-08-19: Josh
+  named his section "Deceptive A part" for a break that SIGNALED the
+  A-major arrival, denied it, then a second break delivered — his own
+  words, his own form, the concept reinvented from inside. Anchor:
+  cool-b-maj-with-b-part bars 10.4–13.2.
 - **Lament bass / Andalusian descent** — bass falling stepwise (or
   chromatically) from tonic toward the dominant; grief's bassline. —
   `encountered` 2026-08-17 (progression library: Grieving). Anchor:

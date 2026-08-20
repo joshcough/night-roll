@@ -7,8 +7,13 @@ session start alongside the quiz.)
 ## THE MENU — everything on deck (consolidated 2026-08-19)
 
 **Music (the point of all of this):**
-1. B-part study → write Cool Bmaj's B section (protocol below; rhythm
-   hypothesis; turns/C-parts included). THE composition thread.
+1. ~~B-part study → write the B~~ **JOSH WROTE THE B FIRST**
+   (2026-08-19: cool-b-maj-with-b-part — key change to ♭VII, formal
+   deceptive resolution across two Breaks, parallel-minor exit, a
+   labeled Turn, prepared bass-alone dropouts, harmonic-rhythm shift
+   as the "Deceptive A part"'s contrast device). The STUDY now runs in
+   reverse: analyze the corpus's B parts to name what he already did
+   and find what he hasn't tried. Protocol below still applies.
 2. Bass variation in Cool Bmaj — the lead voice's two verbatim bars.
 3. Rename his tracks in-app (top/chords/bass/counter — feature shipped
    2026-08-19, names settled in the 08-18 handoff). Josh's two minutes.
