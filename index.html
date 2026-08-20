@@ -680,6 +680,7 @@
   <button id="insbtn" aria-label="Insert a chord at the cursor">♫</button>
   <button id="movebtn" aria-label="Move selection to another track">⇄</button>
   <button id="drumfillbtn" aria-label="Fill a drum pattern">🥁</button>
+  <button id="drummerbtn" aria-label="Generate drums (Drummer)">🎲</button>
   <button id="copybtn" aria-label="Duplicate selected notes">⧉</button>
   <button id="pastebtn" aria-label="Paste the selection at the cursor">📋</button>
   <button id="octupbtn" aria-label="Selection up an octave">▲8</button>
@@ -9838,6 +9839,7 @@ document.getElementById("drfrom").addEventListener("input", drRefresh);
 document.getElementById("drto").addEventListener("input", drRefresh);
 document.getElementById("drclose").addEventListener("click", () =>
   document.getElementById("drummersheet").classList.remove("on"));
+document.getElementById("drummerbtn").addEventListener("click", openDrummer);
 document.getElementById("movebtn").addEventListener("click", () => {
   if (!editableSong()) { setInfo("editing works on your own songs — captures are locked"); return; }
   const box = document.getElementById("mvtracks");
