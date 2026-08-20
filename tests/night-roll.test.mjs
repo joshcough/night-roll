@@ -1217,7 +1217,10 @@ test("chord quality parse/compose: bases + stacked extensions round-trip", () =>
   installSong();
   const cases = [["", "maj", []], ["m7add9", "m", ["7", "add9"]], ["7b9", "maj", ["7", "b9"]],
                  ["dim7", "dim", ["7"]], ["m7b5", "m", ["7", "b5"]], ["maj9", "maj", ["maj9"]],
-                 ["sus4", "sus4", []], ["5", "5", []], ["6", "maj", ["6"]]];
+                 ["sus4", "sus4", []], ["5", "5", []], ["6", "maj", ["6"]],
+                 ["madd13", "m", ["add13"]], ["7#5b9", "maj", ["7", "#5", "b9"]],
+                 ["maj13", "maj", ["maj13"]], ["69", "maj", ["6", "9"]],
+                 ["7b13", "maj", ["7", "b13"]]];
   for (const [q, base, exts] of cases) {
     const got = val(`chordQualParse(${JSON.stringify(q)})`);
     assert.deepEqual(got, {base, exts}, q);

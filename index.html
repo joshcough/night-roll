@@ -7647,7 +7647,8 @@ document.getElementById("ntype").addEventListener("change", applyEditorType);
 // base quality (pick one) + extensions (stack as many as the chord needs):
 // Cm7add9 = root C, base m, extensions 7 + add9 (Josh, 2026-08-19)
 const CHORD_BASES = ["maj", "m", "dim", "aug", "sus2", "sus4", "5"];
-const CHORD_EXTS = ["6", "7", "maj7", "9", "maj9", "11", "13", "add9", "add11", "b5", "b9", "#9", "#11"];
+const CHORD_EXTS = ["6", "7", "maj7", "9", "maj9", "11", "maj11", "13", "maj13",
+                    "add9", "add11", "add13", "b5", "#5", "b9", "#9", "#11", "b13"];
 function chordQualParse(rest) { // "m7add9" -> {base, exts} or null if anything is left over
   let base = "maj";
   for (const b of CHORD_BASES) {
