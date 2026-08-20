@@ -13,7 +13,7 @@ The ▾ at the footer's left folds the bottom controls (edit row + footer) away 
 Switch between piano roll and engraved sheet music. Same timeline, same everything else. Your choice is remembered.
 
 **Drag / pinch**
-One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.
+One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Two fingers moving TOGETHER pan — and that works with pencil or select armed, so a sweeping two-finger scroll never pencils a stray note or drags one along; anything the first finger started is rolled back the instant the second finger lands. Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.
 
 **Roll zoom-out limit**
 Pinch-out stops once the whole song is in view — per axis: when every bar fits, further pinch-out only reveals pitch; when every note is visible — plus a few rows of breathing room above and below, so the top notes never sit against the ruler — it stops. Opening a song lands exactly on this limit.

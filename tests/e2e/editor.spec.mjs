@@ -266,3 +266,21 @@ test("LCD readouts open their annotations: tempo, meter, key", async ({ page }) 
   await page.evaluate(() => document.getElementById("lcdkey").click());
   expect(await editorType()).toBe("key");
 });
+
+test("two-finger drag pans even with pencil armed (no note lands)", async ({ page }) => {
+  await page.evaluate(() => document.querySelector('#modeseg button[data-mode="pencil"]').click());
+  await page.evaluate(() => { view.pxq = 600; clampView(); draw(); }); // content wider than the viewport, so panning has room
+  const before = await page.evaluate(() => ({ x: view.x, n: song.tracks[0].notes.filter(n => !n.gone).length }));
+  await page.evaluate(() => {
+    const r = canvas.getBoundingClientRect();
+    const ev = (type, id, x, y) => canvas.dispatchEvent(new PointerEvent(type, {
+      pointerId: id, clientX: r.left + x, clientY: r.top + y, isPrimary: id === 1, bubbles: true }));
+    ev("pointerdown", 1, 300, 200);
+    ev("pointerdown", 2, 300, 300); // second finger: the gesture becomes pinch/pan
+    for (let i = 1; i <= 6; i++) { ev("pointermove", 1, 300 - i * 20, 200); ev("pointermove", 2, 300 - i * 20, 300); }
+    ev("pointerup", 1, 180, 200); ev("pointerup", 2, 180, 300);
+  });
+  const after = await page.evaluate(() => ({ x: view.x, n: song.tracks[0].notes.filter(n => !n.gone).length }));
+  expect(after.x).toBeGreaterThan(before.x); // fingers left -> view scrolled right
+  expect(after.n).toBe(before.n); // the pencil's finger-down note was rolled back
+});

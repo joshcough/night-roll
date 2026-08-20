@@ -958,7 +958,7 @@
     <dl>
       <dt>▾ Hide controls</dt><dd>The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Phones start folded automatically; your explicit choice is remembered per device.</dd>
       <dt>𝄞 Score / ▦ Roll</dt><dd>Switch between piano roll and engraved sheet music. Same timeline, same everything else. Your choice is remembered.</dd>
-      <dt>Drag / pinch</dt><dd>One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.</dd>
+      <dt>Drag / pinch</dt><dd>One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Two fingers moving TOGETHER pan — and that works with pencil or select armed, so a sweeping two-finger scroll never pencils a stray note or drags one along; anything the first finger started is rolled back the instant the second finger lands. Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.</dd>
       <dt>Roll zoom-out limit</dt><dd>Pinch-out stops once the whole song is in view — per axis: when every bar fits, further pinch-out only reveals pitch; when every note is visible — plus a few rows of breathing room above and below, so the top notes never sit against the ruler — it stops. Opening a song lands exactly on this limit.</dd>
       <dt>Score zoom limit</dt><dd>The score stops zooming out where its busiest bar would overflow — engraved notes can't shrink. Mute dense tracks to zoom out further, or use the Roll for the bird's-eye view.</dd>
     </dl>
@@ -3471,11 +3471,35 @@ canvas.addEventListener("pointerdown", e => {
   try { canvas.setPointerCapture(e.pointerId); } catch (err) {} // Safari can refuse mid-gesture
   if (pinch) return; // third finger: ignore
   if (drag && drag.id !== e.pointerId) {
+    // the first finger wasn't a scroll after all — undo whatever it started
+    // (a second finger means "pan/zoom", even with pencil or select armed)
+    if (drag.pencil) { // remove the just-penciled note and its undo entry
+      const pn = drag.pencil;
+      song.tracks[pn.ti].notes.splice(pn.ni, 1);
+      if (song.rawNotes) song.rawNotes[pn.ti].pop();
+      const u = editUndo[editUndo.length - 1];
+      if (u && u.kind === "add" && u.ti === pn.ti && u.ni === pn.ni) editUndo.pop();
+    }
+    if (drag.noteEdit) { // put every grabbed note back where it was
+      drag.noteEdit.items.forEach((it, i) => {
+        const o = drag.noteEdit.orig[i];
+        it.n.t = o.t; it.n.d = o.d; it.n.p = o.p;
+      });
+    }
+    if (drag.bandEdge) { // restore the band's original span
+      const be = drag.bandEdge;
+      setAnchorBQ(be.n, be.s0);
+      setEndBQ(be.n, be.e0);
+      resolveNote(be.n);
+    }
+    lassoRect = null;
     pinch = {a: {id: drag.id, x: drag.x, y: drag.y},
              b: {id: e.pointerId, x: e.clientX, y: e.clientY},
              pxq: view.pxq, vx: view.x, rowH0: view.rowH, vy: view.y};
     pinch.dx0 = Math.abs(pinch.a.x - pinch.b.x);
     pinch.dy0 = Math.abs(pinch.a.y - pinch.b.y);
+    pinch.mid0x = (pinch.a.x + pinch.b.x) / 2 - RULER_W; // fixed anchor: parallel fingers PAN
+    pinch.mid0y = (pinch.a.y + pinch.b.y) / 2 - RULER_H;
     drag = null;
     return;
   }
@@ -3561,7 +3585,10 @@ canvas.addEventListener("pointermove", e => {
     const midX = (pinch.a.x + pinch.b.x) / 2 - RULER_W;
     const floorX = viewMode === "score" ? minPxq() : pxqFloor();
     const newPxq = Math.min(400, Math.max(floorX, pinch.pxq * sx));
-    view.x = (pinch.vx + midX) * (newPxq / pinch.pxq) - midX;
+    // anchored at the gesture's STARTING midpoint: spreading zooms around it,
+    // moving both fingers together pans — so two fingers always scroll, even
+    // with pencil or select armed (Josh, 2026-08-19: sweeping scrolls misfired)
+    view.x = (pinch.vx + pinch.mid0x) * (newPxq / pinch.pxq) - midX;
     view.pxq = newPxq;
     if (viewMode !== "score" && newPxq === floorX) view.x = 0; // flush: bar 1 at the left edge
     if (viewMode !== "score") { // score staves are fixed-height
@@ -3569,7 +3596,7 @@ canvas.addEventListener("pointermove", e => {
       const midY = (pinch.a.y + pinch.b.y) / 2 - RULER_H;
       const floorY = rowHFloor();
       const newRowH = Math.min(32, Math.max(floorY, pinch.rowH0 * sy));
-      view.y = (pinch.vy + midY) * (newRowH / pinch.rowH0) - midY;
+      view.y = (pinch.vy + pinch.mid0y) * (newRowH / pinch.rowH0) - midY;
       view.rowH = newRowH;
       if (newRowH === floorY) view.y = (topRow() - dispPitchExtent().hi - ROLL_AIR) * newRowH; // top row + air below the ruler
     }
