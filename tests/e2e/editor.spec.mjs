@@ -150,3 +150,39 @@ test("velocity slider live-adjusts a selection with one undo step", async ({ pag
   await page.click("#undobtn");
   expect((await notes(page)).map(n => n.v)).toEqual([80, 80, 80]);
 });
+
+test("cycle parks on ruler tap, re-arms on tap inside; ⏮ goes to cycle start", async ({ page }) => {
+  const rulerXY = tk => page.evaluate(t => {
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + RULER_W + (t / song.ppq) * view.pxq - view.x, y: r.top + 10 };
+  }, tk);
+  await drag(page, await rulerXY(480), await rulerXY(1920)); // drag arms the cycle
+  expect(await page.evaluate(() => ({ a: rangeSel.a, cyc: !!rangeSel.cycle, off: !!rangeSel.off })))
+    .toEqual({ a: 480, cyc: true, off: false });
+  await page.evaluate(() => document.getElementById("rwbtn").click());
+  expect(await page.evaluate(() => playCursor)).toBe(480); // ⏮ honors the armed cycle
+  const away = await rulerXY(240); // plain tap outside the span: parks, doesn't destroy
+  await page.mouse.click(away.x, away.y);
+  expect(await page.evaluate(() => rangeSel && rangeSel.off)).toBe(true);
+  await page.evaluate(() => document.getElementById("rwbtn").click());
+  expect(await page.evaluate(() => playCursor)).toBe(0); // parked cycle releases ⏮
+  const inside = await rulerXY(960); // tap the dimmed span: re-armed, same bounds
+  await page.mouse.click(inside.x, inside.y);
+  expect(await page.evaluate(() => ({ a: rangeSel.a, b: rangeSel.b, off: !!rangeSel.off })))
+    .toEqual({ a: 480, b: 1920, off: false });
+});
+
+test("full-song move drags sections and the loop along (intro-cut workflow)", async ({ page }) => {
+  await page.evaluate(() => {
+    rollnotes = deriveNoteTypes([
+      { b1: 1, q1: 1, b2: 1, q2: 2, text: "section: A", added: true },
+      { b1: 1, q1: 3, text: "loop: 1.2", added: true },
+    ]).map(resolveNote);
+    finalizeNotes();
+  });
+  await selectAll(page);
+  await page.evaluate(() => nudgeSelection(song.ppq, 0)); // whole song right one beat
+  const rn = await page.evaluate(() => rollnotes.map(n => ({ q1: n.q1, text: n.text, sec: !!n.section })));
+  expect(rn.find(n => n.sec).q1).toBe(2);
+  expect(rn.find(n => n.text.startsWith("loop")).text).toBe("loop: 1.3");
+});

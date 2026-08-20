@@ -1008,12 +1008,12 @@
     <dl>
       <dt>Attached notes on ANY annotation</dt><dd>Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the text box below the value rides along (for sections, the first line is the label and the rest is the note). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.</dd>
       <dt>+ Note</dt><dd>Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.</dd>
-      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: the span glows amber and playback loops just that span (any loop: annotation is ignored while it's armed). Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tap the ruler to clear.</dd>
+      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: the span glows amber and playback loops just that span (any loop: annotation is ignored while it's armed). Ruler drags snap to 16ths. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tapping the ruler <b>parks</b> the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode.</dd>
       <dt>Gold flags</dt><dd>Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.</dd>
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
       <dt>Sections</dt><dd>Colored bands in the ruler (A, B…). Make one: select a range, + Note, tick "section", give it a short label. Nest them by containment. Tap a band to select its whole range. Sections and chords each get their OWN row group (sections above, chords below), so a section and a chord covering the same bars never fight for a lane.</dd>
-      <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection that carries a band's every note takes the band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), and a band whose notes no longer spell its label gets a ⚠: tap it to see what the notes read now, rename in ☰ Notes if you agree. The app never rewrites your labels.</dd>
+      <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · /bass) or type the symbol. Bare root = major, m = minor (Gm). Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection of EVERY note in the song takes the entire annotation layer with it — sections, chords, the loop point and its target — with chord and key labels transposing on vertical moves (global facts like meter and tempo keep their bar-1 anchor); that's how you cut an intro and slide everything left without orphaning your analysis. Moving a selection that carries one band's every note takes that band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), and a band whose notes no longer spell its label gets a ⚠: tap it to see what the notes read now, rename in ☰ Notes if you agree. The app never rewrites your labels.</dd>
       <dt>Chop</dt><dd>Trim a song without touching the file: put the cursor at the cut, + Note, "Chop", pick "everything before this beat" or "this beat to the end". The chopped part vanishes entirely and bars renumber (chop a 2-bar intro and old bar 3 becomes bar 1 — your annotations shift with it). Delete the chop in ☰ Notes to restore. Made for cleaning up freshly imported captures.</dd>
     </dl>
 
@@ -2575,10 +2575,10 @@ function draw() {
     const x = RULER_W + playCursor * ppt - view.x;
     ctx.fillStyle = css("--accent");
     ctx.fillRect(x - 1, 0, 2.5, H);
-    ctx.beginPath(); // grab handle
-    ctx.moveTo(x - 6, RULER_H);
-    ctx.lineTo(x + 6, RULER_H);
-    ctx.lineTo(x, RULER_H + 7);
+    ctx.beginPath(); // grab handle — Logic-sized, made for fingers
+    ctx.moveTo(x - 11, RULER_H);
+    ctx.lineTo(x + 11, RULER_H);
+    ctx.lineTo(x, RULER_H + 14);
     ctx.fill();
   }
 
@@ -2865,7 +2865,7 @@ function drawRuler(W, H) {
     const rsx = viewMode === "score" && scoreModel ? scoreTickToX(rangeSel.a) : RULER_W + rangeSel.a * ppt - view.x;
     const rse = viewMode === "score" && scoreModel ? scoreTickToX(rangeSel.b) : RULER_W + rangeSel.b * ppt - view.x;
     ctx.fillStyle = rangeSel.cycle ? "#E09A3E" : css("--accent");
-    ctx.globalAlpha = rangeSel.cycle ? 0.75 : 0.3;
+    ctx.globalAlpha = (rangeSel.cycle ? 0.75 : 0.3) * (rangeSel.off ? 0.35 : 1); // dimmed = parked, tap to re-arm
     ctx.fillRect(rsx, 0, rse - rsx, BASE_RULER_H); // number strip only — lanes stay readable
     ctx.globalAlpha = 1;
   }
@@ -2971,6 +2971,56 @@ function ridealongChordBands(pre, post) { // Phase 1 (open-items plan): a rigid
   for (let i = 0; i < pre.length; i++) // rigid translation only
     if (post[i].n.t - pre[i].t !== dT || post[i].n.p - pre[i].p !== dP || post[i].n.d !== pre[i].d) return;
   const movedKeys = new Set(post.map(({ti, ni}) => ti + ":" + ni));
+  // FULL-SONG carry (Josh's intro-cut workflow, 2026-08-19): a rigid move
+  // that takes EVERY sounding note drags the whole annotation layer along —
+  // sections, chords, loop (anchor AND target), plain notes. Global facts
+  // pinned at 1.1 (meter, tempo, key, track, lane) keep their anchor; chord
+  // labels transpose with dP; key labels transpose too (their signature
+  // re-derives from the new name).
+  let total = 0;
+  song.tracks.forEach(tr => tr.notes.forEach(n => { if (!n.gone) total++; }));
+  if (total > 0 && movedKeys.size >= total) {
+    const bt = barTicks(), qt = beatTicks();
+    const setAnchor = (n, tick) => {
+      const t = Math.max(0, tick);
+      n.b1 = Math.floor(t / bt) + 1;
+      n.q1 = snapBeat((t % bt) / qt + 1);
+    };
+    const setEnd = (n, tick) => {
+      const t = Math.max(qt, tick) - qt; // q2 is the INCLUSIVE end beat (resolveNote adds one)
+      n.b2 = Math.floor(t / bt) + 1;
+      n.q2 = snapBeat((t % bt) / qt + 1);
+    };
+    for (const n of rollnotes) {
+      const pinned = n.start === 0 && (n.tsdir || n.trackdir || n.tempodir !== undefined ||
+        n.keydir !== undefined || n.keypartial || /^lane:/.test(n.text));
+      if (!pinned && dT !== 0) {
+        setAnchor(n, n.start + dT);
+        if (n.b2) setEnd(n, n.end + dT);
+      }
+      if (n.loopTo !== undefined && dT !== 0) {
+        n.loopTo = Math.max(0, n.loopTo + dT);
+        const lb = Math.floor(n.loopTo / bt) + 1, lq = snapBeat((n.loopTo % bt) / qt + 1);
+        n.text = "loop: " + lb + "." + lq;
+      }
+      if (dP !== 0 && n.chord && !n.section) n.text = transposeChordLabel(n.text, dP);
+      if (dP !== 0 && (n.keydir !== undefined || n.keypartial)) {
+        const km = n.text.match(/^key:\s*(.+)$/i);
+        if (km) {
+          const moved = transposeChordLabel(km[1].trim(), dP);
+          n.text = "key: " + moved;
+          if (n.keypartial) n.keypartial = moved.replace(/\?$/, "");
+          else { const sf2 = keyNameToSf(moved); if (sf2 !== null) n.keydir = sf2; }
+        }
+      }
+      n.added = true; // carried annotations must persist and sync
+    }
+    finalizeNotes();
+    saveLocalNotes();
+    setInfo("moved the whole song — every annotation came along" +
+            (dP ? " (chords and keys transposed)" : ""));
+    return;
+  }
   let changed = false;
   for (const band of rollnotes) {
     if (!band.chord || band.section) continue;
@@ -3356,11 +3406,13 @@ function rowHFloor() { // row height where the display range + air fills the hei
   return Math.min(32, Math.max(4, (wrap.clientHeight - 2 * RULER_H) / (hi - lo + 1 + 2 * ROLL_AIR)));
 }
 function cursorHit(pos) {
-  if (playing || !song || mode !== "select") return false;
-  if (pos.y < RULER_H) return false; // ruler drags select a range instead
+  if (playing || !song) return false;
   const x = viewMode === "score" ? scoreTickToX(playCursor)
                                  : RULER_W + playCursor * pxPerTick() - view.x;
-  return Math.abs(pos.x - x) < 12;
+  // the handle triangle under the ruler is grabbable in ANY mode
+  if (pos.y >= RULER_H && pos.y < RULER_H + 16 && Math.abs(pos.x - x) < 14) return true;
+  if (pos.y < RULER_H) return false; // ruler drags select a range instead
+  return mode === "select" || mode === null ? Math.abs(pos.x - x) < 12 : false;
 }
 function tickAtX(x, snap) {
   const t = (x - RULER_W + view.x) / pxPerTick();
@@ -3538,8 +3590,8 @@ canvas.addEventListener("pointermove", e => {
     }
     else if (drag.cursor) scrubTo(evtPos(e));
     else if (drag.ruler) { // drag along the ruler = select a beat range
-      const a = tickAtX(drag.spos.x, moveSnapTicks()); // 16ths (triplet steps with a T duration)
-      const b = tickAtX(evtPos(e).x, moveSnapTicks());
+      const a = tickAtX(drag.spos.x, Math.round(song.ppq / 4)); // ruler selects on 16ths, always
+      const b = tickAtX(evtPos(e).x, Math.round(song.ppq / 4)); // (32nd snapping made section edges misland)
       rangeSel = a === b ? null : {a: Math.min(a, b), b: Math.max(a, b), cycle: true}; // drags arm the cycle
       draw();
     }
@@ -3647,7 +3699,16 @@ function tap(pos) {
   }
   clearMultiSel();
   if (pos.y < RULER_H) { // section tap, marker tap, or seek
-    rangeSel = null; // a plain ruler tap clears any range selection
+    if (rangeSel) {
+      const {tick: rt} = posToTickPitch(pos);
+      if (rangeSel.off && rt >= rangeSel.a && rt < rangeSel.b && pos.y < BASE_RULER_H) {
+        rangeSel.off = false; // tap the dimmed span: it re-arms without redrawing it
+        setInfo("cycle re-armed: " + "▶ loops the highlighted span again");
+        draw();
+        return;
+      }
+      rangeSel.off = true; // Logic-style: the highlight fades but survives
+    }
     const {tick} = posToTickPitch(pos);
     const ppt = pxPerTick();
     if (pos.y >= BASE_RULER_H) { // section lanes
@@ -4590,7 +4651,7 @@ async function play(fromSec = 0) {
   if (fromSec >= loopSeg.end - 0.01) loopSeg = {start: 0, end: tickToSec(song, songEndTick)};
   // only a DRAGGED ruler range cycles — tapping a section/chord band also sets
   // rangeSel (for + Note prefill) and silently outranked loop: annotations (Josh)
-  const cycling = !!(rangeSel && rangeSel.cycle && rangeSel.b > rangeSel.a);
+  const cycling = !!(rangeSel && rangeSel.cycle && !rangeSel.off && rangeSel.b > rangeSel.a);
   if (cycling) { // Logic-style cycle: a ruler selection loops playback over just
     // that span and outranks any loop: annotation
     loopSeg = {start: tickToSec(song, rangeSel.a),
@@ -5457,8 +5518,10 @@ document.getElementById("playbtn").addEventListener("click", () => {
 });
 document.getElementById("rwbtn").addEventListener("click", () => {
   const startX = viewMode === "score" ? -SCORE_INTRO_W : 0;
-  if (playing) { stop(); playCursor = 0; view.x = startX; play(0); return; }
-  playCursor = 0;
+  // an armed cycle owns the transport: ⏮ returns to ITS start, not bar 1
+  const home = rangeSel && rangeSel.cycle && !rangeSel.off ? rangeSel.a : 0;
+  if (playing) { stop(); playCursor = home; view.x = startX; play(tickToSec(song, home)); return; }
+  playCursor = home;
   view.x = startX;
   updateSubtitle();
   draw();

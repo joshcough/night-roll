@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "duplicates in place", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1169,6 +1169,42 @@ test("chord bands ride rigid moves; stale flag when notes stop matching", () => 
   const after = val(`(() => { const b = rollnotes.find(n => n.chord); return {text: b.text, stale: b.stale || null}; })()`);
   assert.equal(after.text, "D"); // never rewritten
   assert.ok(after.stale); // but flagged
+  run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
+});
+
+test("full-song move carries the whole annotation layer (intro-cut workflow)", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/carry-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [{name: "pulse1", notes: [
+        {t: 1920, d: 480, p: 60, v: 80}, {t: 3840, d: 480, p: 64, v: 80}]}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = deriveNoteTypes([
+      {b1: 2, q1: 1, b2: 3, q2: 4, text: "section: A", added: true},
+      {b1: 2, q1: 1, b2: 2, q2: 4, text: "chord: C", added: true},
+      {b1: 3, q1: 2, text: "loop: 2.1", added: true},
+      {b1: 1, q1: 1, text: "track: pulse1 voice=square50", added: true},
+    ]).map(resolveNote);
+    finalizeNotes();
+    multiSel = [{ti: 0, ni: 0}, {ti: 0, ni: 1}];
+    multiSelKey = new Set(["0:0", "0:1"]);
+  `);
+  // every note moved one bar left: sections, chords, and the loop (anchor AND
+  // target) slide with them; the track directive keeps its bar-1 anchor
+  assert.equal(run(`nudgeSelection(-1920, 0)`), true);
+  const rn = val(`rollnotes.map(n => ({text: n.text, b1: n.b1, q1: n.q1, b2: n.b2 || null,
+    section: !!n.section, chord: !!n.chord, loop: n.loopTo !== undefined, track: !!n.trackdir}))`);
+  const sec = rn.find(n => n.section);
+  assert.equal(sec.b1, 1); assert.equal(sec.b2, 2);
+  assert.equal(rn.find(n => n.chord && !n.section).b1, 1);
+  const loop = rn.find(n => n.loop);
+  assert.equal(loop.text, "loop: 1.1"); // target followed the move
+  assert.equal(loop.b1, 2); assert.equal(loop.q1, 2);
+  assert.equal(rn.find(n => n.track).b1, 1); // pinned
+  // vertical whole-song move transposes chord labels (time anchors untouched)
+  assert.equal(run(`nudgeSelection(0, 2)`), true);
+  assert.equal(val(`rollnotes.find(n => n.chord && !n.section).text`), "D");
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 

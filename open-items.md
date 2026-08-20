@@ -409,18 +409,45 @@ up in sessions; promote honestly.
   after. Composition-ergonomics priority signal: invest there, not in
   note entry. iPad pencil chord entry is slow; the untested unblock is
   ● Record + the Jamstik (merged, awaiting his field test).
-- **Loop annotations corpus gap — JOSH'S CALL, optional:** only 5 of 19
-  FF1 songs carry loop: annotations (the rest loop end→1.1, targets
-  recorded in CUTS.md but not queryable). A script could write the 14
-  annotations from CUTS.md; value = loop-targets --all becomes a full
-  corpus view of every voice at every loop target (his tonic evidence).
-- Song threads: trumpet (voice5) deliberately HELD OUT of the whole B
-  section (A-part enters on chord 3 — a card not yet played); drums
-  stop before the B part.
+- **Loop annotations corpus gap — JOSH IS DOING IT BY HAND (2026-08-19):**
+  he wants them verified-correct and it's a good pass over the corpus
+  anyway ("it's only 19 songs"). No script. When done, loop-targets
+  --all becomes a full corpus view of every voice at every loop target.
+- Song threads (Josh's corrections, 2026-08-19): trumpet (voice5) is
+  NOT deliberately held out of the B section — he hasn't tried it yet.
+  Plan: not in the B part's first two bars, but it "could very well
+  belong" in the remaining bars; probably drops out for the Turn like
+  everything else does. Drums stop before the B part. Drums overall
+  "could use some work" — accents, fills, variation (feeds the parked
+  drummer design, still do-not-implement).
+- **Intro replacement (Josh, 2026-08-19):** he no longer likes the
+  intro — "I liked it... maybe it could be good for another song. I
+  don't think it quite fits anymore." Wants to cut it and slide the
+  song back. The enabler shipped same day: a move that carries EVERY
+  note now carries the whole annotation layer too (sections, chords,
+  loop anchor+target; labels transpose on vertical moves). Workflow:
+  delete intro notes → select all → drag left. The old intro is a
+  candidate seed for a new song.
 - Query tools verdict from the field: zero factual errors in a full
   session (a first); ✱ inline notes and duration-weighted census called
   out as better than spec. Equal-span anomaly retired (false positive
   since the lane redesign).
+
+## Annoyance log (Josh, from writing the B part — no proposals yet)
+
+- **Selection dies on scroll.** Copying bar 3 to bar 16: lasso at 3,
+  scroll to 16, selection gone — so he zooms way out until both bars
+  fit, and then the notes are too small to lasso. He explicitly did
+  NOT propose a fix yet; logged as a real cost of the core gesture.
+  (Candidate directions when this comes up: selection survives
+  pan/zoom; or paste-at-cursor so the clipboard, not the selection,
+  travels. ⧉ Duplicate + drag already survives some of this.)
+
+Shipped same session (2026-08-19): draggable Logic-sized cursor
+handle; ⏮ returns to an armed cycle's start; ruler highlight parks/
+re-arms instead of dying (his bar-7-to-9 case); ruler drags snap to
+16ths (32nd snapping made his B-part section edge land a 16th off —
+worth re-dragging that edge, Josh); full-song moves carry annotations.
 
 ## Tooling to-do
 
