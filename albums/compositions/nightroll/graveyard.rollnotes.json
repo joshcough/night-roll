@@ -1,10 +1,10 @@
-{ "version": 1, "song": "graveyard", "saved": 1787345001313, "notes": [
+{ "version": 1, "song": "graveyard", "saved": 1787347665139, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"tempo","bpm":80},
   {"at":[1,1],"type":"key","key":"Gm"},
   {"at":[1,1],"type":"tempo","bpm":80},
   {"at":[1,1],"type":"track","track":"triangle","voice":"triangle"},
+  {"at":[1,1],"type":"lane","lane":38},
   {"at":[1,2.75],"type":"track","track":"triangle","voice":"sawtooth","vol":1.5},
-  {"at":[6,1],"type":"tempo","bpm":240},
-  {"at":[7,1],"type":"loop","loop":"1.3"}
+  {"at":[6,1],"type":"tempo","bpm":240}
 ] }
