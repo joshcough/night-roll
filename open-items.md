@@ -448,10 +448,42 @@ handle; ⏮ returns to an armed cycle's start; ruler highlight parks/
 re-arms instead of dying (his bar-7-to-9 case); ruler drags snap to
 16ths (32nd snapping made his B-part section edge land a 16th off —
 worth re-dragging that edge, Josh); full-song moves carry annotations.
+SUPERSEDED 2026-08-22: ruler snapping is now bar-magnetic (14 screen
+px) with 16ths elsewhere, and ruler taps no longer clear the lasso —
+both from his 08-21 "reported with real heat" items.
+
+## Composition thread — graveyard (2026-08-20 → 08-22, web sessions)
+
+- 21 bars, F♯ minor (transposed whole from Gm), journal at
+  albums/compositions/nightroll/graveyard.md. Intro complete and
+  liked; seam built (eighth-rest gap, F♯ hang solved rhythmically,
+  hard splice); riff + lead written — lead is "the absolutely most
+  beautiful thing I have ever written." Bar 13 DECIDED: harmony, not
+  unison (unison washed out the middle voice).
+- OPEN, all his: fast-section tempo (at 160; ratio-vs-subdivision
+  framing on the table); bar-8 run regrouping now that ➗ exists
+  (sextuplet vs two eighth-triplets — his call); which thread carries
+  across the seam; real bass arrangement (sketch-pad bass — he's
+  studying Ellefson/Rust in Peace); whether the never-sounds-the-tonic
+  melody is deliberate (asked, unanswered).
+- Housekeeping he may want: duplicate tempo 80 at [1,1] in
+  graveyard.rollnotes.json (harmless; HIS file, not touched).
+- B-part study now has a second live specimen: graveyard's A→B is a
+  rhythm-carried contrast BY DESIGN — the category his 08-18
+  hypothesis predicted would be instructive.
+- **Quiz owed ×2** (2026-07-22 concepts + the leading-tone material);
+  declined twice; next session should draw from both banks at once.
 
 ## Awaiting Josh's field verdicts (2026-08-19 marathon session)
 
-- **Hold-to-grab dwell is 230ms** — tune up/down after real iPad use.
+- **Hold-to-grab friction is REAL but undiagnosed (his 08-20/21 field
+  report):** scroll-misfires solved, but moving existing notes up/down
+  is now "a pain in the ass." The 230ms dwell is ONE suspect, not the
+  diagnosis. DO NOT implement a fix until he reproduces it live and
+  narrates (which pointer, note selected or not, grab never starts vs
+  starts-then-loses, roll vs score). Candidate shapes logged in the
+  handoff: lower dwell / axis-based grab (vertical=grab, horizontal=
+  pan) / instant grab on already-selected notes / slop threshold.
 - Logic-style always-from-top cycle play — he suspects he may want
   mid-span audition back ("i can ask to change it later").
 - New since his last load: real copy/paste (⧉ must be tapped before 📋

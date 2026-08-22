@@ -135,6 +135,24 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   between triads sharing no tones. — `encountered` 2026-08-19. Anchor:
   cool-b-maj-with-b-part, the B part's exit. FF: *(find one)*.
 
+- **Leading tone** — a note a half step below its target, borrowed if
+  need be, existing to pull you there. Functional kind vs. the scale-
+  degree name (7 of major/harmonic minor) — his two are functional. —
+  **`demonstrated`** 2026-08-20: built TWO deliberate instances before
+  knowing the term (graveyard, written in Gm: ♭5→5 at bar 3, 7→1 at
+  bar 4 into 5 — aimed at the key's two structural pitches), described
+  the mechanism exactly while declining to guess the word, then
+  generalized unprompted: "a tool of voice leading," like "the
+  backhanded compliment is a tool of the passive aggressive." Anchor:
+  graveyard bars 3–4. Bonus finding, his ear + tutor's account: held
+  two bars (graveyard 8–9), the pull dies and it becomes a PLACE —
+  duration flips the function.
+- **Horizontal (melodic) arpeggiation** — a chord spelled one tone at a
+  time in a single voice; harmony as melody. — `encountered`
+  2026-08-20: he DID it (graveyard triangle 1–3, one triad tone per
+  bar) and named the chord; the term was the tutor's wording back.
+  FF: *(find one — FF1's prelude arpeggio is the giant case)*.
+
 ## Form
 
 - **Turnaround** — the moment before a repeat that sets up the RETURN

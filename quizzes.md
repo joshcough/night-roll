@@ -108,3 +108,19 @@ Status marks: `[ ]` not yet asked · `[x]` answered well · `[~]` shaky, re-ask.
 - Bank candidate (2026-08-14): major third vs minor third over a ♭5 —
   F#(♭5) [F#–A#–C] vs F#ø7 [F#–A–C–E]. Josh reached for ø7 with the
   degree and ♭5 right, missing only the third quality.
+
+## Bank additions — 2026-08-20/21 sessions (graveyard)
+
+- Leading tone: the functional kind vs scale-degree 7 — his C♯→D was
+  borrowed from outside G minor entirely; what makes it a leading tone
+  anyway?
+- What happens to a leading tone's pull when it's HELD two bars?
+  (graveyard 8–9 — his ear called it "more sinister"; why?)
+- Tritone as a vertical interval vs ♭5 as a chord alteration — same
+  pitches, different claims.
+- Hard splice vs prepared retransition at a section seam — which did
+  graveyard use, and what carried across?
+- What does a chord-tone-only bass cost you harmonically, and what was
+  the fix already sitting in his own intro?
+- Quarter-note triplets: where do the three onsets land, and why can
+  no binary grid contain them?
