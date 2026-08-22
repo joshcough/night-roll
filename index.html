@@ -3552,12 +3552,18 @@ function rowHFloor() { // row height where the display range + air fills the hei
   const {lo, hi} = dispPitchExtent();
   return Math.min(32, Math.max(4, (wrap.clientHeight - 2 * RULER_H) / (hi - lo + 1 + 2 * ROLL_AIR)));
 }
+function cursorHandleHit(pos) { // the triangle under the ruler — outranks every tool, lasso included
+  if (playing || !song) return false;
+  const x = viewMode === "score" ? scoreTickToX(playCursor)
+                                 : RULER_W + playCursor * pxPerTick() - view.x;
+  return pos.y >= RULER_H && pos.y < RULER_H + 16 && Math.abs(pos.x - x) < 14;
+}
 function cursorHit(pos) {
   if (playing || !song) return false;
   const x = viewMode === "score" ? scoreTickToX(playCursor)
                                  : RULER_W + playCursor * pxPerTick() - view.x;
   // the handle triangle under the ruler is grabbable in ANY mode
-  if (pos.y >= RULER_H && pos.y < RULER_H + 16 && Math.abs(pos.x - x) < 14) return true;
+  if (cursorHandleHit(pos)) return true;
   if (pos.y < RULER_H) return false; // ruler drags select a range instead
   return mode === "select" || mode === null ? Math.abs(pos.x - x) < 12 : false;
 }
@@ -3651,7 +3657,8 @@ canvas.addEventListener("pointerdown", e => {
   }
   const p = evtPos(e);
   const instantGrab = e.pointerType === "mouse"; // pen/finger must dwell; a mouse press is already deliberate
-  let lasso = lassoMode && !!song && (fallActive() || p.y >= RULER_H); // fall has no ruler band
+  let lasso = lassoMode && !!song && (fallActive() || p.y >= RULER_H) &&
+              !cursorHandleHit(p); // the triangle outranks the lasso (Josh, 2026-08-22)
   let noteEdit = null, pendingEdit = null;
   // a drag that STARTS on a selected note moves the selection even in lasso
   // mode (drag from empty space still draws a box; a tap still toggles)
