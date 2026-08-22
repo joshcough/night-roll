@@ -1062,7 +1062,7 @@
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
-      <dt>View ▾ menu</dt><dd>Beside Edit in the header (always there, even on locked songs) — one place for every hide/show: 𝄞 Score view, ◂ Tracks, 🛠 Edit toolbar, ▦ Bottom bar, 🎹 Instrument panel, 💬 Notes strip, and ▸ Section levels (cycles, shows "2 of 3"). ✓ means visible; the menu STAYS OPEN while you flip several at once, and closes on a tap anywhere else. Every item mirrors an existing button — the buttons are the fast path, the menu is the findable one. The header itself never hides, so View ▾ is always the way back; hiding the bottom bar floats the ▴ restore button bottom-left (one tap brings everything back). The old ▾ hide buttons are gone — hiding lives here now.</dd>
+      <dt>View ▾ menu</dt><dd>Beside Edit in the header (always there, even on locked songs) — one place for every hide/show: 𝄞 Score view, ◂ Tracks, 🛠 Edit toolbar, ▦ Bottom bar, 🎹 Instrument panel, 💬 Notes strip, and ▸ Section levels with −/+ steppers (shows "2 of 3"; the gutter chevron still one-tap cycles). ✓ means visible; the menu STAYS OPEN while you flip several at once, and closes on a tap anywhere else. Every item mirrors an existing button — the buttons are the fast path, the menu is the findable one. The header itself never hides, so View ▾ is always the way back; hiding the bottom bar floats the ▴ restore button bottom-left (one tap brings everything back). The old ▾ hide buttons are gone — hiding lives here now.</dd>
       <dt>Speed &amp; volume buttons</dt><dd>The speed slider folded into a <b>percentage button</b> — tap to open the slider, tap anywhere else and it folds back (the reset chip appears when off-native). Beside it, <b>🔊</b> is a master volume the same way: tap, slide (10–200%), tap away; the setting sticks per device and the button shows the number when it's not 100%.</dd>
       <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). Every readout is a door: tap the tempo to open the tempo annotation governing the cursor (or declare the first one), tap the meter to open the time signature, tap the key to open the key change ruling the cursor — a stored partial opens its own note with the tonic already filled.</dd>
       <dt>Blue cursor</dt><dd>Play starts here. Tap the bar ruler to place it, or drag its handle (triangle under the ruler). Tapping any note also moves it there.</dd>
@@ -1170,7 +1170,11 @@
   <button class="fitem" id="vwInst">🎹  Instrument panel</button>
   <button class="fitem" id="vwSub">💬  Notes strip</button>
   <div class="fdiv" id="vwLevelsDiv"></div>
-  <button class="fitem" id="vwLevels">▸  Section levels</button>
+  <div id="vwLevelsRow" style="display:flex;align-items:center;gap:4px;padding:2px 4px">
+    <span id="vwLevelsLbl" style="flex:1;font-family:var(--mono);font-size:13px;padding:6px"></span>
+    <button id="vwLevelsMinus" style="min-height:38px;min-width:44px">−</button>
+    <button id="vwLevelsPlus" style="min-height:38px;min-width:44px">+</button>
+  </div>
 </div>
 <div id="editsheet">
   <button class="fitem" id="emUndo">⟲  Undo</button>
@@ -1664,9 +1668,8 @@ const wrap = document.getElementById("rollwrap");
 const RULER_W = 46, BASE_RULER_H = 24, LANE_H = 15;
 let RULER_H = BASE_RULER_H; // grows when section lanes exist
 let secMaxDepth = 0; // deepest section nesting in this song (set per finalize)
-function cycleSecDepth() { // full -> one fewer per tap, wrapping (chevron + View menu)
-  const cur = Math.min(secDepthCap(), secMaxDepth - 1);
-  const next = cur - 1 < 0 ? secMaxDepth - 1 : cur - 1;
+function setSecDepth(next) { // clamped stepper (the wrap-around cycle read as awkward)
+  next = Math.max(0, Math.min(secMaxDepth - 1, next));
   if (next >= secMaxDepth - 1) localStorage.removeItem("ff1roll-secdepth-" + songKey);
   else localStorage.setItem("ff1roll-secdepth-" + songKey, String(next));
   finalizeNotes();
@@ -1674,6 +1677,10 @@ function cycleSecDepth() { // full -> one fewer per tap, wrapping (chevron + Vie
                                   : "showing " + (next + 1) + " of " + secMaxDepth + " section levels (deeper ones still drive the drums)");
   clampView(); draw();
   if (typeof renderViewMenu === "function") renderViewMenu();
+}
+function cycleSecDepth() { // the gutter chevron keeps its one-tap cycle (fold, fold, unfold-all)
+  const cur = Math.min(secDepthCap(), secMaxDepth - 1);
+  setSecDepth(cur - 1 < 0 ? secMaxDepth - 1 : cur - 1);
 }
 function secDepthCap() { // device pref, per song: how many section levels show
   const v = songKey ? localStorage.getItem("ff1roll-secdepth-" + songKey) : null;
@@ -8730,11 +8737,16 @@ function renderViewMenu() { // ✓ = visible; labels never shift (fixed 2-char s
   set("vwFooter", !footerHidden);
   set("vwInst", typeof instOpen !== "undefined" && instOpen);
   set("vwSub", subOn);
-  const lv = document.getElementById("vwLevels"), lvd = document.getElementById("vwLevelsDiv");
+  const lvr = document.getElementById("vwLevelsRow"), lvd = document.getElementById("vwLevelsDiv");
   const has = secMaxDepth > 1;
-  lv.style.display = has ? "" : "none";
+  lvr.style.display = has ? "flex" : "none";
   lvd.style.display = has ? "" : "none";
-  if (has) lv.textContent = "▸  Section levels: " + (Math.min(secDepthCap(), secMaxDepth - 1) + 1) + " of " + secMaxDepth;
+  if (has) {
+    const cur = Math.min(secDepthCap(), secMaxDepth - 1);
+    document.getElementById("vwLevelsLbl").textContent = "▸ Section levels: " + (cur + 1) + " of " + secMaxDepth;
+    document.getElementById("vwLevelsMinus").disabled = cur <= 0;
+    document.getElementById("vwLevelsPlus").disabled = cur >= secMaxDepth - 1;
+  }
 }
 document.getElementById("viewsheetbtn").addEventListener("click", e => {
   const sheet = document.getElementById("viewsheet");
@@ -8754,7 +8766,8 @@ document.getElementById("viewsheetbtn").addEventListener("click", e => {
   on("vwFooter", () => { footerHidden = !footerHidden; applyChrome(); });
   on("vwInst", () => document.getElementById("instbtn").click());
   on("vwSub", () => document.getElementById("subbtn").click());
-  on("vwLevels", () => cycleSecDepth());
+  on("vwLevelsMinus", () => setSecDepth(Math.min(secDepthCap(), secMaxDepth - 1) - 1));
+  on("vwLevelsPlus", () => setSecDepth(Math.min(secDepthCap(), secMaxDepth - 1) + 1));
 }
 document.addEventListener("pointerdown", e => { // tap-away closes the View menu
   const vs = document.getElementById("viewsheet");
