@@ -9824,10 +9824,14 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
     if (ti === di || ti === bassTi || trackIsDrums(ti)) return;
     if (mtr.notes.some(n => !n.gone && n.t < t1 && n.t + n.d > t0)) rangeHasOthers = true;
   });
+  // labeled "break" sections silence EXACTLY their span (a Break ending at
+  // 14.1 must not mute all of bar 14 — Josh, 2026-08-22); put() enforces it
+  const breakSpans = rollnotes.filter(n => n.section && /break/i.test(n.text))
+    .map(n => ({s: n.start, e: n.end || n.start + bt}));
+  const inLabeledBreak = t => breakSpans.some(sp => t >= sp.s && t < sp.e);
   const isBreak = bar => {
     const bs = (bar - 1) * bt, be = bar * bt;
-    const labeled = rollnotes.some(n => n.section && /break/i.test(n.text) && n.start < be && (n.end || n.start + bt) > bs);
-    if (labeled) return true;
+    if (breakSpans.some(sp => sp.s <= bs && sp.e >= be)) return true; // fully covered bar
     if (!rangeHasOthers) return false;
     let melodic = false;
     song.tracks.forEach((mtr, ti) => {
@@ -9858,6 +9862,7 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
   const hits = []; // {t, p, v, d}
   const put = (t, p, v, d) => {
     if (t < t0 || t >= t1) return;
+    if (inLabeledBreak(t)) return; // a declared Break silences its exact span
     let vv = v + HARD_DELTA; // hard: one uniform shift, applied nowhere else
     if (p === 42) vv = Math.max(40, vv); // hats never fall back into the inaudible zone
     hits.push({t, p, v: Math.max(1, Math.min(127, Math.round(vv))), d});
