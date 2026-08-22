@@ -560,6 +560,18 @@ under harmonic-rhythm compression (cap 4/bar is a guess — if it
 stiffens, bring him the tradeoff, never quietly go probabilistic);
 "double" skank vocabulary is unvalidated.
 
+## Tracks/Arrange view (Josh, 2026-08-22 — "a big project, but it would be cool")
+
+Logic-style third view (screenshot on record): one lane per track,
+note thumbnails in-lane, header strip (name, M/S, per-track fader —
+already exists as vol= annotations), shared ruler/sections/cycle on
+top. viewMode has a slot ("tracks" beside roll/score). The new work is
+the editing model: Logic edits REGIONS; Night Roll has none — v1
+likely lasso-a-timespan-in-lane, drag between lanes/time (⇄ + copy/
+paste machinery underneath). Cross-track pencil-draw his explicit
+mention. DESIGN STAGE: advisor pass first when he says
+"build the tracks view."
+
 ## Quiz platform (Josh, 2026-08-22 — "absurd but it would be pretty cool")
 
 His jiu-jitsu framing: a concept learned once and never drilled decays;
