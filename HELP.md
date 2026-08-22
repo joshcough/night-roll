@@ -41,6 +41,9 @@ Back to bar 1.
 **Scroll while playing**
 Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.
 
+**View ▾ menu**
+Beside Edit in the header (always there, even on locked songs) — one place for every hide/show: 𝄞 Score view, ◂ Tracks, 🛠 Edit toolbar, ▦ Bottom bar, 🎹 Instrument panel, 💬 Notes strip, and ▸ Section levels (cycles, shows "2 of 3"). ✓ means visible; the menu STAYS OPEN while you flip several at once, and closes on a tap anywhere else. Every item mirrors an existing button — the buttons are the fast path, the menu is the findable one. The header itself never hides, so View ▾ is always the way back; hiding the bottom bar floats the ▴ restore button bottom-left like always.
+
 **Speed & volume buttons**
 The speed slider folded into a **percentage button** — tap to open the slider, tap anywhere else and it folds back (the reset chip appears when off-native). Beside it, **🔊** is a master volume the same way: tap, slide (10–200%), tap away; the setting sticks per device and the button shows the number when it's not 100%.
 

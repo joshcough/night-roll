@@ -524,6 +524,17 @@ sync (GitHub Contents API, 409 retry) · key dial · help sheet.
   score-view-plan.md (score history/limitations), supplemental-learning.md
   (session log = quiz source material).
 
+## Chrome visibility: applyChrome() is the ONE writer (advisor, 2026-08-22)
+
+editrowHidden/footerHidden (device-local; migrated from the old
+combined ff1roll-panelhide key, preserving the phones-start-folded
+default). editrow shows iff editable (.on class) AND !editrowHidden
+(inline style) — never write editrow.style.display anywhere else.
+INVARIANT: the header never hides; View ▾ is always reachable, and a
+hidden footer always floats the ▴ restore (which shows both). The
+View ▾ menu stays open across toggle taps (batch hiding); every item
+mirrors an existing button — buttons are the fast path.
+
 ## UI convention: menu/row parity (Josh's rule, 2026-08-20)
 
 Every command in the Edit ▾ menu has a corresponding icon button in the
