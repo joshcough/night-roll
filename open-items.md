@@ -560,6 +560,21 @@ under harmonic-rhythm compression (cap 4/bar is a guess — if it
 stiffens, bring him the tradeoff, never quietly go probabilistic);
 "double" skank vocabulary is unvalidated.
 
+## Quiz platform (Josh, 2026-08-22 — "absurd but it would be pretty cool")
+
+His jiu-jitsu framing: a concept learned once and never drilled decays;
+he wants recognition maintained, tracked over time. Design-stage shape
+(not built): an in-app quiz mode backed by glossary.md + quizzes.md —
+question bank generated from encountered/demonstrated entries and
+their anchors ("what device is at graveyard 8-9?" both directions:
+term→anchor and anchor→term); spaced-repetition scheduling (miss = see
+it sooner, streak = see it later); results tracked in a synced repo
+file so history follows him across devices; a passing streak becomes
+promotion evidence for encountered→demonstrated. Three quizzes' worth
+of owed material is the seed bank. Needs his ruling on: in-app vs
+web-session-led; how scores display; whether wrong answers reveal or
+park.
+
 ## Tooling to-do
 
 - **Kit piece solo/mute in the drum track's voice menu** (Josh,
