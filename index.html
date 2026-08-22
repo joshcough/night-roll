@@ -9694,26 +9694,26 @@ const DR_TOMS = [48, 47, 45, 43, 41];
 // (offsets in beats from bar start) and the skeleton yields inside it
 const DR_FILLS = [ // minE: the softest energy this fill may appear at — a
   // full-bar kick/snare buildup at energy 1 is wrong (Josh, field report)
-  {name: "run", len: 2, minE: 2, hits: (rng, qt, beats) => { // 16th snare run, crescendo
+  {name: "run", len: 2, minE: 2, maxE: 5, hits: (rng, qt, beats) => { // 16th snare run, crescendo
     const out = [];
     for (let i = 0; i < 8; i++) out.push({off: (beats - 2 + i / 4) * qt, p: 38, v: Math.round(70 + (115 - 70) * i / 7), d: 50});
     return out;
   }},
-  {name: "tomdrop", len: 2, minE: 3, hits: (rng, qt, beats) => { // snare -> toms down the slots
+  {name: "tomdrop", len: 2, minE: 3, maxE: 5, hits: (rng, qt, beats) => { // snare -> toms down the slots
     const seq = [38, 48, 47, 45, 43, 41].slice(0, 4 + Math.floor(rng() * 3));
     return seq.map((p, i) => ({off: (beats - 2 + i * 2 / seq.length / 2) * qt + i * 0, p, v: Math.round(88 + 20 * i / (seq.length - 1)), d: 60,
                                off2: true})).map((h, i, arr) => ({...h, off: (beats - 2) * qt + i * (2 * qt / arr.length)}));
   }},
-  {name: "buildup", len: 4, minE: 4, hits: (rng, qt, beats) => { // kick/snare 8ths tightening to 16ths
+  {name: "buildup", len: 4, minE: 4, maxE: 5, hits: (rng, qt, beats) => { // kick/snare 8ths tightening to 16ths
     const out = [];
     const half = Math.min(2, beats / 2);
     for (let i = 0; i < half * 2; i++) out.push({off: i * qt / 2, p: i % 2 ? 38 : 36, v: 90 + i * 2, d: 60});
     for (let i = 0; i < (beats - half) * 4; i++) out.push({off: half * qt + i * qt / 4, p: i % 2 ? 38 : 36, v: Math.round(96 + 18 * i / Math.max(1, (beats - half) * 4 - 1)), d: 50});
     return out;
   }},
-  {name: "negative", len: 2, minE: 1, hits: (rng, qt, beats) => // hats drop, one snare, silence into the downbeat
+  {name: "negative", len: 2, minE: 1, maxE: 2, hits: (rng, qt, beats) => // hats drop, one snare, silence into the downbeat
     [{off: (beats - 1) * qt, p: 38, v: 102, d: 60}]},
-  {name: "flam", len: 1, minE: 1, hits: (rng, qt, beats) =>
+  {name: "flam", len: 1, minE: 1, maxE: 3, hits: (rng, qt, beats) =>
     [{off: beats * qt - 30 - qt / 4, p: 38, v: 96, d: 40}, {off: beats * qt - qt / 4, p: 38, v: 112, d: 50}]},
 ];
 function drBassTrack() { // named bass/triangle wins; else lowest average pitch
@@ -9806,7 +9806,8 @@ function drGenerate(seed, energy, fromBar, toBar, t0Override, t1Override) {
     let fill = null;
     if (boundaries.has(bar + 1)) {
       const frng = drumRng(seed, bar * 7919 + 13);
-      const pool = DR_FILLS.filter(f => energy >= f.minE); // low energy fills small
+      const pool = DR_FILLS.filter(f => energy >= f.minE && energy <= f.maxE); // fills live in an
+      // energy BAND: quiet seams get the negative fill, energy 5 never rolls a two-note flam
       if (frng() < 0.75 && pool.length) fill = pool[Math.floor(frng() * pool.length)];
     }
     const fillStart = fill ? bs + (beats - fill.len) * qt : Infinity;
