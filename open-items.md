@@ -477,8 +477,25 @@ both from his 08-21 "reported with real heat" items.
 - B-part study now has a second live specimen: graveyard's A→B is a
   rhythm-carried contrast BY DESIGN — the category his 08-18
   hypothesis predicted would be instructive.
-- **Quiz owed ×2** (2026-07-22 concepts + the leading-tone material);
-  declined twice; next session should draw from both banks at once.
+- **Quiz owed ×3** (2026-07-22 concepts + leading tone + the 08-21/22
+  material: borrowed chord, timbral fusion, pedal vs chord, duration
+  vs position, interval inversion); declined three times; draw from
+  all banks at once when he's willing.
+- **Named recurring pattern — duration vs. metrical position** (was
+  two separate open questions, now three instances): Ship's pulse2 E;
+  graveyard 7.3's C♯ (short but lands WITH the bass change); graveyard
+  bar 6's E (short but recurrent in a fixed metric slot — if it
+  counts, bar 6 is an incomplete 7th chord and bar 10 RESOLVES it, not
+  just thickens it). Both kinds of evidence are honest; when they
+  disagree, record both readings. Suggested annotation form for bar 6:
+  F#m7(no5) with the note saying the seventh is rhythmic.
+- **graveyard experiments queued, his**: bar-8 voicing audition (bare
+  F5 vs full triad — does the third settle it and kill the pull?);
+  intro-subdivision lever (thin the constant eighths instead of
+  raising the fast tempo — untried); second thematic idea when the
+  piece outgrows 6–13 (a scale note, not a criticism); bar-12 note
+  (vii°7 reading is the least self-evident label — pending HIS
+  wording). Tempo now 96/192 (raised both ends, ratio kept).
 
 ## Awaiting Josh's field verdicts (2026-08-19 marathon session)
 
@@ -814,6 +831,9 @@ his downloads: `review-handoff-2026-08-07.md` (code/tool review) and
   the better epilogue question someday is *what changes between passes*.
   Counted loops shine instead for Josh's own compositions (vamp ×4 then
   bridge) and future albums with true exact internal repeats.
+- ~~Concept index~~ CLOSED 2026-08-22: redundant — glossary.md already
+  does it (terms, anchors, statuses); Josh pointed this out when the
+  web tutor proposed rebuilding it.
 - **Concept index + in-app search (from Josh's 08-02 notes):** notes are
   organized per song but his questions are increasingly per concept
   ("where else have I seen a raised 7th"). Plan: (a) tag convention in

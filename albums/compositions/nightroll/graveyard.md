@@ -98,6 +98,49 @@ the ostinato on the downbeat).
   His words: the E5 is "not even the right timing."
 - Tempo of the fast section: live question, currently 160.
 
+## The 08-21/22 sessions — the fast section became the piece
+
+- **Tempo history, for the record**: 80/240 → 120 → 160 → **96/192**
+  (raised both ends, kept the 2:1 — the problem was 80's absolute
+  slowness, not the ratio). Untried lever on file: thin the intro's
+  constant eighths instead.
+- **CORRECTION: A repeat is development, not repetition.** The earlier
+  "nearly literal repeat" read was wrong and Josh pushed back
+  correctly: pulse2 stops chugging at bar 10 and crosses ABOVE pulse1
+  into harmony — the riff sheds a player into the melody. "That's
+  repetition and development put together." (His Megadeth/Friedman
+  reference: the harmony enters high. And the fourths came from his
+  hands — two strings, same fret.)
+- **Bar 10 is the piece's only complete tonic triad**, arriving after
+  TWO BARS of hammered leading tone — his find: the borrowed chord and
+  the leading tone are one note doing both jobs (bars 8–10 = rootless
+  V → V6 → i). The intro only ever spells the tonic horizontally; with
+  three monophonic voices, spending all three on one triad is the most
+  expensive gesture available, and it happens once. "It's like heaven."
+- **The NES constraint is the organizing principle** — his stated
+  goal, verified: strictly monophonic everywhere. Every chord is
+  implied by voice-leading across three lines; that's WHY the tonic is
+  horizontal, why F-minor exists only as coincident lines, why bar 10
+  detonates.
+- **The melody is a harmony line** — his late realization, and it
+  RESOLVED the tonic-avoidance question: a voice harmonizing the root
+  doesn't play the root. Layered: pulse2 harmonizes pulse1 in fourths
+  while pulse1 harmonizes the triangle in thirds.
+- **Bar 11's one-note revision**: final D5 split into two eighths so
+  melody and harmony attack together — the tritone (D/G♯) expands to a
+  fifth (D/A) with the resolution now ARTICULATED. His summary: "I
+  just cut one note in half... and it sounds even better."
+- **Actual timings at 96/192**: intro 10.6s, bars 6–13 10.0s, the bar
+  10 arrival ~18s in, all 21 bars 30.6s.
+- **Reuse plan**: the 6–12 melody is intended as a leitmotif ("I can
+  slow it down... it still will retain the original idea") — works
+  because the line is almost entirely stepwise, so tempo and
+  accompaniment decide the affect. Uematsu discipline applies: bring
+  it back once, changed.
+- His verdict on 6–13: "those bars feel professional. For real." The
+  marker is legibility — every part's job is audible. Cost: ~45
+  min/bar, four voices. "Worth every second."
+
 ## Process notes
 
 Two hours → twelve seconds of finished music, his own read: "it all
