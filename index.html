@@ -656,17 +656,15 @@
     <button data-mode="erase">Erase</button>
   </div>
   <div class="seg" id="durseg" style="display:none">
-    <button data-dur="0.125">32nd</button>
-    <button data-dur="0.166667">16T</button>
-    <button data-dur="0.25">16th</button>
-    <button data-dur="0.375">16·</button>
-    <button data-dur="0.333333">8T</button>
-    <button data-dur="0.5" class="active">8th</button>
-    <button data-dur="0.75">8·</button>
-    <button data-dur="1">1/4</button>
-    <button data-dur="1.5">4·</button>
-    <button data-dur="2">1/2</button>
-    <button data-dur="4">1</button>
+    <button data-nv="1">1</button>
+    <button data-nv="2">2</button>
+    <button data-nv="4">4</button>
+    <button data-nv="8" class="active">8</button>
+    <button data-nv="16">16</button>
+    <button data-nv="32">32</button>
+    <button data-mod="1" class="active" aria-label="Plain">—</button>
+    <button data-mod="1.5" aria-label="Dotted">·</button>
+    <button data-mod="0.6666666666666666" aria-label="Triplet">T</button>
   </div>
   <div class="seg" id="velseg" style="display:none;align-items:center;gap:6px;padding:0 8px">
     <span class="lbl">vol</span>
@@ -1044,7 +1042,7 @@
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase (tap the active tool again to turn it OFF — then dragging only pans, and no note can be grabbed by accident), durations 32nd–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps, and the grid only goes 32nd-fine when the song actually CONTAINS 32nds — to add the first one, pencil it on the beat (the grid upgrades the moment it exists) and drag it where it belongs (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
       <dt>● Record</dt><dd>On your own songs: tap the chip of the track you want to record onto, then ● beside Play arms the take — the 🎹 panel opens, ● blinks red, the transport rolls (count-in applies), and every key you play lands on that track at the playhead — hold a key for a long note, slide across keys for runs — or play a REAL MIDI device (a Jamstik, a keyboard): the browser's MIDI input records with your actual velocities, chords included (Chrome/Edge on the computer; Safari/iPad has no Web MIDI). Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step.</dd>
-      <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration buttons set that grid (16T/16th/16· · 8T/8th/8· · ¼…): pick the smallest unit you're thinking in and draw lengths by feel.</dd>
+      <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration picker is <b>note value × modifier</b>: pick 1/2/4/8/16/32 (whole through 32nd), then — (plain), · (dotted), or T (triplet) — every duration a staff can write, two taps. A tap lands the note in the CELL you touch: press anywhere in a gap and the note starts at that gap's gridline, no edge-hunting.</dd>
       <dt>Drum chart (score view)</dt><dd>The kit renders as a real percussion staff at the BOTTOM of the score: percussion clef, positions are roles not pitches (kick in the bottom space, snare in the third, toms by size, hats above the top line), x-noteheads for hats and cymbals, stems up for hands and down for feet. Read-only for now — kit entry lives in the roll's drum lane; lasso and tap work on the chart like anywhere else.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
@@ -3636,7 +3634,8 @@ canvas.addEventListener("pointerdown", e => {
     if (pitch >= (kit ? 0 : PMIN) && pitch <= 127 && tick >= 0) {
       const grid = moveSnapTicks(); // 16ths: start position is finer than the note length
       const snap = pencilTicks();
-      const t = Math.round(tick / grid) * grid;
+      const t = Math.floor(tick / grid) * grid; // the CELL you touch, not the nearest line —
+      // tapping mid-gap between two notes lands the note IN the gap (rounding made only edges work)
       pendingPencil = {pitch, t, snap}; // created on dwell or a clean tap — never by a fast stroke
       if (instantGrab) pencil = placePencilNote(pendingPencil), pendingPencil = null;
     }
@@ -7111,11 +7110,19 @@ document.getElementById("modeseg").addEventListener("click", e => {
           mode === "erase" ? "erase: tap a note to remove" :
           mode === "select" ? "tap a note" : "pan: drag moves the view — notes are safe");
 });
+// note VALUE (1..32) × MODIFIER (plain/dotted/triplet) — every duration a
+// staff can write, two taps (Josh, 2026-08-22)
+let pencilNV = 8, pencilMod = 1;
 document.getElementById("durseg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
-  pencilDur = parseFloat(b.dataset.dur);
-  for (const x of document.querySelectorAll("#durseg button")) x.classList.toggle("active", x === b);
+  if (b.dataset.nv) pencilNV = parseInt(b.dataset.nv, 10);
+  else if (b.dataset.mod) pencilMod = parseFloat(b.dataset.mod);
+  else return;
+  pencilDur = (4 / pencilNV) * pencilMod;
+  for (const x of document.querySelectorAll("#durseg button"))
+    x.classList.toggle("active", x.dataset.nv ? +x.dataset.nv === pencilNV
+                                              : parseFloat(x.dataset.mod) === pencilMod);
 });
 document.getElementById("clearbtn").addEventListener("click", () => {
   if (editsKey()) localStorage.removeItem(editsKey());
