@@ -3949,6 +3949,14 @@ function endPointer(e) {
       it.n.t !== o[i].t || it.n.d !== o[i].d || it.n.p !== o[i].p);
     if (changed) selEditApply(drag.noteEdit.items, () => {}, o);
   }
+  else if (drag.rangeEdge && drag.moved && playing && rangeSel && rangeSel.cycle) {
+    // new boundaries take effect NOW: the schedule pre-computes wrap passes, so
+    // rather than desync them, restart the cycle from its (new) top — the same
+    // always-from-the-top rule ▶ already follows (Josh, 2026-08-22)
+    const from = tickToSec(song, rangeSel.a);
+    stop();
+    play(from).catch(() => {});
+  }
   else if (drag.bandEdge && drag.moved) {
     const n = drag.bandEdge.n;
     n.added = true; // edited spans must persist and sync
