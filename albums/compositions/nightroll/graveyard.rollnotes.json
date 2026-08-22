@@ -1,4 +1,4 @@
-{ "version": 1, "song": "graveyard", "saved": 1787411371118, "notes": [
+{ "version": 1, "song": "graveyard", "saved": 1787429349906, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":38},
   {"at":[1,1],"type":"key","key":"F#m"},
@@ -8,8 +8,14 @@
   {"at":[6,1],"to":[12,4],"type":"section","label":"A"},
   {"at":[6,1],"to":[9,4],"type":"section","label":"A1"},
   {"at":[6,1],"to":[6,4],"type":"chord","chord":"F#m7","note":"Calling this minor 7 because there’s no 5th but there are those 2 E’s. You could argue they are just decorative and all we have is a minor 3rd."},
+  {"at":[7,1],"to":[7,2],"type":"chord","chord":"Gm","note":"No 5th"},
+  {"at":[7,3],"to":[7,4],"type":"chord","chord":"A","note":"No 5th"},
+  {"at":[8,1],"to":[8,4],"type":"chord","chord":"C#","note":"Sounds like F minor in the moment (no C♯ present, so the ear takes F as root), but bar 9’s C♯ retroactively reveals both notes as the third and fifth of C♯ major — so bars 8–9 are V, rootless then in first inversion, resolving to i at bar 10."},
+  {"at":[9,1],"to":[9,4],"type":"chord","chord":"C#/F","note":"No 5th. Really over E# too, not F"},
   {"at":[10,1],"to":[12,4],"type":"section","label":"A repeat"},
   {"at":[10,1],"to":[10,4],"type":"chord","chord":"F#m","note":"Finally the full triad arrives.\nWith the Es, you can also argue this is F#m7"},
+  {"at":[11,1],"to":[11,2],"type":"chord","chord":"E/G#"},
+  {"at":[11,3],"to":[11,4],"type":"chord","chord":"F#m/A"},
   {"at":[12,1],"to":[12,4],"type":"chord","chord":"Bdim/F"},
   {"at":[13,1],"to":[14,1],"type":"section","label":"Break"},
   {"at":[13,1],"to":[13,1],"type":"chord","chord":"A/C#","note":"No 5th. C# in the root argues this is really something else."},
