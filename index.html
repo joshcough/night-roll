@@ -1363,7 +1363,20 @@ async function initCatalog() {
 const DRUM_LABELS = {35: "kick2", 36: "kick", 37: "stick", 38: "snare", 40: "snar2",
   41: "tomF", 42: "hat", 43: "tomL", 44: "hatP", 45: "tom", 46: "hatO",
   47: "tomM", 48: "tomH", 49: "crash", 51: "ride"}; // GM kit rows, shown while a drum track is selected
-const DRUM_SLOTS = [49, 51, 48, 47, 45, 43, 41, 46, 44, 42, 40, 38, 37, 36, 35]; // kit lane, top→bottom: cymbals+toms up top, HATS right above the snares (Josh 2026-08-22 — hat/snare/kick are the working cluster), kick at the floor
+const DRUM_SLOTS = [42, 38, 36, 46, 44, 49, 51, 48, 47, 45, 43, 41, 40, 37, 35]; // full kit, top→bottom: the working trio FIRST (hat/snare/kick — closest to the music), then the rest (Josh 2026-08-22)
+let kitShowAll = localStorage.getItem("ff1roll-kitshowall") === "1"; // device pref: ⋯ row toggles
+let _kitSlots = null; // cached with _laneTop (same reset points)
+function kitSlots() { // visible lane rows: the trio always, plus whatever the song USES —
+  // unused pieces hide so the lane stays small ("I have no toms at all; hide those")
+  if (kitShowAll) return DRUM_SLOTS;
+  if (_kitSlots) return _kitSlots;
+  const used = new Set();
+  if (song) song.tracks.forEach((tr, ti) => {
+    if (trackIsDrums(ti)) for (const n of tr.notes) if (!n.gone) used.add(n.p);
+  });
+  _kitSlots = DRUM_SLOTS.filter((p, i) => i < 3 || used.has(p));
+  return _kitSlots;
+}
 function songHasDrums() { return !!song && song.tracks.some((_, ti) => trackIsDrums(ti)); }
 function topRow() { return PMAX; }
 let _laneTop = null; // cached per edit/draw — kitLaneTop scans every note
@@ -1375,7 +1388,7 @@ function computeLaneTop() { // the lane DOCKS just under the lowest melodic note
     if (trackIsDrums(ti)) return;
     for (const n of tr.notes) if (!n.gone && n.p < lo) lo = n.p;
   });
-  if (lo === Infinity) lo = PMIN + DRUM_SLOTS.length + 1; // empty song: lane at the floor
+  if (lo === Infinity) lo = PMIN + kitSlots().length + 1; // empty song: lane at the floor
   return lo - 2; // one gap row between the bass and the hat
 }
 let laneOverride = null; // Josh dragged the lane here — wins over auto-dock, saved per song
@@ -1384,17 +1397,18 @@ function kitLaneTop() {
   if (_laneTop === null) _laneTop = computeLaneTop();
   return _laneTop;
 }
-function laneBotRow() { return kitLaneTop() - DRUM_SLOTS.length + 1; }
-function botRow() { return songHasDrums() ? Math.min(PMIN, laneBotRow()) : PMIN; }
-function inKitLane(row) { return songHasDrums() && row <= kitLaneTop() + 1 && row >= laneBotRow(); }
+function laneBotRow() { return kitLaneTop() - kitSlots().length + 1; }
+function botRow() { return songHasDrums() ? Math.min(PMIN, laneBotRow() - 1) : PMIN; } // -1: the ⋯ expander row
+function inKitLane(row) { return songHasDrums() && row <= kitLaneTop() + 1 && row >= laneBotRow() - 1; } // -1: ⋯ row taps route through the lane gesture
 function noteRow(ti, p) { // display row: drums live in the docked lane
   if (!trackIsDrums(ti)) return p;
-  const i = DRUM_SLOTS.indexOf(p);
+  const i = kitSlots().indexOf(p);
   return kitLaneTop() - (i < 0 ? 0 : i);
 }
-function drumStep(p, d) { // vertical moves walk the kit slots, not semitones
-  const i = DRUM_SLOTS.indexOf(p);
-  return DRUM_SLOTS[Math.min(DRUM_SLOTS.length - 1, Math.max(0, (i < 0 ? 0 : i) + d))];
+function drumStep(p, d) { // vertical moves walk the VISIBLE kit slots, not semitones
+  const ks = kitSlots();
+  const i = ks.indexOf(p);
+  return ks[Math.min(ks.length - 1, Math.max(0, (i < 0 ? 0 : i) + d))];
 }
 const TRACK_COLORS = ["#d95926","#3987e5","#199e70","#c98500","#d55181","#9085e9","#008300","#e66767",
                       "#0aa2c0","#b44ac0","#8a7d20","#a1653f"]; // 12 before any repeat (Epilogue has 11 tracks)
@@ -2355,7 +2369,7 @@ function setSong(parsed, key) {
   song = parsed;
   song.baseTempos = song.tempos.map(t => ({...t})); // tempo: directives rebuild from this
   songKey = key;
-  _laneTop = null; // lane re-docks per song; a lane: annotation may pin it in loadNotes
+  _laneTop = null; _kitSlots = null; // lane re-docks per song; a lane: annotation may pin it in loadNotes
   _has32 = null;
   editRedo = [];
   dupPending = null; // clone bookkeeping never crosses songs
@@ -2563,7 +2577,7 @@ function draw() {
     drawRuler(W, H);
     return;
   }
-  _laneTop = null; // re-dock: edits since the last frame may have changed the lowest note
+  _laneTop = null; _kitSlots = null; // re-dock: edits since the last frame may have changed the lowest note
   _has32 = null; // 32nd-grid presence re-checks against current notes
   const ppt = pxPerTick();
   const bt = barTicks();
@@ -2685,7 +2699,14 @@ function draw() {
     const y = RULER_H + (topRow() - p) * rowH - view.y;
     if (y < RULER_H || y > H) continue;
     if (inKitLane(p)) { // kit lane rows carry their piece names
-      const gm = DRUM_SLOTS[kitLaneTop() - p];
+      if (p === laneBotRow() - 1) { // the ⋯ expander: show/hide unused pieces
+        if (view.rowH >= 9) {
+          ctx.fillStyle = css("--dim");
+          ctx.fillText(kitShowAll ? "⋯ less" : "⋯ kit", RULER_W - 6, y + rowH / 2);
+        }
+        continue;
+      }
+      const gm = kitSlots()[kitLaneTop() - p];
       if (gm !== undefined && DRUM_LABELS[gm] && view.rowH >= 9) {
         const st = pieceState.get(gm);
         ctx.fillStyle = st === "solo" ? css("--gold") : !pieceAudible(gm) ? css("--dim") : css("--text");
@@ -3662,7 +3683,7 @@ canvas.addEventListener("pointerdown", e => {
     const {tick, pitch: row} = posToTickPitch(p);
     const kit = trackIsDrums(selTrack);
     const li = kitLaneTop() - row; // lane slot index when the tap lands in the docked lane
-    const pitch = kit ? (li >= 0 && li < DRUM_SLOTS.length ? DRUM_SLOTS[li] : -1)
+    const pitch = kit ? (li >= 0 && li < kitSlots().length ? kitSlots()[li] : -1)
                       : (row >= PMIN && row <= PMAX && !inKitLane(row) ? row : -1);
     if (pitch >= (kit ? 0 : PMIN) && pitch <= 127 && tick >= 0) {
       const grid = moveSnapTicks(); // 16ths: start position is finer than the note length
@@ -3823,7 +3844,17 @@ function endPointer(e) {
   if (drag.lane) { // pin the lane where it was dropped — as a synced lane: annotation
     if (!drag.moved) { // TAP a gutter label: normal -> SOLO -> mute -> normal (audition tool)
       const row = topRow() - Math.floor((drag.spos.y - RULER_H + view.y) / view.rowH);
-      const gm = DRUM_SLOTS[kitLaneTop() - row];
+      if (row === laneBotRow() - 1) { // the ⋯ row: toggle the full kit
+        kitShowAll = !kitShowAll;
+        localStorage.setItem("ff1roll-kitshowall", kitShowAll ? "1" : "0");
+        _kitSlots = null;
+        setInfo(kitShowAll ? "full kit shown — pencil any piece, ⋯ hides the unused again"
+                           : "unused pieces hidden — hat/snare/kick stay, plus whatever the song uses");
+        clampView(); draw();
+        drag = null;
+        return;
+      }
+      const gm = kitSlots()[kitLaneTop() - row];
       if (gm !== undefined) {
         const st = pieceState.get(gm);
         if (st === undefined) pieceState.set(gm, "solo");
