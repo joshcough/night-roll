@@ -5060,10 +5060,12 @@ async function play(fromSec = 0) {
     if (!playing) return;
     const x = secToTick(song, playSec()) * pxPerTick();
     const W = wrap.clientWidth - RULER_W;
+    const handMidGesture = drag && (drag.ruler || drag.rangeEdge || drag.bandEdge || drag.cursor);
     if (followFree) {
       // user scrolled away: hands off until the playhead enters their view
       if (x >= view.x && x <= view.x + W) followFree = false;
-    } else {
+    } else if (!handMidGesture) { // never yank the view out from under a ruler
+      // drag (Josh: "I can't highlight when the thing moves")
       // auto-follow playhead (and snap back on loop wrap)
       if (x - view.x > W * 0.85) view.x = x - W * 0.3;
       else if (x < view.x) view.x = Math.max(0, x - W * 0.1);
