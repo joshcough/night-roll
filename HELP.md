@@ -148,8 +148,11 @@ The **vol slider** in the edit row (1–127, the number beside it shows the valu
 **Delete**
 Tap **🗑** in the edit row — every selected note goes at once. Delete key does the same.
 
+**Divide (➗)**
+Select notes, tap **➗**, pick N (2–7): each note becomes N equal notes — pitch, velocity, and total span unchanged. This is how triplets happen: 3 on a half note = quarter-note triplets (the 1 · 1.667 · 2.333 placement no grid offers), 3 on a quarter = eighth triplets, 6 on a held two-beat note = a run of six. The pieces are free notes — drag them anywhere after.
+
 **Undo**
-Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲ step.
+Every gesture above — move, resize, copy, paste, delete, divide — is exactly one ⟲ step.
 
 ## Annotations
 
@@ -162,7 +165,7 @@ Every typed annotation — key, meter, tempo, section, chord, loop — can carry
 Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.
 
 **Ruler drag**
-Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play **cycles** over it, Logic-style: playback starts from the cycle's top every time and loops just that span (any loop: annotation is ignored while it's armed). Ruler drags snap to 16ths. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tapping the ruler **parks** the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode. On your own songs, drag a section or chord band by its **edge** (in its ruler lane) to move that boundary — snaps to 16ths, saves like any other edit.
+Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play **cycles** over it, Logic-style: playback starts from the cycle's top every time and loops just that span (any loop: annotation is ignored while it's armed). **Bar lines are magnetic**: land within a finger's width of a bar line and the edge snaps TO the bar (measured in screen pixels, so it works at every zoom); away from bar lines, edges snap to 16ths — zoom in when you want fine edges. Tapping or dragging the ruler never clears your note selection — select notes, set the range, audition, all without re-lassoing. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tapping the ruler **parks** the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode. On your own songs, drag a section or chord band by its **edge** (in its ruler lane) to move that boundary — snaps to 16ths, saves like any other edit.
 
 **Gold flags**
 Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.

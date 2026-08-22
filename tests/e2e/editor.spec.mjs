@@ -330,3 +330,15 @@ test("pen pencil: fast stroke adds nothing; a tap or a dwell adds a note", async
   await pen("pointerup", spot2.x, spot2.y);
   expect(await notes(page)).toHaveLength(5);
 });
+
+test("ruler taps keep the lasso; ➗ divides into triplets", async ({ page }) => {
+  await selectAll(page);
+  const r = await page.evaluate(() => canvas.getBoundingClientRect().left);
+  await page.mouse.click(r + 500, await page.evaluate(() => canvas.getBoundingClientRect().top + 10));
+  expect(await page.evaluate(() => multiSel.length)).toBe(3); // ruler tap kept the selection
+  await page.click("#divbtn");
+  await page.evaluate(() => { for (const b of document.querySelectorAll("#divchips button")) if (b.textContent === "3") b.click(); });
+  expect((await notes(page)).length).toBe(9); // three quarters -> nine triplet eighths
+  await page.click("#undobtn");
+  expect((await notes(page)).length).toBe(3);
+});

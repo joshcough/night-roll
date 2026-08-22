@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "extensions row STACKS", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "extensions row STACKS", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1263,6 +1263,44 @@ test("transposeTrack: whole track ±12, one undo step, drums refuse", () => {
   assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p)`), [40, 43]);
   assert.equal(val(`transposeTrack(1, 12)`), 0); // kit pitches are instruments
   run(`songKey = null; rollnotes = [];`);
+});
+
+test("divideSelection: N equal parts, triplet math exact, one undo", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/div-test.mid";
+    song.tracks = [{name: "pulse1", notes: [{t: 0, d: 960, p: 60, v: 90}]}]; // a half note
+    song.rawNotes = null; chopS = 0; editUndo = []; editRedo = []; dupPending = null;
+    multiSel = [{ti: 0, ni: 0}]; multiSelKey = new Set(["0:0"]);
+  `);
+  assert.equal(val(`divideSelection(3)`), 1); // quarter-note triplets: 1, 1.667, 2.333
+  const parts = val(`song.tracks[0].notes.filter(n => !n.gone).map(n => ({t: n.t, d: n.d, p: n.p, v: n.v}))`);
+  assert.deepEqual(parts.map(n => n.t).sort((a, b) => a - b), [0, 320, 640]);
+  assert.ok(parts.every(n => n.d === 320 && n.p === 60 && n.v === 90)); // inherit everything
+  assert.equal(val(`multiSel.length`), 3); // the pieces are the new selection
+  run(`editUndoPop()`); // one step back to the whole note
+  assert.deepEqual(val(`song.tracks[0].notes.filter(n => !n.gone).map(n => n.d)`), [960]);
+  // 5 into a quarter distributes the remainder without gaps
+  run(`multiSel = [{ti: 0, ni: 0}]; multiSelKey = new Set(["0:0"]); song.tracks[0].notes[0].d = 480;`);
+  assert.equal(val(`divideSelection(5)`), 1);
+  const five = val(`song.tracks[0].notes.filter(n => !n.gone).map(n => ({t: n.t, d: n.d})).sort((a, b) => a.t - b.t)`);
+  assert.equal(five.length, 5);
+  for (let i = 1; i < 5; i++) assert.equal(five[i].t, five[i - 1].t + five[i - 1].d); // seamless
+  assert.equal(five[4].t + five[4].d, 480); // total span unchanged
+  run(`songKey = null; multiSel = []; multiSelKey = new Set();`);
+});
+
+test("rulerSnapX: bar lines are magnetic in pixels; 16ths elsewhere", () => {
+  installSong();
+  run(`view.pxq = 200; view.x = 0;`); // 1 bar = 800px, 14px magnet ≈ 33 ticks
+  const at = x => val(`rulerSnapX(RULER_W + ${x})`);
+  assert.equal(at(800), 1920); // dead on bar 2
+  assert.equal(at(790), 1920); // 10px shy: magnet grabs it
+  assert.equal(at(812), 1920); // 12px past: magnet grabs it
+  assert.equal(at(760), 1800); // 40px shy: a 16th, not the bar
+  run(`view.pxq = 60;`); // zoomed out: same 14px radius = more ticks
+  assert.equal(at(233), 1920); // ~7px shy of bar 2 (240px)
+  run(`songKey = null;`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

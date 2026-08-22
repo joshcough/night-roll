@@ -687,6 +687,7 @@
   <button id="octupbtn" aria-label="Selection up an octave">▲8</button>
   <button id="octdownbtn" aria-label="Selection down an octave">▼8</button>
   <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
+  <button id="divbtn" aria-label="Divide selected notes into equal parts">➗</button>
   <button id="joinbtn" aria-label="Join selected notes">⁀</button>
   <button id="delbtn" aria-label="Delete selected notes">🗑</button>
   <button id="undobtn" aria-label="Undo">⟲</button>
@@ -890,6 +891,17 @@
   </div>
 </div>
 
+<div class="overlay" id="divsheet">
+  <div class="sheet">
+    <h2>DIVIDE INTO</h2>
+    <p class="meta" style="margin:0 0 8px">Each selected note becomes N equal notes — pitch, velocity, and
+    total length unchanged. 3 on a half note = quarter-note triplets; 3 on a quarter = eighth triplets;
+    6 on two beats = a run of six. One ⟲ undoes it.</p>
+    <div class="chiprow" id="divchips"></div>
+    <div class="row" style="margin-top:10px"><button id="divclose" style="margin-left:auto">Close</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="movesheet">
   <div class="sheet">
     <h2>MOVE TO TRACK</h2>
@@ -1011,7 +1023,7 @@
     <dl>
       <dt>Attached notes on ANY annotation</dt><dd>Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the text box below the value rides along (for sections, the first line is the label and the rest is the note). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.</dd>
       <dt>+ Note</dt><dd>Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.</dd>
-      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: playback starts from the cycle's top every time and loops just that span (any loop: annotation is ignored while it's armed). Ruler drags snap to 16ths. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tapping the ruler <b>parks</b> the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode. On your own songs, drag a section or chord band by its <b>edge</b> (in its ruler lane) to move that boundary — snaps to 16ths, saves like any other edit.</dd>
+      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: playback starts from the cycle's top every time and loops just that span (any loop: annotation is ignored while it's armed). <b>Bar lines are magnetic</b>: land within a finger's width of a bar line and the edge snaps TO the bar (measured in screen pixels, so it works at every zoom); away from bar lines, edges snap to 16ths — zoom in when you want fine edges. Tapping or dragging the ruler never clears your note selection — select notes, set the range, audition, all without re-lassoing. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Tapping the ruler <b>parks</b> the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode. On your own songs, drag a section or chord band by its <b>edge</b> (in its ruler lane) to move that boundary — snaps to 16ths, saves like any other edit.</dd>
       <dt>Gold flags</dt><dd>Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.</dd>
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Shortcut: <b>double-tap</b> a section or chord band in the ruler to open that annotation directly. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
@@ -1048,7 +1060,8 @@
       <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Duplicate, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ▲▼ Octave up/down (the whole selection jumps ±12 — no sliding), ♫ Insert chord, 🥁 Drum pattern — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
-      <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete — is exactly one ⟲ step.</dd>
+      <dt>Divide (➗)</dt><dd>Select notes, tap <b>➗</b>, pick N (2–7): each note becomes N equal notes — pitch, velocity, and total span unchanged. This is how triplets happen: 3 on a half note = quarter-note triplets (the 1 · 1.667 · 2.333 placement no grid offers), 3 on a quarter = eighth triplets, 6 on a held two-beat note = a run of six. The pieces are free notes — drag them anywhere after.</dd>
+      <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete, divide — is exactly one ⟲ step.</dd>
     </dl>
     </div>
     <div class="hsec" data-hsec="files">
@@ -1078,6 +1091,7 @@
   <button class="fitem" id="emDelete">🗑  Delete selection</button>
   <div class="fdiv"></div>
   <button class="fitem" id="emSplit">✂  Split at cursor</button>
+  <button class="fitem" id="emDivide">➗  Divide into…</button>
   <button class="fitem" id="emJoin">⁀  Join notes</button>
   <button class="fitem" id="emMove">⇄  Move to track…</button>
   <button class="fitem" id="emOctUp">▲  Octave up</button>
@@ -3249,6 +3263,38 @@ function splitApply(items, cutFor) { // shared: cut each note at cutFor(note)
   draw();
   return items.length;
 }
+function divideSelection(nParts) { // ➗: each selected note becomes N equal notes
+  if (!editableSong()) return 0;
+  const items = selEditItems().filter(({n}) => n.d >= nParts);
+  if (!items.length) return 0;
+  const mod = {kind: "mod", items: items.map(({ti, ni, n}) => ({ti, ni, t: n.t, d: n.d, p: n.p}))};
+  const added = [];
+  for (const {ti, n} of items) {
+    const tr = song.tracks[ti], isAdd = !isComposition();
+    // exact boundaries by rounding the ideal positions — a 480-tick quarter
+    // divided by 3 gives 160/160/160; oddballs distribute the remainder
+    const bounds = [];
+    for (let i = 0; i <= nParts; i++) bounds.push(n.t + Math.round(n.d * i / nParts));
+    for (let i = 1; i < nParts; i++) {
+      tr.notes.push({t: bounds[i], d: bounds[i + 1] - bounds[i], p: n.p, v: n.v, added: isAdd});
+      if (song.rawNotes) song.rawNotes[ti].push({t: bounds[i] + chopS, d: bounds[i + 1] - bounds[i], p: n.p, v: n.v, added: isAdd});
+      added.push({ti, ni: tr.notes.length - 1});
+    }
+    n.d = bounds[1] - n.t;
+    const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[ti][n.ri];
+    if (rn) rn.d = n.d;
+  }
+  pushUndo({kind: "group", entries: [mod, {kind: "addBatch", items: added}]});
+  if (multiSel.length) {
+    multiSel.push(...added);
+    for (const {ti, ni} of added) multiSelKey.add(ti + ":" + ni);
+  }
+  saveEdits();
+  computeSongEnd();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return items.length;
+}
 function splitSelectionAt(tick) { // ✂ with the cursor inside: cut there
   if (!editableSong()) return 0;
   return splitApply(selEditItems().filter(({n}) => n.t < tick && tick < n.t + n.d), () => tick);
@@ -3457,6 +3503,13 @@ function cursorHit(pos) {
   if (pos.y >= RULER_H && pos.y < RULER_H + 16 && Math.abs(pos.x - x) < 14) return true;
   if (pos.y < RULER_H) return false; // ruler drags select a range instead
   return mode === "select" || mode === null ? Math.abs(pos.x - x) < 12 : false;
+}
+function rulerSnapX(x) { // bar lines are magnetic in SCREEN pixels (Pencil-friendly
+  // at every zoom); away from a bar line, 16ths — finer is what zoom is for
+  const fine = tickAtX(x, Math.round(song.ppq / 4));
+  const bt = barTicks(), ppt = pxPerTick();
+  const nearBar = Math.round(fine / bt) * bt;
+  return Math.abs((nearBar - fine) * ppt) <= 14 ? Math.max(0, nearBar) : fine;
 }
 function tickAtX(x, snap) {
   const t = (x - RULER_W + view.x) / pxPerTick();
@@ -3711,8 +3764,8 @@ canvas.addEventListener("pointermove", e => {
     }
     else if (drag.cursor) scrubTo(evtPos(e));
     else if (drag.ruler) { // drag along the ruler = select a beat range
-      const a = tickAtX(drag.spos.x, Math.round(song.ppq / 4)); // ruler selects on 16ths, always
-      const b = tickAtX(evtPos(e).x, Math.round(song.ppq / 4)); // (32nd snapping made section edges misland)
+      const a = rulerSnapX(drag.spos.x);
+      const b = rulerSnapX(evtPos(e).x);
       rangeSel = a === b ? null : {a: Math.min(a, b), b: Math.max(a, b), cycle: true}; // drags arm the cycle
       draw();
     }
@@ -3831,7 +3884,8 @@ function tap(pos) {
     draw();
     return;
   }
-  clearMultiSel();
+  if (pos.y >= RULER_H) clearMultiSel(); // the ruler is NOT the background:
+  // seeking/ranging must never cost the lasso (select -> range -> audition is ONE workflow)
   if (pos.y < RULER_H) { // section tap, marker tap, or seek
     if (rangeSel) {
       const {tick: rt} = posToTickPitch(pos);
@@ -8370,6 +8424,7 @@ document.getElementById("editsheetbtn").addEventListener("click", e => {
   proxy("emPaste", () => document.getElementById("pastebtn").click());
   proxy("emDelete", () => document.getElementById("delbtn").click());
   proxy("emSplit", () => document.getElementById("splitbtn").click());
+  proxy("emDivide", () => document.getElementById("divbtn").click());
   proxy("emJoin", () => document.getElementById("joinbtn").click());
   proxy("emMove", () => document.getElementById("movebtn").click());
   proxy("emOctUp", () => document.getElementById("octupbtn").click());
@@ -9553,6 +9608,27 @@ document.getElementById("octdownbtn").addEventListener("click", () => {
   if (nudgeSelection(0, -12)) setInfo("selection down an octave (⟲ undoes)");
   else setInfo("nothing selected — lasso or tap notes first");
 });
+document.getElementById("divbtn").addEventListener("click", () => {
+  if (!selEditItems().length) { setInfo("select notes first — then ➗ divides each into equal parts"); return; }
+  const row = document.getElementById("divchips");
+  if (!row.children.length) {
+    for (const n of [2, 3, 4, 5, 6, 7]) {
+      const b = document.createElement("button");
+      b.textContent = String(n);
+      b.style.cssText = "flex:1;min-height:44px;font-size:17px";
+      b.addEventListener("click", () => {
+        const k = divideSelection(n);
+        document.getElementById("divsheet").classList.remove("on");
+        setInfo(k ? "divided " + k + " note" + (k === 1 ? "" : "s") + " into " + n + " (one ⟲ undoes)"
+                  : "those notes are too short to divide by " + n);
+      });
+      row.appendChild(b);
+    }
+  }
+  document.getElementById("divsheet").classList.add("on");
+});
+document.getElementById("divclose").addEventListener("click", () =>
+  document.getElementById("divsheet").classList.remove("on"));
 document.getElementById("splitbtn").addEventListener("click", () => {
   let k = splitSelectionAt(playCursor), how = "at the cursor";
   if (!k) { k = splitSelectionHalves(); how = "in half"; }
@@ -9582,7 +9658,7 @@ function updateEditButtons() { // disabled = "this can't do anything right now"
   set("redobtn", st[1]); set("emRedo", st[1]);
   for (const id of ["copybtn", "emDup", "delbtn", "emDelete", "splitbtn", "emSplit",
                     "joinbtn", "emJoin", "movebtn", "emMove", "emOctUp", "emOctDown",
-                    "octupbtn", "octdownbtn"]) set(id, st[2]);
+                    "octupbtn", "octdownbtn", "divbtn", "emDivide"]) set(id, st[2]);
   set("pastebtn", st[3]); set("emPaste", st[3]);
 }
 function pushUndo(entry) { editUndo.push(entry); editRedo = []; } // a fresh edit forks history
