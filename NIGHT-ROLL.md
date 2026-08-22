@@ -539,7 +539,20 @@ follow (bass probabilistic / chords deterministic-on-declared-starts
 capped 4/bar / off), feel (normal / half = mid-bar backbeat + thinner
 hats / double = skank: kick every beat, snare every offbeat 8th,
 bass-follow disabled). Legacy positional signature still works and
-maps energy -> busy = hard. Design invariants (advisor-reviewed, 2026-08-20):
+maps energy -> busy = hard.
+Consistency (advisor round 2, 2026-08-22): the GROOVE substream keys on
+(fnv1a32(section label) + bar offset in section) for the deepest section
+containing the bar's downbeat — sections with an EXACT matching label
+restate bar-for-bar (no stemming: "A repeat" != "A1"; renaming is the
+manual signal, and it also merges their ruler colors). Bars outside any
+section key on the absolute bar — unsectioned songs are bit-identical
+to the old engine. Fill + arrival-crash substreams stay absolute-keyed
+on purpose (fills are commentary on what comes NEXT). Fill vocabulary:
+weighted pick at fills >= 4 (kitfall 3, tomrun/doublekick/buildup 2,
+run/tomdrop 1); the metal tier (tomrun, kitfall, doublekick) is 16th-
+rate and DENSER than the busy-5 groove it interrupts — the old max-
+settings fills were sparser than their surroundings, which is why five
+rolls all felt lackluster (7 toms in a whole song; now ~50+/roll). Design invariants (advisor-reviewed, 2026-08-20):
 every generation is the same idempotent operation — erase all kit
 notes in the bar range + add the new take, pushed as ONE
 group{eraseBatch, addBatch} undo entry (no generation-identity

@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1414,6 +1414,61 @@ test("Drummer v2: hard bit-identity, follow modes, feel tables", () => {
     return song.tracks[di].notes.filter(n => !n.gone && n.t >= 3840).length;
   })()`);
   assert.ok(solo > 0, "one-voice bar generated drums");
+  run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
+});
+
+test("Drummer: same section label = same groove, bar for bar", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/label-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [
+        {name: "pulse1", notes: [ // identical melodic content in bars 1-2 and 3-4
+          {t: 0, d: 960, p: 72, v: 80}, {t: 1920, d: 960, p: 74, v: 80},
+          {t: 3840, d: 960, p: 72, v: 80}, {t: 5760, d: 960, p: 74, v: 80}]},
+        {name: "triangle", notes: [
+          {t: 0, d: 1920, p: 45, v: 90}, {t: 1920, d: 1920, p: 43, v: 90},
+          {t: 3840, d: 1920, p: 45, v: 90}, {t: 5760, d: 1920, p: 43, v: 90}]}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = deriveNoteTypes([
+      {b1: 1, q1: 1, b2: 2, q2: 4, text: "section: A1", added: true},
+      {b1: 3, q1: 1, b2: 4, q2: 4, text: "section: A1", added: true},
+    ]).map(resolveNote);
+    finalizeNotes(); computeSongEnd();
+  `);
+  const gen = () => val(`(() => {
+    const k = drGenerate(31337, {busy: 4, hard: 3, fillAmt: 0, follow: "bass", followTi: 1, fromBar: 1, toBar: 4});
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return song.tracks[di].notes.filter(n => !n.gone).map(n => ({t: n.t, p: n.p, v: n.v}));
+  })()`);
+  const hits = gen();
+  const bt = 1920;
+  const groove = h => h.p !== 49; // arrival crashes stay absolute-keyed by design
+  const half1 = hits.filter(h => groove(h) && h.t < 2 * bt).map(h => (h.t) + ":" + h.p + ":" + h.v);
+  const half2 = hits.filter(h => groove(h) && h.t >= 2 * bt).map(h => (h.t - 2 * bt) + ":" + h.p + ":" + h.v);
+  assert.deepEqual(half2, half1); // same label restates bar-for-bar
+  // different labels diverge (the manual signal is the label itself)
+  run(`rollnotes = deriveNoteTypes([
+      {b1: 1, q1: 1, b2: 2, q2: 4, text: "section: A1", added: true},
+      {b1: 3, q1: 1, b2: 4, q2: 4, text: "section: A2", added: true},
+    ]).map(resolveNote); finalizeNotes();`);
+  const hits2 = gen();
+  const h2b = hits2.filter(h => h.p !== 49 && h.t >= 2 * bt).map(h => (h.t - 2 * bt) + ":" + h.p + ":" + h.v);
+  assert.notDeepEqual(h2b, hits2.filter(h => h.p !== 49 && h.t < 2 * bt).map(h => h.t + ":" + h.p + ":" + h.v));
+  // max fills produce toms now: a boundary + fills 5 rolls from the weighted pool
+  run(`rollnotes = deriveNoteTypes([
+      {b1: 3, q1: 1, b2: 4, q2: 4, text: "section: B", added: true},
+    ]).map(resolveNote); finalizeNotes();`);
+  let toms = 0;
+  for (let seed = 1; seed <= 6; seed++) {
+    const hh = val(`(() => {
+      const k = drGenerate(${seed}, {busy: 5, hard: 3, fillAmt: 5, follow: "off", fromBar: 1, toBar: 4});
+      const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+      return song.tracks[di].notes.filter(n => !n.gone && [48, 47, 45, 43, 41].includes(n.p)).length;
+    })()`);
+    toms += hh;
+  }
+  assert.ok(toms > 10, "weighted metal-tier fills produce toms (got " + toms + ")");
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 

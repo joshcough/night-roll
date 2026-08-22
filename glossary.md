@@ -36,6 +36,14 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   other voices float against. — `encountered` 2026-08-17. Anchor: Cool
   Bmaj bass gallop. FF: *(find one)*.
 
+- **Timbral fusion (octave doubling)** — voices an octave apart fuse
+  into one perceived voice; a middle voice inside the octave stops
+  being audible as a line. — **`demonstrated`** 2026-08-21: discovered
+  by experiment and diagnosed before the term arrived ("you can't
+  really hear the pulse two... it just gets washed out"). Anchor:
+  graveyard bar 13's rejected unison version — WHY the harmony version
+  won. FF: *(find one)*.
+
 ## Rhythm
 
 - **Cross-rhythm** — two simultaneous layers dividing time differently
@@ -50,6 +58,17 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
 - **Agogic accent** — emphasis by DURATION: the long note is the heavy
   note, no volume needed. — `encountered` 2026-08-18. Anchor: Cool Bmaj
   — snares placed on the bass's long notes. FF: *(find one)*.
+
+- **Rhythmic contrast / acceleration** — sustained notes and rapid
+  figures defining each other inside one line; progressive shifts =
+  acceleration. Depends on a FIXED reference (the riff's constant
+  eighths) and a middle gear (the doubled-note eighths) so the line
+  accelerates through rather than cutting. — **`demonstrated`**
+  2026-08-22, derived by Josh from his own material: "contrast between
+  hanging out on these whole notes... and then really quick sets of
+  notes... I don't think I've ever written a melody like that before."
+  Anchor: graveyard pulse1 6–9 — a 16:1 range of note length in four
+  bars (whole note to six sixteenths). FF: *(find one)*.
 
 ## Melody & motive
 
@@ -83,6 +102,27 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   **`demonstrated`** 2026-08-18: distinguished it correctly and
   unprompted, and used it to REJECT a wrong track name ("pulse1 isn't
   the hook"). Anchor: his call that Cool Bmaj's hook is the bass.
+
+- **Neighbor tone** — a step above or below a held pitch, returning;
+  the smallest ornament. — `encountered` 2026-08-21. Anchor: graveyard
+  bar 13, BOTH voices at once, offset a beat (pulse1 C♯–D–C–C♯, pulse2
+  A–G♯–F♯–G♯); pulse1's lower neighbor is C natural, out of key. FF:
+  *(find one)*.
+- **Tonic avoidance** — a melody using every degree but the tonic, so
+  it floats over home. — `encountered` 2026-08-21 as the tutor's
+  observation; RESOLVED 2026-08-22 by Josh's own realization: "the
+  melody is a harmony... that is so interesting" — a voice harmonizing
+  the root doesn't play the root, that's the other voice's job. Here
+  it's a CONSEQUENCE of melody-as-harmony-line, not a device. Anchor:
+  graveyard pulse1 6–12 (A B C♯ D G♯ E, never F♯). And it operates at
+  the chord level too: the bar 10–12 walk reads VI–VII–i–ii°–III with
+  the tonic mid-run as a passing chord.
+- **Doubled-note ascent** — repeating each step of a scalar climb
+  halves the melody's effective speed against a busier accompaniment;
+  reads grand, not busy. — `encountered` 2026-08-21, found on guitar
+  over a loop; he reaches for it repeatedly (bars 7 and 11, and the
+  bar-13 brake is the same principle). Bar 11's revision widens the
+  arrival: A, B B, C♯ C♯, D D D. FF: *(find one)*.
 
 ## Harmony
 
@@ -152,6 +192,54 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   2026-08-20: he DID it (graveyard triangle 1–3, one triad tone per
   bar) and named the chord; the term was the tutor's wording back.
   FF: *(find one — FF1's prelude arpeggio is the giant case)*.
+
+- **Borrowed chord** — a chord taken from outside the key for effect. —
+  **`demonstrated`** 2026-08-21: built deliberately before knowing the
+  term, intent stated unprompted: "a chord I intentionally brought in
+  that doesn't fit in, but it had a specific goal of being sinister."
+  Anchor: graveyard bars 8–9 — F under G♯ inside F♯ minor (a minor
+  third; NO fifth sounds — the full-triad claim in an earlier session
+  draft was wrong). Sub-finding: F♯m→Fm is minor-to-minor by one
+  semitone — parallel quality motion, why it crawls. AND the deeper
+  finding (2026-08-22): heard in hindsight the F is E♯ — the leading
+  tone — so bars 8–10 are rootless V → V6 → i, and the borrowed chord
+  and the leading tone are ONE NOTE doing both jobs. FF: *(find one)*.
+- **Parallel fourths** — two voices in lockstep a fourth apart; hollow
+  and HARD in texture (stacked thirds sound warm) — cf. organum. His
+  correction on record: with the key firmly established this is a
+  texture claim, not ambiguity. — `encountered` 2026-08-21, written by
+  ear over a looped rhythm track (a fourth is a hand shape: two
+  strings, same fret — the hands picked the interval). Anchor:
+  graveyard bar 11, pulse2 over pulse1 (D/A, E/B, F♯/C♯) — and then it
+  BREAKS: G♯ over D, the tritone, where the section tilts. Cross-ref:
+  the Mustaine fourths-and-tritones device from his own structural
+  notes. FF: *(find one)*.
+- **Pedal with scalar motion** — a repeated bass note under a stepwise
+  line; the pedal IS the harmony, the movers are passing — no chord
+  should be named. — **`demonstrated`** 2026-08-21: arrived at "maybe
+  we don't even have a chord here" himself after testing and rejecting
+  Amaj7 and G♯m on evidence. Anchor: graveyard 7.1–7.2.5. FF: *(find
+  one)*.
+- **Duration vs. metrical position** — the two competing kinds of
+  structural evidence (long = agogic weight; on the strong beat or at
+  the harmonic change = metric weight). When they disagree, both
+  readings are honest. — `encountered` 2026-08-21, THIRD instance now
+  a named recurring pattern (Ship's pulse2 E; graveyard 7.3's C♯;
+  graveyard bar 6's short-but-recurrent E). See open-items.
+- **Interval inversion** — interval + inversion sum to nine; quality
+  flips, perfect stays perfect (why fourths and fifths behave alike).
+  Only holds within an octave — wider spacing is harmonic-series
+  territory, which is why bar 10 rings. — **`demonstrated`**
+  2026-08-22: derived the nine-sum rule himself from the fourths.
+- **Implied harmony (voice-limited writing)** — with three monophonic
+  voices, harmony is an emergent property of simultaneous lines, never
+  stacked; a chord costs ALL the voices, so spending them is the most
+  expensive gesture available. — **`demonstrated`** 2026-08-22: "this
+  is a true NES song... one note at a time per instrument" (verified:
+  strictly monophonic throughout), and the constraint EXPLAINS the
+  piece — horizontal tonic in the intro, F-minor-by-coincidence-of-
+  lines, and bar 10 as the piece's single full triad. The organizing
+  principle of graveyard. FF: every song in the corpus.
 
 ## Form
 

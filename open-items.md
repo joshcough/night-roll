@@ -529,7 +529,15 @@ follow bass|chords|off, feel normal|half|double. Advisor's v2+ queue:
 - Ghost knob — only if busy/hard proves too coarse
 - REJECTED: per-section feel annotations (knobs are generation inputs,
   not song state); a Manual tab (the whole app IS the manual tab)
-Advisor's watch items: hard=1 may re-trigger quiet hats (floor 40 is
+Round 2 (2026-08-22, his "bring in an adviser" ask): same-label
+sections now share grooves — TO ACTIVATE ON GRAVEYARD Josh renames
+"A repeat" to "A1" (exact match by design; the rename also merges
+their ruler colors, visible confirmation). Metal-tier fills shipped
+(tomrun/kitfall/doublekick, weighted at fills 4-5). NOT changed, per
+advisor: groove logic, fill trigger sites, probability curve, the
+five original fill bodies. Pre-update take chips no longer replay
+fills identically (pool grew 3->6 at the top band) — session-only,
+nothing persisted. Advisor's watch items: hard=1 may re-trigger quiet hats (floor 40 is
 the mitigation — Josh's ear rules); chords-follow may machine-gun
 under harmonic-rhythm compression (cap 4/bar is a guess — if it
 stiffens, bring him the tradeoff, never quietly go probabilistic);
