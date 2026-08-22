@@ -4644,7 +4644,8 @@ function drumHit(ti, p, when, vel) {
   for (let k = 0; k < ch.length; k++) ch[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / ch.length, 1.5);
   const src = audio.createBufferSource();
   src.buffer = buf;
-  g.gain.value = v * (len < 0.06 ? 0.3 : 0.62); // closed hats still under snares/cymbals
+  g.gain.value = v * (len < 0.06 ? 0.5 : 0.62); // hats: the 6.5k highpass sheds most of the
+  // noise's energy, so the gain compensates — still under snares (Josh: "still too quiet", 2026-08-22)
   if (len < 0.06) { // hats: highpass ABOVE the pulses' energy — masking, not level,
     // is why they vanish under regular instruments (Josh 2026-08-22, same
     // mechanism as the kick: cut through by brightness, not a volume war)
