@@ -1411,6 +1411,22 @@
 
 <script src="vendor/vexflow.js"></script>
 <script>
+/* ============================================================================
+   NIGHT ROLL — one file, by design (tests extract this script; no build step).
+   Rough chapter map (line numbers drift — grep the banner text):
+     MIDI PARSE / WRITE ............ parseMidi, writeMidi, deriveNoteTypes
+     ANNOTATION MODEL .............. noteToJSON, resolveNote, finalizeNotes
+     SONG LOAD / SAVE / DRAFTS ..... loadSong, setSong, saveDraft, revert
+     ROLL DRAWING .................. draw, drawRuler, drawRangeTints
+     GESTURE LAYER ................. pointerdown/move/up, hold-to-grab, pinch
+     SELECTION EDITING ............. selEditApply, nudge, copy/paste, divide
+     AUDIO ENGINE .................. ensureAudio, play, scheduleNote, drumHit
+     SCORE VIEW .................... buildScoreModel, drawScore, engraving
+     INSTRUMENT PANEL .............. drawInst, guitar fretboard, fall
+     UI CHROME ..................... menus (File/Edit/View), chips, sheets
+     DRUMMER ....................... drGenerate, DR_FILLS, take chips
+     SYNC / REPO ................... putRollnotes, commit, vault, catalog
+   ========================================================================= */
 // Night Roll — FF1 OST analysis player. READ NIGHT-ROLL.md FIRST:
 // feature inventory, the .rollnotes format spec, this file's section map,
 // and the project conventions (keys are Josh's discoveries — never pre-fill).
