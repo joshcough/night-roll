@@ -911,8 +911,15 @@
       <span class="lbl">to bar</span>
       <input type="number" id="drto" value="8" min="1" style="width:64px;min-height:40px" aria-label="To bar">
       <span class="lbl">beat</span><select id="drtoq"></select><select id="drtos" aria-label="Subdivision"></select>
-      <span class="lbl">energy</span>
-      <select id="drenergy" aria-label="Energy">
+    </div>
+    <div class="row" style="flex-wrap:wrap;gap:6px">
+      <span class="lbl">busy</span>
+      <select id="drbusy" aria-label="Busy — how much">
+        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+        <option value="4">4</option><option value="5">5</option>
+      </select>
+      <span class="lbl">hard</span>
+      <select id="drhard" aria-label="Hard — how loud">
         <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
         <option value="4">4</option><option value="5">5</option>
       </select>
@@ -921,13 +928,22 @@
         <option value="0">off</option><option value="1">1</option><option value="2">2</option>
         <option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
       </select>
+      <span class="lbl">follow</span>
+      <select id="drfollow" aria-label="What the kick listens to">
+        <option value="bass" selected>bass</option><option value="chords">chords</option><option value="off">off</option>
+      </select>
+      <span class="lbl">feel</span>
+      <select id="drfeel" aria-label="Backbeat rate">
+        <option value="normal" selected>normal</option><option value="half">half</option><option value="double">double</option>
+      </select>
     </div>
     <div class="status" id="drstatus"></div>
     <div class="chiprow" id="drtakes"></div>
-    <p class="meta" style="margin:8px 0 0">Generates a kit part for the bar range: fixed backbeat skeleton,
-    kicks that follow the bass, accents on chord changes and the bass's long notes, fills before section
-    boundaries, silence in breaks. Each take REPLACES the range's kit notes — one ⟲ brings yours back.
-    Tap an old take to get it back exactly.</p>
+    <p class="meta" style="margin:8px 0 0">Fixed skeleton, fills before your declared section boundaries, silence in
+    breaks. <b>busy</b> = how much, <b>hard</b> = how loud, <b>fills</b> = how often and how big,
+    <b>follow</b> = what the kick listens to (bass offbeats · declared chord changes · nothing),
+    <b>feel</b> = backbeat rate (half = big slow snare, double = snare on every offbeat).
+    Each take REPLACES the range's kit notes — one ⟲ brings yours back. Tap an old take to get it back exactly.</p>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="drgen">🎲 Generate</button>
       <button id="drclose" style="margin-left:auto">Close</button>
@@ -1090,7 +1106,7 @@
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Unsaved dot</dt><dd>A gold <b>●</b> after the title means the song has edits that haven't been committed — it appears the moment you change anything and clears when Save &amp; Commit succeeds (the Save sheet's title says which state you're in, too).</dd>
-      <dt>🎲 Drummer</dt><dd>The 🎲 beside 🥁 in the edit row (also Edit ▾ → Drummer…) generates a kit part for a bar range (prefilled from the ruler selection if one is armed, else the section under the cursor). It reads the structure YOU declared: a fixed backbeat skeleton (kick on 1, meter-aware snares) that seeds never move, hats whose loudness always stays under the snare, kicks that follow the bass track's offbeats, accents on chord-change downbeats, a snare on the bass's LONG notes (the agogic accent), fills from a small vocabulary before section boundaries and the loop target (crash on the arrival), and SILENCE in breaks — a bar where only the bass plays, or a section labeled "break", gets no drums at all. Each take REPLACES the range's kit notes and is exactly one ⟲ step, so your hand-placed drums come back with one undo. 🎲 again rerolls; the take chips replay any earlier take exactly (seed, energy, and range all remembered). Energy 1–5 thins or thickens hats, ghosts, and extra kicks — never the anchor. The separate <b>fills</b> knob (off–5) controls fills alone, Logic-style: how often they fire and how big they are (off = none; 1–2 = the quiet vocabulary — flam, the silence-into-the-downbeat negative fill; 4–5 = runs, tom drops, the full-bar buildup) — so a quiet groove can still have big fills, or a wall of energy none at all.</dd>
+      <dt>🎲 Drummer</dt><dd>The 🎲 beside 🥁 in the edit row (also Edit ▾ → Drummer…) generates a kit part for a bar range (prefilled from the ruler selection if one is armed, else the section under the cursor). It reads the structure YOU declared: a fixed backbeat skeleton (kick on 1, meter-aware snares) that seeds never move, hats whose loudness always stays under the snare, kicks that follow the bass track's offbeats, accents on chord-change downbeats, a snare on the bass's LONG notes (the agogic accent), fills from a small vocabulary before section boundaries and the loop target (crash on the arrival), and SILENCE in breaks — a bar where only the bass plays, or a section labeled "break", gets no drums at all. Each take REPLACES the range's kit notes and is exactly one ⟲ step, so your hand-placed drums come back with one undo. 🎲 again rerolls; the take chips replay any earlier take exactly (seed, energy, and range all remembered). Five knobs, Logic's split: <b>busy</b> (1–5) is density — hat subdivisions, ghosts, how eagerly kicks chase the bass; <b>hard</b> (1–5) is loudness — one uniform velocity shift across the whole kit, hats never dropping back below audible; <b>fills</b> (off–5) alone decides how often fills fire and how big (1–2 the quiet vocabulary, 4–5 runs/tom-drops/the full-bar buildup); <b>follow</b> picks what the kick listens to — <b>bass</b> (offbeat onsets, probabilistic) · <b>chords</b> (a kick exactly on every DECLARED chord change, deterministic, capped 4/bar) · <b>off</b> (skeleton and fills only); <b>feel</b> sets the backbeat rate — <b>half</b> (one big snare mid-bar, thinner hats: the slow-heavy read) · <b>double</b> (kick every beat, snare every offbeat 8th: the skank/D-beat read — bass-follow stands down, every slot is owned). The take chips remember all five.</dd>
       <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Copy, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ▲▼ Octave up/down (the whole selection jumps ±12 — no sliding), ♫ Insert chord, 🥁 Drum pattern, 🎲 Drummer — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
@@ -9750,8 +9766,25 @@ function drBackbeats(beats) { // explicit meter table, not "adapted"
   if (beats === 6) return [4];
   return [beats]; // anything else: last beat of the bar
 }
-function drGenerate(seed, energy, fromBar, toBar, t0Override, t1Override, fillAmt) {
-  if (fillAmt === undefined) fillAmt = 3; // Logic splits fills from the groove; so do we
+function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, fillAmt) {
+  // v2 (advisor spec): busy = density, hard = velocity, follow = what the kick
+  // listens to, feel = backbeat rate. Legacy positional call maps energy ->
+  // busy = hard = energy, and hard 3 / follow bass / feel normal is BIT-
+  // IDENTICAL to v1 for the same seed (hard consumes zero rng draws).
+  let busy, hard, follow, feel;
+  if (typeof energyOrOpts === "object" && energyOrOpts !== null) {
+    const o = energyOrOpts;
+    busy = o.busy ?? 3; hard = o.hard ?? busy;
+    follow = o.follow ?? "bass"; feel = o.feel ?? "normal";
+    fillAmt = o.fillAmt ?? 3;
+    fromBar = o.fromBar; toBar = o.toBar;
+    t0Override = o.t0; t1Override = o.t1;
+  } else {
+    busy = energyOrOpts; hard = energyOrOpts; follow = "bass"; feel = "normal";
+    if (fillAmt === undefined) fillAmt = 3;
+  }
+  const HARD_DELTA = 7 * (hard - 3);
+  const energy = busy; // density reads below
   if (!editableSong()) { setInfo("the Drummer works on your own songs — captures are locked"); return 0; }
   const bt = barTicks(), qt = beatTicks(), beats = beatsPerBarDisp();
   // sub-bar edges: bar loop still walks whole bars (per-bar substreams stay
@@ -9807,7 +9840,12 @@ function drGenerate(seed, energy, fromBar, toBar, t0Override, t1Override, fillAm
   });
   // ---- generate ----
   const hits = []; // {t, p, v, d}
-  const put = (t, p, v, d) => { if (t >= t0 && t < t1) hits.push({t, p, v: Math.max(1, Math.min(127, Math.round(v))), d}); };
+  const put = (t, p, v, d) => {
+    if (t < t0 || t >= t1) return;
+    let vv = v + HARD_DELTA; // hard: one uniform shift, applied nowhere else
+    if (p === 42) vv = Math.max(40, vv); // hats never fall back into the inaudible zone
+    hits.push({t, p, v: Math.max(1, Math.min(127, Math.round(vv))), d});
+  };
   // a boundary AT the range start: this generation owns the arrival — crash it
   // (section-at-a-time workflow: the intro pass plays the fill, this pass lands)
   if (boundaries.has(fromBar) && !isBreak(fromBar)) {
@@ -9828,41 +9866,70 @@ function drGenerate(seed, energy, fromBar, toBar, t0Override, t1Override, fillAm
       if (frng() < 0.35 + 0.12 * fillAmt && pool.length) fill = pool[Math.floor(frng() * pool.length)];
     }
     const fillStart = fill ? bs + (beats - fill.len) * qt : Infinity;
-    // skeleton: kick on 1 (fixed), backbeat snare (fixed) — energy never moves the anchor
+    // skeleton: kick on 1 (fixed in every feel) — knobs never move the anchor
     put(bs, 36, 104 + rng() * 8, 70);
-    const backs = drBackbeats(beats);
-    let barSnareV = 0;
-    for (const b of backs) {
-      const t = bs + (b - 1) * qt;
-      if (t >= fillStart) continue;
-      const v = 100 + rng() * 16;
-      barSnareV = Math.max(barSnareV, v);
-      put(t, 38, v, 60);
+    let barSnareV = 0; // tracked PRE-delta: the hats-under-snare discipline shifts uniformly
+    if (feel === "double") { // skank/D-beat: kick every beat, snare every offbeat 8th
+      for (let k = 1; k < beats; k++) {
+        const t = bs + k * qt;
+        if (t < fillStart) put(t, 36, 96 + rng() * 8, 65);
+      }
+      for (let k = 0; k < beats; k++) {
+        const t = bs + (k + 0.5) * qt;
+        if (t >= fillStart) continue;
+        const v = 100 + rng() * 16;
+        barSnareV = Math.max(barSnareV, v);
+        put(t, 38, v, 55);
+      }
+    } else {
+      const backs = feel === "half" ? [Math.floor(beats / 2) + 1] : drBackbeats(beats);
+      for (const b of backs) {
+        const t = bs + (b - 1) * qt;
+        if (t >= fillStart) continue;
+        const v = 100 + rng() * 16;
+        barSnareV = Math.max(barSnareV, v);
+        put(t, 38, v, 60);
+      }
     }
     if (!barSnareV) barSnareV = 108;
-    // hats: 8ths base, energy adds 16th pairs; ceiling snare-25, never over 76
+    // hats: table by feel + busy; ceiling stays under the bar's snare
     const hatCap = Math.min(88, barSnareV - 12); // under the snare, but audible in the mix
-    for (let i = 0; i < beats * 2; i++) {
-      const t = bs + i * qt / 2;
+    const hatStep = feel === "half" ? (busy <= 2 ? qt : qt / 2) : qt / 2; // half thins a notch
+    for (let t = bs; t < bs + bt; t += hatStep) {
       if (t >= fillStart) break;
-      const on = i % 2 === 0;
+      const on = Math.abs((t - bs) % qt) < 1;
       put(t, 42, Math.min(hatCap, on ? 66 + rng() * 16 : 52 + rng() * 12), 40);
-      if (energy >= 4 && !on && rng() < 0.12 * energy) put(t + qt / 4, 42, Math.min(hatCap, 50 + rng() * 10), 35);
+      const pairGate = feel === "half" ? busy >= 5 : busy >= 4;
+      const pairProb = feel === "half" ? 0.12 * (busy - 1) : 0.12 * busy;
+      if (pairGate && !on && rng() < pairProb) put(t + qt / 4, 42, Math.min(hatCap, 50 + rng() * 10), 35);
     }
-    // bass-following kicks: offbeat bass onsets, probability by energy, capped 2/bar
-    let extra = 0;
-    for (const n of bass) {
-      if (n.t < bs || n.t >= bs + bt || n.t >= fillStart) continue;
-      const beatPos = (n.t - bs) / qt;
-      if (Math.abs(beatPos - Math.round(beatPos)) < 0.01 && (Math.round(beatPos) === 0)) continue; // beat 1 covered
-      if (extra >= 2) break;
-      if (rng() < 0.12 + 0.1 * energy) { put(n.t, 36, 88 + rng() * 12, 60); extra++; }
-    }
-    // agogic snare on the bass's LONG notes (Josh's own device)
-    for (const n of bass) {
-      if (n.t < bs || n.t >= bs + bt || n.t >= fillStart) continue;
-      if (n.d >= qt * 1.5 && !backs.some(b => Math.abs(n.t - (bs + (b - 1) * qt)) < 5))
-        put(n.t, 38, Math.min(120, barSnareV + 8), 60);
+    if (follow === "bass" && feel !== "double") { // double already owns every slot
+      // bass-following kicks: offbeat bass onsets, probability by busy, capped 2/bar
+      let extra = 0;
+      for (const n of bass) {
+        if (n.t < bs || n.t >= bs + bt || n.t >= fillStart) continue;
+        const beatPos = (n.t - bs) / qt;
+        if (Math.abs(beatPos - Math.round(beatPos)) < 0.01 && (Math.round(beatPos) === 0)) continue; // beat 1 covered
+        if (extra >= 2) break;
+        if (rng() < 0.12 + 0.1 * busy) { put(n.t, 36, 88 + rng() * 12, 60); extra++; }
+      }
+      // agogic snare on the bass's LONG notes (Josh's own device)
+      for (const n of bass) {
+        if (n.t < bs || n.t >= bs + bt || n.t >= fillStart) continue;
+        if (n.d >= qt * 1.5 && !(feel === "double") &&
+            !(feel === "half" ? [Math.floor(beats / 2) + 1] : drBackbeats(beats))
+              .some(b => Math.abs(n.t - (bs + (b - 1) * qt)) < 5))
+          put(n.t, 38, Math.min(120, barSnareV + 8), 60);
+      }
+    } else if (follow === "chords") { // declared chord starts get the kick — deterministic
+      let ck = 0;
+      for (const ct of chordStarts) {
+        if (ct < bs || ct >= Math.min(bs + bt, fillStart)) continue;
+        if (Math.abs(ct - bs) < 5) continue; // downbeat already kicked
+        if (ck >= 4) break; // harmonic-rhythm-compression safety
+        put(ct, 36, 92 + rng() * 12, 60);
+        ck++;
+      }
     }
     // the fill itself, then a crash lands on the boundary downbeat (next bar's put)
     if (fill) for (const h of fill.hits(rng, qt, beats)) put(bs + h.off, h.p, h.v, h.d);
@@ -9872,9 +9939,9 @@ function drGenerate(seed, energy, fromBar, toBar, t0Override, t1Override, fillAm
   }
   // chord-change downbeat accents (+12, capped) — harmonic-rhythm compression
   // densifies these automatically, so his device is honored for free
-  for (const ct of chordStarts) {
+  if (follow !== "off") for (const ct of chordStarts) {
     if (ct < t0 || ct >= t1) continue;
-    for (const h of hits) if (h.t === ct && (h.p === 36 || h.p === 42)) h.v = Math.min(h.p === 42 ? 76 : 127, h.v + 12);
+    for (const h of hits) if (h.t === ct && (h.p === 36 || h.p === 42)) h.v = Math.min(h.p === 42 ? 76 + HARD_DELTA : 127, h.v + 12);
   }
   hits.sort((a, b) => a.t - b.t || a.p - b.p);
   const added = [];
@@ -9913,10 +9980,16 @@ function drRange() { // ticks + whole-bar span from the bar/beat/sub selects
 function drRefresh() {
   const r = drRange();
   const from = r.from, to = r.to;
+  const mode = (document.getElementById("drfollow") || {}).value || "bass";
   const bTi = drBassTrack();
+  let followTxt;
+  if (mode === "off") followTxt = "following: nothing";
+  else if (mode === "chords") {
+    const n = rollnotes.filter(x => x.chord && !x.section && x.start >= r.t0 && x.start < r.t1).length;
+    followTxt = "following: chords (" + n + " change" + (n === 1 ? "" : "s") + " in range)";
+  } else followTxt = bTi >= 0 ? "following: " + (song.tracks[bTi].name || "track " + (bTi + 1)) : "no bass track found";
   document.getElementById("drstatus").textContent =
-    "replaces " + drKitCountT(r.t0, r.t1) + " kit note(s) in " + fmtBarBeat(r.t0) + "–" + fmtBarBeat(r.t1) +
-    (bTi >= 0 ? " · following: " + (song.tracks[bTi].name || "track " + (bTi + 1)) : " · no bass track found");
+    "replaces " + drKitCountT(r.t0, r.t1) + " kit note(s) in " + fmtBarBeat(r.t0) + "–" + fmtBarBeat(r.t1) + " · " + followTxt;
   const row = document.getElementById("drtakes");
   row.innerHTML = "";
   drTakes.forEach((tk, i) => {
@@ -9925,15 +9998,22 @@ function drRefresh() {
     b.textContent = "take " + (i + 1);
     b.classList.toggle("active", i === drActive);
     b.addEventListener("click", () => { // a take is the FULL tuple, not just the seed
-      document.getElementById("drenergy").value = String(tk.energy);
-      if (tk.fillAmt !== undefined) document.getElementById("drfills").value = String(tk.fillAmt);
+      const busy = tk.busy ?? tk.energy ?? 3, hard = tk.hard ?? busy;
+      const follow = tk.follow ?? "bass", feel = tk.feel ?? "normal", fillAmt = tk.fillAmt ?? 3;
+      document.getElementById("drbusy").value = String(busy);
+      document.getElementById("drhard").value = String(hard);
+      document.getElementById("drfills").value = String(fillAmt);
+      document.getElementById("drfollow").value = follow;
+      document.getElementById("drfeel").value = feel;
       document.getElementById("drfrom").value = tk.from;
       document.getElementById("drto").value = tk.to;
       if (tk.q) { setBeatPair("drfromq", "drfroms", tk.q[0]); setBeatPair("drtoq", "drtos", tk.q[1]); }
-      const k = drGenerate(tk.seed, tk.energy, tk.from, tk.to, tk.t0, tk.t1, tk.fillAmt);
+      const k = drGenerate(tk.seed, {busy, hard, follow, feel, fillAmt,
+        fromBar: tk.fromBar ?? tk.from, toBar: tk.toBar ?? tk.to, t0: tk.t0, t1: tk.t1});
       drActive = i;
       drRefresh();
-      setInfo("take " + (i + 1) + " restored — " + k + " hits (one ⟲ brings the previous drums back)");
+      setInfo("take " + (i + 1) + " — busy " + busy + " · hard " + hard + " · fills " + fillAmt +
+              " · " + follow + " · " + feel + " · " + k + " hits (one ⟲ brings the previous back)");
     });
     row.appendChild(b);
   });
@@ -9990,23 +10070,28 @@ function openDrummer() {
 }
 document.getElementById("drgen").addEventListener("click", () => {
   const r = drRange();
-  const energy = parseInt(document.getElementById("drenergy").value, 10) || 3;
-  const fillAmt = parseInt(document.getElementById("drfills").value, 10);
+  const opts = {
+    busy: parseInt(document.getElementById("drbusy").value, 10) || 3,
+    hard: parseInt(document.getElementById("drhard").value, 10) || 3,
+    fillAmt: (v => isNaN(v) ? 3 : v)(parseInt(document.getElementById("drfills").value, 10)),
+    follow: document.getElementById("drfollow").value,
+    feel: document.getElementById("drfeel").value,
+    fromBar: r.from, toBar: r.to, t0: r.t0, t1: r.t1,
+  };
   const seed = (Math.random() * 0xFFFFFFFF) >>> 0; // the ONLY nondeterminism; takes replay it exactly
-  const k = drGenerate(seed, energy, r.from, r.to, r.t0, r.t1, isNaN(fillAmt) ? 3 : fillAmt);
+  const k = drGenerate(seed, opts);
   if (!k) { drRefresh(); return; }
-  drTakes.push({seed, energy, fillAmt: isNaN(fillAmt) ? 3 : fillAmt,
+  drTakes.push({seed, ...opts,
                 from: parseInt(document.getElementById("drfrom").value, 10) || 1,
                 to: parseInt(document.getElementById("drto").value, 10) || 1,
-                q: [getBeatPair("drfromq", "drfroms"), getBeatPair("drtoq", "drtos")],
-                t0: r.t0, t1: r.t1});
+                q: [getBeatPair("drfromq", "drfroms"), getBeatPair("drtoq", "drtos")]});
   if (drTakes.length > 8) drTakes.shift();
   drActive = drTakes.length - 1;
   drRefresh();
   setInfo("take " + drTakes.length + ": " + k + " hits in " + fmtBarBeat(r.t0) + "–" + fmtBarBeat(r.t1) + " (one ⟲ restores what was there)");
 });
 for (const id of ["drfrom", "drto"]) document.getElementById(id).addEventListener("input", drRefresh);
-for (const id of ["drfromq", "drfroms", "drtoq", "drtos"]) document.getElementById(id).addEventListener("change", drRefresh);
+for (const id of ["drfromq", "drfroms", "drtoq", "drtos", "drfollow"]) document.getElementById(id).addEventListener("change", drRefresh);
 document.getElementById("drclose").addEventListener("click", () =>
   document.getElementById("drummersheet").classList.remove("on"));
 document.getElementById("drummerbtn").addEventListener("click", openDrummer);

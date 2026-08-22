@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1358,6 +1358,53 @@ test("Drummer: deterministic, skeleton fixed, breaks silent, one group undo", ()
   // meter change inside the range refuses honestly
   run(`rollnotes.push(resolveNote(deriveNoteTypes([{b1: 2, q1: 1, text: "timesig: 3/4", added: true}])[0])); finalizeNotes();`);
   assert.equal(val(`drGenerate(1, 3, 1, 3)`), 0);
+  run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
+});
+
+test("Drummer v2: hard bit-identity, follow modes, feel tables", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/drv2-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [
+        {name: "pulse1", notes: [{t: 0, d: 3840, p: 72, v: 80}]},
+        {name: "triangle", notes: [
+          {t: 0, d: 960, p: 45, v: 90}, {t: 1200, d: 240, p: 43, v: 90}, {t: 1920, d: 1440, p: 41, v: 90}]}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = deriveNoteTypes([
+      {b1: 1, q1: 3, b2: 1, q2: 4, text: "chord: A", added: true},
+    ]).map(resolveNote);
+    finalizeNotes(); computeSongEnd();
+  `);
+  const gen = args => val(`(() => {
+    const k = drGenerate(4242, ${args});
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return song.tracks[di].notes.filter(n => !n.gone).map(n => ({t: n.t, p: n.p, v: n.v}));
+  })()`);
+  // hard=3 opts call is bit-identical to the legacy positional call
+  const legacy = gen(`3, 1, 2`);
+  const opts3 = gen(`{busy: 3, hard: 3, fillAmt: 3, fromBar: 1, toBar: 2}`);
+  assert.deepEqual(opts3, legacy);
+  // hard shifts every non-floored velocity uniformly; positions identical
+  const hard5 = gen(`{busy: 3, hard: 5, fillAmt: 3, fromBar: 1, toBar: 2}`);
+  assert.deepEqual(hard5.map(h => h.t + ":" + h.p), legacy.map(h => h.t + ":" + h.p));
+  assert.ok(hard5.some((h, i) => h.v > legacy[i].v));
+  // follow off: no bass-follow kicks, no agogic snares, no chord accents
+  const off = gen(`{busy: 3, hard: 3, fillAmt: 0, follow: "off", fromBar: 1, toBar: 2}`);
+  assert.ok(!off.some(h => h.p === 36 && h.t === 1200)); // the offbeat bass onset
+  // follow chords: deterministic kick on the declared off-downbeat chord start (1.3 = 960)
+  const ch = gen(`{busy: 1, hard: 3, fillAmt: 0, follow: "chords", fromBar: 1, toBar: 2}`);
+  assert.ok(ch.some(h => h.p === 36 && h.t === 960));
+  // half feel: exactly one snare per bar, on beat 3 in 4/4
+  const half = gen(`{busy: 3, hard: 3, fillAmt: 0, follow: "off", feel: "half", fromBar: 1, toBar: 2}`);
+  const halfSnares = half.filter(h => h.p === 38);
+  assert.equal(halfSnares.length, 2);
+  assert.ok(halfSnares.every(h => h.t % 1920 === 960));
+  // double feel: kick on every beat, snare on every offbeat 8th
+  const dbl = gen(`{busy: 3, hard: 3, fillAmt: 0, follow: "off", feel: "double", fromBar: 1, toBar: 2}`);
+  assert.equal(dbl.filter(h => h.p === 36).length, 8);
+  assert.equal(dbl.filter(h => h.p === 38).length, 8);
+  assert.ok(dbl.filter(h => h.p === 38).every(h => h.t % 480 === 240));
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 

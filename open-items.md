@@ -512,14 +512,22 @@ both from his 08-21 "reported with real heat" items.
   together. First entry in the keep/change trail.
 
 Shipped from it same night: the fills knob (amount+size, decoupled from
-energy). Still unmined, logged for when field use asks:
-- Complexity vs Intensity as SEPARATE axes (busyness vs velocity/
-  aggression — our energy still conflates them)
-- Swing knob (8th/16th selectable base)
-- "Follow: Chord Rhythm" — kick/snare locking to the chord bands'
-  rhythm, not just the bass (we follow bass onsets only)
-- Per-group pattern variants (cymbal row pattern N, kick/snare row
-  pattern M — numbered, browsable)
+energy). v2 SHIPPED overnight 2026-08-22 (advisor-designed): busy/hard split,
+follow bass|chords|off, feel normal|half|double. Advisor's v2+ queue:
+- Nameable pattern variants (variant index REPLACES the per-group seed
+  substream, joins the take tuple) — only if chips prove insufficient
+- Per-piece density row (hats/kick/snare less/normal/more)
+- Skeleton personas (chip/rock/metal tables) — after fill vocabulary
+  matures empirically
+- Swing — explicit request only (advisor: mush on chip/metal material)
+- Ghost knob — only if busy/hard proves too coarse
+- REJECTED: per-section feel annotations (knobs are generation inputs,
+  not song state); a Manual tab (the whole app IS the manual tab)
+Advisor's watch items: hard=1 may re-trigger quiet hats (floor 40 is
+the mitigation — Josh's ear rules); chords-follow may machine-gun
+under harmonic-rhythm compression (cap 4/bar is a guess — if it
+stiffens, bring him the tradeoff, never quietly go probabilistic);
+"double" skank vocabulary is unvalidated.
 
 ## Tooling to-do
 

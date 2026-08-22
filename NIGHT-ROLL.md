@@ -531,8 +531,15 @@ edit row, and vice versa — the menu is the labeled version of the row,
 never a superset. Shipping a new edit command means shipping both.
 ## Drummer (branch `drummer`, awaiting field test)
 
-drGenerate(seed, energy, fromBar, toBar) in index.html: deterministic
-kit generation. Design invariants (advisor-reviewed, 2026-08-20):
+drGenerate(seed, opts) in index.html: deterministic kit generation.
+v2 knobs (advisor-designed from Josh's Logic screenshot, 2026-08-22):
+busy (density), hard (velocity — ONE choke point in put(), so hard=3
+is bit-identical to v1; hats floored at 40), fills (band + odds),
+follow (bass probabilistic / chords deterministic-on-declared-starts
+capped 4/bar / off), feel (normal / half = mid-bar backbeat + thinner
+hats / double = skank: kick every beat, snare every offbeat 8th,
+bass-follow disabled). Legacy positional signature still works and
+maps energy -> busy = hard. Design invariants (advisor-reviewed, 2026-08-20):
 every generation is the same idempotent operation — erase all kit
 notes in the bar range + add the new take, pushed as ONE
 group{eraseBatch, addBatch} undo entry (no generation-identity
