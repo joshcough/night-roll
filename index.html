@@ -3748,7 +3748,14 @@ canvas.addEventListener("pointerdown", e => {
     const d = drag;
     d.holdTimer = setTimeout(() => {
       if (drag !== d || d.moved) return; // gone, or already panning
-      if (d.pendingEdit) { d.noteEdit = d.pendingEdit; d.pendingEdit = null; }
+      if (d.pendingEdit) {
+        d.noteEdit = d.pendingEdit; d.pendingEdit = null;
+        // the dwell armed — SAY so, or moving a beat early silently pans instead
+        // (Josh, 2026-08-22: "sometimes I did [hold] and it was still difficult")
+        const k = d.noteEdit.items.length;
+        setInfo("✊ grabbed " + k + " note" + (k === 1 ? "" : "s") + " — drag to move");
+        previewNote(d.noteEdit.items[0].ti, d.noteEdit.items[0].n.p); // audible arm cue
+      }
       else if (d.pendingPencil) { d.pencil = placePencilNote(d.pendingPencil); d.pendingPencil = null; }
       draw();
     }, 230);
