@@ -1,4 +1,4 @@
-{ "version": 1, "song": "graveyard", "saved": 1787429423877, "notes": [
+{ "version": 1, "song": "graveyard", "saved": 1787435910007, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":38},
   {"at":[1,1],"type":"key","key":"F#m"},
@@ -16,7 +16,8 @@
   {"at":[10,1],"to":[10,4],"type":"chord","chord":"F#m","note":"Finally the full triad arrives.\nWith the Es, you can also argue this is F#m7"},
   {"at":[11,1],"to":[11,2],"type":"chord","chord":"E/G#"},
   {"at":[11,3],"to":[11,4],"type":"chord","chord":"F#m/A"},
-  {"at":[12,1],"to":[12,4],"type":"chord","chord":"Bdim/F"},
+  {"at":[11,4],"text":"Melody reaches C♯/F♯ on the 4th eighth while the bass is still on G♯ — it anticipates the chord change by an eighth, then the bass catches up. Suspension."},
+  {"at":[12,1],"to":[12,4],"type":"chord","chord":"Bdim/F","note":"vii°7"},
   {"at":[13,1],"to":[14,1],"type":"section","label":"Break"},
   {"at":[13,1],"to":[13,1],"type":"chord","chord":"A/C#","note":"No 5th. C# in the root argues this is really something else."},
   {"at":[13,2],"to":[13,2],"type":"chord","chord":"Ddim","note":"No 3rd, tritone only. Still feels like a diminished chord to me."},
