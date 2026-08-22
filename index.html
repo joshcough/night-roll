@@ -1075,7 +1075,7 @@
     <dl>
       <dt>Attached notes on ANY annotation</dt><dd>Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the note box below the value rides along (sections have a dedicated label field, so the note box is purely the note — and key, meter, tempo, loop, and chop all show the note box too). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.</dd>
       <dt>+ Note</dt><dd>Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.</dd>
-      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: playback starts from the cycle's top every time and loops just that span (any loop: annotation is ignored while it's armed). <b>Bar lines are magnetic</b>: land within a finger's width of a bar line and the edge snaps TO the bar (measured in screen pixels, so it works at every zoom); away from bar lines, edges snap to 16ths — zoom in when you want fine edges. Tapping or dragging the ruler never clears your note selection — select notes, set the range, audition, all without re-lassoing. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Grab either <b>edge</b> of the highlight and drag to stretch or shrink it in either direction (bar-magnetic, stays armed). Tapping the ruler <b>parks</b> the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode. On your own songs, drag a section or chord band by its <b>edge</b> (in its ruler lane) to move that boundary — snaps to 16ths, saves like any other edit.</dd>
+      <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: playback starts from the cycle's top every time and loops just that span (any loop: annotation is ignored while it's armed). <b>Bar lines are magnetic</b>: land within a finger's width of a bar line and the edge snaps TO the bar (measured in screen pixels, so it works at every zoom); away from bar lines, edges snap to 16ths — zoom in when you want fine edges. Tapping or dragging the ruler never clears your note selection — select notes, set the range, audition, all without re-lassoing. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Grab either <b>edge</b> of the highlight and drag to stretch or shrink it in either direction (bar-magnetic, stays armed). When sections nest, a <b>▸ chevron</b> at the ruler's left edge cycles how many levels show — fold away a drum-keying sub-label and look at just your form; folded levels still drive the Drummer (device-side view only, per song). Tapping the ruler <b>parks</b> the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode. On your own songs, drag a section or chord band by its <b>edge</b> (in its ruler lane) to move that boundary — snaps to 16ths, saves like any other edit.</dd>
       <dt>Gold flags</dt><dd>Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.</dd>
       <dt>☰ Notes</dt><dd>Every annotation in the song, grouped by type — key, meter, sections, chords, loop, text notes. Tap a row to edit or delete it; each group's + adds one of that type. Shortcut: <b>double-tap</b> a section or chord band in the ruler to open that annotation directly. Changes to synced notes need a Sync to become permanent.</dd>
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
@@ -1627,6 +1627,11 @@ const ctx = canvas.getContext("2d");
 const wrap = document.getElementById("rollwrap");
 const RULER_W = 46, BASE_RULER_H = 24, LANE_H = 15;
 let RULER_H = BASE_RULER_H; // grows when section lanes exist
+let secMaxDepth = 0; // deepest section nesting in this song (set per finalize)
+function secDepthCap() { // device pref, per song: how many section levels show
+  const v = songKey ? localStorage.getItem("ff1roll-secdepth-" + songKey) : null;
+  return v === null ? 99 : Math.max(0, +v);
+}
 let sectionColors = {};     // label -> color
 const PMIN = 24, PMAX = 96; // C1..C7 display range
 
@@ -2047,9 +2052,15 @@ function finalizeNotes() {
   };
   const secGroup = secs.filter(n => n.section);
   const chGroup = secs.filter(n => n.chord && !n.section);
-  const secRows = depthWithin(secGroup);
+  const secDeep = depthWithin(secGroup);
   const chRows = depthWithin(chGroup);
-  for (const s of secGroup) s.lane = s.depth;
+  // collapse: levels deeper than the device's cap fold away from the RULER
+  // only — the drummer and every tool still read all of them (a drum-keying
+  // sub-label is scaffolding you shouldn't have to look at; Josh, 2026-08-22)
+  const cap = secDepthCap();
+  const secRows = Math.min(secDeep, cap + 1);
+  secMaxDepth = secDeep; // for the chevron's cycle
+  for (const s of secGroup) s.lane = s.depth <= cap ? s.depth : null; // null = folded
   for (const c of chGroup) c.lane = secRows + c.depth;
   for (const s of secs)
     if (!(s.text in sectionColors)) sectionColors[s.text] = TRACK_COLORS[ci++ % TRACK_COLORS.length];
@@ -2697,6 +2708,14 @@ function draw() {
     ctx.lineTo(x, RULER_H + 14);
     ctx.fill();
   }
+  if (secMaxDepth > 1 && song) { // ▸/▾ collapse chevron beside the section lanes
+    const cap = secDepthCap();
+    ctx.fillStyle = css("--dim");
+    ctx.font = "10px " + (getComputedStyle(document.body).getPropertyValue("--mono") || "monospace");
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(cap >= secMaxDepth - 1 ? "▾" : "▸" + (cap + 1), 4, BASE_RULER_H + LANE_H / 2);
+  }
   // playhead / cursor — same triangle either way, gold while rolling
   if (playing) {
     const tick = secToTick(song, playSec());
@@ -3011,6 +3030,7 @@ function drawRuler(W, H) {
   const tickX = t => viewMode === "score" && scoreModel ? scoreTickToX(t) : RULER_W + t * ppt - view.x;
   for (const n of rollnotes) {
     if (!n.section && !n.chord) continue;
+    if (n.lane === null) continue; // collapsed level: folded out of the ruler
     const x = tickX(n.start);
     const w = tickX(n.end) - x;
     if (x + w < RULER_W || x > W) continue;
@@ -4046,6 +4066,17 @@ function tap(pos) {
     }
     const {tick} = posToTickPitch(pos);
     const ppt = pxPerTick();
+    if (pos.x < 18 && pos.y >= BASE_RULER_H && secMaxDepth > 1) { // ▸ chevron: cycle visible levels
+      const cur = Math.min(secDepthCap(), secMaxDepth - 1);
+      const next = cur - 1 < 0 ? secMaxDepth - 1 : cur - 1;
+      if (next >= secMaxDepth - 1) localStorage.removeItem("ff1roll-secdepth-" + songKey);
+      else localStorage.setItem("ff1roll-secdepth-" + songKey, String(next));
+      finalizeNotes();
+      setInfo(next >= secMaxDepth - 1 ? "all " + secMaxDepth + " section levels shown"
+                                      : "showing " + (next + 1) + " of " + secMaxDepth + " section levels (deeper ones still drive the drums)");
+      clampView(); draw();
+      return;
+    }
     if (pos.y >= BASE_RULER_H) { // section lanes
       const lane = Math.floor((pos.y - BASE_RULER_H) / LANE_H);
       const sec = rollnotes.find(n => (n.section || n.chord) && n.lane === lane && tick >= n.start && tick < n.end);
