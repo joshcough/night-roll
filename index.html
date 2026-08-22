@@ -1398,7 +1398,7 @@ function kitLaneTop() {
   return _laneTop;
 }
 function laneBotRow() { return kitLaneTop() - kitSlots().length + 1; }
-function botRow() { return songHasDrums() ? Math.min(PMIN, laneBotRow() - 1) : PMIN; } // -1: the ⋯ expander row
+function botRow() { return songHasDrums() ? Math.min(PMIN, laneBotRow() - 3) : PMIN; } // ⋯ expander row + two pitch rows of air under the kit (Josh: "show two more notes under the drums")
 function inKitLane(row) { return songHasDrums() && row <= kitLaneTop() + 1 && row >= laneBotRow() - 1; } // -1: ⋯ row taps route through the lane gesture
 function noteRow(ti, p) { // display row: drums live in the docked lane
   if (!trackIsDrums(ti)) return p;
