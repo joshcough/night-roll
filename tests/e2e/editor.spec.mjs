@@ -104,6 +104,7 @@ test("help sheet: tabs switch sections and remember the last one", async ({ page
 
 test("insert dialog stamps a chord and walks the cursor", async ({ page }) => {
   await page.evaluate(() => { playCursor = 1920; }); // empty bar — inserts skip notes that already exist
+  await page.evaluate(() => { const w = document.getElementById("morewrap"); if (w.style.display === "none") document.getElementById("morebtn").click(); });
   await page.click("#insbtn");
   await page.click('#chquals button[data-qual="maj7"]');
   await page.click("#chinsert");
@@ -114,6 +115,7 @@ test("insert dialog stamps a chord and walks the cursor", async ({ page }) => {
 });
 
 test("drum fill creates the kit and fills a backbeat; lane renders", async ({ page }) => {
+  await page.evaluate(() => { const w = document.getElementById("morewrap"); if (w.style.display === "none") document.getElementById("morebtn").click(); });
   await page.click("#drumfillbtn");
   await page.click("#dpfill");
   const kit = await page.evaluate(() => {
@@ -336,6 +338,7 @@ test("ruler taps keep the lasso; ➗ divides into triplets", async ({ page }) =>
   const r = await page.evaluate(() => canvas.getBoundingClientRect().left);
   await page.mouse.click(r + 500, await page.evaluate(() => canvas.getBoundingClientRect().top + 10));
   expect(await page.evaluate(() => multiSel.length)).toBe(3); // ruler tap kept the selection
+  await page.evaluate(() => { const w = document.getElementById("morewrap"); if (w.style.display === "none") document.getElementById("morebtn").click(); });
   await page.click("#divbtn");
   await page.evaluate(() => { for (const b of document.querySelectorAll("#divchips button")) if (b.textContent === "3") b.click(); });
   expect((await notes(page)).length).toBe(9); // three quarters -> nine triplet eighths

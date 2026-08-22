@@ -640,10 +640,18 @@
   </div>
   <div id="timectl">
     <button id="metbtn" aria-label="Metronome">⏱</button>
-    <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
-           aria-label="Playback speed">
-    <span class="meta" id="speedlbl" style="margin-left:0">100%</span>
-    <button id="speedreset" style="display:none;min-height:32px;padding:4px 9px">100%</button>
+    <button id="speedbtn" aria-label="Playback speed">100%</button>
+    <div id="speedpop" style="display:none;align-items:center;gap:6px">
+      <input type="range" id="speedsl" min="25" max="200" step="5" value="100"
+             aria-label="Playback speed">
+      <span class="meta" id="speedlbl" style="margin-left:0">100%</span>
+      <button id="speedreset" style="display:none;min-height:32px;padding:4px 9px">100%</button>
+    </div>
+    <button id="volbtn" aria-label="Master volume">🔊</button>
+    <div id="volpop" style="display:none;align-items:center;gap:6px">
+      <input type="range" id="volsl" min="10" max="200" step="5" value="100" aria-label="Master volume">
+      <span class="meta" id="vollbl" style="margin-left:0">100%</span>
+    </div>
     <div class="meta" id="songmeta" style="display:none"></div>
   </div>
 </div>
@@ -677,20 +685,24 @@
     <button data-acc="1">♯</button>
     <button data-acc="-1">♭</button>
   </div>
+  <button id="undobtn" aria-label="Undo">⟲</button>
+  <button id="redobtn" aria-label="Redo">⟳</button>
+  <button id="copybtn" aria-label="Copy selected notes">⧉</button>
+  <button id="pastebtn" aria-label="Paste the selection at the cursor">📋</button>
+  <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
+  <button id="octupbtn" aria-label="Selection up an octave">▲8</button>
+  <button id="octdownbtn" aria-label="Selection down an octave">▼8</button>
+  <button id="delbtn" aria-label="Delete selected notes">🗑</button>
+  <button id="morebtn" aria-label="More edit tools">⋯</button>
+  <span id="morewrap" style="display:none;gap:6px">
+  <button id="trbtn" aria-label="Transpose selection">⇅</button>
   <button id="insbtn" aria-label="Insert a chord at the cursor">♫</button>
   <button id="movebtn" aria-label="Move selection to another track">⇄</button>
   <button id="drumfillbtn" aria-label="Fill a drum pattern">🥁</button>
   <button id="drummerbtn" aria-label="Generate drums (Drummer)">🎲</button>
-  <button id="copybtn" aria-label="Duplicate selected notes">⧉</button>
-  <button id="pastebtn" aria-label="Paste the selection at the cursor">📋</button>
-  <button id="octupbtn" aria-label="Selection up an octave">▲8</button>
-  <button id="octdownbtn" aria-label="Selection down an octave">▼8</button>
-  <button id="splitbtn" aria-label="Split selected notes at the cursor">✂</button>
   <button id="divbtn" aria-label="Divide selected notes into equal parts">➗</button>
   <button id="joinbtn" aria-label="Join selected notes">⁀</button>
-  <button id="delbtn" aria-label="Delete selected notes">🗑</button>
-  <button id="undobtn" aria-label="Undo">⟲</button>
-  <button id="redobtn" aria-label="Redo">⟳</button>
+  </span>
 </div>
 <div id="instpanel">
   <div id="instwrap"><canvas id="instcanvas"></canvas></div>
@@ -895,6 +907,17 @@
   </div>
 </div>
 
+<div class="overlay" id="trsheet">
+  <div class="sheet">
+    <h2>TRANSPOSE</h2>
+    <p class="meta" style="margin:0 0 8px;white-space:normal">Chromatic moves everything blindly by
+    semitones. <b>In key</b> moves each note to the next scale degree of the declared key — a "whole
+    step up that stays in the key," so some notes move 1 and some move 2. One ⟲ per tap.</p>
+    <div class="chiprow" id="trchips"></div>
+    <div class="row" style="margin-top:10px"><button id="trclose" style="margin-left:auto">Close</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="divsheet">
   <div class="sheet">
     <h2>DIVIDE INTO</h2>
@@ -1039,6 +1062,7 @@
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
+      <dt>Speed &amp; volume buttons</dt><dd>The speed slider folded into a <b>percentage button</b> — tap to open the slider, tap anywhere else and it folds back (the reset chip appears when off-native). Beside it, <b>🔊</b> is a master volume the same way: tap, slide (10–200%), tap away; the setting sticks per device and the button shows the number when it's not 100%.</dd>
       <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). Every readout is a door: tap the tempo to open the tempo annotation governing the cursor (or declare the first one), tap the meter to open the time signature, tap the key to open the key change ruling the cursor — a stored partial opens its own note with the tonic already filled.</dd>
       <dt>Blue cursor</dt><dd>Play starts here. Tap the bar ruler to place it, or drag its handle (triangle under the ruler). Tapping any note also moves it there.</dd>
     </dl>
@@ -1065,7 +1089,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
-      <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); a lasso'd note gets a white ring for exactly as long as it sounds — so your selection visibly fires as the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
+      <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); a lasso'd note gets a white ring for exactly as long as it sounds — so your selection visibly fires as the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows — and SOUNDING notes get the same treatment during playback, so hitting ▶ lights the whole neck's worth of what's playing, not just the sounding octave. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
 
@@ -1103,14 +1127,14 @@
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> to change its length, or its <b>left edge</b> to move the start while the end stays put — every selected note adjusts by the same amount, so "play this chord half as long" is one gesture. Notes too small on screen to have edge zones are all move-handle — zoom in to resize them. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>A real copy and a real paste: <b>⧉</b> copies whatever is lasso'd (or tapped), <b>📋</b> pastes it at the blue cursor — and the copy SURVIVES scrolling, changing selection, even changing tools, so "lasso bar 3, scroll to bar 16, paste" is exactly three gestures. ⌘C fills the same clipboard. Pasting and chord inserts never stack an identical note on an existing one. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → 📋 at each cursor stop. Buttons that can't do anything right now are grayed — no selection grays copy/delete/split/join/⇄, an empty clipboard grays paste, empty histories gray ⟲⟳. With a keyboard there's also Option-drag (drags out an in-place copy) and ⌘C/⌘V.</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
-      <dt>Transpose</dt><dd>Lasso notes → <b>▲8/▼8</b> in the edit row (or Edit ▾ → ▲/▼ Octave) jumps the selection ±12 without dragging. For a WHOLE track, open its voice &amp; color menu (tap the selected chip again) — the <b>octave ▼/▲ 8va</b> row shifts every note on that track, one tap per octave, each tap one ⟲ step. "What if the bass lived three octaves up?" is three taps, no lassoing, no muting. Notes at the range edge stay put; the drum track never transposes (kit pitches are instruments, not notes).</dd>
+      <dt>Transpose</dt><dd>Lasso notes → <b>▲8/▼8</b> in the edit row jumps the selection ±12 without dragging. For finer moves, <b>⇅ Transpose</b> (behind ⋯, or Edit ▾) opens half/whole-step chromatic buttons plus <b>in key ▲/▼</b>: every note moves one SCALE DEGREE of the declared key — the "whole step up that stays in the key," where some notes move 1 and some move 2. Out-of-scale notes slide chromatically; no declared key = chromatic with a warning. For a WHOLE track, open its voice &amp; color menu (tap the selected chip again) — the <b>octave ▼/▲ 8va</b> row shifts every note on that track, one tap per octave, each tap one ⟲ step. "What if the bass lived three octaves up?" is three taps, no lassoing, no muting. Notes at the range edge stay put; the drum track never transposes (kit pitches are instruments, not notes).</dd>
       <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Unsaved dot</dt><dd>A gold <b>●</b> after the title means the song has edits that haven't been committed — it appears the moment you change anything and clears when Save &amp; Commit succeeds (the Save sheet's title says which state you're in, too).</dd>
       <dt>🎲 Drummer</dt><dd>The 🎲 beside 🥁 in the edit row (also Edit ▾ → Drummer…) generates a kit part for a bar range (prefilled from the ruler selection if one is armed, else the section under the cursor). It reads the structure YOU declared: a fixed backbeat skeleton (kick on 1, meter-aware snares) that seeds never move, hats whose loudness always stays under the snare, kicks that follow the bass track's offbeats, accents on chord-change downbeats, a snare on the bass's LONG notes (the agogic accent), fills from a small vocabulary before section boundaries and the loop target (crash on the arrival), and SILENCE in breaks — a bar where only the bass plays, or a section labeled "break", gets no drums at all. Each take REPLACES the range's kit notes and is exactly one ⟲ step, so your hand-placed drums come back with one undo. 🎲 again rerolls; the take chips replay any earlier take exactly (seed, energy, and range all remembered). Five knobs, Logic's split: <b>busy</b> (1–5) is density — hat subdivisions, ghosts, how eagerly kicks chase the bass; <b>hard</b> (1–5) is loudness — one uniform velocity shift across the whole kit, hats never dropping back below audible; <b>fills</b> (off–5) alone decides how often fills fire and how big (1–2 the quiet vocabulary, 4–5 runs/tom-drops/the full-bar buildup); <b>follow</b> picks what the kick listens to — <b>any track, by name</b> (its offbeat onsets and long notes, probabilistic; defaults to the detected bass) · <b>chords</b> (a kick exactly on every DECLARED chord change, deterministic, capped 4/bar) · <b>off</b> (skeleton and fills only); <b>feel</b> sets the backbeat rate — <b>half</b> (one big snare mid-bar, thinner hats: the slow-heavy read) · <b>double</b> (kick every beat, snare every offbeat 8th: the skank/D-beat read — bass-follow stands down, every slot is owned). The take chips remember all five. Two more rules: <b>sections sharing an EXACT label share their groove</b> — label two spans "A1" and the drums restate bar-for-bar (fills and crashes still vary: a fill is commentary on what comes next), so the same-label-same-color convention now also means same-drums; and at fills 4–5 the vocabulary opens its <b>metal tier</b> — a 16th-rate tom run down the kit, a full-bar crash-in kit fall, and a double-kick burst — weighted so big fills dominate the top of the knob.</dd>
-      <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Copy, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⁀ Join, ⇄ Move to track, ▲▼ Octave up/down (the whole selection jumps ±12 — no sliding), ♫ Insert chord, 🥁 Drum pattern, 🎲 Drummer — the same actions as the edit-row icons, labeled. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
+      <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Copy, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⇅ Transpose, ▲▼ Octave up/down, ♫ Insert chord, ⇄ Move to track, 🥁 Drum pattern, 🎲 Drummer, ➗ Divide, ⁀ Join — the same actions as the edit-row icons, labeled. The row itself keeps the heavy-use tools up front and folds the rest behind <b>⋯</b> (tap to expand; the choice sticks per device) — so pencil mode's duration picker fits on one iPad row again. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
       <dt>Divide (➗)</dt><dd>Select notes, tap <b>➗</b>, pick N (2–7): each note becomes N equal notes — pitch, velocity, and total span unchanged. This is how triplets happen: 3 on a half note = quarter-note triplets (the 1 · 1.667 · 2.333 placement no grid offers), 3 on a quarter = eighth triplets, 6 on a held two-beat note = a run of six. The pieces are free notes — drag them anywhere after.</dd>
@@ -1147,6 +1171,7 @@
   <button class="fitem" id="emDivide">➗  Divide into…</button>
   <button class="fitem" id="emJoin">⁀  Join notes</button>
   <button class="fitem" id="emMove">⇄  Move to track…</button>
+  <button class="fitem" id="emTranspose">⇅  Transpose…</button>
   <button class="fitem" id="emOctUp">▲  Octave up</button>
   <button class="fitem" id="emOctDown">▼  Octave down</button>
   <div class="fdiv"></div>
@@ -2746,17 +2771,19 @@ function draw() {
     if (y < RULER_H || y > H) continue;
     if (inKitLane(p)) { // kit lane rows carry their piece names
       if (p === laneBotRow() - 1) { // the ⋯ expander: show/hide unused pieces
-        if (view.rowH >= 9) {
+        if (view.rowH >= 6) {
           ctx.fillStyle = css("--dim");
           ctx.fillText(kitShowAll ? "⋯ less" : "⋯ kit", RULER_W - 6, y + rowH / 2);
         }
         continue;
       }
       const gm = kitSlots()[kitLaneTop() - p];
-      if (gm !== undefined && DRUM_LABELS[gm] && view.rowH >= 9) {
+      if (gm !== undefined && DRUM_LABELS[gm] && view.rowH >= 6) { // shrink, don't vanish (iPad zoom-out lost the labels)
         const st = pieceState.get(gm);
         ctx.fillStyle = st === "solo" ? css("--gold") : !pieceAudible(gm) ? css("--dim") : css("--text");
+        if (view.rowH < 10) ctx.font = Math.max(7, Math.floor(view.rowH)) + "px " + css("--mono");
         ctx.fillText((st === "solo" ? "S " : st === "mute" ? "✕" : "") + DRUM_LABELS[gm], RULER_W - 6, y + rowH / 2);
+        if (view.rowH < 10) ctx.font = "10px " + css("--mono");
       }
       continue;
     }
@@ -4165,6 +4192,7 @@ function tap(pos) {
 
 // ---------------------------------------------------------------- audio (NES-ish voices)
 const MASTER_VOL = 0.22;
+let masterVol = 1; // user's master multiplier (🔊 button), device pref
 function warmContext() { // one silent sample: absorbs the fresh context's glitchy first quantum
   const src = audio.createBufferSource();
   src.buffer = audio.createBuffer(1, 1, audio.sampleRate);
@@ -4179,7 +4207,7 @@ function ensureAudio() { // one context for the app's lifetime — iOS Safari
   audio = new (window.AudioContext || window.webkitAudioContext)();
   audio.onstatechange = () => console.log("[audio] state:", audio && audio.state);
   master = audio.createGain();
-  master.gain.value = MASTER_VOL;
+  master.gain.value = MASTER_VOL * masterVol;
   master.connect(audio.destination);
   trackGains = [];
   warmContext();
@@ -4218,7 +4246,7 @@ function openMaster() { // declick: ramp the master up instead of snapping on
   const t = audio.currentTime;
   master.gain.cancelScheduledValues(t);
   master.gain.setValueAtTime(master.gain.value, t);
-  master.gain.linearRampToValueAtTime(MASTER_VOL, t + 0.03);
+  master.gain.linearRampToValueAtTime(MASTER_VOL * masterVol, t + 0.03);
 }
 // first touch anywhere: create + warm the context inside a user gesture
 document.addEventListener("pointerdown", function warm() {
@@ -5978,6 +6006,44 @@ function applySpeed(pct) {
 speedsl.addEventListener("input", () => { speedlbl.textContent = speedsl.value + "%"; });
 speedsl.addEventListener("change", () => applySpeed(+speedsl.value)); // on release, not per drag-tick
 speedreset.addEventListener("click", () => applySpeed(100));
+// speed + volume live behind BUTTONS (Josh, 2026-08-22: the slider "takes too
+// much space... if I click it, it opens up the slider") — tap toggles the
+// popover open; tapping anywhere else folds it back to a button
+{
+  const pops = [["speedbtn", "speedpop"], ["volbtn", "volpop"]];
+  for (const [bid, pid] of pops) {
+    document.getElementById(bid).addEventListener("click", () => {
+      for (const [b2, p2] of pops) // one open at a time
+        document.getElementById(p2).style.display = p2 === pid &&
+          document.getElementById(p2).style.display === "none" ? "flex" : "none";
+    });
+  }
+  document.addEventListener("pointerdown", e => {
+    for (const [bid, pid] of pops) {
+      const pop = document.getElementById(pid);
+      if (pop.style.display !== "none" && !pop.contains(e.target) && e.target.id !== bid)
+        pop.style.display = "none";
+    }
+  }, {capture: true});
+}
+const speedbtn = document.getElementById("speedbtn");
+const _applySpeedInner = applySpeed;
+applySpeed = pct => { _applySpeedInner(pct); speedbtn.textContent = pct + "%"; };
+// master volume: device pref, multiplies MASTER_VOL everywhere it lands
+const volsl = document.getElementById("volsl");
+const vollbl = document.getElementById("vollbl");
+const volbtn = document.getElementById("volbtn");
+masterVol = +(localStorage.getItem("ff1roll-mastervol") || 1);
+volsl.value = String(Math.round(masterVol * 100));
+vollbl.textContent = Math.round(masterVol * 100) + "%";
+volbtn.textContent = masterVol === 1 ? "🔊" : "🔊" + Math.round(masterVol * 100) + "%";
+volsl.addEventListener("input", () => {
+  masterVol = (+volsl.value) / 100;
+  vollbl.textContent = volsl.value + "%";
+  volbtn.textContent = masterVol === 1 ? "🔊" : "🔊" + volsl.value + "%";
+  localStorage.setItem("ff1roll-mastervol", String(masterVol));
+  if (audio && master) master.gain.setValueAtTime(MASTER_VOL * masterVol, audio.currentTime);
+});
 
 // key dial: preview any signature live; Set writes "key: X" at the cursor bar.
 // A signature is mode-ambiguous (Bb major and G minor share two flats), so a
@@ -7523,13 +7589,17 @@ function drawGuitar(W, H, lit) {
   lit.live.forEach((ti, p) => add(p, trackColor(ti)));
   lit.sel.forEach((ti, p) => add(p, trackColor(ti))); // lasso'd notes wear their track's color
   if (instFlash && instFlash.si !== undefined) dots.push({...instFlash, color: trackColor(selTrack)});
-  // pitch-class echoes (lasso only): EVERY same-named note on the neck gets a
-  // hollow ring in its source note's track color — earliest track wins
+  // pitch-class echoes: EVERY same-named note on the neck gets a hollow ring
+  // in its source note's track color — earliest track wins. Sounding notes get
+  // the same treatment as the lasso (Josh, 2026-08-22: "the same algorithm
+  // applied to the Play button")
   const selPcs = new Map();
-  lit.sel.forEach((ti, p) => {
+  const echo = (ti, p) => {
     const pc = p % 12;
     if (!selPcs.has(pc) || ti < selPcs.get(pc)) selPcs.set(pc, ti);
-  });
+  };
+  lit.sel.forEach(echo);
+  lit.live.forEach(echo);
   if (selPcs.size) {
     const taken = new Set(dots.map(d => d.si + ":" + d.f));
     GTR_TUNING.forEach((open, si) => {
@@ -8635,6 +8705,7 @@ document.getElementById("editsheetbtn").addEventListener("click", e => {
   proxy("emDivide", () => document.getElementById("divbtn").click());
   proxy("emJoin", () => document.getElementById("joinbtn").click());
   proxy("emMove", () => document.getElementById("movebtn").click());
+  proxy("emTranspose", () => document.getElementById("trbtn").click());
   proxy("emOctUp", () => document.getElementById("octupbtn").click());
   proxy("emOctDown", () => document.getElementById("octdownbtn").click());
   proxy("emChord", () => document.getElementById("insbtn").click());
@@ -10308,6 +10379,63 @@ document.getElementById("octdownbtn").addEventListener("click", () => {
   if (nudgeSelection(0, -12)) setInfo("selection down an octave (⟲ undoes)");
   else setInfo("nothing selected — lasso or tap notes first");
 });
+// ⋯ folds the less-used tools (Josh, 2026-08-22: pencil mode wrapped the row)
+{
+  const wrap2 = document.getElementById("morewrap");
+  const open = localStorage.getItem("ff1roll-editmore") === "1";
+  wrap2.style.display = open ? "inline-flex" : "none";
+  document.getElementById("morebtn").classList.toggle("active", open);
+  document.getElementById("morebtn").addEventListener("click", () => {
+    const on = wrap2.style.display === "none";
+    wrap2.style.display = on ? "inline-flex" : "none";
+    document.getElementById("morebtn").classList.toggle("active", on);
+    localStorage.setItem("ff1roll-editmore", on ? "1" : "0");
+  });
+}
+function diatonicShift(dir) { // move each note one scale degree in the declared key
+  const items = selEditItems();
+  if (!items.length) { setInfo("select notes first"); return 0; }
+  const MAJ = [0, 2, 4, 5, 7, 9, 11];
+  let noKey = false;
+  const shifted = selEditApply(items, n => {
+    const sf = sfDeclaredAt(n.t); // DECLARED key only — the C default is not a ruling
+    if (sf === null || sf === undefined) { noKey = true; n.p = Math.max(PMIN, Math.min(PMAX, n.p + dir)); return; }
+    const tonic = ((sf * 7) % 12 + 12) % 12;
+    const scale = MAJ.map(x => (x + tonic) % 12);
+    const pc = n.p % 12;
+    let i = scale.indexOf(pc);
+    if (i < 0) { n.p = Math.max(PMIN, Math.min(PMAX, n.p + dir)); return; } // chromatic slide back toward the scale
+    const j = (i + dir + 7) % 7;
+    let d = scale[j] - scale[i];
+    if (dir > 0 && d <= 0) d += 12;
+    if (dir < 0 && d >= 0) d -= 12;
+    n.p = Math.max(PMIN, Math.min(PMAX, n.p + d));
+  });
+  if (noKey) setInfo("no key declared at some notes — those moved chromatically");
+  return shifted;
+}
+document.getElementById("trbtn").addEventListener("click", () => {
+  if (!selEditItems().length) { setInfo("select notes first — then ⇅ transposes them"); return; }
+  const row = document.getElementById("trchips");
+  if (!row.children.length) {
+    const mk = (label, fn) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.style.cssText = "flex:1;min-height:44px";
+      b.addEventListener("click", fn);
+      row.appendChild(b);
+    };
+    mk("−2", () => nudgeSelection(0, -2) && setInfo("down a whole step (chromatic)"));
+    mk("−1", () => nudgeSelection(0, -1) && setInfo("down a half step"));
+    mk("+1", () => nudgeSelection(0, 1) && setInfo("up a half step"));
+    mk("+2", () => nudgeSelection(0, 2) && setInfo("up a whole step (chromatic)"));
+    mk("in key ▼", () => diatonicShift(-1) && setInfo("down one scale degree — still in key"));
+    mk("in key ▲", () => diatonicShift(1) && setInfo("up one scale degree — still in key"));
+  }
+  document.getElementById("trsheet").classList.add("on");
+});
+document.getElementById("trclose").addEventListener("click", () =>
+  document.getElementById("trsheet").classList.remove("on"));
 document.getElementById("divbtn").addEventListener("click", () => {
   if (!selEditItems().length) { setInfo("select notes first — then ➗ divides each into equal parts"); return; }
   const row = document.getElementById("divchips");
@@ -10358,7 +10486,7 @@ function updateEditButtons() { // disabled = "this can't do anything right now"
   set("redobtn", st[1]); set("emRedo", st[1]);
   for (const id of ["copybtn", "emDup", "delbtn", "emDelete", "splitbtn", "emSplit",
                     "joinbtn", "emJoin", "movebtn", "emMove", "emOctUp", "emOctDown",
-                    "octupbtn", "octdownbtn", "divbtn", "emDivide"]) set(id, st[2]);
+                    "octupbtn", "octdownbtn", "divbtn", "emDivide", "trbtn", "emTranspose"]) set(id, st[2]);
   set("pastebtn", st[3]); set("emPaste", st[3]);
 }
 function pushUndo(entry) { editUndo.push(entry); editRedo = []; } // a fresh edit forks history

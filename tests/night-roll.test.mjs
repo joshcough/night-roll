@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Octave up", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "in key ▲", "folds the rest behind", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1469,6 +1469,28 @@ test("Drummer: same section label = same groove, bar for bar", () => {
     toms += hh;
   }
   assert.ok(toms > 10, "weighted metal-tier fills produce toms (got " + toms + ")");
+  run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
+});
+
+test("diatonicShift: scale-degree steps in the declared key", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/dia-test.mid";
+    song.tracks = [{name: "pulse1", notes: [
+      {t: 0, d: 480, p: 64, v: 80},   // E in F#m/A-major scale
+      {t: 480, d: 480, p: 66, v: 80}, // F#
+      {t: 960, d: 480, p: 63, v: 80}]}]; // D# — NOT in the scale
+    song.rawNotes = null; chopS = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = deriveNoteTypes([{b1: 1, q1: 1, text: "key: F#m", added: true}]).map(resolveNote);
+    finalizeNotes();
+    multiSel = song.tracks[0].notes.map((_, ni) => ({ti: 0, ni}));
+    multiSelKey = new Set(multiSel.map(x => "0:" + x.ni));
+  `);
+  assert.ok(val(`diatonicShift(1)`)); // up one scale degree of A major / F# minor
+  // E->F# (whole step), F#->G# (whole step), D# (chromatic, out of scale) -> E
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p)`), [66, 68, 64]);
+  assert.ok(val(`diatonicShift(-1)`)); // and back down
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p)`), [64, 66, 62]);
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 
