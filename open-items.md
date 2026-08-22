@@ -497,6 +497,18 @@ both from his 08-21 "reported with real heat" items.
   hold-to-grab, band edge drag, left-edge resize, double-tap bands,
   LCD taps, chord extension chips, on-demand Check labels.
 
+## Drummer v2 seeds from Logic's control surface (Josh shared it, 2026-08-22)
+
+Shipped from it same night: the fills knob (amount+size, decoupled from
+energy). Still unmined, logged for when field use asks:
+- Complexity vs Intensity as SEPARATE axes (busyness vs velocity/
+  aggression — our energy still conflates them)
+- Swing knob (8th/16th selectable base)
+- "Follow: Chord Rhythm" — kick/snare locking to the chord bands'
+  rhythm, not just the bass (we follow bass onsets only)
+- Per-group pattern variants (cymbal row pattern N, kick/snare row
+  pattern M — numbered, browsable)
+
 ## Tooling to-do
 
 - **Kit piece solo/mute in the drum track's voice menu** (Josh,
