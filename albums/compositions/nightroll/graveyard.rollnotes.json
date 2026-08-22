@@ -1,4 +1,4 @@
-{ "version": 1, "song": "graveyard", "saved": 1787381455778, "notes": [
+{ "version": 1, "song": "graveyard", "saved": 1787406347149, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":38},
   {"at":[1,1],"type":"key","key":"F#m"},
@@ -8,6 +8,8 @@
   {"at":[6,1],"to":[12,4],"type":"section","label":"A"},
   {"at":[6,1],"to":[9,4],"type":"section","label":"A1"},
   {"at":[10,1],"to":[12,4],"type":"section","label":"A repeat"},
+  {"at":[10,1],"to":[10,4],"type":"chord","chord":"F#m"},
+  {"at":[12,1],"to":[12,4],"type":"chord","chord":"Bdim/F"},
   {"at":[13,1],"to":[14,1],"type":"section","label":"Break"},
   {"at":[14,2],"to":[21,3],"type":"section","label":"B"},
   {"at":[14,2],"to":[17,4],"type":"section","label":"B1"},
