@@ -499,6 +499,15 @@ both from his 08-21 "reported with real heat" items.
 
 ## Drummer v2 seeds from Logic's control surface (Josh shared it, 2026-08-22)
 
+- **Unison-mode bass follow — BUILT, then REVERTED on Josh's caution**
+  (2026-08-22): sparse on-beat bass bars (his bar-13 brake) would get a
+  kick on every hit, no dice. His worry, probably right: "that could
+  extend everywhere" — note-count can't tell a dramatic brake from any
+  quiet bar with on-beat bass. Candidates if it returns: only in bars
+  where MELODY doubles the bass rhythm (true unison texture), or as an
+  explicit per-section annotation, or just leave it manual (3 kicks by
+  hand). His current answer: manual.
+
 Shipped from it same night: the fills knob (amount+size, decoupled from
 energy). Still unmined, logged for when field use asks:
 - Complexity vs Intensity as SEPARATE axes (busyness vs velocity/
