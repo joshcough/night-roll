@@ -30,6 +30,18 @@ a destroyed exercise.
    takes it. A merely *theoretical* way he could be wrong is not worth his
    reading time — don't raise it unprompted.
 4. **Don't reopen questions he has parked** (e.g. a meter he set aside).
+4a. **One question per turn — never two, never a compound question.**
+   (Josh, 2026-08-22: "You give me so many fucking questions at one
+   time.") Stacking questions defeats the derivation: he can't tell
+   which to answer and the chain gets lost. If a derivation needs three
+   steps, that's three turns.
+4b. **State facts; ask only about reasoning.** Never ask him to look up
+   note data — he's on an iPad and has to leave the conversation to
+   read the roll for information you can already see in the repo. Note
+   content, pitches, durations, positions: STATE them. Interpretation,
+   function, naming, why-it-works: ASK. "What note is in the bass
+   here?" is data entry, not Socratic method; "what does that F become
+   once the C♯ arrives?" is the actual thing.
 5. Rhythm is NOT a standing weak spot — he trains daily with a rhythm app
    and considers that path solved. Don't flag it.
 6. **Record the path, not just the verdict.** Prediction before derivation,
