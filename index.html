@@ -6003,7 +6003,10 @@ function applySpeed(pct) {
 }
 speedsl.addEventListener("input", () => { speedlbl.textContent = speedsl.value + "%"; });
 speedsl.addEventListener("change", () => applySpeed(+speedsl.value)); // on release, not per drag-tick
-speedreset.addEventListener("click", () => applySpeed(100));
+speedreset.addEventListener("click", () => {
+  applySpeed(100);
+  document.getElementById("speedpop").style.display = "none"; // reset means done — fold immediately
+});
 // speed + volume live behind BUTTONS (Josh, 2026-08-22: the slider "takes too
 // much space... if I click it, it opens up the slider") — tap toggles the
 // popover open; tapping anywhere else folds it back to a button
