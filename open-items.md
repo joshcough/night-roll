@@ -506,7 +506,10 @@ both from his 08-21 "reported with real heat" items.
   quiet bar with on-beat bass. Candidates if it returns: only in bars
   where MELODY doubles the bass rhythm (true unison texture), or as an
   explicit per-section annotation, or just leave it manual (3 kicks by
-  hand). His current answer: manual.
+  hand). His current answer: manual. The curation datum (2026-08-22):
+  the generator gave kicks on 1, 2, 4 of his four-quarter brake; his
+  ear added beat 3 — full unison, no syncopation, when the band hits
+  together. First entry in the keep/change trail.
 
 Shipped from it same night: the fills knob (amount+size, decoupled from
 energy). Still unmined, logged for when field use asks:
