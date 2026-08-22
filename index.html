@@ -2731,14 +2731,6 @@ function draw() {
     ctx.lineTo(x, RULER_H + 14);
     ctx.fill();
   }
-  if (secMaxDepth > 1 && song) { // ▸/▾ collapse chevron beside the section lanes
-    const cap = secDepthCap();
-    ctx.fillStyle = css("--dim");
-    ctx.font = "10px " + (getComputedStyle(document.body).getPropertyValue("--mono") || "monospace");
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillText(cap >= secMaxDepth - 1 ? "▾" : "▸" + (cap + 1), 4, BASE_RULER_H + LANE_H / 2);
-  }
   // playhead / cursor — same triangle either way, gold while rolling
   if (playing) {
     const tick = secToTick(song, playSec());
@@ -2761,6 +2753,14 @@ function draw() {
   ctx.fillRect(0, 0, RULER_W, H);
   ctx.strokeStyle = css("--grid");
   ctx.beginPath(); ctx.moveTo(RULER_W - 0.5, 0); ctx.lineTo(RULER_W - 0.5, H); ctx.stroke();
+  if (secMaxDepth > 1 && song) { // ▸/▾ level-collapse chevron, in the gutter corner
+    const cap = secDepthCap(); // beside the section lanes (drawn AFTER the panel, or it's buried)
+    ctx.fillStyle = css("--gold");
+    ctx.font = "11px " + css("--mono");
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(cap >= secMaxDepth - 1 ? "▾" : "▸" + (cap + 1), 5, BASE_RULER_H + LANE_H / 2 + 1);
+  }
   ctx.textAlign = "right";
   ctx.textBaseline = "middle"; // labels center on their rows (E sat at its row's bottom)
   for (let p = botRow(); p <= topRow(); p++) {
