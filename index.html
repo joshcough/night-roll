@@ -9757,8 +9757,8 @@ function drGenerate(seed, energy, fromBar, toBar, t0Override, t1Override) {
   // boundaries inside the range: section starts + the loop target — the bar BEFORE gets the fill
   const boundaries = new Set();
   for (const n of rollnotes) {
-    if (n.section && n.start > t0 && n.start <= t1) boundaries.add(Math.floor(n.start / bt) + 1);
-    if (n.loopTo !== undefined && n.loopTo > t0 && n.loopTo <= t1) boundaries.add(Math.floor(n.loopTo / bt) + 1);
+    if (n.section && n.start >= t0 && n.start <= t1) boundaries.add(Math.floor(n.start / bt) + 1);
+    if (n.loopTo !== undefined && n.loopTo >= t0 && n.loopTo <= t1) boundaries.add(Math.floor(n.loopTo / bt) + 1);
   }
   const chordStarts = new Set(rollnotes.filter(n => n.chord && !n.section).map(n => n.start));
   const bass = bassTi >= 0 ? song.tracks[bassTi].notes.filter(n => !n.gone && n.t >= t0 && n.t < t1) : [];
@@ -9775,6 +9775,12 @@ function drGenerate(seed, energy, fromBar, toBar, t0Override, t1Override) {
   // ---- generate ----
   const hits = []; // {t, p, v, d}
   const put = (t, p, v, d) => { if (t >= t0 && t < t1) hits.push({t, p, v: Math.max(1, Math.min(127, Math.round(v))), d}); };
+  // a boundary AT the range start: this generation owns the arrival — crash it
+  // (section-at-a-time workflow: the intro pass plays the fill, this pass lands)
+  if (boundaries.has(fromBar) && !isBreak(fromBar)) {
+    const arng = drumRng(seed, fromBar * 7919 + 47);
+    put((fromBar - 1) * bt, 49, 100 + arng() * 12, 120);
+  }
   for (let bar = fromBar; bar <= toBar; bar++) {
     if (isBreak(bar)) continue; // his breaks are sacred: the drummer lays out
     const rng = drumRng(seed, bar);
