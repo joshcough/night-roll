@@ -490,6 +490,12 @@ both from his 08-21 "reported with real heat" items.
   starts-then-loses, roll vs score). Candidate shapes logged in the
   handoff: lower dwell / axis-based grab (vertical=grab, horizontal=
   pan) / instant grab on already-selected notes / slop threshold.
+  AUDIT 2026-08-22 found the PRIME SUSPECT: with a selection active,
+  pressing an UNSELECTED note pans instead of grabbing — a stale
+  off-screen lasso silently turns note-presses into pans. Candidate
+  fix (NOT shipped, his call): press-on-unselected replaces the
+  selection and grabs. Shipped the safe half: an arm cue (✊ info line
+  + the note sounds) when the dwell lands.
 - Logic-style always-from-top cycle play — he suspects he may want
   mid-span audition back ("i can ask to change it later").
 - New since his last load: real copy/paste (⧉ must be tapped before 📋
