@@ -1405,6 +1405,15 @@ test("Drummer v2: hard bit-identity, follow modes, feel tables", () => {
   assert.equal(dbl.filter(h => h.p === 36).length, 8);
   assert.equal(dbl.filter(h => h.p === 38).length, 8);
   assert.ok(dbl.filter(h => h.p === 38).every(h => h.t % 480 === 240));
+  // a ONE-VOICE passage is not a wall of breaks: following the only track
+  // that plays still generates (Josh's pulse1-solo tail, 2026-08-22)
+  run(`song.tracks[0].notes.push({t: 3840, d: 1920, p: 76, v: 80}); computeSongEnd();`);
+  const solo = val(`(() => {
+    const k = drGenerate(9, {busy: 3, hard: 3, fillAmt: 0, follow: "bass", followTi: 0, fromBar: 3, toBar: 3});
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return song.tracks[di].notes.filter(n => !n.gone && n.t >= 3840).length;
+  })()`);
+  assert.ok(solo > 0, "one-voice bar generated drums");
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 

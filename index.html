@@ -882,7 +882,7 @@
       <span class="lbl">grid</span>
       <select id="dpdiv"><option value="2" selected>8ths</option><option value="4">16ths</option></select>
     </div>
-    <p class="meta" style="margin:8px 0 0">One bar of pattern, repeated across the bar range on the drums track (created if the song has none). Tap cells to toggle.</p>
+    <p class="meta" style="margin:8px 0 0;white-space:normal">One bar of pattern, repeated across the bar range on the drums track (created if the song has none). Tap cells to toggle.</p>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="dpfill">Fill</button>
       <button id="dpclose" style="margin-left:auto">Close</button>
@@ -893,7 +893,7 @@
 <div class="overlay" id="divsheet">
   <div class="sheet">
     <h2>DIVIDE INTO</h2>
-    <p class="meta" style="margin:0 0 8px">Each selected note becomes N equal notes — pitch, velocity, and
+    <p class="meta" style="margin:0 0 8px;white-space:normal">Each selected note becomes N equal notes — pitch, velocity, and
     total length unchanged. 3 on a half note = quarter-note triplets; 3 on a quarter = eighth triplets;
     6 on two beats = a run of six. One ⟲ undoes it.</p>
     <div class="chiprow" id="divchips"></div>
@@ -937,7 +937,7 @@
     </div>
     <div class="status" id="drstatus"></div>
     <div class="chiprow" id="drtakes"></div>
-    <p class="meta" style="margin:8px 0 0">Fixed skeleton, fills before your declared section boundaries, silence in
+    <p class="meta" style="margin:8px 0 0;white-space:normal">Fixed skeleton, fills before your declared section boundaries, silence in
     breaks. <b>busy</b> = how much, <b>hard</b> = how loud, <b>fills</b> = how often and how big,
     <b>follow</b> = what the kick listens to (bass offbeats · declared chord changes · nothing),
     <b>feel</b> = backbeat rate (half = big slow snare, double = snare on every offbeat).
@@ -9816,10 +9816,19 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
   const bassTi = oFollowTi !== undefined && song.tracks[oFollowTi] ? oFollowTi : drBassTrack();
   // context per bar: break = nothing but bass (or nothing at all) SOUNDING there,
   // or a declared section label saying so — a sustained melody note is not a break
+  // a break is a DROPOUT: bars where the texture thins to the followed track
+  // alone. If no OTHER track plays anywhere in the range (a one-voice
+  // passage), nothing dropped out — only a labeled "break" section counts.
+  let rangeHasOthers = false;
+  song.tracks.forEach((mtr, ti) => {
+    if (ti === di || ti === bassTi || trackIsDrums(ti)) return;
+    if (mtr.notes.some(n => !n.gone && n.t < t1 && n.t + n.d > t0)) rangeHasOthers = true;
+  });
   const isBreak = bar => {
     const bs = (bar - 1) * bt, be = bar * bt;
     const labeled = rollnotes.some(n => n.section && /break/i.test(n.text) && n.start < be && (n.end || n.start + bt) > bs);
     if (labeled) return true;
+    if (!rangeHasOthers) return false;
     let melodic = false;
     song.tracks.forEach((mtr, ti) => {
       if (ti === di || ti === bassTi || trackIsDrums(ti)) return;
