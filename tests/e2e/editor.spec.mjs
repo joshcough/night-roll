@@ -372,3 +372,18 @@ test("Drummer: generate, reroll, take chips replay, one undo restores", async ({
   await page.click("#undobtn"); // one step back to take 2's state
   expect(await kit()).toEqual(take2);
 });
+
+test("cycle highlight stretches by its edges, both directions", async ({ page }) => {
+  const xy = tk => page.evaluate(t => {
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + RULER_W + (t / song.ppq) * view.pxq - view.x, y: r.top + 10 };
+  }, tk);
+  await drag(page, await xy(480), await xy(960)); // arm a one-beat cycle
+  const b0 = await page.evaluate(() => ({ a: rangeSel.a, b: rangeSel.b }));
+  await drag(page, await xy(b0.b), await xy(1440)); // right edge further right
+  expect(await page.evaluate(() => rangeSel.b)).toBe(1440);
+  await drag(page, await xy(480), await xy(240)); // left edge further left
+  expect(await page.evaluate(() => ({ a: rangeSel.a, b: rangeSel.b }))).toEqual({ a: 240, b: 1440 });
+  await drag(page, await xy(240), await xy(720)); // left edge back right (shrink)
+  expect(await page.evaluate(() => rangeSel.a)).toBe(720);
+});
