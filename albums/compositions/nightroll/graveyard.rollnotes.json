@@ -1,4 +1,4 @@
-{ "version": 1, "song": "graveyard", "saved": 1787411283319, "notes": [
+{ "version": 1, "song": "graveyard", "saved": 1787411371118, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":38},
   {"at":[1,1],"type":"key","key":"F#m"},
@@ -10,7 +10,7 @@
   {"at":[6,1],"to":[6,4],"type":"chord","chord":"F#m7","note":"Calling this minor 7 because there’s no 5th but there are those 2 E’s. You could argue they are just decorative and all we have is a minor 3rd."},
   {"at":[10,1],"to":[12,4],"type":"section","label":"A repeat"},
   {"at":[10,1],"to":[10,4],"type":"chord","chord":"F#m","note":"Finally the full triad arrives.\nWith the Es, you can also argue this is F#m7"},
-  {"at":[12,1],"to":[13,1],"type":"chord","chord":"Bdim/F"},
+  {"at":[12,1],"to":[12,4],"type":"chord","chord":"Bdim/F"},
   {"at":[13,1],"to":[14,1],"type":"section","label":"Break"},
   {"at":[13,1],"to":[13,1],"type":"chord","chord":"A/C#","note":"No 5th. C# in the root argues this is really something else."},
   {"at":[13,2],"to":[13,2],"type":"chord","chord":"Ddim","note":"No 3rd, tritone only. Still feels like a diminished chord to me."},
