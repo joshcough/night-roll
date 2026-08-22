@@ -499,6 +499,12 @@ both from his 08-21 "reported with real heat" items.
 
 ## Tooling to-do
 
+- **Kit piece solo/mute in the drum track's voice menu** (Josh,
+  2026-08-22): gutter-label tap cycle shipped and approved; if the
+  labels prove too small to hit on the iPad, mirror the controls into
+  the drum track's chip menu (tap selected chip) — "not necessary
+  yet," his call after field use.
+
 - **iPhone treatment (Josh, 2026-08-18, "eventually"):** track chips
   are unreachable on a phone — the top row shows only ⏮ + ▶ pushed
   hard left; the chip cluster gets no room. The bottom panel already
