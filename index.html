@@ -786,6 +786,11 @@
         <select id="nchordbass"></select>
       </div>
     </div>
+    <div class="row" id="nsectrow" style="display:none">
+      <span class="lbl">label</span>
+      <input id="nsectlabel" type="text" placeholder="Section label (shows in the ruler, e.g. A — G home)"
+             style="flex:1;min-width:0;min-height:40px">
+    </div>
     <textarea id="ntext" placeholder="What's happening at this beat?"></textarea>
     <div class="row" id="nkeyrow" style="display:none">
       <span class="lbl">new key</span>
@@ -1068,7 +1073,7 @@
     <div class="hsec" data-hsec="annot">
     <h3>ANNOTATIONS</h3>
     <dl>
-      <dt>Attached notes on ANY annotation</dt><dd>Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the text box below the value rides along (for sections, the first line is the label and the rest is the note). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.</dd>
+      <dt>Attached notes on ANY annotation</dt><dd>Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the note box below the value rides along (sections have a dedicated label field, so the note box is purely the note — and key, meter, tempo, loop, and chop all show the note box too). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.</dd>
       <dt>+ Note</dt><dd>Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.</dd>
       <dt>Ruler drag</dt><dd>Drag along the bar ruler to select a range — + Note pre-fills it, and ▶ Play <b>cycles</b> over it, Logic-style: playback starts from the cycle's top every time and loops just that span (any loop: annotation is ignored while it's armed). <b>Bar lines are magnetic</b>: land within a finger's width of a bar line and the edge snaps TO the bar (measured in screen pixels, so it works at every zoom); away from bar lines, edges snap to 16ths — zoom in when you want fine edges. Tapping or dragging the ruler never clears your note selection — select notes, set the range, audition, all without re-lassoing. Only a DRAG arms the cycle — tapping a section or chord band still selects its range for + Note, without changing playback. Grab either <b>edge</b> of the highlight and drag to stretch or shrink it in either direction (bar-magnetic, stays armed). Tapping the ruler <b>parks</b> the highlight (it dims but survives); tap inside the dimmed span to re-arm it without redrawing, or drag a new span to replace it. While a cycle is armed, ⏮ returns to the cycle's start instead of bar 1. The playhead's triangle handle under the ruler is draggable in any mode. On your own songs, drag a section or chord band by its <b>edge</b> (in its ruler lane) to move that boundary — snaps to 16ths, saves like any other edit.</dd>
       <dt>Gold flags</dt><dd>Existing annotations. Tap one to jump there and read it in the strip above the footer. They also appear as subtitles during playback.</dd>
@@ -2392,6 +2397,9 @@ function setSong(parsed, key) {
   _has32 = null;
   editRedo = [];
   dupPending = null; // clone bookkeeping never crosses songs
+  rangeSel = null; // a ruler range is meaningless in a different song
+  tapBand = {n: null, t: 0};
+  drTakes = []; drActive = -1; // Drummer takes replay against THIS song's notes
   declaredTs = null; // meter resets to neutral until this song's notes declare one
   selNote = null;
   editUndo = []; // undo history belongs to ONE song — stale entries would mutate the wrong notes
@@ -3742,7 +3750,7 @@ canvas.addEventListener("pointerdown", e => {
   drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false,
           lasso, noteEdit, pencil, bandEdge, pendingEdit, pendingPencil, rangeEdge,
           cursor: !lasso && !noteEdit && !pendingEdit && !pencil && !pendingPencil && !bandEdge && !rangeEdge && cursorHit(p),
-          ruler: !lasso && !noteEdit && !pendingEdit && !pencil && !pendingPencil && !bandEdge && !rangeEdge && !!song && p.y < RULER_H,
+          ruler: !lasso && !noteEdit && !pendingEdit && !pencil && !pendingPencil && !bandEdge && !rangeEdge && !!song && p.y < BASE_RULER_H,
           spos: p};
   if (pendingEdit || pendingPencil) { // hold-to-grab: dwell arms the edit; a fast stroke pans
     const d = drag;
@@ -7888,7 +7896,8 @@ function fillBarBeatSelects() {
 function editorType() { return document.getElementById("ntype").value; }
 function applyEditorType() {
   const t = editorType();
-  document.getElementById("ntext").style.display = t === "key" || t === "loop" || t === "timesig" || t === "chop" || t === "tempo" ? "none" : "";
+  document.getElementById("ntext").style.display = ""; // every authored type carries a note (Josh, 2026-08-22)
+  document.getElementById("nsectrow").style.display = t === "section" ? "" : "none";
   document.getElementById("nkeyrow").style.display = t === "key" ? "" : "none";
   document.getElementById("nchordbox").style.display = t === "chord" ? "" : "none";
   document.getElementById("ntsrow").style.display = t === "timesig" ? "" : "none";
@@ -7899,9 +7908,8 @@ function applyEditorType() {
   document.getElementById("nmic").style.display =
     SPEECH && t !== "key" && t !== "loop" && t !== "timesig" && t !== "chop" && t !== "tempo" ? "" : "none"; // dictation targets the text box
   document.getElementById("ntext").placeholder =
-    t === "section" ? "Section label (shows in the ruler, e.g. A — G home)"
-    : t === "chord" ? "Optional note about this chord (✱ in the ruler)"
-                    : "What's happening at this beat?";
+    t === "note" ? "What's happening at this beat?"
+                 : "Optional note about this " + (t === "timesig" ? "meter" : t) + " (✱ in the ruler)";
   document.getElementById("nstatus").textContent =
     t === "key" ? "To bar '—' = until further notice; set it to make a temporary key that reverts after." :
     t === "chord" ? "Tap chips or type the symbol. Standard: bare root = major (C), m = minor (Gm), /X = bass note (G7/B)." :
@@ -8147,9 +8155,10 @@ function openEditor(note, presetType) {
     setBeatPair("nq1", "ns1", (dt % barTicks()) / beatTicks() + 1);
   }
   document.getElementById("ntext").value =
-    ["chord", "key", "tempo", "timesig", "loop"].includes(type) ? (note && note.cnote || "")
-    : type === "section" ? (note ? note.text + (note.cnote ? "\n" + note.cnote : "") : "")
-    : note ? note.text : "";
+    ["chord", "key", "tempo", "timesig", "loop", "section", "chop"].includes(type)
+      ? (note && note.cnote || "")
+      : note ? note.text : "";
+  document.getElementById("nsectlabel").value = type === "section" && note ? note.text : "";
   if (type === "chord") setChordWidget(note ? note.text : "");
   if (type === "key" && note) {
     const nm = (note.text.match(/^key:\s*(\S+(?:\s+[a-z]+)?)/i) || [])[1] || "";
@@ -8223,7 +8232,7 @@ document.getElementById("nsave").addEventListener("click", () => {
   micStop();
   const type = editorType();
   const text = document.getElementById("ntext").value.trim();
-  if (type !== "key" && type !== "loop" && type !== "timesig" && type !== "chord" && type !== "chop" && type !== "tempo" && !text) { document.getElementById("nstatus").textContent = "Note text is empty."; return; }
+  if (type === "note" && !text) { document.getElementById("nstatus").textContent = "Note text is empty."; return; }
   const b1 = Math.max(1, +document.getElementById("nb1").value || 1);
   const q1 = Math.max(1, getBeatPair("nq1", "ns1"));
   const b2raw = +document.getElementById("nb2").value || 0;
@@ -8299,10 +8308,12 @@ document.getElementById("nsave").addEventListener("click", () => {
     fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
              text: sym, chord: true, cnote: text || undefined, added: true};
   } else if (type === "section") {
+    const label = document.getElementById("nsectlabel").value.trim();
+    if (!label) { document.getElementById("nstatus").textContent = "Section label is empty."; return; }
     localStorage.setItem("ff1roll-dragtype", "section");
     fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
-             text: text.split("\n")[0], section: true, added: true,
-             cnote: text.split("\n").slice(1).join("\n").trim() || undefined};
+             text: label, section: true, added: true,
+             cnote: text || undefined};
   } else {
     fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null, text, added: true};
   }

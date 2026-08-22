@@ -162,7 +162,7 @@ Every gesture above — move, resize, copy, paste, delete, divide — is exactly
 ### ANNOTATIONS
 
 **Attached notes on ANY annotation**
-Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the text box below the value rides along (for sections, the first line is the label and the rest is the note). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.
+Every typed annotation — key, meter, tempo, section, chord, loop — can carry a text note: in its editor, whatever you write in the note box below the value rides along (sections have a dedicated label field, so the note box is purely the note — and key, meter, tempo, loop, and chop all show the note box too). The ✱ marker in bands and ☰ Notes says one is there. This is where the DOUBT lives — "whole-tone material, no conventional key" can sit on a key: B♭? and make the open question findable later.
 
 **+ Note**
 Write a note anchored at the cursor's beat — or tap 🎤 Speak and dictate it. Fill "to bar/beat" to span a range. The ⊙ highlight toggle in the note strip shades the current note's span in the timeline.
