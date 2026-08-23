@@ -4596,10 +4596,22 @@ function openMaster() { // declick: ramp the master up instead of snapping on
   master.gain.linearRampToValueAtTime(MASTER_VOL * masterVol, t + 0.03);
 }
 // first touch anywhere: create + warm the context inside a user gesture
+let silentUnlock = null;
 document.addEventListener("pointerdown", function warm() {
   document.removeEventListener("pointerdown", warm);
   ensureAudio();
   resumeAudio();
+  // iOS SILENT-SWITCH bypass (friends' "it won't play", 2026-08-23): WebAudio
+  // alone routes through the ringer channel, which the hardware mute switch
+  // silences — everything looks like it plays, no sound comes out. Looping a
+  // silent <audio> element on the same gesture upgrades the session to media
+  // playback, which the switch does not mute. Standard web workaround.
+  try {
+    silentUnlock = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=");
+    silentUnlock.loop = true;
+    silentUnlock.volume = 0.01;
+    silentUnlock.play().catch(() => { silentUnlock = null; }); // fine if refused — desktop doesn't need it
+  } catch (err) { silentUnlock = null; }
   if (sfPreloadPending) sfPreloadForSong(); // the boot-time preload deferred to this gesture
 }, {capture: true});
 function trackGain(ti) {
