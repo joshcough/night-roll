@@ -2799,7 +2799,7 @@ function pxPerTick() { return view.pxq / song.ppq; }
 // invalidate-and-render path; playbackFrame() blits a cached scene and lays
 // the playhead on top, falling back to a full render only when the camera
 // jumped or something called draw() (every state mutation already does).
-let sceneCanvas = null, sceneValid = false, sceneVX = -1, sceneVY = -1;
+let sceneCanvas = null, sceneValid = false, sceneVX = -1, sceneVY = -1, phLastX = null;
 function draw() { sceneValid = false; drawFull(false); }
 function playbackFrame() {
   if (!song) { draw(); return; }
@@ -2811,10 +2811,15 @@ function playbackFrame() {
     if (!sceneCanvas) sceneCanvas = document.createElement("canvas");
     sceneCanvas.width = canvas.width; sceneCanvas.height = canvas.height;
     sceneCanvas.getContext("2d").drawImage(canvas, 0, 0);
-    sceneValid = true; sceneVX = view.x; sceneVY = view.y;
-  } else {
+    sceneValid = true; sceneVX = view.x; sceneVY = view.y; phLastX = null;
+  } else if (phLastX !== null) {
+    // restore ONLY the strip under the previous playhead — a full-canvas blit
+    // per frame is the same pixel bill as a full redraw on CPU rasterizers
+    // (Brave, 2026-08-24: still 180% after the draw-call fix)
+    const sx = Math.max(0, Math.floor((phLastX - 13) * dpr));
+    const sw = Math.ceil(28 * dpr);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(sceneCanvas, 0, 0);
+    ctx.drawImage(sceneCanvas, sx, 0, sw, sceneCanvas.height, sx, 0, sw, sceneCanvas.height);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   // playhead overlay — same geometry as drawFull's, clipped below the ruler
@@ -2829,7 +2834,8 @@ function playbackFrame() {
     ctx.lineTo(x + 11, RULER_H);
     ctx.lineTo(x, RULER_H + 14);
     ctx.fill();
-  }
+    phLastX = x;
+  } else phLastX = null;
 }
 function drawFull(skipCursor) {
   if (instOpen) drawInst(); // panel repaints on every app repaint (incl. playback frames)
