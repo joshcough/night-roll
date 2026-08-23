@@ -1,10 +1,10 @@
-{ "version": 1, "song": "graveyard-2", "saved": 1787519051963, "notes": [
+{ "version": 1, "song": "graveyard-2", "saved": 1787526069893, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":35},
   {"at":[1,1],"type":"key","key":"F#m"},
   {"at":[1,1],"type":"tempo","bpm":96},
   {"at":[1,1],"text":"forked from albums/compositions/nightroll/graveyard.mid"},
-  {"at":[1,4],"to":[17,1.75],"type":"section","label":"Intro"},
+  {"at":[1,4],"to":[6,1],"type":"section","label":"Intro"},
   {"at":[6,1],"type":"tempo","bpm":192},
   {"at":[6,1],"to":[12,4],"type":"section","label":"A"},
   {"at":[6,1],"to":[9,4],"type":"section","label":"A1"},
