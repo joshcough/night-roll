@@ -555,6 +555,20 @@ hidden footer always floats the ▴ restore (which shows both). The
 View ▾ menu stays open across toggle taps (batch hiding); every item
 mirrors an existing button — buttons are the fast path.
 
+### Listener mode (2026-08-23)
+
+Phones (min-dimension < 500) default to a PLAYER: body.listener CSS
+hides File/Edit/View, track chips, edit row, footer, ▴ restore,
+metronome/record, instrument panel — leaving the roll, ⏮ ▶, the LCD,
+speed % and 🔊. Rationale: shared ?song= links are for listening.
+Device pref ff1roll-listener ("1"/"0"; null = phone default). The
+never-strand invariant holds via a header **Full app** button that
+only renders in listener mode (one tap opts the device out and
+persists "0"); View ▾ → 📻 Listener mode folds it back on any device.
+applyListener() is the one class writer, called from applyChrome's
+boot read and the two toggles; it early-returns when document.body is
+absent (vm harness).
+
 ## Bassist (advisor-designed, 2026-08-23)
 
 bsGenerate(seed, opts) mirrors the Drummer's contract: seeded takes,

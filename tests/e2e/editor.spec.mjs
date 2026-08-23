@@ -439,5 +439,20 @@ test("phone-size boot: song loads with the panel folded (no TDZ bricks)", async 
   await page.waitForFunction(() => { try { return !!song; } catch (e) { return false; } }, null, { timeout: 15000 });
   expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.querySelector("footer").style.display)).toBe("none"); // folded
+  // listener mode: phone boots as a PLAYER — chrome hidden, transport + Full app visible
+  expect(await page.evaluate(() => document.body.classList.contains("listener"))).toBe(true);
+  const vis = id => page.evaluate(i => {
+    const el = document.getElementById(i);
+    return !!el && getComputedStyle(el).display !== "none";
+  }, id);
+  expect(await vis("filesheetbtn")).toBe(false);
+  expect(await vis("viewsheetbtn")).toBe(false);
+  expect(await vis("playbtn")).toBe(true);
+  expect(await vis("fullappbtn")).toBe(true);
+  // Full app escape: never strand — one tap restores the DAW, pref persists
+  await page.click("#fullappbtn");
+  expect(await page.evaluate(() => document.body.classList.contains("listener"))).toBe(false);
+  expect(await vis("filesheetbtn")).toBe(true);
+  expect(await page.evaluate(() => localStorage.getItem("ff1roll-listener"))).toBe("0");
   await ctx.close();
 });
