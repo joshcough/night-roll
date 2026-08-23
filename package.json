@@ -6,7 +6,8 @@
   },
   "scripts": {
     "test": "node --test tests/night-roll.test.mjs tests/nsf.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --project=chromium -g @smoke"
   },
   "repository": {
     "type": "git",

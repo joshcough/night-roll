@@ -685,6 +685,9 @@ chord name, key inference, or note classification; findings are Josh's.
 4. Tests green: `npm test` (vm suite) and `npm run test:e2e`
    (Playwright gesture suite, chromium + webkit ≈ iPad Safari; WebAudio
    is stubbed in e2e — a real AudioContext stalls 20s in headless).
+   Mid-iteration, `npm run test:e2e:smoke` runs the @smoke-tagged
+   specs chromium-only (~2s); the FULL suite before every push stays
+   mandatory — smoke is for the edit loop, not the ship gate.
    Browser-verify via claude-in-chrome, commit, push with hash check;
    the push-triggered Pages build deploys on its own (manual kicks
    collide with it and email failure noise — only kick if it hangs).

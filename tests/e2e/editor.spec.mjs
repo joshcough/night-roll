@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 });
 test.afterEach(async ({ page }) => cleanup(page));
 
-test("drag moves the whole selection as a chord (lasso mode stays on)", async ({ page }) => {
+test("drag moves the whole selection as a chord (lasso mode stays on) @smoke", async ({ page }) => {
   await selectAll(page);
   await page.evaluate(() => { lassoMode = true; draw(); });
   const from = await noteXY(page, 240, 64);
@@ -37,7 +37,7 @@ test("with no tool armed (the default), dragging over a note only pans", async (
   expect((await notes(page)).map(n => n.t)).toEqual([0, 0, 0]); // untouched
 });
 
-test("pencil tap places one grid unit; pencil drag stretches the note", async ({ page }) => {
+test("pencil tap places one grid unit; pencil drag stretches the note @smoke", async ({ page }) => {
   await page.evaluate(() => {
     document.querySelector('#modeseg button[data-mode="pencil"]').click();
     pencilDur = 0.25;
@@ -53,7 +53,7 @@ test("pencil tap places one grid unit; pencil drag stretches the note", async ({
   expect(added[1].d).toBeGreaterThanOrEqual(480);
 });
 
-test("🗑 deletes the selection; ⟲ restores it", async ({ page }) => {
+test("🗑 deletes the selection; ⟲ restores it @smoke", async ({ page }) => {
   await selectAll(page);
   await page.click("#delbtn");
   expect(await notes(page)).toHaveLength(0);
@@ -61,7 +61,7 @@ test("🗑 deletes the selection; ⟲ restores it", async ({ page }) => {
   expect(await notes(page)).toHaveLength(3);
 });
 
-test("⧉ copies, 📋 pastes at the cursor — surviving a dead selection, never stacking", async ({ page }) => {
+test("⧉ copies, 📋 pastes at the cursor — surviving a dead selection, never stacking @smoke", async ({ page }) => {
   await selectAll(page);
   await page.click("#copybtn");
   expect(await notes(page)).toHaveLength(3); // a real copy adds nothing
@@ -346,7 +346,7 @@ test("ruler taps keep the lasso; ➗ divides into triplets", async ({ page }) =>
   expect((await notes(page)).length).toBe(3);
 });
 
-test("Drummer: generate, reroll, take chips replay, one undo restores", async ({ page }) => {
+test("Drummer: generate, reroll, take chips replay, one undo restores @smoke", async ({ page }) => {
   await page.evaluate(() => {
     song.tracks[0].notes.push({ t: 1920, d: 1920, p: 64, v: 80 }); // melody sounds in bar 2 too
     song.tracks.push({ name: "triangle", notes: [{ t: 0, d: 960, p: 45, v: 90 }, { t: 1920, d: 1440, p: 41, v: 90 }] });
@@ -427,7 +427,7 @@ test("tracks view: lasso across lanes, ghost-drag retrack, fader persists", asyn
   await page.evaluate(() => setViewMode("roll"));
 });
 
-test("phone-size boot: song loads with the panel folded (no TDZ bricks)", async ({ browser }) => {
+test("phone-size boot: song loads with the panel folded (no TDZ bricks) @smoke", async ({ browser }) => {
   // phones default the bottom panel folded, which runs the chrome/View-menu
   // path during boot — the exact path that bricked every iPhone (editOn TDZ)
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
