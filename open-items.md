@@ -560,6 +560,18 @@ under harmonic-rhythm compression (cap 4/bar is a guess — if it
 stiffens, bring him the tradeoff, never quietly go probabilistic);
 "double" skank vocabulary is unvalidated.
 
+## Local-first distribution (Josh, 2026-08-22 — the YouTube question)
+
+"People are not gonna use it if they have to set up GitHub accounts."
+Design-stage: (1) File System Access API save-to-folder (Chrome/Edge:
+showDirectoryPicker once, then Save writes .mid + .rollnotes.json
+locally — the folder is their repo; Safari/iPad falls back to
+downloads); (2) GitHub Release zip with a start.command/start.bat
+one-line server, OR inline vendor/ into index.html for true
+double-click-and-go; (3) hosted version stays the try-first path.
+Needs advisor ruling on save-mode detection, Sync-UI behavior with no
+repo configured, and the Safari story. Trigger: "build local mode."
+
 ## Tracks/Arrange view (Josh, 2026-08-22 — "a big project, but it would be cool")
 
 Logic-style third view (screenshot on record): one lane per track,
