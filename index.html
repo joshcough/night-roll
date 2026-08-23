@@ -1054,7 +1054,7 @@
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
       <dt>▤ Tracks view</dt><dd>The arrangement view (𝄞/▤/▦ button cycles Roll → Tracks → Score; also in View ▾): one lane per track, its notes drawn as a thumbnail (each lane scaled to its own range), with the track's color dot, name, M/S, and a volume fader in the lane header — the fader saves as the same vol= annotation as the voice menu's. Tap a note to select it (it sounds); lasso a box and it selects by TIME across every lane it touches — cross-track selection in one gesture. Hold-to-grab a selected note and drag: sideways moves it in time (bar-magnet-free, 16th snap), and <b>dragging up or down carries the whole selection to another lane</b> — pitch kept, one ⟲ undoes it, drums and melodic lanes never mix. Dragging shows a ghost until you release. Tap a lane's header to select that track; tap the selected track's header again for its voice & volume menu. Pencil doesn't draw here (a squeezed lane has no honest pitch) — it draws in Roll or Score; Erase works. The ruler above is the same one as always: sections, cycle, magnetic bars, the playhead triangle.</dd>
-      <dt>💬 Feature request</dt><dd>File → Feature request… opens a box that sends to the app's dev channel — requests and bug reports from inside the app, auto-tagged with the open song and playhead position, with a 🎤 Speak button: open, talk, Send. Replies stream back as 🛰 lines in the info strip AND light a gold 🛰 badge in the footer (like the ⚠ error button) that stays lit until you tap and read, with a Reply button in the list. Powered by two private ntfy topics set once in File → Settings (device-only — the public repo never contains them; without them the feature is inert). The topic names are the password: keep them secret.</dd>
+      <dt>💬 Feature request</dt><dd>File → Feature request… opens a box that sends to the app's dev channel — requests and bug reports from inside the app, auto-tagged with the open song and playhead position, with a 🎤 Speak button: open, talk, Send. Replies stream back as 🛰 lines in the info strip AND light a gold 🛰 badge in the footer (like the ⚠ error button) that stays lit until you tap and read, with a Reply button in the list. The whole two-way history — your requests and the replies, timestamped — persists on this device: 🕘 History in the request sheet (or tap the 🛰 badge) shows it newest-first; Clear wipes it. Powered by two private ntfy topics set once in File → Settings (device-only — the public repo never contains them; without them the feature is inert). The topic names are the password: keep them secret.</dd>
       <dt>View ▾ menu</dt><dd>Beside Edit in the header (always there, even on locked songs) — one place for every hide/show: 𝄞 Score view, ◂ Tracks, 🛠 Edit toolbar, ▦ Bottom bar, 🎹 Instrument panel, 💬 Notes strip, and ▸ Section levels with −/+ steppers (shows "2 of 3"; the gutter chevron still one-tap cycles). ✓ means visible; the menu STAYS OPEN while you flip several at once, and closes on a tap anywhere else. Every item mirrors an existing button — the buttons are the fast path, the menu is the findable one. The header itself never hides, so View ▾ is always the way back; hiding the bottom bar floats the ▴ restore button bottom-left (one tap brings everything back). The old ▾ hide buttons are gone — hiding lives here now.</dd>
       <dt>Speed &amp; volume buttons</dt><dd>The speed slider folded into a <b>percentage button</b> — tap to open the slider, tap anywhere else and it folds back (the reset chip appears when off-native). Beside it, <b>🔊</b> is a master volume the same way: tap, slide (10–200%), tap away; the setting sticks per device and the button shows the number when it's not 100%.</dd>
       <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). Every readout is a door: tap the tempo to open the tempo annotation governing the cursor (or declare the first one), tap the meter to open the time signature, tap the key to open the key change ruling the cursor — a stored partial opens its own note with the tonic already filled.</dd>
@@ -1315,7 +1315,7 @@
 
 <div class="overlay" id="claudealerts">
   <div class="sheet">
-    <h2>REPLIES</h2>
+    <h2>DEV CHANNEL</h2>
     <div class="status" id="claudealertlist" style="max-height:55vh;overflow-y:auto;white-space:pre-wrap;user-select:text;-webkit-user-select:text;cursor:text"></div>
     <div class="row" style="margin-top:10px">
       <button id="claudealertclear">Clear</button>
@@ -1333,6 +1333,7 @@
     <div class="row" style="margin-top:10px">
       <button class="primary" id="claudesend">Send</button>
       <button id="claudemic">🎤 Speak</button>
+      <button id="claudehist">🕘 History</button>
       <div class="status" id="claudestatus" style="flex:1"></div>
       <button id="claudeclose" style="margin-left:auto">Close</button>
     </div>
@@ -11234,6 +11235,13 @@ document.getElementById("claudeclose").addEventListener("click", () => {
   micStop();
   document.getElementById("claudesheet").classList.remove("on");
 });
+document.getElementById("claudehist").addEventListener("click", () => {
+  document.getElementById("claudesheet").classList.remove("on");
+  claudeRenderLog();
+  claudeUnread = 0;
+  claudeBadge();
+  document.getElementById("claudealerts").classList.add("on");
+});
 document.getElementById("claudemic").addEventListener("click", () => {
   if (!SPEECH) { document.getElementById("claudestatus").textContent = "no speech recognition in this browser"; return; }
   micToggle(document.getElementById("claudemic"), document.getElementById("claudetext"),
@@ -11248,6 +11256,8 @@ document.getElementById("claudesend").addEventListener("click", async () => {
     const r = await fetch("https://ntfy.sh/" + encodeURIComponent(topic),
       {method: "POST", body: txt + ctx});
     if (!r.ok) throw new Error("HTTP " + r.status);
+    claudeMsgs.push({t: Date.now(), dir: "out", message: txt + ctx});
+    claudeLogSave();
     document.getElementById("claudetext").value = "";
     document.getElementById("claudestatus").textContent = "sent ✓";
     setInfo("💬 request sent — replies arrive as 🛰 messages here");
@@ -11255,7 +11265,14 @@ document.getElementById("claudesend").addEventListener("click", async () => {
     document.getElementById("claudestatus").textContent = "send failed: " + err.message;
   }
 });
-const claudeMsgs = [];
+// two-way dev-channel history, persisted on this device (Josh, from bed:
+// "look back through my request history and your responses... timestamps")
+let claudeMsgs = [];
+try { claudeMsgs = JSON.parse(localStorage.getItem("ff1roll-devch-log") || "[]"); } catch (err) { claudeMsgs = []; }
+function claudeLogSave() {
+  if (claudeMsgs.length > 500) claudeMsgs = claudeMsgs.slice(-500);
+  localStorage.setItem("ff1roll-devch-log", JSON.stringify(claudeMsgs));
+}
 let claudeUnread = 0;
 function claudeBadge() { // the 🛰 stays lit until he actually reads (Josh's ask)
   const b = document.getElementById("claudebtn");
@@ -11263,15 +11280,21 @@ function claudeBadge() { // the 🛰 stays lit until he actually reads (Josh's a
   b.textContent = "🛰 " + claudeUnread;
 }
 function claudeMsg(title, message) {
-  claudeMsgs.push({t: new Date(), title, message});
-  if (claudeMsgs.length > 200) claudeMsgs.shift();
+  claudeMsgs.push({t: Date.now(), dir: "in", title, message});
+  claudeLogSave();
   claudeUnread++;
   claudeBadge();
 }
-document.getElementById("claudebtn").addEventListener("click", () => {
+function claudeRenderLog() {
+  const fmt = t => { const d = new Date(t); return d.toLocaleDateString() + " " + d.toLocaleTimeString(); };
   document.getElementById("claudealertlist").textContent = claudeMsgs.length
-    ? [...claudeMsgs].reverse().map(x => x.t.toLocaleTimeString() + "  " + (x.title ? x.title + ": " : "") + x.message).join("\n\n")
+    ? [...claudeMsgs].reverse().map(x =>
+        fmt(x.t) + (x.dir === "out" ? "  → you: " : "  🛰 " + (x.title ? x.title + ": " : "")) + x.message)
+      .join("\n\n")
     : "No messages.";
+}
+document.getElementById("claudebtn").addEventListener("click", () => {
+  claudeRenderLog();
   claudeUnread = 0; // reading clears the badge, keeps the history
   claudeBadge();
   document.getElementById("claudealerts").classList.add("on");
@@ -11279,7 +11302,8 @@ document.getElementById("claudebtn").addEventListener("click", () => {
 document.getElementById("claudealertclose").addEventListener("click", () =>
   document.getElementById("claudealerts").classList.remove("on"));
 document.getElementById("claudealertclear").addEventListener("click", () => {
-  claudeMsgs.length = 0;
+  claudeMsgs = [];
+  claudeLogSave();
   document.getElementById("claudealertlist").textContent = "No messages.";
 });
 document.getElementById("claudealertreply").addEventListener("click", () => {
