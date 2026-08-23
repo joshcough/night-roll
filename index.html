@@ -1725,6 +1725,8 @@ let pencilDur = 0.5;      // quarters
 // so "10 per bar", typed as a plain count). Transient by spec: no persistence,
 // nothing about the song changes. null = the meter's own grid.
 let gridDiv = null;
+const HOLD_MS = 160; // hold-to-grab dwell (was 230 — "way too damn hard", 2026-08-24)
+const HOLD_SLOP = 20; // px of pen jitter a pending hold survives (8 killed real holds)
 let gridAnchor = {b: 1, q: 1}; // grid phase origin, set IN the grid sheet (bar.beat)
 function pencilTicks() { return Math.max(1, Math.round(song.ppq * pencilDur)); }
 function isTripletDur(d) { // 1/6, 1/3, 2/3 — *6 lands on an integer, *4 doesn't
@@ -4011,6 +4013,13 @@ function placePencilNote(pp) { // deferred pencil: called by the dwell timer or 
   draw();
   return {ti: selTrack, ni: tr.notes.length - 1, t: pp.t, snap: pp.snap};
 }
+function armNoteEdit(pe) { // a grab became real: NOW selection may change
+  if (pe.reselect) {
+    const [ti, ni] = pe.hitKey.split(":").map(Number);
+    multiSel = [{ti, ni}];
+    multiSelKey = new Set([pe.hitKey]);
+  }
+}
 canvas.addEventListener("pointerdown", e => {
   if (fallActive() && !lassoMode) return; // fall rides the playhead — no pan/zoom; lasso still works
   try { canvas.setPointerCapture(e.pointerId); } catch (err) {} // Safari can refuse mid-gesture
@@ -4058,17 +4067,19 @@ canvas.addEventListener("pointerdown", e => {
   // mode (drag from empty space still draws a box; a tap still toggles)
   if (editableSong() && (mode === "select" || lasso) && viewMode !== "score" && !fallActive() && p.y >= RULER_H) {
     const hit = viewMode === "tracks" ? hitTracksNote(p) : hitNote(p);
-    if (hit && !lasso && multiSel.length && !multiSelKey.has(hit.ti + ":" + hit.ni)) {
+    const hitKey0 = hit ? hit.ti + ":" + hit.ni : null;
+    const wasSelected = !!hit && multiSelKey.has(hitKey0);
+    if (hit && !lasso && multiSel.length && !wasSelected) {
       // grabbing a note OUTSIDE the selection reselects just it (Logic
-      // behavior) — kills both stale-selection traps: the pan-instead-of-
-      // grab and the this-moved-five-drum-notes surprise (Josh, 2026-08-24)
-      multiSel = [{ti: hit.ti, ni: hit.ni}];
-      multiSelKey = new Set([hit.ti + ":" + hit.ni]);
+      // behavior) — but only when the grab actually ARMS (below), so a fast
+      // pan across notes never churns the selection (Josh, 2026-08-24)
+      selNote = hit;
     }
-    if (hit && (multiSelKey.has(hit.ti + ":" + hit.ni) || (!multiSel.length && !lasso))) {
+    if (hit && (wasSelected || !lasso)) {
       if (!multiSel.length) selNote = hit; // single note is draggable too
       if (e.altKey) duplicateSelectionInPlace(); // option-drag = drag out a copy
-      const items = selEditItems();
+      const items = wasSelected || !multiSel.length ? selEditItems()
+        : [{ti: hit.ti, ni: hit.ni, n: song.tracks[hit.ti].notes[hit.ni]}];
       if (items.length) {
         const hn = song.tracks[hit.ti].notes[hit.ni];
         const tickHere = posToTickPitch(p).tick;
@@ -4077,8 +4088,10 @@ canvas.addEventListener("pointerdown", e => {
         const nearStart = edgeOk && !nearEnd && Math.abs(tickHere - hn.t) < 8 / pxPerTick();
         pendingEdit = {kind: nearEnd ? "resize" : nearStart ? "resizeL" : "move",
                        orig: items.map(({ti, ni, n: nn}) => ({ti, ni, t: nn.t, d: nn.d, p: nn.p})),
-                       items, hitKey: hit.ti + ":" + hit.ni};
-        if (instantGrab) { noteEdit = pendingEdit; pendingEdit = null; }
+                       items, hitKey: hitKey0, reselect: !wasSelected};
+        // a SELECTED note grabs instantly for every pointer — tap once, then
+        // drag; the dwell is only for cold grabs (Josh: "way too damn hard")
+        if (instantGrab || wasSelected) { armNoteEdit(pendingEdit); noteEdit = pendingEdit; pendingEdit = null; }
         lasso = false;
       }
     }
@@ -4158,8 +4171,11 @@ canvas.addEventListener("pointerdown", e => {
   if (pendingEdit || pendingPencil) { // hold-to-grab: dwell arms the edit; a fast stroke pans
     const d = drag;
     d.holdTimer = setTimeout(() => {
-      if (drag !== d || d.moved) return; // gone, or already panning
+      // pending survives small jitter (moved flips at 8px, pending dies at
+      // HOLD_SLOP) — only a real swipe or a finished gesture cancels the arm
+      if (drag !== d || (!d.pendingEdit && !d.pendingPencil)) return;
       if (d.pendingEdit) {
+        armNoteEdit(d.pendingEdit);
         d.noteEdit = d.pendingEdit; d.pendingEdit = null;
         // the dwell armed — SAY so, or moving a beat early silently pans instead
         // (Josh, 2026-08-22: "sometimes I did [hold] and it was still difficult")
@@ -4169,7 +4185,7 @@ canvas.addEventListener("pointerdown", e => {
       }
       else if (d.pendingPencil) { d.pencil = placePencilNote(d.pendingPencil); d.pendingPencil = null; }
       draw();
-    }, 230);
+    }, HOLD_MS);
   }
 });
 canvas.addEventListener("pointermove", e => {
@@ -4205,9 +4221,10 @@ canvas.addEventListener("pointermove", e => {
   }
   if (!drag || drag.id !== e.pointerId) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-  if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 8) drag.moved = true;
-  if (drag.moved && (drag.pendingEdit || drag.pendingPencil)) {
-    drag.pendingEdit = drag.pendingPencil = null; // moved before the dwell: it's a scroll
+  const trav = Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy);
+  if (trav > 8) drag.moved = true;
+  if (trav > HOLD_SLOP && (drag.pendingEdit || drag.pendingPencil)) {
+    drag.pendingEdit = drag.pendingPencil = null; // a real swipe, not pen jitter: it's a scroll
     clearTimeout(drag.holdTimer);
   }
   if (drag.moved) {

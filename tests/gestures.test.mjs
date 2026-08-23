@@ -102,26 +102,34 @@ test("gesture: cycle highlight stretches by its edges, both directions", () => {
   assert.equal(app.run(`rangeSel.a`), 720);
 });
 
-test("gesture: pen fast stroke pans; a 230ms dwell grabs (fake clock)", () => {
+test("gesture: pen fast stroke pans; a dwell cold-grabs; selected = instant", () => {
   const app = boot("vm-gest-dwell");
   app.run(`mode = "select"; view.pxq = 600; clampView(); draw();`);
-  selectAll(app);
   const start = noteXY(app, 240, 64);
   const pen = (type, x, y) => app.dispatch("roll",
     pev(type, { pointerId: 7, pointerType: "pen", clientX: x, clientY: y }));
-  // fast stroke: down, immediately sweep, up — the selection must not move
+  // fast stroke over an unselected note: pans, nothing moves, no selection churn
   pen("pointerdown", start.x, start.y);
   for (let i = 1; i <= 5; i++) pen("pointermove", start.x - i * 30, start.y);
   pen("pointerup", start.x - 150, start.y);
   assert.deepEqual(notes(app).map(n => n.t), [0, 0, 0]);
-  // dwell: down, tick past the hold, then sweep — now it drags
+  assert.equal(app.run(`multiSel.length`), 0, "pan never reshuffles selection");
+  // cold dwell with pen jitter: 12px wobble must NOT kill the hold (slop 20)
   const s2 = noteXY(app, 240, 64);
   pen("pointerdown", s2.x, s2.y);
-  app.tick(230);
+  pen("pointermove", s2.x + 6, s2.y + 6); // jitter inside the slop
+  app.tick(160);
   const px16 = app.run(`(240 / song.ppq) * view.pxq`);
   for (let i = 1; i <= 4; i++) pen("pointermove", s2.x + (px16 / 4) * i, s2.y);
   pen("pointerup", s2.x + px16, s2.y);
-  assert.deepEqual(notes(app).map(n => n.t), [240, 240, 240]);
+  assert.deepEqual(notes(app).map(n => n.t), [0, 240, 0], "cold grab moves ONLY the grabbed note");
+  // the grab selected what it grabbed; a SELECTED note now drags with NO dwell
+  assert.deepEqual(JSON.parse(app.run(`JSON.stringify([...multiSelKey])`)), ["0:1"]);
+  const s3 = noteXY(app, 480, 64);
+  pen("pointerdown", s3.x, s3.y);
+  for (let i = 1; i <= 4; i++) pen("pointermove", s3.x + (px16 / 4) * i, s3.y);
+  pen("pointerup", s3.x + px16, s3.y);
+  assert.deepEqual(notes(app).map(n => n.t), [0, 480, 0], "instant grab, zero dwell");
 });
 
 test("gesture: custom grid — pencil taps land on 10ths-of-a-bar cells", () => {
