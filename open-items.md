@@ -579,8 +579,12 @@ on-screen piano, scoring, per-track practice); score view seeds
 notation; glossary + quiz platform close the loop. The full cycle —
 compose (roll) -> read (score) -> drill (fall) -> name (glossary) ->
 retain (quiz) — is the differentiator no competitor has; may justify
-more than $5. (His "Musical Meter" reference awaiting clarification —
-MuseScore or Melodics?)
+more than $5. "Musical Meter" (clarified): a rhythm-READING trainer — notation
+scrolls in time, you tap the rhythms as written. Night Roll has the
+hard parts already: engraved score view + the scoreTickToX playhead
+map + measurable tap timing. Feature shape: pick track + section,
+score scrolls, tap a pad, onsets scored against the notation — with
+HIS OWN compositions as exercise material, which nothing else offers.
 
 ## Local-first distribution (Josh, 2026-08-22 — the YouTube question)
 
