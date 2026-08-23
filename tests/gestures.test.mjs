@@ -156,18 +156,18 @@ test("gesture: uneven grid divisions stay bar-anchored (no drift)", () => {
   assert.equal(app.run(`gridCellStart(${4 * bt + 3 * (bt / 7) + 20})`), want);
 });
 
-test("view menu: grid input wires gridDiv; Off clears it", () => {
+test("grid sheet: chip tap applies instantly; off chip restores the meter", () => {
   const app = boot("vm-gest-gridmenu");
-  const gn = app.el("vwGridN");
-  gn.value = "10";
-  gn.dispatchEvent({ type: "change" });
+  app.el("vwGrid").click(); // opens the sheet (View menu item)
+  const chips = app.el("gridchips").children;
+  assert.equal(chips.length, 9, "preset chips rendered");
+  const ten = [...chips].find(c => c.textContent === "10");
+  ten.dispatchEvent({ type: "click" });
   assert.equal(app.run(`gridDiv`), 10);
-  assert.equal(app.el("vwGridLbl").textContent, "▦ Grid: 10/bar");
-  app.el("vwGridOff").click();
+  assert.ok(app.el("gridanchor").textContent.includes("bar lines"), "anchor explained");
+  app.el("gridoff").click();
   assert.equal(app.run(`gridDiv`), null);
-  gn.value = "999"; // out of range = off, not clamp-to-surprise
-  gn.dispatchEvent({ type: "change" });
-  assert.equal(app.run(`gridDiv`), null);
+  app.el("gridclose").click();
 });
 
 test("gesture: grid anchors at the cycle start — 14.2 phase, bar line not a snap target", () => {
