@@ -426,3 +426,18 @@ test("tracks view: lasso across lanes, ghost-drag retrack, fader persists", asyn
   expect(await page.evaluate(() => song.tracks[0].notes.filter(n => !n.gone).length)).toBe(3);
   await page.evaluate(() => setViewMode("roll"));
 });
+
+test("phone-size boot: song loads with the panel folded (no TDZ bricks)", async ({ browser }) => {
+  // phones default the bottom panel folded, which runs the chrome/View-menu
+  // path during boot — the exact path that bricked every iPhone (editOn TDZ)
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await page.addInitScript(() => { /* fresh storage = phone-folded default */ });
+  await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => { try { return !!song; } catch (e) { return false; } }, null, { timeout: 15000 });
+  expect(errors).toEqual([]);
+  expect(await page.evaluate(() => document.querySelector("footer").style.display)).toBe("none"); // folded
+  await ctx.close();
+});
