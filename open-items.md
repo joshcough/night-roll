@@ -560,6 +560,20 @@ under harmonic-rhythm compression (cap 4/bar is a guess — if it
 stiffens, bring him the tradeoff, never quietly go probabilistic);
 "double" skank vocabulary is unvalidated.
 
+## Product thread ($5 DAW — Josh, 2026-08-22: "a special little product")
+
+Positioning: not Logic-but-cheaper — "the chiptune DAW that teaches
+you composition." Differentiators: annotation layer living with the
+notes, declared-structure Drummer, authentic 2A03 chip audio, score
+view, iPad-first. Precedent: Koala Sampler ($5, one-person, beloved).
+Path = the local-first ladder below (PWA -> Capacitor -> local files
+-> App Store, $99/yr dev account accepted). Prerequisites: separate
+the ENGINE from Josh's corpus (compositions/journals/FF1 stay out —
+the data-locations config plan was built for this split); license
+check on bundled soundfonts (VexFlow is MIT, fine); support burden is
+the real cost, cheap pricing mitigates. YouTube demos = marketing +
+the learning story is the description.
+
 ## Local-first distribution (Josh, 2026-08-22 — the YouTube question)
 
 "People are not gonna use it if they have to set up GitHub accounts."
