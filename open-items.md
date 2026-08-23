@@ -573,6 +573,14 @@ the data-locations config plan was built for this split); license
 check on bundled soundfonts (VexFlow is MIT, fine); support burden is
 the real cost, cheap pricing mitigates. YouTube demos = marketing +
 the learning story is the description.
+LEARNING-SUITE framing (Josh, 2026-08-22): Synthesia-style practice is
+the existing ▼ Fall view + a practice layer (wait-for-input via MIDI/
+on-screen piano, scoring, per-track practice); score view seeds
+notation; glossary + quiz platform close the loop. The full cycle —
+compose (roll) -> read (score) -> drill (fall) -> name (glossary) ->
+retain (quiz) — is the differentiator no competitor has; may justify
+more than $5. (His "Musical Meter" reference awaiting clarification —
+MuseScore or Melodics?)
 
 ## Local-first distribution (Josh, 2026-08-22 — the YouTube question)
 
