@@ -391,3 +391,38 @@ test("cycle highlight stretches by its edges, both directions", async ({ page })
   await drag(page, await xy(240), await xy(720)); // left edge back right (shrink)
   expect(await page.evaluate(() => rangeSel.a)).toBe(720);
 });
+
+test("tracks view: lasso across lanes, ghost-drag retrack, fader persists", async ({ page }) => {
+  await page.evaluate(() => {
+    song.tracks.push({ name: "pulse2b", notes: [] });
+    if (song.rawNotes) song.rawNotes.push([]);
+    trackState.push({ muted: false, solo: false });
+    renderTrackbar(); computeSongEnd();
+    setViewMode("tracks");
+  });
+  await page.evaluate(() => { lassoMode = true; draw(); });
+  const geom = await page.evaluate(() => {
+    const g = laneGeom(0), r = canvas.getBoundingClientRect();
+    return { top: r.top, left: r.left, y0: g.y0, lh: g.lh, ppt: pxPerTick() };
+  });
+  // lasso the first lane's whole first bar
+  await drag(page, { x: geom.left + 200, y: geom.top + geom.y0 + 20 }, // clear of the playhead handle zone
+                   { x: geom.left + 150 + 1920 * geom.ppt, y: geom.top + geom.y0 + geom.lh - 4 });
+  expect(await page.evaluate(() => multiSel.length)).toBe(3);
+  // hold-to-grab a selected note, then drag one lane down (pen = dwell first)
+  const noteXYt = await page.evaluate(() => {
+    const g = laneGeom(0), r = canvas.getBoundingClientRect();
+    const n = song.tracks[0].notes[0];
+    return { x: r.left + RULER_W + (n.t + 120) * pxPerTick() - view.x, y: r.top + tracksNoteY(g, 0, n.p) };
+  });
+  await page.mouse.move(noteXYt.x, noteXYt.y);
+  await page.mouse.down();
+  await page.waitForTimeout(300); // mouse grabs instantly; dwell for pens — either way armed by now
+  await page.mouse.move(noteXYt.x, noteXYt.y + geom.lh, { steps: 6 });
+  await page.mouse.up();
+  expect(await page.evaluate(() => song.tracks[1].notes.filter(n => !n.gone).length)).toBe(3);
+  expect(await page.evaluate(() => song.tracks[0].notes.filter(n => !n.gone).length)).toBe(0);
+  await page.click("#undobtn"); // one step back
+  expect(await page.evaluate(() => song.tracks[0].notes.filter(n => !n.gone).length)).toBe(3);
+  await page.evaluate(() => setViewMode("roll"));
+});

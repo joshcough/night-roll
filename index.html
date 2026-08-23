@@ -1062,6 +1062,7 @@
       <dt>⏮</dt><dd>Back to bar 1.</dd>
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
+      <dt>▤ Tracks view</dt><dd>The arrangement view (𝄞/▤/▦ button cycles Roll → Tracks → Score; also in View ▾): one lane per track, its notes drawn as a thumbnail (each lane scaled to its own range), with the track's color dot, name, M/S, and a volume fader in the lane header — the fader saves as the same vol= annotation as the voice menu's. Tap a note to select it (it sounds); lasso a box and it selects by TIME across every lane it touches — cross-track selection in one gesture. Hold-to-grab a selected note and drag: sideways moves it in time (bar-magnet-free, 16th snap), and <b>dragging up or down carries the whole selection to another lane</b> — pitch kept, one ⟲ undoes it, drums and melodic lanes never mix. Dragging shows a ghost until you release. Tap a lane's header to select that track; tap the selected track's header again for its voice & volume menu. Pencil doesn't draw here (a squeezed lane has no honest pitch) — it draws in Roll or Score; Erase works. The ruler above is the same one as always: sections, cycle, magnetic bars, the playhead triangle.</dd>
       <dt>View ▾ menu</dt><dd>Beside Edit in the header (always there, even on locked songs) — one place for every hide/show: 𝄞 Score view, ◂ Tracks, 🛠 Edit toolbar, ▦ Bottom bar, 🎹 Instrument panel, 💬 Notes strip, and ▸ Section levels with −/+ steppers (shows "2 of 3"; the gutter chevron still one-tap cycles). ✓ means visible; the menu STAYS OPEN while you flip several at once, and closes on a tap anywhere else. Every item mirrors an existing button — the buttons are the fast path, the menu is the findable one. The header itself never hides, so View ▾ is always the way back; hiding the bottom bar floats the ▴ restore button bottom-left (one tap brings everything back). The old ▾ hide buttons are gone — hiding lives here now.</dd>
       <dt>Speed &amp; volume buttons</dt><dd>The speed slider folded into a <b>percentage button</b> — tap to open the slider, tap anywhere else and it folds back (the reset chip appears when off-native). Beside it, <b>🔊</b> is a master volume the same way: tap, slide (10–200%), tap away; the setting sticks per device and the button shows the number when it's not 100%.</dd>
       <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). Every readout is a door: tap the tempo to open the tempo annotation governing the cursor (or declare the first one), tap the meter to open the time signature, tap the key to open the key change ruling the cursor — a stored partial opens its own note with the tonic already filled.</dd>
@@ -1162,6 +1163,7 @@
 
 <div id="viewsheet">
   <button class="fitem" id="vwScore">𝄞  Score view</button>
+  <button class="fitem" id="vwTracksView">▤  Tracks view</button>
   <div class="fdiv"></div>
   <button class="fitem" id="vwTracks">◂  Tracks</button>
   <button class="fitem" id="vwEdit">🛠  Edit toolbar</button>
@@ -1681,7 +1683,8 @@ let previewSf = null;    // key dial preview override (null = follow regions)
 const canvas = document.getElementById("roll");
 const ctx = canvas.getContext("2d");
 const wrap = document.getElementById("rollwrap");
-const RULER_W = 46, BASE_RULER_H = 24, LANE_H = 15;
+const RULER_W_ROLL = 46, TRACKS_GUTTER = 148, BASE_RULER_H = 24, LANE_H = 15;
+let RULER_W = RULER_W_ROLL; // widens to the header column in tracks view (set ONLY in applyViewMode)
 let RULER_H = BASE_RULER_H; // grows when section lanes exist
 let secMaxDepth = 0; // deepest section nesting in this song (set per finalize)
 function setSecDepth(next) { // clamped stepper (the wrap-around cycle read as awkward)
@@ -2684,6 +2687,11 @@ function draw() {
     drawRuler(W, H);
     return;
   }
+  if (viewMode === "tracks") {
+    drawTracks(W, H);
+    drawRuler(W, H);
+    return;
+  }
   _laneTop = null; _kitSlots = null; // re-dock: edits since the last frame may have changed the lowest note
   _has32 = null; // 32nd-grid presence re-checks against current notes
   const ppt = pxPerTick();
@@ -2926,6 +2934,17 @@ function finalizeLasso() {
       });
     });
     t0 = secToTick(song, Math.max(0, sLo)); // key context for spelling comes from the box's start
+  } else if (viewMode === "tracks") {
+    // arrange lasso: time span × lane span — a box across lanes selects
+    // across tracks (the advisor's ruling: selection IS the arrange currency)
+    const tiLo = trackLaneAt(y0), tiHi = trackLaneAt(y1);
+    const lo = tiLo < 0 ? 0 : tiLo, hi = tiHi < 0 ? song.tracks.length - 1 : tiHi;
+    for (let ti = lo; ti <= hi; ti++) {
+      if (!trackAudible(ti)) continue;
+      song.tracks[ti].notes.forEach((n, ni) => {
+        if (!n.gone && n.t < t1 && n.t + n.d > t0) addSel(ti, ni);
+      });
+    }
   } else if (viewMode === "score" && scoreModel) {
     // hit-test the engraved notehead boxes themselves — the roll's linear
     // x->tick map doesn't hold on a score (noteheads aren't engraved
@@ -3050,6 +3069,135 @@ function drawLasso() {
   ctx.setLineDash([]);
 }
 
+// ---- TRACKS VIEW (advisor-designed, 2026-08-22): one lane per track, note
+// thumbnails per-lane-normalized, headers with M/S/fader. Time axis is the
+// roll's own map — ruler, cycle, bar magnet, playhead all shared. ----
+function tracksLaneH() {
+  const n = song ? song.tracks.length : 1;
+  return Math.max(44, Math.min(88, Math.floor((wrap.clientHeight - RULER_H) / Math.max(1, n))));
+}
+function laneGeom(ti) { // screen box + pitch normalization for one track's lane
+  const lh = tracksLaneH();
+  const y0 = RULER_H + ti * lh - view.y;
+  const tr = song.tracks[ti];
+  let lo = Infinity, hi = -Infinity;
+  if (trackIsDrums(ti)) { lo = 0; hi = Math.max(1, kitSlots().length - 1); }
+  else {
+    for (const n of tr.notes) if (!n.gone) { if (n.p < lo) lo = n.p; if (n.p > hi) hi = n.p; }
+    if (lo === Infinity) { lo = 57; hi = 69; }
+    if (hi - lo < 12) { const mid = (hi + lo) / 2; lo = mid - 6; hi = mid + 6; } // min one-octave span
+  }
+  return {y0, lh, lo, hi};
+}
+function trackLaneAt(y) {
+  const ti = Math.floor((y - RULER_H + view.y) / tracksLaneH());
+  return song && ti >= 0 && ti < song.tracks.length ? ti : -1;
+}
+function tracksNoteY(g, ti, p) { // y of a note's center inside its lane
+  const inner = g.lh - 8;
+  const frac = trackIsDrums(ti)
+    ? (kitSlots().indexOf(p) < 0 ? 0.5 : kitSlots().indexOf(p) / Math.max(1, kitSlots().length - 1))
+    : 1 - (p - g.lo) / Math.max(1, g.hi - g.lo);
+  return g.y0 + 4 + frac * inner;
+}
+function hitTracksNote(pos) {
+  const ti = trackLaneAt(pos.y);
+  if (ti < 0 || pos.x < RULER_W) return null;
+  const tick = (pos.x - RULER_W + view.x) / pxPerTick();
+  const g = laneGeom(ti);
+  const noteH = Math.max(3, (g.lh - 8) / Math.max(12, g.hi - g.lo));
+  const tr = song.tracks[ti];
+  for (let ni = tr.notes.length - 1; ni >= 0; ni--) {
+    const n = tr.notes[ni];
+    if (n.gone || tick < n.t - 8 / pxPerTick() || tick > n.t + n.d + 8 / pxPerTick()) continue;
+    if (Math.abs(tracksNoteY(g, ti, n.p) - pos.y) <= Math.max(6, noteH)) return {ti, ni};
+  }
+  return null;
+}
+let tracksGhost = null; // {dT, dLane} while dragging a selection between lanes
+function drawTracks(W, H) {
+  const ppt = pxPerTick();
+  drawRangeTints(W, H);
+  for (let ti = 0; ti < song.tracks.length; ti++) {
+    const g = laneGeom(ti);
+    if (g.y0 + g.lh < RULER_H || g.y0 > H) continue;
+    // lane body
+    if (ti === selTrack) {
+      ctx.fillStyle = css("--accent");
+      ctx.globalAlpha = 0.05;
+      ctx.fillRect(RULER_W, g.y0, W - RULER_W, g.lh);
+      ctx.globalAlpha = 1;
+    }
+    ctx.strokeStyle = css("--grid");
+    ctx.beginPath(); ctx.moveTo(0, g.y0 + g.lh - 0.5); ctx.lineTo(W, g.y0 + g.lh - 0.5); ctx.stroke();
+    // notes (thumbnail): per-lane normalized; ghost offset applies to the selection
+    const tr = song.tracks[ti];
+    const noteH = Math.max(2, Math.min(8, (g.lh - 8) / Math.max(12, g.hi - g.lo)));
+    tr.notes.forEach((n, ni) => {
+      if (n.gone) return;
+      const selHere = multiSelKey.has(ti + ":" + ni) || (selNote && selNote.ti === ti && selNote.ni === ni);
+      const gdT = selHere && tracksGhost ? tracksGhost.dT : 0;
+      const x = RULER_W + (n.t + gdT) * ppt - view.x;
+      const w = Math.max(2, n.d * ppt);
+      if (x + w < RULER_W || x > W) return;
+      let y = tracksNoteY(g, ti, n.p);
+      if (selHere && tracksGhost && tracksGhost.dLane) y += tracksGhost.dLane * g.lh;
+      ctx.fillStyle = trackColor(ti);
+      ctx.globalAlpha = (selHere && tracksGhost ? 0.6 : 0.55 + 0.45 * ((n.v || 80) / 127));
+      ctx.fillRect(x, y - noteH / 2, w, noteH);
+      ctx.globalAlpha = 1;
+      if (selHere) {
+        ctx.strokeStyle = css("--gold");
+        ctx.strokeRect(x - 0.5, y - noteH / 2 - 0.5, w + 1, noteH + 1);
+      }
+    });
+    // header column (over the notes' left edge)
+    ctx.fillStyle = css("--panel");
+    ctx.fillRect(0, g.y0, RULER_W, g.lh);
+    ctx.strokeStyle = css("--grid");
+    ctx.beginPath(); ctx.moveTo(RULER_W - 0.5, g.y0); ctx.lineTo(RULER_W - 0.5, g.y0 + g.lh); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, g.y0 + g.lh - 0.5); ctx.lineTo(RULER_W, g.y0 + g.lh - 0.5); ctx.stroke();
+    ctx.fillStyle = trackColor(ti);
+    ctx.beginPath(); ctx.arc(12, g.y0 + 14, 4, 0, 7); ctx.fill();
+    ctx.fillStyle = ti === selTrack ? css("--gold") : css("--text");
+    ctx.font = "11px " + css("--mono");
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText((tr.name || "track " + (ti + 1)).slice(0, 10), 22, g.y0 + 14);
+    // M / S chips
+    const st = trackState[ti] || {};
+    const chip = (label, on, x0) => {
+      ctx.fillStyle = on ? css("--gold") : css("--panel2");
+      ctx.fillRect(x0, g.y0 + 24, 22, 16);
+      ctx.fillStyle = on ? "#111" : css("--dim");
+      ctx.textAlign = "center";
+      ctx.fillText(label, x0 + 11, g.y0 + 32);
+      ctx.textAlign = "left";
+    };
+    chip("M", !!st.muted, 8);
+    chip("S", !!st.solo, 34);
+    // fader (hidden when the lane is squeezed; vol% always shows)
+    const vol = tr.vol === undefined ? 1 : tr.vol;
+    if (g.lh >= 56) {
+      const fx = 62, fw = 56, fy = g.y0 + 32;
+      ctx.strokeStyle = css("--grid");
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx + fw, fy); ctx.stroke();
+      ctx.fillStyle = css("--accent");
+      ctx.beginPath(); ctx.arc(fx + fw * Math.min(1, vol / 1.5), fy, 5, 0, 7); ctx.fill();
+    }
+    ctx.fillStyle = css("--dim");
+    ctx.textAlign = "right";
+    ctx.fillText(Math.round(vol * 100) + "%", RULER_W - 8, g.y0 + 14);
+    ctx.textAlign = "left";
+  }
+  // playhead
+  const x = RULER_W + (playing ? secToTick(song, playSec()) : playCursor) * ppt - view.x;
+  ctx.fillStyle = playing ? css("--gold") : css("--accent");
+  ctx.fillRect(x - (playing ? 0 : 1), 0, playing ? 1.5 : 2.5, H);
+  ctx.beginPath();
+  ctx.moveTo(x - 11, RULER_H); ctx.lineTo(x + 11, RULER_H); ctx.lineTo(x, RULER_H + 14);
+  ctx.fill();
+}
 function drawRuler(W, H) {
   const ppt = pxPerTick();
   const bt = barTicks();
@@ -3776,7 +3924,7 @@ canvas.addEventListener("pointerdown", e => {
   // a drag that STARTS on a selected note moves the selection even in lasso
   // mode (drag from empty space still draws a box; a tap still toggles)
   if (editableSong() && (mode === "select" || lasso) && viewMode !== "score" && !fallActive() && p.y >= RULER_H) {
-    const hit = hitNote(p);
+    const hit = viewMode === "tracks" ? hitTracksNote(p) : hitNote(p);
     if (hit && (multiSelKey.has(hit.ti + ":" + hit.ni) || (!multiSel.length && !lasso))) {
       if (!multiSel.length) selNote = hit; // single note is draggable too
       if (e.altKey) duplicateSelectionInPlace(); // option-drag = drag out a copy
@@ -3795,7 +3943,32 @@ canvas.addEventListener("pointerdown", e => {
       }
     }
   }
-  if (p.x < RULER_W && p.y >= RULER_H && songHasDrums()) { // grab the lane by its gutter labels
+  if (viewMode === "tracks" && p.x < RULER_W && p.y >= RULER_H && song) { // lane header column
+    const ti = trackLaneAt(p.y);
+    if (ti >= 0) {
+      const g = laneGeom(ti);
+      const ly = p.y - g.y0;
+      if (ly >= 22 && ly <= 42 && p.x >= 8 && p.x <= 30) { // M
+        trackState[ti].muted = !trackState[ti].muted;
+        renderTrackbar(); updateTrackGains(); draw();
+        drag = null; return;
+      }
+      if (ly >= 22 && ly <= 42 && p.x >= 34 && p.x <= 56) { // S
+        trackState[ti].solo = !trackState[ti].solo;
+        renderTrackbar(); updateTrackGains(); draw();
+        drag = null; return;
+      }
+      if (g.lh >= 56 && ly >= 22 && ly <= 42 && p.x >= 56 && p.x <= 126) { // fader
+        drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY,
+                moved: false, trFader: {ti}, spos: p};
+        return;
+      }
+      drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY,
+              moved: false, trHeader: {ti}, spos: p};
+      return;
+    }
+  }
+  if (viewMode === "roll" && p.x < RULER_W && p.y >= RULER_H && songHasDrums()) { // grab the lane by its gutter labels
     const row = topRow() - Math.floor((p.y - RULER_H + view.y) / view.rowH);
     if (inKitLane(row)) {
       drag = {id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY,
@@ -3804,7 +3977,7 @@ canvas.addEventListener("pointerdown", e => {
     }
   }
   let pencil = null, pendingPencil = null; // pencil-drag: note at finger-down, stretch as you drag
-  if (editableSong() && mode === "pencil" && viewMode !== "score" && !fallActive() && !lasso && p.y >= RULER_H) {
+  if (editableSong() && mode === "pencil" && viewMode === "roll" && !fallActive() && !lasso && p.y >= RULER_H) {
     const {tick, pitch: row} = posToTickPitch(p);
     const kit = trackIsDrums(selTrack);
     const li = kitLaneTop() - row; // lane slot index when the tap lands in the docked lane
@@ -3879,7 +4052,7 @@ canvas.addEventListener("pointermove", e => {
     view.x = (pinch.vx + pinch.mid0x) * (newPxq / pinch.pxq) - midX;
     view.pxq = newPxq;
     if (viewMode !== "score" && newPxq === floorX) view.x = 0; // flush: bar 1 at the left edge
-    if (viewMode !== "score") { // score staves are fixed-height
+    if (viewMode === "roll") { // roll rows only — score staves and tracks lanes are fixed-height
       const sy = (Math.abs(pinch.a.y - pinch.b.y) + PAD) / (pinch.dy0 + PAD);
       const midY = (pinch.a.y + pinch.b.y) / 2 - RULER_H;
       const floorY = rowHFloor();
@@ -3904,6 +4077,13 @@ canvas.addEventListener("pointermove", e => {
       lassoRect = {x0: drag.spos.x, y0: drag.spos.y, x1: p.x, y1: p.y};
       draw();
     }
+    else if (drag.trFader) { // lane fader: live while dragging, persist on release
+      const ti = drag.trFader.ti;
+      const v = Math.max(0, Math.min(1.5, ((evtPos(e).x - 62) / 56) * 1.5));
+      song.tracks[ti].vol = Math.abs(v - 1) < 0.04 ? undefined : Math.round(v * 100) / 100;
+      updateTrackGains();
+      draw();
+    }
     else if (drag.lane) { // drag the kit lane anywhere; it pins there for this song
       const dRow = Math.round((drag.lane.y0 - e.clientY) / view.rowH);
       laneOverride = Math.min(PMAX - 4, Math.max(PMIN - 2, drag.lane.top0 + dRow));
@@ -3922,7 +4102,20 @@ canvas.addEventListener("pointermove", e => {
       const p = evtPos(e);
       const snap = moveSnapTicks();
       const dT = Math.round((p.x - drag.spos.x) / pxPerTick() / snap) * snap;
-      if (drag.noteEdit.kind === "move") {
+      if (drag.noteEdit.kind === "move" && viewMode === "tracks") {
+        // arrange drag is a GHOST — commit on release (live retrack would churn
+        // the {ti,ni} selection under our feet; advisor's structural ruling)
+        const snap = moveSnapTicks();
+        const dT = Math.round((p.x - drag.spos.x) / pxPerTick() / snap) * snap;
+        let dLane = Math.round((p.y - drag.spos.y) / tracksLaneH());
+        const fromTi = drag.noteEdit.items[0].ti;
+        const tgt = fromTi + dLane;
+        if (tgt < 0 || tgt >= song.tracks.length ||
+            trackIsDrums(tgt) !== trackIsDrums(fromTi)) dLane = 0; // compatible lanes only
+        tracksGhost = {dT, dLane};
+        draw();
+      }
+      else if (drag.noteEdit.kind === "move") {
         const dP = Math.round((drag.spos.y - p.y) / view.rowH);
         for (let i = 0; i < drag.noteEdit.items.length; i++) {
           const it = drag.noteEdit.items[i], o = drag.noteEdit.orig[i];
@@ -3985,6 +4178,27 @@ function endPointer(e) {
   }
   if (!drag || drag.id !== e.pointerId) return;
   clearTimeout(drag.holdTimer);
+  if (drag.trFader) { // persist the fader as the track: annotation (song truth)
+    if (drag.moved && editableSong()) { voiceMenuTi = drag.trFader.ti; saveVoices(); }
+    drag = null;
+    draw();
+    return;
+  }
+  if (drag.trHeader && !drag.moved) { // header tap: select; second tap = voice menu
+    const ti = drag.trHeader.ti;
+    if (selTrack === ti) {
+      const g = laneGeom(ti);
+      openVoiceMenu(ti, {getBoundingClientRect: () => ({left: 10, bottom: canvas.getBoundingClientRect().top + g.y0 + g.lh, top: canvas.getBoundingClientRect().top + g.y0, right: 130})});
+    } else {
+      selTrack = ti;
+      renderTrackbar();
+      setInfo((song.tracks[ti].name || "track " + (ti + 1)) + " selected — tap its header again for voice & volume");
+    }
+    drag = null;
+    draw();
+    return;
+  }
+  if (drag.trHeader) { drag = null; return; }
   if (drag.pendingPencil && !drag.moved && !drag.pencil) { // released before the dwell: a tap still pencils
     drag.pencil = placePencilNote(drag.pendingPencil);
     drag.pendingPencil = null;
@@ -4042,6 +4256,15 @@ function endPointer(e) {
     draw();
   }
   else if (drag.lasso && drag.moved) finalizeLasso();
+  else if (drag.noteEdit && drag.moved && viewMode === "tracks" && tracksGhost && drag.noteEdit.kind === "move") {
+    const {dT, dLane} = tracksGhost;
+    tracksGhost = null;
+    if (dLane !== 0) { // retrack: the killer feature — one group undo, keeps pitch
+      moveSelectionToTrack(drag.noteEdit.items[0].ti + dLane, dT);
+    } else if (dT !== 0) {
+      selEditApply(drag.noteEdit.items, n => { n.t = Math.max(0, n.t + dT); });
+    } else draw();
+  }
   else if (drag.noteEdit && drag.moved) { // commit the gesture: one undo entry, one save
     const o = drag.noteEdit.orig;
     const changed = drag.noteEdit.items.some((it, i) =>
@@ -4101,7 +4324,8 @@ function clampView() {
     ? Math.max(minX, songEndTick * pxPerTick() + 2 * barTicks() * pxPerTick() - (wrap.clientWidth - RULER_W))
     : Infinity;
   view.x = Math.min(maxX, Math.max(minX, view.x));
-  const contentH = viewMode === "score" && scoreModel
+  const contentH = viewMode === "tracks" ? song.tracks.length * tracksLaneH()
+    : viewMode === "score" && scoreModel
     ? scoreContentH()
     : (topRow() - botRow() + 1) * view.rowH;
   const maxY = contentH - (wrap.clientHeight - RULER_H);
@@ -4119,6 +4343,30 @@ function tap(pos) {
     if (hit) { toggleSel(hit); return; }
     clearMultiSel();
     setInfo("lasso: cleared");
+    draw();
+    return;
+  }
+  if (viewMode === "tracks" && pos.y >= RULER_H && pos.x >= RULER_W && song) {
+    const hit = hitTracksNote(pos);
+    if (hit && mode === "erase" && editableSong()) {
+      multiSel = [hit]; multiSelKey = new Set([hit.ti + ":" + hit.ni]);
+      deleteSelection();
+      return;
+    }
+    if (hit) {
+      selNote = hit;
+      multiSel = [hit]; multiSelKey = new Set([hit.ti + ":" + hit.ni]);
+      selTrack = hit.ti;
+      renderTrackbar();
+      previewNote(hit.ti, song.tracks[hit.ti].notes[hit.ni].p);
+      setInfo(noteLabel(hit.ti, hit.ni));
+      draw();
+      return;
+    }
+    if (mode === "pencil") setInfo("pencil draws in Roll or Score — Tracks moves notes between tracks");
+    const ti = trackLaneAt(pos.y);
+    if (ti >= 0 && ti !== selTrack) { selTrack = ti; renderTrackbar(); }
+    clearMultiSel();
     draw();
     return;
   }
@@ -5237,6 +5485,7 @@ const VF = (() => {
   try { return Vex.Flow.Stave ? Vex.Flow : Vex; } catch (e) { return null; }
 })();
 let viewMode = localStorage.getItem("ff1roll-view") || "roll";
+if (viewMode === "tracks") RULER_W = TRACKS_GUTTER; // applyViewMode confirms at boot
 let scoreModel = null;      // built per song
 let scoreCache = new Map(); // measureIndex -> {canvas, geo:[{tick,x0,x1,y0,y1,ti,ni,pitch}], timeMap:[{tick,x}]}
 let scoreZoom = 0;          // pxq the cache was built at
@@ -6508,7 +6757,7 @@ function renameTrack(ti, newName) { // compositions/local drafts only — analys
   draw();
   return null;
 }
-function moveSelectionToTrack(target) { // ⇄: selection changes instrument, keeps time+pitch
+function moveSelectionToTrack(target, dT = 0) { // ⇄ / tracks-view retrack: keeps pitch; dT slides time
   if (!editableSong() || !song.tracks[target]) return 0;
   const items = selEditItems().filter(({ti}) => ti !== target &&
     (mvFromFilter === null || ti === mvFromFilter));
@@ -6517,8 +6766,9 @@ function moveSelectionToTrack(target) { // ⇄: selection changes instrument, ke
   const added = [], erased = [];
   for (const it of items) {
     const n = it.n;
-    tr.notes.push({t: n.t, d: n.d, p: n.p, v: n.v, duty: n.duty, added: isAdd});
-    if (song.rawNotes) song.rawNotes[target].push({t: n.t + chopS, d: n.d, p: n.p, v: n.v, added: isAdd});
+    const nt = Math.max(0, n.t + dT);
+    tr.notes.push({t: nt, d: n.d, p: n.p, v: n.v, duty: n.duty, added: isAdd});
+    if (song.rawNotes) song.rawNotes[target].push({t: nt + chopS, d: n.d, p: n.p, v: n.v, added: isAdd});
     added.push({ti: target, ni: tr.notes.length - 1});
     n.gone = true;
     const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[it.ti][n.ri];
@@ -7261,7 +7511,9 @@ function applyChrome() {
 }
 const viewbtn = document.getElementById("viewbtn");
 function applyViewMode() {
-  viewbtn.textContent = viewMode === "score" ? "▦ Roll" : "𝄞 Score";
+  // the button shows the NEXT view in the Roll -> Tracks -> Score cycle
+  viewbtn.textContent = viewMode === "roll" ? "▤ Tracks" : viewMode === "tracks" ? "𝄞 Score" : "▦ Roll";
+  RULER_W = viewMode === "tracks" ? TRACKS_GUTTER : RULER_W_ROLL;
   // score entry (2026-08-15): Edit works in both views; ♮♯♭ is score-only
   document.getElementById("accseg").style.display =
     viewMode === "score" && editOn && mode === "pencil" ? "" : "none";
@@ -7269,15 +7521,21 @@ function applyViewMode() {
     view.y = 0;
     if (view.pxq < minPxq()) view.pxq = minPxq(); // roll zooms out further than engraving can
     if (view.x < 40) view.x = -SCORE_INTRO_W; // near the start: show clef/key column
+  } else if (viewMode === "tracks") {
+    view.y = 0;
+    if (view.x < 0) view.x = 0;
   } else if (view.x < 0) view.x = 0;
   clampView();
   draw();
 }
-viewbtn.addEventListener("click", () => {
-  if (!VF) { setInfo("score engine failed to load"); return; }
-  viewMode = viewMode === "score" ? "roll" : "score";
+function setViewMode(m) {
+  if (m === "score" && !VF) { setInfo("score engine failed to load"); return; }
+  viewMode = m;
   localStorage.setItem("ff1roll-view", viewMode);
   applyViewMode();
+}
+viewbtn.addEventListener("click", () => {
+  setViewMode(viewMode === "roll" ? "tracks" : viewMode === "tracks" ? "score" : "roll");
 });
 
 let editOn = false; // = "this song is editable"; the edit row shows exactly then
@@ -8744,10 +9002,11 @@ function renderViewMenu() { // ✓ = visible; labels never shift (fixed 2-char s
     b.textContent = (on ? "✓ " : "   ") + b.textContent.replace(/^([✓ ]\s*)/, "").replace(/^\s+/, "");
     b.style.opacity = dim ? 0.55 : 1;
   };
-  const base = {vwScore: "𝄞  Score view", vwTracks: "◂  Tracks", vwEdit: "🛠  Edit toolbar",
+  const base = {vwScore: "𝄞  Score view", vwTracksView: "▤  Tracks view", vwTracks: "◂  Tracks", vwEdit: "🛠  Edit toolbar",
                 vwFooter: "▦  Bottom bar", vwInst: "🎹  Instrument panel", vwSub: "💬  Notes strip"};
   for (const [id, label] of Object.entries(base)) document.getElementById(id).textContent = label;
   set("vwScore", viewMode === "score");
+  set("vwTracksView", viewMode === "tracks");
   set("vwTracks", !document.getElementById("trackslide").classList.contains("off"));
   set("vwEdit", !editrowHidden, !editOn); // dimmed (not disabled) in read-only: the pref still flips
   set("vwFooter", !footerHidden);
@@ -8776,7 +9035,8 @@ document.getElementById("viewsheetbtn").addEventListener("click", e => {
 });
 { // View toggles flip in place — the menu STAYS OPEN (batch hiding is the use)
   const on = (id, fn) => document.getElementById(id).addEventListener("click", () => { fn(); renderViewMenu(); });
-  on("vwScore", () => document.getElementById("viewbtn").click());
+  on("vwScore", () => setViewMode(viewMode === "score" ? "roll" : "score"));
+  on("vwTracksView", () => setViewMode(viewMode === "tracks" ? "roll" : "tracks"));
   on("vwTracks", () => document.getElementById("tracktoggle").click());
   on("vwEdit", () => { editrowHidden = !editrowHidden; applyChrome(); });
   on("vwFooter", () => { footerHidden = !footerHidden; applyChrome(); });

@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1492,6 +1492,32 @@ test("diatonicShift: scale-degree steps in the declared key", () => {
   assert.ok(val(`diatonicShift(-1)`)); // and back down
   assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p)`), [64, 66, 62]);
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
+});
+
+test("tracks view: retrack with time offset, lane math, pencil inert", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/tracks-test.mid";
+    song.tracks = [
+      {name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}, {t: 480, d: 480, p: 64, v: 80}]},
+      {name: "pulse2", notes: []}];
+    song.rawNotes = null; chopS = 0; editUndo = []; editRedo = []; dupPending = null;
+    multiSel = [{ti: 0, ni: 0}, {ti: 0, ni: 1}]; multiSelKey = new Set(["0:0", "0:1"]);
+    mvFromFilter = null;
+  `);
+  // retrack with a time slide: the tracks-view ghost commit path
+  assert.equal(val(`moveSelectionToTrack(1, 960)`), 2);
+  const moved = val(`song.tracks[1].notes.filter(n => !n.gone).map(n => ({t: n.t, p: n.p}))`);
+  assert.deepEqual(moved, [{t: 960, p: 60}, {t: 1440, p: 64}]); // pitch kept, time slid
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 0);
+  run(`editUndoPop()`); // one step restores both sides
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 2);
+  assert.equal(val(`song.tracks[1].notes.filter(n => !n.gone).length`), 0);
+  // lane geometry: fit-to-count, clamped
+  run(`viewMode = "tracks"; RULER_W = TRACKS_GUTTER; view.y = 0;`);
+  assert.ok(val(`tracksLaneH() >= 44 && tracksLaneH() <= 88`));
+  assert.equal(val(`trackLaneAt(RULER_H + 2)`), 0);
+  run(`viewMode = "roll"; RULER_W = RULER_W_ROLL; songKey = null; multiSel = []; multiSelKey = new Set();`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

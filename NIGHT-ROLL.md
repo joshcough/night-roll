@@ -524,6 +524,26 @@ sync (GitHub Contents API, 409 retry) · key dial · help sheet.
   score-view-plan.md (score history/limitations), supplemental-learning.md
   (session log = quiz source material).
 
+## Tracks/Arrange view (advisor-designed, 2026-08-22)
+
+Third viewMode ("tracks"; viewbtn cycles Roll -> Tracks -> Score, label
+shows the NEXT view; View ▾ has direct rows). RULER_W is now a LET —
+148 in tracks (the header column), 46 elsewhere — set ONLY in
+applyViewMode; every gutter/time consumer keys off it. Time axis is
+the roll's shared map, so ruler/sections/cycle/bar-magnet/playhead/
+follow-camera come free. laneGeom(ti) = fit-to-count lanes (44-88px),
+thumbnails normalized per lane (min one-octave span; drums use
+kitSlots rows). Editing: selection is the arrange currency — lasso =
+time-span × lane-span across tracks; drags on selected notes GHOST
+(tracksGhost {dT, dLane}) and commit on release: dLane 0 ->
+selEditApply time slide, else moveSelectionToTrack(target, dT)
+(retrack keeps pitch, one group undo; melodic/drums lanes never mix).
+Pencil is roll/score-only (no honest pitch in a squeezed lane); erase
+works. Headers: M/S chips, fader (live gains, persists via
+saveVoices as vol=), tap = selTrack, second tap = voice menu.
+Gesture guards: anything assuming ROLL geometry must check
+viewMode === "roll", not !== "score".
+
 ## Chrome visibility: applyChrome() is the ONE writer (advisor, 2026-08-22)
 
 editrowHidden/footerHidden (device-local; migrated from the old
