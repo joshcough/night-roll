@@ -1,7 +1,7 @@
 // Unit tests for Night Roll's pure logic (index.html inline script).
 // Run: node --test tests/
 import test from "node:test";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createApp } from "./harness.mjs";
 
@@ -681,14 +681,19 @@ test("NSF import rename: draft moves, typed title survives, collisions refused",
   `);
 });
 
-test("NSF import: in-app capture runs the real pipeline and round-trips through parseMidi", async () => {
+// ff1.nsf lives in the private vault, not this repo — CI runners skip; the
+// full pipeline still runs on any checkout that has fetched it (the planned
+// existsSync gate from the data-locations work)
+const FF1_NSF = new URL("../albums/final-fantasy-i/reference/ff1.nsf", import.meta.url);
+test("NSF import: in-app capture runs the real pipeline and round-trips through parseMidi",
+     { skip: !existsSync(FF1_NSF) && "ff1.nsf not present (vault-only)" }, async () => {
   // same modules the browser dynamically imports, wired into the vm realm
   const M = {
     ...(await import("../tools/nsf/nsf.mjs")),
     ...(await import("../tools/nsf/notes.mjs")),
     ...(await import("../tools/nsf/midi-write.mjs")),
   };
-  const nsf = M.parseNSF(readFileSync(new URL("../albums/final-fantasy-i/reference/ff1.nsf", import.meta.url)));
+  const nsf = M.parseNSF(readFileSync(FF1_NSF));
   app.context.__M = M;
   app.context.__nsf = nsf;
   // track 17 = menu: known 8-bar loop, quick to run. captureNsfTrack is
