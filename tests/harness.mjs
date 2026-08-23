@@ -3,6 +3,14 @@
 // build step. Top-level `let`/`const` bindings persist in the context's global
 // lexical scope, so later run() calls can read and assign them like a second
 // <script> tag would.
+//
+// Event injection (2026-08-23): elements/document/window RECORD their
+// listeners and expose dispatchEvent, so vm tests can drive the real pointer
+// handlers with plain objects — the handlers only read data properties
+// (clientX, pointerType, …), never PointerEvent internals. Timers are a fake
+// clock (app.tick(ms) fires them and advances performance.now()), which makes
+// the 230ms hold-to-grab dwell deterministic. WebAudio is the same inert fake
+// the e2e suite injects. None of this touches index.html.
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import path from "node:path";
@@ -20,12 +28,42 @@ function ctx2dStub() {
   });
 }
 
+function listenable(el) {
+  const listeners = new Map(); // type -> Set(handler)
+  el.addEventListener = (type, fn) => {
+    if (!listeners.has(type)) listeners.set(type, new Set());
+    listeners.get(type).add(fn);
+  };
+  el.removeEventListener = (type, fn) => listeners.get(type)?.delete(fn);
+  el.dispatchEvent = (evt) => {
+    evt.target ??= el;
+    evt.preventDefault ??= noop;
+    evt.stopPropagation ??= noop;
+    for (const fn of [...(listeners.get(evt.type) || [])]) fn(evt);
+  };
+  return el;
+}
+
+function makeClassList() {
+  const set = new Set();
+  return {
+    add: (...ks) => ks.forEach(k => set.add(k)),
+    remove: (...ks) => ks.forEach(k => set.delete(k)),
+    toggle: (k, force) => {
+      const on = force === undefined ? !set.has(k) : !!force;
+      on ? set.add(k) : set.delete(k);
+      return on;
+    },
+    contains: (k) => set.has(k),
+  };
+}
+
 function makeEl() {
-  const el = {
+  const el = listenable({
     children: [],
     style: {},
     dataset: {},
-    classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
+    classList: makeClassList(),
     value: "",
     textContent: "",
     innerHTML: "",
@@ -36,20 +74,44 @@ function makeEl() {
     height: 0,
     clientWidth: 800,
     clientHeight: 600,
-    addEventListener: noop,
-    removeEventListener: noop,
     setAttribute: noop,
     setPointerCapture: noop,
+    releasePointerCapture: noop,
     focus: noop,
-    click: noop,
     appendChild(c) { el.children.push(c); return c; },
     append(...cs) { el.children.push(...cs); },
     querySelectorAll: () => [],
     cloneNode: () => makeEl(),
     getContext: () => ctx2dStub(),
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 600 }),
-  };
+  });
+  el.click = () => el.dispatchEvent({ type: "click" });
   return el;
+}
+
+// inert WebAudio (ported from tests/e2e/helpers.mjs — keep the two in step)
+function fakeAudio(clock) {
+  const param = () => ({ value: 0, setValueAtTime() {}, cancelScheduledValues() {},
+    linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} });
+  const node = () => ({ connect() { return node(); }, disconnect() {}, start() {}, stop() {},
+    gain: param(), frequency: param(), buffer: null, type: "sine",
+    addEventListener() {}, setPeriodicWave() {} });
+  return class FakeCtx {
+    constructor() { this.state = "running"; this.sampleRate = 44100; this.destination = node(); }
+    get currentTime() { return clock.now() / 1000; }
+    resume() { return Promise.resolve(); }
+    close() { this.state = "closed"; return Promise.resolve(); }
+    createGain() { return node(); }
+    createOscillator() { return node(); }
+    createBufferSource() { return node(); }
+    createBuffer(ch, len) { return { getChannelData: () => new Float32Array(len || 1) }; }
+    createPeriodicWave() { return {}; }
+    createDynamicsCompressor() { const n = node(); n.threshold = param(); n.knee = param();
+      n.ratio = param(); n.attack = param(); n.release = param(); return n; }
+    createMediaStreamDestination() { return { stream: {} }; }
+    decodeAudioData() { return Promise.resolve({ getChannelData: () => new Float32Array(1),
+      duration: 0.01, length: 1, sampleRate: 44100 }); }
+  };
 }
 
 export function createApp() {
@@ -59,19 +121,43 @@ export function createApp() {
 
   const elements = new Map();
   const store = new Map();
+
+  // fake clock: setTimeout/performance.now share one timeline; tick(ms) fires
+  // due timers in order (the dwell tests depend on exact ordering)
+  let vnow = 0, timerId = 1;
+  const timers = new Map(); // id -> {at, fn}
+  const clock = { now: () => vnow };
+  function tick(ms) {
+    const until = vnow + ms;
+    for (;;) {
+      let next = null;
+      for (const [id, t] of timers) if (t.at <= until && (!next || t.at < next.t.at)) next = { id, t };
+      if (!next) break;
+      vnow = Math.max(vnow, next.t.at);
+      timers.delete(next.id);
+      next.t.fn();
+    }
+    vnow = until;
+  }
+
+  const documentEl = listenable({
+    documentElement: makeEl(),
+    getElementById(id) {
+      if (!elements.has(id)) elements.set(id, makeEl());
+      return elements.get(id);
+    },
+    createElement: () => makeEl(),
+    createTextNode: (t) => ({ text: t }),
+  });
+  const windowEl = listenable({ devicePixelRatio: 1 });
+  const FakeCtx = fakeAudio(clock);
+  windowEl.AudioContext = FakeCtx;
+  windowEl.webkitAudioContext = FakeCtx;
+
   const sandbox = {
     console,
-    document: {
-      documentElement: makeEl(),
-      getElementById(id) {
-        if (!elements.has(id)) elements.set(id, makeEl());
-        return elements.get(id);
-      },
-      createElement: () => makeEl(),
-      createTextNode: (t) => ({ text: t }),
-      addEventListener: noop,
-    },
-    window: { devicePixelRatio: 1, addEventListener: noop },
+    document: documentEl,
+    window: windowEl,
     // Proxy so Object.keys(localStorage) enumerates stored keys, like the real
     // thing (draftKeys/dirtySongs scan that way)
     localStorage: new Proxy({
@@ -90,6 +176,10 @@ export function createApp() {
     cancelAnimationFrame: noop,
     setInterval: () => 0,
     clearInterval: noop,
+    setTimeout: (fn, ms = 0) => { const id = timerId++; timers.set(id, { at: vnow + ms, fn }); return id; },
+    clearTimeout: (id) => timers.delete(id),
+    performance: { now: () => vnow },
+    Event: class { constructor(type) { this.type = type; } },
     fetch: () => Promise.reject(new Error("no network in tests")),
     navigator: {},
     TextDecoder,
@@ -106,5 +196,30 @@ export function createApp() {
     run: (code) => vm.runInContext(code, context),
     /** The in-memory localStorage backing store (for asserting persistence). */
     store,
+    /** Advance the fake clock, firing due setTimeout callbacks in order. */
+    tick,
+    /** Element stub by id (same instance the app holds). */
+    el: (id) => documentEl.getElementById(id),
+    /** Dispatch a plain event object on an element / document / window. */
+    dispatch: (id, evt) => documentEl.getElementById(id).dispatchEvent(evt),
+    docDispatch: (evt) => documentEl.dispatchEvent(evt),
+    winDispatch: (evt) => windowEl.dispatchEvent(evt),
+  };
+}
+
+/** Plain pointer-event object: the app's handlers only read data properties.
+ *  Coordinates are canvas-space (the stubbed rect sits at 0,0). */
+export function pev(type, props = {}) {
+  return {
+    type,
+    clientX: 0, clientY: 0,
+    pointerId: 1,
+    pointerType: "mouse",
+    isPrimary: true,
+    button: 0,
+    altKey: false, shiftKey: false, metaKey: false, ctrlKey: false,
+    preventDefault: noop,
+    stopPropagation: noop,
+    ...props,
   };
 }

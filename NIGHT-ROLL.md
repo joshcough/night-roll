@@ -688,6 +688,20 @@ chord name, key inference, or note classification; findings are Josh's.
    Mid-iteration, `npm run test:e2e:smoke` runs the @smoke-tagged
    specs chromium-only (~2s); the FULL suite before every push stays
    mandatory — smoke is for the edit loop, not the ship gate.
+   The harness (tests/harness.mjs) records element/document/window
+   listeners and exposes dispatchEvent, a fake clock (app.tick(ms)
+   drives setTimeout + performance.now — the 230ms dwell is
+   deterministic), Set-backed classList, and the e2e suite's inert
+   FakeAudioContext, so vm tests drive the REAL pointer handlers with
+   plain event objects (pev() in harness.mjs; handlers only read data
+   properties). tests/gestures.test.mjs holds these ports. Port
+   discipline (advisor, 2026-08-23): a vm port lives alongside its e2e
+   twin for at least one commit before the e2e spec retires, and every
+   port must fail under a knocked-out gesture (mutation check) before
+   it is trusted. Irreducible e2e core stays browser-real on chromium
+   AND webkit: boot/viewport/CSS, one real drag + pen dwell + pinch,
+   sheet visibility, and the button-wiring sweep (the vm stub has no
+   querySelector — a vm test can never prove a button is wired).
    Browser-verify via claude-in-chrome, commit, push with hash check;
    the push-triggered Pages build deploys on its own (manual kicks
    collide with it and email failure noise — only kick if it hangs).
