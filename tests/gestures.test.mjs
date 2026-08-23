@@ -146,11 +146,10 @@ test("gesture: custom grid — pencil taps land on 10ths-of-a-bar cells", () => 
   assert.equal(app.run(`moveSnapTicks()`), app.run(`Math.round(song.ppq / 4)`));
 });
 
-test("gesture: uneven grid divisions stay bar-anchored (no drift)", () => {
+test("gesture: uneven grid divisions keep one exact phase from the anchor", () => {
   const app = boot("vm-gest-grid7");
-  app.run(`gridDiv = 7;`);
-  // bar 5 starts at 4*1920 = 7680; a tick just past its 3rd cell must floor
-  // to barStart + 3*(1920/7), not to an absolute multiple of round(1920/7)
+  app.run(`gridDiv = 7; gridAnchor = {b: 5, q: 1};`);
+  // cells are exact bt/7 floats from the anchor — no per-cell rounding drift
   const bt = app.run(`barTicks()`);
   const want = Math.round(4 * bt + 3 * (bt / 7));
   assert.equal(app.run(`gridCellStart(${4 * bt + 3 * (bt / 7) + 20})`), want);
@@ -164,30 +163,29 @@ test("grid sheet: chip tap applies instantly; off chip restores the meter", () =
   const ten = [...chips].find(c => c.textContent === "10");
   ten.dispatchEvent({ type: "click" });
   assert.equal(app.run(`gridDiv`), 10);
-  assert.ok(app.el("gridanchor").textContent.includes("bar lines"), "anchor explained");
+  assert.ok(app.el("gridanchor").textContent.includes("Lines run from 1.1"), "anchor explained");
   app.el("gridoff").click();
   assert.equal(app.run(`gridDiv`), null);
   app.el("gridclose").click();
 });
 
-test("gesture: grid anchors at the cycle start — 14.2 phase, bar line not a snap target", () => {
+test("gesture: grid anchor typed in the sheet — 14.2 phase, bar line not a snap target", () => {
   const app = boot("vm-gest-gridanchor");
-  // arm a cycle at bar 14 beat 2 via a real ruler drag, then set the grid
   const bt = app.run(`barTicks()`), qt = app.run(`beatTicks()`);
   const a = 13 * bt + qt; // 14.2
-  app.run(`view.x = ${a} / song.ppq * view.pxq - 100; clampView(); draw();`);
-  const x = t => app.run(`RULER_W + (${t} / song.ppq) * view.pxq - view.x`);
-  drag(app, { x: x(a), y: 10 }, { x: x(a + bt), y: 10 });
-  assert.equal(app.run(`rangeSel.a`), a, "cycle armed at 14.2");
+  app.el("vwGrid").click(); // open the sheet
+  app.el("gridab").value = "14"; app.el("gridaq").value = "2";
+  app.el("gridab").dispatchEvent({ type: "input" });
   app.run(`gridDiv = 10;`);
+  assert.equal(app.run(`gridAnchorTick()`), a, "anchor from the sheet inputs");
   const cell = bt / 10;
   // ten cells between 14.2 and 15.2, running on the anchor's phase
   assert.equal(app.run(`gridCellStart(${a + 3 * cell + 20})`), a + 3 * cell);
-  // bar 15's line (26880) sits 7.5 cells in — snapping must NOT land there
+  // bar 15's line sits 7.5 cells in — snapping must NOT land there
   assert.equal(app.run(`gridCellStart(${14 * bt + 1})`), a + 7 * cell);
   // phase continues across the bar: 15.2 is exactly cell 10
   assert.equal(app.run(`gridCellStart(${a + 10 * cell + 5})`), a + 10 * cell);
-  // no cycle -> back to bar-anchored cells
-  app.run(`rangeSel = null;`);
+  // default anchor 1.1 = plain bar phase (10 divides the bar evenly)
+  app.run(`gridAnchor = {b: 1, q: 1};`);
   assert.equal(app.run(`gridCellStart(${13 * bt + 3 * cell + 20})`), 13 * bt + 3 * cell);
 });
