@@ -1053,6 +1053,7 @@
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
       <dt>▤ Tracks view</dt><dd>The arrangement view (𝄞/▤/▦ button cycles Roll → Tracks → Score; also in View ▾): one lane per track, its notes drawn as a thumbnail (each lane scaled to its own range), with the track's color dot, name, M/S, and a volume fader in the lane header — the fader saves as the same vol= annotation as the voice menu's. Tap a note to select it (it sounds); lasso a box and it selects by TIME across every lane it touches — cross-track selection in one gesture. Hold-to-grab a selected note and drag: sideways moves it in time (bar-magnet-free, 16th snap), and <b>dragging up or down carries the whole selection to another lane</b> — pitch kept, one ⟲ undoes it, drums and melodic lanes never mix. Dragging shows a ghost until you release. Tap a lane's header to select that track; tap the selected track's header again for its voice & volume menu. Pencil doesn't draw here (a squeezed lane has no honest pitch) — it draws in Roll or Score; Erase works. The ruler above is the same one as always: sections, cycle, magnetic bars, the playhead triangle.</dd>
+      <dt>💬 Message Claude</dt><dd>File → Message Claude… opens a box that sends straight to the live Claude Code session — feature requests and bug reports from inside the app, auto-tagged with the open song and playhead position. Replies and deploy notices stream back as 🛰 lines in the info strip. Powered by two private ntfy topics you set once in File → Settings (they stay on this device only — the public repo never contains them; without them the feature is simply inert). The topic names are the password: keep them secret.</dd>
       <dt>View ▾ menu</dt><dd>Beside Edit in the header (always there, even on locked songs) — one place for every hide/show: 𝄞 Score view, ◂ Tracks, 🛠 Edit toolbar, ▦ Bottom bar, 🎹 Instrument panel, 💬 Notes strip, and ▸ Section levels with −/+ steppers (shows "2 of 3"; the gutter chevron still one-tap cycles). ✓ means visible; the menu STAYS OPEN while you flip several at once, and closes on a tap anywhere else. Every item mirrors an existing button — the buttons are the fast path, the menu is the findable one. The header itself never hides, so View ▾ is always the way back; hiding the bottom bar floats the ▴ restore button bottom-left (one tap brings everything back). The old ▾ hide buttons are gone — hiding lives here now.</dd>
       <dt>Speed &amp; volume buttons</dt><dd>The speed slider folded into a <b>percentage button</b> — tap to open the slider, tap anywhere else and it folds back (the reset chip appears when off-native). Beside it, <b>🔊</b> is a master volume the same way: tap, slide (10–200%), tap away; the setting sticks per device and the button shows the number when it's not 100%.</dd>
       <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). Every readout is a door: tap the tempo to open the tempo annotation governing the cursor (or declare the first one), tap the meter to open the time signature, tap the key to open the key change ruling the cursor — a stored partial opens its own note with the tonic already filled.</dd>
@@ -1189,6 +1190,7 @@
 
 <div id="filesheet">
   <button class="fitem" id="filesettings">Settings…</button>
+  <button class="fitem" id="fileclaude">💬 Message Claude…</button>
   <div class="fdiv"></div>
   <button class="fitem" id="fileopen">Open…</button>
   <button class="fitem" id="filenew">＋ New song…</button>
@@ -1310,6 +1312,19 @@
   </div>
 </div>
 
+<div class="overlay" id="claudesheet">
+  <div class="sheet">
+    <h2>MESSAGE CLAUDE</h2>
+    <textarea id="claudetext" placeholder="Feature request, bug report, anything — lands in the live session." style="min-height:110px"></textarea>
+    <div class="meta" id="claudectx" style="white-space:normal;margin:6px 0 0"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="claudesend">Send</button>
+      <div class="status" id="claudestatus" style="flex:1"></div>
+      <button id="claudeclose" style="margin-left:auto">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="settingssheet">
   <div class="sheet">
     <h2>SETTINGS</h2>
@@ -1330,6 +1345,9 @@
         <input type="text" id="cfgnsfrepo" placeholder="owner/repo (writes)" style="width:200px;min-height:36px"></div>
       <div class="row"><span class="lbl">one Save (above) stores the token and all locations together</span></div>
     </div>
+    <div class="row"><span class="lbl" style="width:70px">Claude</span>
+      <input type="password" id="cfgclaudecmd" placeholder="command topic (ntfy — stays on this device)" autocomplete="off" style="flex:1;min-height:36px">
+      <input type="password" id="cfgclaudenotify" placeholder="notify topic" autocomplete="off" style="width:200px;min-height:36px"></div>
     <div class="status" id="settingsstatus">Token: GitHub → Settings → Developer settings → Fine-grained tokens → grant every owner/repo configured above, Contents read/write. Data locations: blank read bases load from this site; changing them re-points the whole app (reload after saving).</div>
   </div>
 </div>
@@ -11173,11 +11191,60 @@ function openSettingsSheet() {
   document.getElementById("settingssheet").classList.add("on");
 }
 document.getElementById("filesettings").addEventListener("click", () => {
+  document.getElementById("cfgclaudecmd").value = localStorage.getItem("ff1roll-claude-cmd") || "";
+  document.getElementById("cfgclaudenotify").value = localStorage.getItem("ff1roll-claude-notify") || "";
   closeFileMenus();
   openSettingsSheet();
 });
 document.getElementById("settingsclose").addEventListener("click", () =>
   document.getElementById("settingssheet").classList.remove("on"));
+// ---- Message Claude (Josh, 2026-08-22, requested FROM the channel itself):
+// posts to his private ntfy command topic; replies/deploys stream back in-app.
+// Topics live ONLY in this device's localStorage — never in the repo. ----
+document.getElementById("fileclaude").addEventListener("click", () => {
+  closeFileMenus();
+  if (!localStorage.getItem("ff1roll-claude-cmd")) {
+    setInfo("set the Claude command topic first: File → Settings…");
+    return;
+  }
+  const ctx = songKey ? songKey.split("/").pop() + " · " + fmtBarBeat(playCursor) : "no song open";
+  document.getElementById("claudectx").textContent = "will be tagged: " + ctx;
+  document.getElementById("claudestatus").textContent = "";
+  document.getElementById("claudesheet").classList.add("on");
+  document.getElementById("claudetext").focus();
+});
+document.getElementById("claudeclose").addEventListener("click", () =>
+  document.getElementById("claudesheet").classList.remove("on"));
+document.getElementById("claudesend").addEventListener("click", async () => {
+  const txt = document.getElementById("claudetext").value.trim();
+  if (!txt) return;
+  const topic = localStorage.getItem("ff1roll-claude-cmd");
+  const ctx = songKey ? " [" + songKey.split("/").pop() + " @ " + fmtBarBeat(playCursor) + "]" : "";
+  try {
+    const r = await fetch("https://ntfy.sh/" + encodeURIComponent(topic),
+      {method: "POST", body: txt + ctx});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    document.getElementById("claudetext").value = "";
+    document.getElementById("claudestatus").textContent = "sent ✓";
+    setInfo("💬 sent to Claude — replies arrive as 🛰 messages here");
+  } catch (err) {
+    document.getElementById("claudestatus").textContent = "send failed: " + err.message;
+  }
+});
+let claudeES = null;
+function claudeListen() { // in-app notifications from the notify topic
+  const topic = localStorage.getItem("ff1roll-claude-notify");
+  if (claudeES) { claudeES.close(); claudeES = null; }
+  if (!topic) return;
+  claudeES = new EventSource("https://ntfy.sh/" + encodeURIComponent(topic) + "/sse");
+  claudeES.onmessage = ev => {
+    try {
+      const m = JSON.parse(ev.data);
+      if (m.event === "message" || m.message) setInfo("🛰 " + (m.title ? m.title + ": " : "") + m.message);
+    } catch (err) { /* keepalive */ }
+  };
+}
+claudeListen();
 document.getElementById("settingssave").addEventListener("click", () => {
   const tok = document.getElementById("ghtoken").value.trim();
   if (tok) localStorage.setItem("ff1roll-ghtoken", tok);
@@ -11189,6 +11256,11 @@ document.getElementById("settingssave").addEventListener("click", () => {
     nsfBase: document.getElementById("cfgnsfbase").value.trim(),
     nsfRepo: document.getElementById("cfgnsfrepo").value.trim() || "joshcough/nsf-archive",
   });
+  const cc = document.getElementById("cfgclaudecmd").value.trim();
+  const cn = document.getElementById("cfgclaudenotify").value.trim();
+  if (cc) localStorage.setItem("ff1roll-claude-cmd", cc); else localStorage.removeItem("ff1roll-claude-cmd");
+  if (cn) localStorage.setItem("ff1roll-claude-notify", cn); else localStorage.removeItem("ff1roll-claude-notify");
+  claudeListen();
   document.getElementById("settingsstatus").textContent = "Saved ✓ — reload to apply data locations everywhere.";
 });
 document.getElementById("synccancel").addEventListener("click", () => syncsheet.classList.remove("on"));
