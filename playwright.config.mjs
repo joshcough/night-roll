@@ -7,6 +7,8 @@ export default defineConfig({
   testDir: "tests/e2e",
   timeout: 30000,
   fullyParallel: true,
+  workers: 2, // uncapped = cpu/2 browser processes; they starved specs into
+              // 30s timeouts and pinned Josh's machine (2026-08-23)
   retries: 1, // canvas timing on webkit can be flaky-once
   webServer: {
     command: "python3 -m http.server 8735",

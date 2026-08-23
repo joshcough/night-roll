@@ -123,3 +123,49 @@ test("gesture: pen fast stroke pans; a 230ms dwell grabs (fake clock)", () => {
   pen("pointerup", s2.x + px16, s2.y);
   assert.deepEqual(notes(app).map(n => n.t), [240, 240, 240]);
 });
+
+test("gesture: custom grid — pencil taps land on 10ths-of-a-bar cells", () => {
+  const app = boot("vm-gest-grid");
+  app.run(`mode = "pencil"; gridDiv = 10; draw();`);
+  // ppq 480, 4/4: bar = 1920, cell = 192. Tap mid-bar-2 between lines.
+  const bt = app.run(`barTicks()`), cell = bt / 10;
+  const xy = app.run(`JSON.stringify({
+    x: RULER_W + ((${bt} + ${cell} * 3.6) / song.ppq) * view.pxq - view.x,
+    y: RULER_H + (topRow() - noteRow(0, 62)) * view.rowH - view.y + view.rowH / 2})`);
+  const p = JSON.parse(xy);
+  app.dispatch("roll", pev("pointerdown", { clientX: p.x, clientY: p.y }));
+  app.dispatch("roll", pev("pointerup", { clientX: p.x, clientY: p.y }));
+  const placed = notes(app).find(n => n.t >= bt);
+  assert.ok(placed, "a note landed");
+  assert.equal(placed.t, bt + cell * 3, "floored into the 0.4-beat cell");
+  assert.equal(placed.d, cell, "tap under a custom grid = one cell");
+  // snapping seam: moves use the same cell
+  assert.equal(app.run(`moveSnapTicks()`), cell);
+  // off restores the meter grid
+  app.run(`gridDiv = null;`);
+  assert.equal(app.run(`moveSnapTicks()`), app.run(`Math.round(song.ppq / 4)`));
+});
+
+test("gesture: uneven grid divisions stay bar-anchored (no drift)", () => {
+  const app = boot("vm-gest-grid7");
+  app.run(`gridDiv = 7;`);
+  // bar 5 starts at 4*1920 = 7680; a tick just past its 3rd cell must floor
+  // to barStart + 3*(1920/7), not to an absolute multiple of round(1920/7)
+  const bt = app.run(`barTicks()`);
+  const want = Math.round(4 * bt + 3 * (bt / 7));
+  assert.equal(app.run(`gridCellStart(${4 * bt + 3 * (bt / 7) + 20})`), want);
+});
+
+test("view menu: grid input wires gridDiv; Off clears it", () => {
+  const app = boot("vm-gest-gridmenu");
+  const gn = app.el("vwGridN");
+  gn.value = "10";
+  gn.dispatchEvent({ type: "change" });
+  assert.equal(app.run(`gridDiv`), 10);
+  assert.equal(app.el("vwGridLbl").textContent, "▦ Grid: 10/bar");
+  app.el("vwGridOff").click();
+  assert.equal(app.run(`gridDiv`), null);
+  gn.value = "999"; // out of range = off, not clamp-to-surprise
+  gn.dispatchEvent({ type: "change" });
+  assert.equal(app.run(`gridDiv`), null);
+});
