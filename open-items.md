@@ -571,6 +571,14 @@ one-line server, OR inline vendor/ into index.html for true
 double-click-and-go; (3) hosted version stays the try-first path.
 Needs advisor ruling on save-mode detection, Sync-UI behavior with no
 repo configured, and the Safari story. Trigger: "build local mode."
+iPad tiers (2026-08-22 follow-up): (1) PWA — manifest + offline cache;
+Add to Home Screen gives an app icon, full-screen, and PROTECTED
+storage (home-screen web apps are exempt from Safari's eviction);
+cheap, worth doing for Josh regardless. (2) Capacitor/WKWebView
+wrapper — index.html in a native shell with a filesystem bridge: Save
+writes real files visible in the Files app, iCloud-backed; needs
+Xcode/Mac, distribution via TestFlight/App Store ($99/yr) or direct
+build to his own iPad.
 
 ## Tracks/Arrange view (Josh, 2026-08-22 — "a big project, but it would be cool")
 
