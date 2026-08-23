@@ -5561,6 +5561,7 @@ function stop() {
 const VF = (() => {
   try { return Vex.Flow.Stave ? Vex.Flow : Vex; } catch (e) { return null; }
 })();
+let editOn = false; // = "this song is editable"; the edit row shows exactly then
 let viewMode = localStorage.getItem("ff1roll-view") || "roll";
 if (viewMode === "tracks") RULER_W = TRACKS_GUTTER; // applyViewMode confirms at boot
 let scoreModel = null;      // built per song
@@ -7615,7 +7616,9 @@ viewbtn.addEventListener("click", () => {
   setViewMode(viewMode === "roll" ? "tracks" : viewMode === "tracks" ? "score" : "roll");
 });
 
-let editOn = false; // = "this song is editable"; the edit row shows exactly then
+// (editOn is declared early, with the view state — the phone boot path calls
+// renderViewMenu before this file's later sections ran; TDZ here bricked
+// every iPhone: "Cannot access 'editOn' before initialization", 2026-08-23)
 document.getElementById("accseg").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
