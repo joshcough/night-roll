@@ -2793,7 +2793,45 @@ function drawRangeTints(W, H) {
   }
 }
 function pxPerTick() { return view.pxq / song.ppq; }
-function draw() {
+// Playback perf (2026-08-24, "two processes at 180%"): the 60fps tick used to
+// re-render EVERY note/band/label per frame at retina size when only the
+// playhead moves. drawFull is the real renderer; draw() is the normal
+// invalidate-and-render path; playbackFrame() blits a cached scene and lays
+// the playhead on top, falling back to a full render only when the camera
+// jumped or something called draw() (every state mutation already does).
+let sceneCanvas = null, sceneValid = false, sceneVX = -1, sceneVY = -1;
+function draw() { sceneValid = false; drawFull(false); }
+function playbackFrame() {
+  if (!song) { draw(); return; }
+  if (instOpen) drawInst();
+  const dpr = window.devicePixelRatio || 1;
+  if (!sceneValid || view.x !== sceneVX || view.y !== sceneVY ||
+      !sceneCanvas || sceneCanvas.width !== canvas.width || sceneCanvas.height !== canvas.height) {
+    drawFull(true); // scene only — no playhead baked into the cache
+    if (!sceneCanvas) sceneCanvas = document.createElement("canvas");
+    sceneCanvas.width = canvas.width; sceneCanvas.height = canvas.height;
+    sceneCanvas.getContext("2d").drawImage(canvas, 0, 0);
+    sceneValid = true; sceneVX = view.x; sceneVY = view.y;
+  } else {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(sceneCanvas, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  // playhead overlay — same geometry as drawFull's, clipped below the ruler
+  const tick = secToTick(song, playSec());
+  const x = RULER_W + tick * pxPerTick() - view.x;
+  const H = wrap.clientHeight;
+  if (x >= RULER_W) {
+    ctx.fillStyle = css("--gold");
+    ctx.fillRect(x, RULER_H, 1.5, H - RULER_H);
+    ctx.beginPath();
+    ctx.moveTo(x - 11, RULER_H);
+    ctx.lineTo(x + 11, RULER_H);
+    ctx.lineTo(x, RULER_H + 14);
+    ctx.fill();
+  }
+}
+function drawFull(skipCursor) {
   if (instOpen) drawInst(); // panel repaints on every app repaint (incl. playback frames)
   if (typeof updateEditButtons === "function") updateEditButtons(); // cached — cheap on every frame
   if (!song) return;
@@ -2921,7 +2959,8 @@ function draw() {
     ctx.fill();
   }
   // playhead / cursor — same triangle either way, gold while rolling
-  if (playing) {
+  if (skipCursor) { /* playbackFrame lays the playhead over the cached scene */ }
+  else if (playing) {
     const tick = secToTick(song, playSec());
     const x = RULER_W + tick * ppt - view.x;
     ctx.fillStyle = css("--gold");
@@ -5634,7 +5673,7 @@ async function play(fromSec = 0) {
       else if (x < view.x) view.x = Math.max(0, x - W * 0.1);
     }
     updateSubtitle();
-    draw();
+    playbackFrame();
     raf = requestAnimationFrame(tick);
   };
   raf = requestAnimationFrame(tick);
