@@ -61,7 +61,14 @@ fill restated, F→F# resolution through the wrap to 6.1, Conquer or
 Die callout in the last four bass notes. Entry conditions any new B
 must meet: bass path to C#3 at 21.1, pulse2 register reaching D4,
 melody handing off to C#6. His labels stop at 14.1 — B harmony still
-unnamed (his to name).
+unnamed (his to name). His diagnosis: the B progression is "cool to
+play over" but melody-resistant; B1's melody-alone drop (14.2-17) was
+a Dancing Mad-inspired gesture he wants to re-audit. Research queue:
+relisten to Dancing Mad + other boss themes + Megadeth instrumentals.
+Structural freedom he noted: bar 21 is movable — B can LENGTHEN (to
+~30 if needed; shrinking unlikely, "a B part should be longer than
+that"). Possible pre-rewrite step (my suggestion, his call): name the
+B chords first — melody-over-named-chords beats melody-over-mystery.
 
 ## Test-suite migration to vm (advisor plan, started 2026-08-23)
 
