@@ -4070,7 +4070,7 @@ canvas.addEventListener("pointerdown", e => {
         const nearStart = edgeOk && !nearEnd && Math.abs(tickHere - hn.t) < 8 / pxPerTick();
         pendingEdit = {kind: nearEnd ? "resize" : nearStart ? "resizeL" : "move",
                        orig: items.map(({ti, ni, n: nn}) => ({ti, ni, t: nn.t, d: nn.d, p: nn.p})),
-                       items};
+                       items, hitKey: hit.ti + ":" + hit.ni};
         if (instantGrab) { noteEdit = pendingEdit; pendingEdit = null; }
         lasso = false;
       }
@@ -4257,17 +4257,29 @@ canvas.addEventListener("pointermove", e => {
         }
       } else if (drag.noteEdit.kind === "resizeL") { // left edge: end stays put
         const minD = Math.max(24, Math.round(song.ppq / 8));
+        const gi = drag.noteEdit.orig.findIndex((o, i) => {
+          const it = drag.noteEdit.items[i]; return it.ti + ":" + it.ni === drag.noteEdit.hitKey;
+        });
+        const go = drag.noteEdit.orig[gi] || drag.noteEdit.orig[0];
+        const edgeT = Math.round((go.t + dT) / snap) * snap; // absolute: land ON lines
+        const dEdge = edgeT - go.t;
         for (let i = 0; i < drag.noteEdit.items.length; i++) {
           const it = drag.noteEdit.items[i], o = drag.noteEdit.orig[i];
-          const nt = Math.max(0, Math.min(o.t + dT, o.t + o.d - minD));
+          const nt = Math.max(0, Math.min(o.t + dEdge, o.t + o.d - minD));
           it.n.t = nt;
           it.n.d = o.d + (o.t - nt);
         }
       } else {
         const minD = Math.max(24, Math.round(song.ppq / 8));
+        const gi = drag.noteEdit.orig.findIndex((o, i) => {
+          const it = drag.noteEdit.items[i]; return it.ti + ":" + it.ni === drag.noteEdit.hitKey;
+        });
+        const go = drag.noteEdit.orig[gi] || drag.noteEdit.orig[0];
+        const edgeT = Math.round((go.t + go.d + dT) / snap) * snap; // absolute: land ON lines
+        const dEdge = edgeT - (go.t + go.d);
         for (let i = 0; i < drag.noteEdit.items.length; i++) {
           const it = drag.noteEdit.items[i], o = drag.noteEdit.orig[i];
-          it.n.d = Math.max(minD, o.d + dT);
+          it.n.d = Math.max(minD, o.d + dEdge);
         }
       }
       draw();

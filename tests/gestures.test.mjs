@@ -189,3 +189,17 @@ test("gesture: grid anchor typed in the sheet — 14.2 phase, bar line not a sna
   app.run(`gridAnchor = {b: 1, q: 1};`);
   assert.equal(app.run(`gridCellStart(${13 * bt + 3 * cell + 20})`), 13 * bt + 3 * cell);
 });
+
+test("gesture: off-phase note's edge snaps TO the beat line (10-grid then 4-4)", () => {
+  const app = boot("vm-gest-offphase");
+  // a note penciled on the 10-grid: starts at cell 6.5*192=1248, 192 long,
+  // ending 1440-ish? no: 1248+192=1440 exactly... use start 1152+96 off 16ths:
+  // t=1056 (not a multiple of 120), d=192 -> end 1248; drag end to beat 4 (1440)
+  app.run(`song.tracks[0].notes = [{t: 1056, d: 192, p: 64, v: 80}]; multiSel = [{ti:0,ni:0}];
+           multiSelKey = new Set(["0:0"]); mode = "select"; draw();`);
+  const edge = noteXY(app, 1248, 64);
+  const target = noteXY(app, 1440, 64);
+  drag(app, edge, { x: target.x, y: target.y });
+  const n = notes(app)[0];
+  assert.equal(n.t + n.d, 1440, "edge landed ON the beat, phase notwithstanding");
+});
