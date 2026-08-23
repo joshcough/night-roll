@@ -253,3 +253,11 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   cycles; the seam placement is a composition decision. — arguably
   **`demonstrated`** 2026-08-18: Cool Bmaj's loop lands where the drums
   enter (2.4), built unprompted. FF: every capture in the corpus.
+
+## Dotted-eighth cross-rhythm (4 : 3) — encountered 2026-08-24
+Four equal notes across three beats: each is a dotted eighth (3/4 beat),
+so the figure needs no tuplet — it lives on the sixteenth grid, attacking
+every third sixteenth (1, a-of-1, &-of-2, e-of-3). The attacks slide one
+sixteenth later against each beat; same equal-division-across-the-beat
+family as the 10:8 graveyard bass figure, friendlier ratio. Came up
+splitting a dotted half into four with the knife tool.
