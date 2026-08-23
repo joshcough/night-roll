@@ -520,6 +520,16 @@ both from his 08-21 "reported with real heat" items.
   hold-to-grab, band edge drag, left-edge resize, double-tap bands,
   LCD taps, chord extension chips, on-demand Check labels.
 
+## Bassist v2 queue (advisor, 2026-08-23 — v1 SHIPPED, awaiting field test)
+
+Shipped: 5 styles, chord-driven with slash-bass anchors, melody-only
+internal inference (never displayed — doctrine boundary), plays
+through Breaks, mixed per-bar tiering, riff-defaults-with-drums, take
+chips + one-undo replace, strictly monophonic. Queue: hard knob
+(zero-draw); bass fills/turnarounds into drBoundaries; scoped reroll
+(rhythm-only/pitch-only); kick-align toggle for non-riff styles;
+register from target track; approach-density knob; half-time.
+
 ## Drummer v2 seeds from Logic's control surface (Josh shared it, 2026-08-22)
 
 - **Unison-mode bass follow — BUILT, then REVERTED on Josh's caution**
