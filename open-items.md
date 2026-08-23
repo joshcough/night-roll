@@ -52,6 +52,17 @@ session start alongside the quiz.)
 15. Guitar audio input (monophonic pitch tracking) — superseded for
     now by the Jamstik/MIDI path, kept as the amp-and-cable dream.
 
+## Graveyard-2: possible B rewrite (Josh, 2026-08-24)
+
+Bars 14-20 may be rewritten — his ear: "just not that strong." BAR 21
+IS FIXED ("bet your butt"): the wedge (bass C#-B-A-G# quarters down vs
+pulse2's 16-note chromatic 16th run D4→F5 up), held C#6 on top, bar-9
+fill restated, F→F# resolution through the wrap to 6.1, Conquer or
+Die callout in the last four bass notes. Entry conditions any new B
+must meet: bass path to C#3 at 21.1, pulse2 register reaching D4,
+melody handing off to C#6. His labels stop at 14.1 — B harmony still
+unnamed (his to name).
+
 ## Test-suite migration to vm (advisor plan, started 2026-08-23)
 
 Step 1 SHIPPED (5e3fee8): harness event injection — vm tests drive the
