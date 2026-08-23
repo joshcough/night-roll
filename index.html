@@ -1053,7 +1053,7 @@
       <dt>Speed slider</dt><dd>25–200% of the song's own tempo, for close listening or instrument practice — pitch stays true; only time stretches. Applies when you let go; keeps its setting across songs. A 100% button appears whenever you're off native — tap to snap back.</dd>
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
       <dt>▤ Tracks view</dt><dd>The arrangement view (𝄞/▤/▦ button cycles Roll → Tracks → Score; also in View ▾): one lane per track, its notes drawn as a thumbnail (each lane scaled to its own range), with the track's color dot, name, M/S, and a volume fader in the lane header — the fader saves as the same vol= annotation as the voice menu's. Tap a note to select it (it sounds); lasso a box and it selects by TIME across every lane it touches — cross-track selection in one gesture. Hold-to-grab a selected note and drag: sideways moves it in time (bar-magnet-free, 16th snap), and <b>dragging up or down carries the whole selection to another lane</b> — pitch kept, one ⟲ undoes it, drums and melodic lanes never mix. Dragging shows a ghost until you release. Tap a lane's header to select that track; tap the selected track's header again for its voice & volume menu. Pencil doesn't draw here (a squeezed lane has no honest pitch) — it draws in Roll or Score; Erase works. The ruler above is the same one as always: sections, cycle, magnetic bars, the playhead triangle.</dd>
-      <dt>💬 Message Claude</dt><dd>File → Message Claude… opens a box that sends straight to the live Claude Code session — feature requests and bug reports from inside the app, auto-tagged with the open song and playhead position. Replies and deploy notices stream back as 🛰 lines in the info strip. Powered by two private ntfy topics you set once in File → Settings (they stay on this device only — the public repo never contains them; without them the feature is simply inert). The topic names are the password: keep them secret.</dd>
+      <dt>💬 Message Claude</dt><dd>File → Message Claude… opens a box that sends straight to the live Claude Code session — feature requests and bug reports from inside the app, auto-tagged with the open song and playhead position — with a 🎤 Speak button, so a request is: open, talk, Send. Replies and deploy notices stream back as 🛰 lines in the info strip. Powered by two private ntfy topics you set once in File → Settings (they stay on this device only — the public repo never contains them; without them the feature is simply inert). The topic names are the password: keep them secret.</dd>
       <dt>View ▾ menu</dt><dd>Beside Edit in the header (always there, even on locked songs) — one place for every hide/show: 𝄞 Score view, ◂ Tracks, 🛠 Edit toolbar, ▦ Bottom bar, 🎹 Instrument panel, 💬 Notes strip, and ▸ Section levels with −/+ steppers (shows "2 of 3"; the gutter chevron still one-tap cycles). ✓ means visible; the menu STAYS OPEN while you flip several at once, and closes on a tap anywhere else. Every item mirrors an existing button — the buttons are the fast path, the menu is the findable one. The header itself never hides, so View ▾ is always the way back; hiding the bottom bar floats the ▴ restore button bottom-left (one tap brings everything back). The old ▾ hide buttons are gone — hiding lives here now.</dd>
       <dt>Speed &amp; volume buttons</dt><dd>The speed slider folded into a <b>percentage button</b> — tap to open the slider, tap anywhere else and it folds back (the reset chip appears when off-native). Beside it, <b>🔊</b> is a master volume the same way: tap, slide (10–200%), tap away; the setting sticks per device and the button shows the number when it's not 100%.</dd>
       <dt>LCD readout</dt><dd>Beside Play, Logic-style: live bar and beat (counted in the declared meter's beats), the tempo at the cursor from the song's own tempo map (scaled by the speed slider), and the declared meter and key. Undeclared stays honest: meter reads "4/4?", key reads "C?" (the display default), a stored tonic reads "B♭?". On your own songs the tempo segment is tappable too — it opens a Tempo change annotation ("tempo: 120" at a bar/beat; the map applies from there, so mid-song tempo changes work; Save writes the full map into the .mid). On analyzed songs the same annotation is an OBSERVATION — it records that the music changes tempo there and leaves playback untouched (the capture's timing is measured fact). Every readout is a door: tap the tempo to open the tempo annotation governing the cursor (or declare the first one), tap the meter to open the time signature, tap the key to open the key change ruling the cursor — a stored partial opens its own note with the tonic already filled.</dd>
@@ -1319,6 +1319,7 @@
     <div class="meta" id="claudectx" style="white-space:normal;margin:6px 0 0"></div>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="claudesend">Send</button>
+      <button id="claudemic">🎤 Speak</button>
       <div class="status" id="claudestatus" style="flex:1"></div>
       <button id="claudeclose" style="margin-left:auto">Close</button>
     </div>
@@ -8474,15 +8475,17 @@ const nmic = document.getElementById("nmic");
 function micStop() {
   if (micRec) { try { micRec.stop(); } catch (err) { /* already stopped */ } }
   micRec = null;
-  nmic.classList.remove("active");
-  nmic.textContent = "🎤 Speak";
+  if (micBtn) { micBtn.classList.remove("active"); micBtn.textContent = "🎤 Speak"; }
+  else { nmic.classList.remove("active"); nmic.textContent = "🎤 Speak"; }
+  micBtn = null;
 }
-nmic.addEventListener("click", () => {
-  if (micRec) { micStop(); return; }
-  const ntext = document.getElementById("ntext");
-  const base = ntext.value ? ntext.value.replace(/\s+$/, "") + " " : "";
+let micBtn = null; // whichever 🎤 is live (annotation editor or Message Claude)
+function micToggle(btn, textarea, statusFn) { // shared dictation: append into any box
+  if (micRec) { const same = micBtn === btn; micStop(); if (same) return; }
+  const base = textarea.value ? textarea.value.replace(/\s+$/, "") + " " : "";
   let finals = "";
   micRec = new SPEECH();
+  micBtn = btn;
   micRec.continuous = true;
   micRec.interimResults = true;
   micRec.onresult = e => {
@@ -8492,19 +8495,20 @@ nmic.addEventListener("click", () => {
       if (e.results[i].isFinal) finals += e.results[i][0].transcript;
       else interim += e.results[i][0].transcript;
     }
-    ntext.value = base + finals + interim;
+    textarea.value = base + finals + interim;
   };
   micRec.onerror = e => {
-    document.getElementById("nstatus").textContent =
-      e.error === "not-allowed" ? "Microphone permission denied — allow it in Safari settings."
-                                : "Dictation error: " + e.error;
+    statusFn(e.error === "not-allowed" ? "Microphone permission denied — allow it in Safari settings."
+                                       : "Dictation error: " + e.error);
     micStop();
   };
   micRec.onend = () => micStop(); // Safari ends recognition on silence
-  nmic.classList.add("active");
-  nmic.textContent = "■ Stop";
+  btn.classList.add("active");
+  btn.textContent = "■ Stop";
   micRec.start();
-});
+}
+nmic.addEventListener("click", () =>
+  micToggle(nmic, document.getElementById("ntext"), s2 => document.getElementById("nstatus").textContent = s2));
 
 function snapBeat(q) { return Math.round((q - 1) / 0.25) * 0.25 + 1; }
 function setBeatPair(qid, sid, q) { // 2.75 → beat "2", sub ".75"
@@ -11213,8 +11217,15 @@ document.getElementById("fileclaude").addEventListener("click", () => {
   document.getElementById("claudesheet").classList.add("on");
   document.getElementById("claudetext").focus();
 });
-document.getElementById("claudeclose").addEventListener("click", () =>
-  document.getElementById("claudesheet").classList.remove("on"));
+document.getElementById("claudeclose").addEventListener("click", () => {
+  micStop();
+  document.getElementById("claudesheet").classList.remove("on");
+});
+document.getElementById("claudemic").addEventListener("click", () => {
+  if (!SPEECH) { document.getElementById("claudestatus").textContent = "no speech recognition in this browser"; return; }
+  micToggle(document.getElementById("claudemic"), document.getElementById("claudetext"),
+            s2 => document.getElementById("claudestatus").textContent = s2);
+});
 document.getElementById("claudesend").addEventListener("click", async () => {
   const txt = document.getElementById("claudetext").value.trim();
   if (!txt) return;
