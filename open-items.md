@@ -52,6 +52,26 @@ session start alongside the quiz.)
 15. Guitar audio input (monophonic pitch tracking) — superseded for
     now by the Jamstik/MIDI path, kept as the amp-and-cable dream.
 
+## Test-suite migration to vm (advisor plan, started 2026-08-23)
+
+Step 1 SHIPPED (5e3fee8): harness event injection — vm tests drive the
+real pointer handlers with plain objects; fake clock makes the 230ms
+dwell deterministic; five proof ports in tests/gestures.test.mjs, all
+mutation-checked. App code untouched (the advisor's ranked-1 path; the
+gesture-reducer rewrite was REJECTED as the risky option).
+Remaining, shippable independently:
+- Batch A (~1 session): demote the class-A dialog/command e2e specs
+  (delete/undo, copy-paste, gray states, insert dialog, drum fill,
+  Edit menu, fader, velocity, LCD taps, ruler-tap+➗, Drummer sheet).
+- Batch B (~1 session): demote the gesture-decode halves (chord drag,
+  pan default, cycle park/re-arm, left edge, band edge, double-tap
+  band, pen pencil, tracks view vm half), then trim editor.spec.mjs
+  to the irreducible ~9 (boot/viewport, one real drag/dwell/pinch,
+  sheet visibility, button-wiring sweep — chromium AND webkit).
+Port discipline (documented in NIGHT-ROLL.md): vm twin coexists with
+its e2e spec for ≥1 commit; every port must fail a knocked-out-gesture
+mutation check before the e2e copy retires.
+
 ## RESTART CONTEXT — updated 2026-08-15 late night (the seven-hour app marathon)
 
 **Analysis thread unchanged:** prologue F#–C tritone is still THE NEXT
