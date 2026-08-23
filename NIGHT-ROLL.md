@@ -584,9 +584,18 @@ meter-change refusal, strictly monophonic output (post-sort duration
 clamp). Pitch truth ladder: declared chord bands (bsChordTimeline —
 slash basses honored, N.C. = key-root pedal, gaps ride the last chord,
 unreadable labels ride root+fifth) > INTERNAL melody inference
-(bsInferTimeline: per-bar duration+metric-weighted PC census scored
-against the declared key's diatonic triads, smoothness prior, seed
-picks among top candidates so takes give different harmonic READINGS
+(bsInferTimeline: per-bar duration+metric-weighted PC census over ALL
+sounding voices (one voice alone misreads multi-voice songs), scored
+against the declared key's diatonic triads PLUS harmonic minor's
+V-major and vii° when the declared key is minor (the graveyard-B
+failure: an E# over F#m had no candidate, so every seed shuffled
+equally-wrong diatonic picks), an additive mass-scaled smoothness
+prior strong enough to hold a pedal (multiplicative ×1.15 amplified
+negative scores and let solo lines read as a new root every bar), a
+sounded-root bonus, seed draw squared-biased to the best reading and
+gated to candidates ≥55% of the top score; a bar where every candidate
+scores negative RIDES the previous chord instead of committing to a
+confident wrong root. Seeds give different harmonic READINGS
 — never displayed, never annotated: naming chords is Josh's; this is
 his explicit melody-only "idea machine" case, overriding the
 advisor's doctrinal rejection with the display boundary) > key-root

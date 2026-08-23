@@ -1593,6 +1593,56 @@ test("Bassist: chord-driven, monophonic, one undo; melody-only infers", () => {
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 
+test("Bassist inference: minor-key V, pedal stability, no wrong-root guesses", () => {
+  installSong();
+  // scratch fixture ONLY (never Josh's music): F#m declared, melody spans
+  // the failure classes his graveyard-ending report exposed — a harmonic-
+  // minor V bar, solo pedal bars, an out-of-vocabulary chromatic bar
+  run(`
+    songKey = "albums/compositions/nightroll/infer-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [
+        {name: "pulse1", notes: [
+          {t: 0, d: 640, p: 61, v: 80}, {t: 640, d: 640, p: 65, v: 80}, {t: 1280, d: 640, p: 68, v: 80},
+          {t: 1920, d: 960, p: 61, v: 80}, {t: 2880, d: 480, p: 62, v: 80}, {t: 3360, d: 480, p: 61, v: 80},
+          {t: 3840, d: 960, p: 61, v: 80}, {t: 4800, d: 480, p: 60, v: 80}, {t: 5280, d: 480, p: 61, v: 80},
+          {t: 5760, d: 1440, p: 61, v: 80}, {t: 7200, d: 480, p: 66, v: 80},
+          {t: 7680, d: 480, p: 60, v: 80}, {t: 8160, d: 480, p: 63, v: 80},
+          {t: 8640, d: 480, p: 67, v: 80}, {t: 9120, d: 480, p: 70, v: 80}]},
+        {name: "bass", notes: []}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = [];
+    rollnotes = deriveNoteTypes([{b1: 1, q1: 1, text: "key: F#m", added: true}]).map(resolveNote);
+    finalizeNotes(); computeSongEnd();
+  `);
+  let sawV = false;
+  for (const seed of [1, 2, 3, 4, 5]) {
+    const tl = val(`bsInferTimeline(0, 9600, [0], drumRng(${seed}, 0xB055))`);
+    const bar = t => tl.find(e => e.t === t);
+    // bar 1 arpeggiates C#-E#-G#: every seed must land the root on C# (the
+    // old diatonic-only candidate set had NO home for E#, so seeds shuffled
+    // equally-wrong roots — Josh's "not a single one fit"); the V-major
+    // reading holding E# must exist among the takes
+    assert.equal(bar(0).rootPc, 1, "seed " + seed + ": root lands on C#");
+    if (bar(0).tones.includes(5)) sawV = true;
+    // bars 2-4 prolong a C# pedal with neighbor tones: a solo line must not
+    // read as a new root every bar (the per-bar random walk)
+    const roots = [bar(1920), bar(3840), bar(5760)].map(e => e.rootPc);
+    assert.ok(new Set(roots).size <= 2, "seed " + seed + ": pedal stays put, got " + roots);
+    // bar 5 is a chromatic cluster no triad holds: ride the previous chord,
+    // never commit to a confident wrong root
+    assert.equal(bar(7680).rootPc, bar(5760).rootPc, "seed " + seed + ": all-negative bar rides");
+  }
+  assert.ok(sawV, "some take reads the harmonic-minor V (E# among its tones)");
+  // multi-voice census: harmony readable only from the UNION of voices
+  run(`song.tracks[0].notes = [{t: 0, d: 1920, p: 61, v: 80}];
+       song.tracks.splice(1, 0, {name: "pulse2", notes: [{t: 0, d: 1920, p: 65, v: 80}]});`);
+  const both = val(`bsInferTimeline(0, 1920, [0, 1], drumRng(1, 0xB055))`);
+  const one = val(`bsInferTimeline(0, 1920, [0], drumRng(1, 0xB055))`);
+  assert.ok(both[0].tones.includes(5), "union census sees the second voice's E#");
+  assert.ok(one[0].tones.includes(1), "single-index call still works (back-compat shape)");
+  run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
+});
+
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {
   const { buildHelp } = await import("../tools/build_help.mjs");
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");

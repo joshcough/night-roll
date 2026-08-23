@@ -10782,26 +10782,38 @@ function bsChordTone(label) { // label -> {rootPc, bassPc, tones[] (pcs)} or nul
   }
   return {rootPc, bassPc, tones: tones.map(x => (x + rootPc) % 12), readable: !!hit || !!chordQualParse(m[3] || "")};
 }
-function bsInferTimeline(t0, t1, melodyTi, seedRng) { // INTERNAL sketch only — never shown
+function bsInferTimeline(t0, t1, melodyTis, seedRng) { // INTERNAL sketch only — never shown
   const bt = barTicks(), qt = beatTicks();
   const sf = sfDeclaredAt(t0);
   const tonic = sf === null || sf === undefined ? null : ((sf * 7) % 12 + 12) % 12;
   const MAJ = [0, 2, 4, 5, 7, 9, 11];
   const scale = tonic === null ? null : MAJ.map(x => (x + tonic) % 12);
-  // candidate triads: diatonic to the declared key when there is one, else all 24
+  // candidate triads: diatonic to the declared key when there is one, else all
+  // 24. A declared MINOR key also admits harmonic minor's V (major) and vii°
+  // (raised 7th) — the graveyard-B failure: an E# over F#m had no candidate
+  // that could hold it, so every seed shuffled equally-wrong diatonic picks.
   const cands = [];
-  if (scale) for (let i = 0; i < 7; i++) {
-    cands.push({rootPc: scale[i], tones: [scale[i], scale[(i + 2) % 7], scale[(i + 4) % 7]]});
+  if (scale) {
+    for (let i = 0; i < 7; i++)
+      cands.push({rootPc: scale[i], tones: [scale[i], scale[(i + 2) % 7], scale[(i + 4) % 7]]});
+    const kn = keyNameAt(t0);
+    if (kn && modeOfName(kn) === "minor") {
+      const mt = tonicPcOfName(kn);
+      if (mt !== null) {
+        cands.push({rootPc: (mt + 7) % 12, tones: [(mt + 7) % 12, (mt + 11) % 12, (mt + 2) % 12]});  // V major
+        cands.push({rootPc: (mt + 11) % 12, tones: [(mt + 11) % 12, (mt + 2) % 12, (mt + 5) % 12]}); // vii°
+      }
+    }
   } else for (let pc = 0; pc < 12; pc++) {
     cands.push({rootPc: pc, tones: [pc, (pc + 4) % 12, (pc + 7) % 12]});
     cands.push({rootPc: pc, tones: [pc, (pc + 3) % 12, (pc + 7) % 12]});
   }
-  const tr = song.tracks[melodyTi];
+  const tis = Array.isArray(melodyTis) ? melodyTis : [melodyTis];
   const out = [];
   let prevRoot = null;
   for (let bs = Math.floor(t0 / bt) * bt; bs < t1; bs += bt) {
     const w = new Map(); // duration + metric weighted PC census (his own method)
-    for (const n of tr.notes) {
+    for (const ti of tis) for (const n of song.tracks[ti].notes) {
       if (n.gone || n.t + n.d <= bs || n.t >= bs + bt) continue;
       const dur = Math.min(n.t + n.d, bs + bt) - Math.max(n.t, bs);
       const onBeat = Math.abs(((n.t - bs) % qt)) < 5 ? 1.5 : 1;
@@ -10809,14 +10821,26 @@ function bsInferTimeline(t0, t1, melodyTi, seedRng) { // INTERNAL sketch only �
       w.set(pc, (w.get(pc) || 0) + dur * onBeat);
     }
     if (!w.size) { out.push(prevRoot ? {...prevRoot, t: bs, end: bs + bt} : null); continue; }
+    let barMass = 0; for (const wt of w.values()) barMass += wt;
     const scored = cands.map(c => {
       let sc = 0;
       for (const [pc, wt] of w) sc += c.tones.includes(pc) ? wt : -wt * 0.35;
-      if (prevRoot && c.rootPc === prevRoot.rootPc) sc *= 1.15; // smoothness prior
+      const rw = w.get(c.rootPc); // a sounded root outranks an implied one
+      if (rw) sc += rw * 0.15;
+      // smoothness prior, additive and mass-scaled: a solo line prolonging one
+      // harmony must not read as a new root every bar (multiplicative ×1.15
+      // was too weak to hold a pedal, and AMPLIFIED negative scores)
+      if (prevRoot && c.rootPc === prevRoot.rootPc && sc > 0) sc += barMass * 0.45;
       return {c, sc};
     }).sort((a, b) => b.sc - a.sc);
-    const top = scored.slice(0, 3).filter(x => x.sc > 0);
-    const pick = top.length ? top[Math.floor(seedRng() * top.length)].c : scored[0].c; // seed varies the READING
+    // seeds vary the reading among PLAUSIBLE candidates only — a distant
+    // third pick is how "none of the takes fit" happens on ambiguous bars
+    const best = scored[0].sc;
+    const top = scored.slice(0, 3).filter(x => x.sc > 0 && x.sc >= best * 0.55);
+    // nothing positive = the bar reads as none of the candidates: ride the
+    // previous chord (or yield nothing) rather than commit to a wrong root
+    const pick = top.length ? top[Math.floor(seedRng() ** 2 * top.length)].c : null; // squared: biased to the best reading
+    if (!pick) { out.push(prevRoot ? {...prevRoot, t: bs, end: bs + bt} : null); continue; }
     const entry = {t: bs, end: bs + bt, rootPc: pick.rootPc, bassPc: pick.rootPc, tones: pick.tones, readable: true};
     out.push(entry);
     prevRoot = entry;
@@ -10874,11 +10898,13 @@ function bsGenerate(seed, opts) { // the Bassist: strictly monophonic, chord-dri
   let tl = bsChordTimeline(t0, t1);
   let inferred = false;
   {
-    const mel = song.tracks.findIndex((tr2, ti) => ti !== targetTi && !trackIsDrums(ti) &&
-      tr2.notes.some(n => !n.gone && n.t < t1 && n.t + n.d > t0));
-    if (mel >= 0) { // fill only the bars no band covers (mixed songs welcome)
+    const mels = song.tracks.map((tr2, ti) => ({tr2, ti}))
+      .filter(({tr2, ti}) => ti !== targetTi && !trackIsDrums(ti) &&
+        tr2.notes.some(n => !n.gone && n.t < t1 && n.t + n.d > t0))
+      .map(({ti}) => ti); // ALL sounding voices — one voice alone misreads multi-voice songs
+    if (mels.length) { // fill only the bars no band covers (mixed songs welcome)
       const declared = tl.filter(e => !e.lookahead);
-      const inferredTl = bsInferTimeline(t0, t1, mel, drumRng(seed, 0xB055));
+      const inferredTl = bsInferTimeline(t0, t1, mels, drumRng(seed, 0xB055));
       const gaps = inferredTl.filter(g => !declared.some(d2 => d2.t < g.end && d2.end > g.t));
       if (gaps.length) { inferred = declared.length === 0; tl = [...declared, ...gaps, ...tl.filter(e => e.lookahead)].sort((a, b) => a.t - b.t); }
     }
