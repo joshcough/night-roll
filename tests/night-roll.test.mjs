@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Feature request", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Feature request", "Bassist", "✄</b> cuts", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1553,6 +1553,44 @@ test("Drummer parts: scoped reroll touches only its piece group", () => {
   assert.deepEqual(nonKick(after).sort(), nonKick(before).sort()); // snares + hats byte-identical
   assert.notDeepEqual(after.sort(), before.sort()); // kicks actually rerolled
   run(`songKey = null; rollnotes = [];`);
+});
+
+test("Bassist: chord-driven, monophonic, one undo; melody-only infers", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/bass-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [
+        {name: "pulse1", notes: [{t: 0, d: 1920, p: 69, v: 80}, {t: 1920, d: 1920, p: 64, v: 80}]},
+        {name: "bass", notes: []}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = deriveNoteTypes([
+      {b1: 1, q1: 1, b2: 1, q2: 4, text: "chord: A", added: true},
+      {b1: 2, q1: 1, b2: 2, q2: 4, text: "chord: E/G#", added: true},
+    ]).map(resolveNote);
+    finalizeNotes(); computeSongEnd();
+  `);
+  const gen = args => val(`(() => {
+    const k = bsGenerate(777, ${args});
+    return {k, notes: song.tracks[1].notes.filter(n => !n.gone).map(n => ({t: n.t, p: n.p, d: n.d}))};
+  })()`);
+  const a = gen(`{style: "chug", busy: 3, oct: 2, follow: "chords", targetTi: 1, fromBar: 1, toBar: 2}`);
+  assert.ok(a.k >= 12); // straight 8ths over two bars
+  assert.ok(a.notes.filter(n => n.t < 1920).every(n => n.p % 12 === 9), "bar 1 rides A");
+  assert.ok(a.notes.filter(n => n.t >= 1920).every(n => n.p % 12 === 8), "bar 2 honors the slash bass G#");
+  for (let i = 0; i < a.notes.length - 1; i++)
+    assert.ok(a.notes[i].t + a.notes[i].d <= a.notes[i + 1].t + 1, "strictly monophonic");
+  const b = gen(`{style: "chug", busy: 3, oct: 2, follow: "chords", targetTi: 1, fromBar: 1, toBar: 2}`);
+  assert.deepEqual(b.notes, a.notes); // deterministic + idempotent replace
+  run(`editUndoPop()`); // undoes generation b -> generation a's notes return
+  assert.equal(val(`song.tracks[1].notes.filter(n => !n.gone).length`), a.k);
+  run(`editUndoPop()`); // undoes generation a -> empty again
+  assert.equal(val(`song.tracks[1].notes.filter(n => !n.gone).length`), 0);
+  // melody-only: no chords -> internal inference still produces bass
+  run(`rollnotes = []; finalizeNotes();`);
+  const c = gen(`{style: "walk", busy: 3, oct: 2, follow: "chords", targetTi: 1, fromBar: 1, toBar: 2}`);
+  assert.ok(c.k > 0, "melody-only inference generates");
+  run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

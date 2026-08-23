@@ -555,6 +555,25 @@ hidden footer always floats the ▴ restore (which shows both). The
 View ▾ menu stays open across toggle taps (batch hiding); every item
 mirrors an existing button — buttons are the fast path.
 
+## Bassist (advisor-designed, 2026-08-23)
+
+bsGenerate(seed, opts) mirrors the Drummer's contract: seeded takes,
+replace-in-range as ONE group undo, per-bar substreams via the shared
+sectionLane(bar) (same label = same bassline), labeled-Break silence,
+meter-change refusal, strictly monophonic output (post-sort duration
+clamp). Pitch truth ladder: declared chord bands (bsChordTimeline —
+slash basses honored, N.C. = key-root pedal, gaps ride the last chord,
+unreadable labels ride root+fifth) > INTERNAL melody inference
+(bsInferTimeline: per-bar duration+metric-weighted PC census scored
+against the declared key's diatonic triads, smoothness prior, seed
+picks among top candidates so takes give different harmonic READINGS
+— never displayed, never annotated: naming chords is Josh's; this is
+his explicit melody-only "idea machine" case, overriding the
+advisor's doctrinal rejection with the display boundary) > key-root
+pedal > honest refusal. Styles chug/pump/arp/walk/riff per the spec;
+constant rng draws per bar per style (liked-bar stability). Target
+track picker never defaults onto a track with notes in range.
+
 ## Drummer parts scoping (advisor round 3, 2026-08-22)
 
 parts = chips {kick, snare, hats, fills}. kick/snare/hats scope by
