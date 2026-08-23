@@ -449,6 +449,9 @@ test("phone-size boot: song loads with the panel folded (no TDZ bricks)", async 
   expect(await vis("viewsheetbtn")).toBe(false);
   expect(await vis("playbtn")).toBe(true);
   expect(await vis("fullappbtn")).toBe(true);
+  // annotations fold away: no section/chord band lanes, no subtitle strip
+  expect(await page.evaluate(() => RULER_H === BASE_RULER_H)).toBe(true);
+  expect(await vis("subtitle")).toBe(false);
   // Full app escape: never strand — one tap restores the DAW, pref persists
   await page.click("#fullappbtn");
   expect(await page.evaluate(() => document.body.classList.contains("listener"))).toBe(false);

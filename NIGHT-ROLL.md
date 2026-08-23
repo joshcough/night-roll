@@ -559,8 +559,14 @@ mirrors an existing button — buttons are the fast path.
 
 Phones (min-dimension < 500) default to a PLAYER: body.listener CSS
 hides File/Edit/View, track chips, edit row, footer, ▴ restore,
-metronome/record, instrument panel — leaving the roll, ⏮ ▶, the LCD,
-speed % and 🔊. Rationale: shared ?song= links are for listening.
+metronome/record, instrument panel, #subtitle notes strip — leaving
+the roll, ⏮ ▶, the LCD, speed % and 🔊. Section/chord bands fold too:
+finalizeNotes caps depth at -1 and nulls chord lanes when listenerMode,
+so RULER_H = BASE_RULER_H (applyListener re-runs finalizeNotes on
+toggle — idempotent, same pattern as setSecDepth). listenerMode is
+declared beside editOn/viewMode: lane math runs at song load, before
+applyChrome's boot read (the editOn TDZ lesson).
+Rationale: shared ?song= links are for listening.
 Device pref ff1roll-listener ("1"/"0"; null = phone default). The
 never-strand invariant holds via a header **Full app** button that
 only renders in listener mode (one tap opts the device out and
