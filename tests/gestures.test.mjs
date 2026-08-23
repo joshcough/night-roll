@@ -203,3 +203,19 @@ test("gesture: off-phase note's edge snaps TO the beat line (10-grid then 4-4)",
   const n = notes(app)[0];
   assert.equal(n.t + n.d, 1440, "edge landed ON the beat, phase notwithstanding");
 });
+
+test("gesture: grabbing a note outside a stale selection moves ONLY that note", () => {
+  const app = boot("vm-gest-stalesel");
+  // three chord notes selected earlier (stale); a fourth note elsewhere
+  app.run(`song.tracks[0].notes.push({t: 960, d: 480, p: 72, v: 80});
+           multiSel = [{ti:0,ni:0},{ti:0,ni:1},{ti:0,ni:2}];
+           multiSelKey = new Set(["0:0","0:1","0:2"]); mode = "select"; draw();`);
+  const from = noteXY(app, 1100, 72);
+  const px8 = app.run(`(240 / song.ppq) * view.pxq`);
+  drag(app, from, { x: from.x + px8, y: from.y });
+  const ns = notes(app);
+  assert.deepEqual(ns.slice(0, 3).map(n => n.t), [0, 0, 0], "stale selection untouched");
+  assert.equal(ns[3].t, 1200, "grabbed note moved alone");
+  assert.deepEqual(JSON.parse(app.run(`JSON.stringify([...multiSelKey])`)), ["0:3"],
+    "selection reset to the grabbed note");
+});

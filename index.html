@@ -4058,6 +4058,13 @@ canvas.addEventListener("pointerdown", e => {
   // mode (drag from empty space still draws a box; a tap still toggles)
   if (editableSong() && (mode === "select" || lasso) && viewMode !== "score" && !fallActive() && p.y >= RULER_H) {
     const hit = viewMode === "tracks" ? hitTracksNote(p) : hitNote(p);
+    if (hit && !lasso && multiSel.length && !multiSelKey.has(hit.ti + ":" + hit.ni)) {
+      // grabbing a note OUTSIDE the selection reselects just it (Logic
+      // behavior) — kills both stale-selection traps: the pan-instead-of-
+      // grab and the this-moved-five-drum-notes surprise (Josh, 2026-08-24)
+      multiSel = [{ti: hit.ti, ni: hit.ni}];
+      multiSelKey = new Set([hit.ti + ":" + hit.ni]);
+    }
     if (hit && (multiSelKey.has(hit.ti + ":" + hit.ni) || (!multiSel.length && !lasso))) {
       if (!multiSel.length) selNote = hit; // single note is draggable too
       if (e.altKey) duplicateSelectionInPlace(); // option-drag = drag out a copy
