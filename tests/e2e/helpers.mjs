@@ -27,6 +27,12 @@ export async function openApp(page) {
     window.AudioContext = FakeCtx;
     window.webkitAudioContext = FakeCtx;
   });
+  // block EVERYTHING off-localhost: the NSF arriving from the public archive
+  // triggers the in-page 6502/APU render — seconds of synchronous main-thread
+  // emulation that lands at a random moment (network timing) and wedges
+  // whatever spec is mid-evaluate (the 30-44s "random spec hangs"). Tests run
+  // on synthesized voices and never need the network.
+  await page.route(/^(?!.*localhost)/, r => r.abort());
   await page.goto("/index.html");
   // app globals are top-level `let` — not window properties; probe bare identifiers
   await page.waitForFunction(() => { try { return !!song; } catch (e) { return false; } }, null, { timeout: 15000 });
