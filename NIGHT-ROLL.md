@@ -555,6 +555,22 @@ hidden footer always floats the ▴ restore (which shows both). The
 View ▾ menu stays open across toggle taps (batch hiding); every item
 mirrors an existing button — buttons are the fast path.
 
+## Drummer parts scoping (advisor round 3, 2026-08-22)
+
+parts = chips {kick, snare, hats, fills}. kick/snare/hats scope by
+PITCH GROUP; fills is a ROLE (fills contain snares and kicks), scoped
+by BAR: the bar before each declared boundary + the boundary/arrival
+downbeat crash ticks. Semantics: all four = the literal v1 "all" path,
+bit-identical (asserted in vm); groove-only = union of pitch groups,
+fillAmt forced 0, no crashes; fills-only = whole-kit rewrite of fill
+bars alone (fills knob "off" here = a DE-FILL: strips fills, lays
+plain groove); combos = union. DOCUMENTED DECISION: a fills-only
+reroll re-seeds the fill bar's groove too, so an identically-labeled
+section's restated bar may diverge from its twins there — fill bars
+are statement bars and vary on purpose (fills key on absolute bars).
+ZERO new rng draws in any pre-existing path — the bit-compat guarantee
+is what keeps takes replaying.
+
 ## UI convention: menu/row parity (Josh's rule, 2026-08-20)
 
 Every command in the Edit ▾ menu has a corresponding icon button in the

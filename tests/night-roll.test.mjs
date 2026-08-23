@@ -723,7 +723,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1531,6 +1531,14 @@ test("Drummer parts: scoped reroll touches only its piece group", () => {
     song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
     rollnotes = []; finalizeNotes(); computeSongEnd();
   `);
+  // array parts === legacy string parts, and all-four === "all", bit for bit
+  const legacyAll = val(`(() => { drGenerate(4242, {busy: 3, hard: 3, fillAmt: 3, follow: "off", parts: "all", fromBar: 1, toBar: 2});
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return song.tracks[di].notes.filter(n => !n.gone).map(n => n.t + ":" + n.p + ":" + n.v); })()`);
+  const arrAll = val(`(() => { drGenerate(4242, {busy: 3, hard: 3, fillAmt: 3, follow: "off", parts: ["kick","snare","hats","fills"], fromBar: 1, toBar: 2});
+    const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
+    return song.tracks[di].notes.filter(n => !n.gone).map(n => n.t + ":" + n.p + ":" + n.v); })()`);
+  assert.deepEqual(arrAll, legacyAll);
   run(`drGenerate(11, {busy: 3, hard: 3, fillAmt: 0, follow: "off", fromBar: 1, toBar: 2})`);
   const before = val(`(() => {
     const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));

@@ -356,7 +356,7 @@ test("Drummer: generate, reroll, take chips replay, one undo restores", async ({
   });
   await page.evaluate(() => openDrummer());
   await page.evaluate(() => { document.getElementById("drfrom").value = 1; document.getElementById("drto").value = 2;
-    document.getElementById("drbusy").value = "3"; document.getElementById("drhard").value = "4"; });
+    segSet("drbusy", 3); segSet("drhard", 4); });
   const kit = () => page.evaluate(() => {
     const di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
     return di < 0 ? [] : song.tracks[di].notes.filter(n => !n.gone).map(n => ({ t: n.t, p: n.p, v: n.v }));

@@ -335,6 +335,8 @@
   #editsheet.on, #viewsheet.on { display: block; }
   #editsheet .fitem, #viewsheet .fitem { display: block; width: 100%; text-align: left; border: 0; background: none; border-radius: 6px; min-height: 42px; padding: 8px 10px; font-family: var(--mono); font-size: 13px; color: var(--text); cursor: pointer; }
   #editsheet .fitem:active, #viewsheet .fitem:active { background: var(--panel); }
+  .drseg button { min-height: 44px; min-width: 42px; }
+  #drparts button { min-height: 44px; padding: 8px 12px; }
   #filesheet {
     display: none;
     position: absolute;
@@ -940,41 +942,23 @@
       <input type="number" id="drto" value="8" min="1" style="width:64px;min-height:40px" aria-label="To bar">
       <span class="lbl">beat</span><select id="drtoq"></select><select id="drtos" aria-label="Subdivision"></select>
     </div>
+    <div class="row" style="flex-wrap:wrap;gap:10px">
+      <span class="lbl">busy</span><div class="seg drseg" id="drbusy" aria-label="Busy — how much"></div>
+      <span class="lbl">hard</span><div class="seg drseg" id="drhard" aria-label="Hard — how loud"></div>
+    </div>
+    <div class="row" style="flex-wrap:wrap;gap:10px" id="drfillsrow">
+      <span class="lbl">fills</span><div class="seg drseg" id="drfills" aria-label="Fill amount"></div>
+      <span class="lbl">feel</span><div class="seg drseg" id="drfeel" aria-label="Backbeat rate"></div>
+    </div>
     <div class="row" style="flex-wrap:wrap;gap:6px">
-      <span class="lbl">busy</span>
-      <select id="drbusy" aria-label="Busy — how much">
-        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
-        <option value="4">4</option><option value="5">5</option>
-      </select>
-      <span class="lbl">hard</span>
-      <select id="drhard" aria-label="Hard — how loud">
-        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
-        <option value="4">4</option><option value="5">5</option>
-      </select>
-      <span class="lbl">fills</span>
-      <select id="drfills" aria-label="Fills">
-        <option value="0">off</option><option value="1">1</option><option value="2">2</option>
-        <option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
-      </select>
       <span class="lbl">follow</span>
       <select id="drfollow" aria-label="What the kick listens to"></select>
-      <span class="lbl">feel</span>
-      <select id="drfeel" aria-label="Backbeat rate">
-        <option value="normal" selected>normal</option><option value="half">half</option><option value="double">double</option>
-      </select>
       <span class="lbl">parts</span>
-      <select id="drparts" aria-label="Which pieces to reroll">
-        <option value="all" selected>all</option><option value="kick">kick</option>
-        <option value="snare">snare</option><option value="hats">hats</option>
-      </select>
+      <div class="chiprow" id="drparts" style="display:inline-flex" aria-label="Which pieces to reroll"></div>
     </div>
     <div class="status" id="drstatus"></div>
     <div class="chiprow" id="drtakes"></div>
-    <p class="meta" style="margin:8px 0 0;white-space:normal">Fixed skeleton, fills before your declared section boundaries, silence in
-    breaks. <b>busy</b> = how much, <b>hard</b> = how loud, <b>fills</b> = how often and how big,
-    <b>follow</b> = what the kick listens to (bass offbeats · declared chord changes · nothing),
-    <b>feel</b> = backbeat rate (half = big slow snare, double = snare on every offbeat).
-    Each take REPLACES the range's kit notes — one ⟲ brings yours back. Tap an old take to get it back exactly.</p>
+    <p class="meta" style="margin:8px 0 0;white-space:normal">Each take replaces the range's kit notes — one ⟲ brings yours back. (Full guide: Help → 🎲 Drummer.)</p>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="drgen">🎲 Generate</button>
       <button id="drclose" style="margin-left:auto">Close</button>
@@ -1140,7 +1124,7 @@
       <dt>Split</dt><dd>Select notes and tap <b>✂</b>. If the blue cursor sits inside them (tap the ruler to place it), each selected note the cursor crosses splits at that exact spot; if the cursor is elsewhere, each selected note splits in half.</dd>
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Unsaved dot</dt><dd>A gold <b>●</b> after the title means the song has edits that haven't been committed — it appears the moment you change anything and clears when Save &amp; Commit succeeds (the Save sheet's title says which state you're in, too).</dd>
-      <dt>🎲 Drummer</dt><dd>The 🎲 beside 🥁 in the edit row (also Edit ▾ → Drummer…) generates a kit part for a bar range (prefilled from the ruler selection if one is armed, else the section under the cursor). It reads the structure YOU declared: a fixed backbeat skeleton (kick on 1, meter-aware snares) that seeds never move, hats whose loudness always stays under the snare, kicks that follow the bass track's offbeats, accents on chord-change downbeats, a snare on the bass's LONG notes (the agogic accent), fills from a small vocabulary before section boundaries and the loop target (crash on the arrival), and SILENCE in breaks — a bar where only the bass plays, or a section labeled "break", gets no drums at all. Each take REPLACES the range's kit notes and is exactly one ⟲ step, so your hand-placed drums come back with one undo. 🎲 again rerolls; the take chips replay any earlier take exactly (seed, energy, and range all remembered). Five knobs, Logic's split: <b>busy</b> (1–5) is density — hat subdivisions, ghosts, how eagerly kicks chase the bass; <b>hard</b> (1–5) is loudness — one uniform velocity shift across the whole kit, hats never dropping back below audible; <b>fills</b> (off–5) alone decides how often fills fire and how big (1–2 the quiet vocabulary, 4–5 runs/tom-drops/the full-bar buildup); <b>follow</b> picks what the kick listens to — <b>any track, by name</b> (its offbeat onsets and long notes, probabilistic; defaults to the detected bass) · <b>chords</b> (a kick exactly on every DECLARED chord change, deterministic, capped 4/bar) · <b>off</b> (skeleton and fills only); <b>feel</b> sets the backbeat rate — <b>half</b> (one big snare mid-bar, thinner hats: the slow-heavy read) · <b>double</b> (kick every beat, snare every offbeat 8th: the skank/D-beat read — bass-follow stands down, every slot is owned). The <b>parts</b> select scopes a reroll to one piece group — kick, snare, or hats — leaving everything else (including fills) exactly as it was: "I love these snares, reroll just the kick" is one setting. Scoped rolls skip fills and crashes (those are whole-kit statements), and a hats-only roll caps its loudness under your KEPT snares. The take chips remember every knob. Two more rules: <b>sections sharing an EXACT label share their groove</b> — label two spans "A1" and the drums restate bar-for-bar (fills and crashes still vary: a fill is commentary on what comes next), so the same-label-same-color convention now also means same-drums; and at fills 4–5 the vocabulary opens its <b>metal tier</b> — a 16th-rate tom run down the kit, a full-bar crash-in kit fall, and a double-kick burst — weighted so big fills dominate the top of the knob.</dd>
+      <dt>🎲 Drummer</dt><dd>The 🎲 beside 🥁 in the edit row (also Edit ▾ → Drummer…) generates a kit part for a bar range (prefilled from the ruler selection if one is armed, else the section under the cursor). It reads the structure YOU declared: a fixed backbeat skeleton (kick on 1, meter-aware snares) that seeds never move, hats whose loudness always stays under the snare, kicks that follow the bass track's offbeats, accents on chord-change downbeats, a snare on the bass's LONG notes (the agogic accent), fills from a small vocabulary before section boundaries and the loop target (crash on the arrival), and SILENCE in breaks — a bar where only the bass plays, or a section labeled "break", gets no drums at all. Each take REPLACES the range's kit notes and is exactly one ⟲ step, so your hand-placed drums come back with one undo. 🎲 again rerolls; the take chips replay any earlier take exactly (seed, energy, and range all remembered). Five knobs, Logic's split: <b>busy</b> (1–5) is density — hat subdivisions, ghosts, how eagerly kicks chase the bass; <b>hard</b> (1–5) is loudness — one uniform velocity shift across the whole kit, hats never dropping back below audible; <b>fills</b> (off–5) alone decides how often fills fire and how big (1–2 the quiet vocabulary, 4–5 runs/tom-drops/the full-bar buildup); <b>follow</b> picks what the kick listens to — <b>any track, by name</b> (its offbeat onsets and long notes, probabilistic; defaults to the detected bass) · <b>chords</b> (a kick exactly on every DECLARED chord change, deterministic, capped 4/bar) · <b>off</b> (skeleton and fills only); <b>feel</b> sets the backbeat rate — <b>half</b> (one big snare mid-bar, thinner hats: the slow-heavy read) · <b>double</b> (kick every beat, snare every offbeat 8th: the skank/D-beat read — bass-follow stands down, every slot is owned). The <b>parts</b> chips scope a reroll — kick, snare, hats, and <b>fills</b> (a role, not a pitch: the whole fill-and-crash layer at your section boundaries, snare runs and tom drops included). Toggle any combination: all four = the normal full roll; "I love these snares, reroll just the kick" = tap snare and hats and fills off; <b>fills alone</b> rerolls just the boundary bars (with fills set to off, that STRIPS the fills and lays plain groove — a de-fill). With the fills chip off the fills knob dims (nothing to control) and kept pieces stay byte-identical, hats capping under your real snares. Take chips now show their recipe (busy/hard/fills, ½ or 2× for feel, part initials when scoped) and still replay exactly. Layout: busy and hard are 1–5 segment rows (how much / how loud), fills off–5 and feel sit below, follow and parts under those — the long explanation you used to scroll past lives here in Help now. Two more rules: <b>sections sharing an EXACT label share their groove</b> — label two spans "A1" and the drums restate bar-for-bar (fills and crashes still vary: a fill is commentary on what comes next), so the same-label-same-color convention now also means same-drums; and at fills 4–5 the vocabulary opens its <b>metal tier</b> — a 16th-rate tom run down the kit, a full-bar crash-in kit fall, and a double-kick burst — weighted so big fills dominate the top of the knob.</dd>
       <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Copy, 📋 Paste at cursor, 🗑 Delete, ✂ Split, ⇅ Transpose (chromatic, octave, and in-key moves live in its sheet), ♫ Insert chord, ⇄ Move to track, 🥁 Drum pattern, 🎲 Drummer, ➗ Divide, ⁀ Join — the same actions as the edit-row icons, labeled. The row itself keeps the heavy-use tools up front and folds the rest behind <b>⋯</b> (tap to expand; the choice sticks per device) — so pencil mode's duration picker fits on one iPad row again. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
@@ -10279,6 +10263,19 @@ const DR_FILLS = [ // minE: the softest energy this fill may appear at — a
     return out;
   }},
 ];
+function drBoundaries(t0, t1) { // section starts + loop target inside (t0, t1]
+  const bt = barTicks(), out = new Set();
+  for (const n of rollnotes) {
+    if (n.section && n.start >= t0 && n.start <= t1) out.add(Math.floor(n.start / bt) + 1);
+    if (n.loopTo !== undefined && n.loopTo >= t0 && n.loopTo <= t1) out.add(Math.floor(n.loopTo / bt) + 1);
+  }
+  return out;
+}
+function drNormParts(p) { // legacy string | array -> array; 4 groups = "all"
+  if (Array.isArray(p)) return p.slice();
+  if (!p || p === "all") return ["kick", "snare", "hats", "fills"];
+  return [p]; // legacy single-group string: that group, fills off
+}
 function drBassTrack() { // named bass/triangle wins; else lowest average pitch
   let byName = song.tracks.findIndex((tr, ti) => !trackIsDrums(ti) && /bass|tri/i.test(tr.name || ""));
   if (byName >= 0) return byName;
@@ -10317,12 +10314,19 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
     busy = energyOrOpts; hard = energyOrOpts; follow = "bass"; feel = "normal"; parts = "all";
     if (fillAmt === undefined) fillAmt = 3;
   }
-  // scoped reroll (Josh, 2026-08-22: "reroll just the bass drum"): only the
-  // chosen piece group is erased and rewritten; fills + arrival crashes are
-  // whole-kit statements, so scoped rolls skip them
+  // scoped reroll (Josh, 2026-08-22, advisor round 2): parts is a SET of
+  // kick/snare/hats (pitch groups) + fills (a ROLE — fills contain snares and
+  // kicks, so the fill layer scopes by BAR, not pitch). All four = the
+  // literal v1 "all" path, bit-identical. ZERO new rng draws in any path.
   const PIECE_GROUPS = {kick: [36, 35], snare: [38, 40, 37], hats: [42, 44, 46]};
-  const scopePcs = parts === "all" ? null : new Set(PIECE_GROUPS[parts]);
-  if (scopePcs) fillAmt = 0;
+  const partsArr = drNormParts(parts);
+  const isAllParts = ["kick", "snare", "hats", "fills"].every(g => partsArr.includes(g));
+  const fillsOn = partsArr.includes("fills");
+  const grooveGroups = partsArr.filter(g => g !== "fills");
+  const scopePcs = isAllParts ? null
+    : new Set(grooveGroups.flatMap(g => PIECE_GROUPS[g]));
+  if (!fillsOn) fillAmt = 0;
+  if (!isAllParts && !partsArr.length) { setInfo("pick at least one part"); return 0; }
   const HARD_DELTA = 7 * (hard - 3);
   const energy = busy; // density reads below
   if (!editableSong()) { setInfo("the Drummer works on your own songs — captures are locked"); return 0; }
@@ -10375,11 +10379,13 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
     return !melodic;
   };
   // boundaries inside the range: section starts + the loop target — the bar BEFORE gets the fill
-  const boundaries = new Set();
-  for (const n of rollnotes) {
-    if (n.section && n.start >= t0 && n.start <= t1) boundaries.add(Math.floor(n.start / bt) + 1);
-    if (n.loopTo !== undefined && n.loopTo >= t0 && n.loopTo <= t1) boundaries.add(Math.floor(n.loopTo / bt) + 1);
-  }
+  const boundaries = drBoundaries(t0, t1);
+  // fill bars (role scope): the bar BEFORE each boundary; boundary/arrival
+  // downbeat ticks carry the crash
+  const fillBarSet = new Set([...boundaries].map(b => b - 1));
+  const crashTicks = new Set([...boundaries].map(b => (b - 1) * bt));
+  if (boundaries.has(fromBar)) crashTicks.add((fromBar - 1) * bt);
+  const inFillScope = t => fillBarSet.has(Math.floor(t / bt) + 1) || crashTicks.has(t);
   const chordStarts = new Set(rollnotes.filter(n => n.chord && !n.section).map(n => n.start));
   // same label = same drums (the app's own same-label-same-color convention,
   // extended; advisor 2026-08-22): the GROOVE substream keys on (label hash +
@@ -10403,7 +10409,8 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
   // ---- erase everything the kit holds in the range (idempotent replace) ----
   const erased = [];
   tr.notes.forEach((n, ni) => {
-    if (!n.gone && n.t >= t0 && n.t < t1 && (!scopePcs || scopePcs.has(n.p))) {
+    if (!n.gone && n.t >= t0 && n.t < t1 &&
+        (!scopePcs || scopePcs.has(n.p) || (fillsOn && inFillScope(n.t)))) {
       n.gone = true;
       const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[di][n.ri];
       if (rn) rn.gone = true;
@@ -10414,7 +10421,7 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
   const hits = []; // {t, p, v, d}
   const put = (t, p, v, d) => {
     if (t < t0 || t >= t1) return;
-    if (scopePcs && !scopePcs.has(p)) return; // scoped reroll: other pieces are KEPT, not rewritten
+    if (scopePcs && !scopePcs.has(p) && !(fillsOn && inFillScope(t))) return; // out-of-scope pieces are KEPT
     if (inLabeledBreak(t)) return; // a declared Break silences its exact span
     let vv = v + HARD_DELTA; // hard: one uniform shift, applied nowhere else
     if (p === 42) vv = Math.max(40, vv); // hats never fall back into the inaudible zone
@@ -10427,6 +10434,7 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
     put((fromBar - 1) * bt, 49, 100 + arng() * 12, 120);
   }
   for (let bar = fromBar; bar <= toBar; bar++) {
+    if (scopePcs && scopePcs.size === 0 && fillsOn && !fillBarSet.has(bar)) continue; // fills-only: touch fill bars alone
     if (isBreak(bar)) continue; // his breaks are sacred: the drummer lays out
     const rng = drumRng(seed, grooveLane(bar));
     const bs = (bar - 1) * bt;
@@ -10473,7 +10481,7 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
       }
     }
     if (!barSnareV) barSnareV = 108;
-    if (parts === "hats") { // snares were kept, not generated: cap under the REAL ones
+    if (scopePcs && !grooveGroups.includes("snare")) { // snares kept, not generated: cap under the REAL ones
       let kept = 0;
       for (const n of tr.notes) if (!n.gone && n.t >= bs && n.t < bs + bt && (n.p === 38 || n.p === 40)) kept = Math.max(kept, n.v || 0);
       if (kept) barSnareV = kept;
@@ -10547,9 +10555,21 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
 }
 // ---- Drummer sheet wiring ----
 let drTakes = [], drActive = -1; // session-ephemeral: the winning take IS the notes
-function drKitCountT(t0, t1) {
+function drKitCountT(t0, t1) { // counts only what the current parts scope would replace
+  const pa = typeof drPartsGet === "function" && document.querySelector("#drparts button")
+    ? drNormParts(drPartsGet()) : ["kick", "snare", "hats", "fills"];
+  const all = ["kick", "snare", "hats", "fills"].every(g => pa.includes(g));
+  const G = {kick: [36, 35], snare: [38, 40, 37], hats: [42, 44, 46]};
+  const pcs = new Set(pa.filter(g => g !== "fills").flatMap(g => G[g]));
+  const fillsOn = pa.includes("fills");
+  const bt = barTicks();
+  const bounds = drBoundaries(t0, t1);
+  const fillBars = new Set([...bounds].map(b => b - 1));
   let k = 0;
-  song.tracks.forEach((tr, ti) => { if (trackIsDrums(ti)) tr.notes.forEach(n => { if (!n.gone && n.t >= t0 && n.t < t1) k++; }); });
+  song.tracks.forEach((tr, ti) => { if (trackIsDrums(ti)) tr.notes.forEach(n => {
+    if (n.gone || n.t < t0 || n.t >= t1) return;
+    if (all || pcs.has(n.p) || (fillsOn && (fillBars.has(Math.floor(n.t / bt) + 1) || n.p === 49))) k++;
+  }); });
   return k;
 }
 function fmtBarBeat(t) {
@@ -10576,24 +10596,31 @@ function drRefresh() {
     const ti = mode.startsWith("t") ? parseInt(mode.slice(1), 10) : drBassTrack();
     followTxt = ti >= 0 && song.tracks[ti] ? "following: " + (song.tracks[ti].name || "track " + (ti + 1)) : "no track to follow";
   }
+  const nb = drBoundaries(r.t0, r.t1).size;
+  const fillsPicked = !document.querySelector("#drparts button") || drPartsGet().includes("fills");
   document.getElementById("drstatus").textContent =
-    "replaces " + drKitCountT(r.t0, r.t1) + " kit note(s) in " + fmtBarBeat(r.t0) + "–" + fmtBarBeat(r.t1) + " · " + followTxt;
+    "replaces " + drKitCountT(r.t0, r.t1) + " kit note(s) in " + fmtBarBeat(r.t0) + "–" + fmtBarBeat(r.t1) + " · " + followTxt +
+    (fillsPicked ? " · " + nb + " fill spot" + (nb === 1 ? "" : "s") : "");
   const row = document.getElementById("drtakes");
   row.innerHTML = "";
   drTakes.forEach((tk, i) => {
     const b = document.createElement("button");
     b.type = "button";
-    b.textContent = "take " + (i + 1);
+    const pa = drNormParts(tk.parts ?? "all");
+    const scoped = !["kick", "snare", "hats", "fills"].every(g => pa.includes(g));
+    b.textContent = "take " + (i + 1) + " · " + (tk.busy ?? tk.energy ?? 3) + "/" + (tk.hard ?? tk.busy ?? 3) + "/" + (tk.fillAmt ?? 3) +
+      ((tk.feel ?? "normal") === "half" ? " ½" : (tk.feel ?? "normal") === "double" ? " 2×" : "") +
+      (scoped ? " " + pa.map(g => g[0].toUpperCase()).join("+") : "");
     b.classList.toggle("active", i === drActive);
     b.addEventListener("click", () => { // a take is the FULL tuple, not just the seed
       const busy = tk.busy ?? tk.energy ?? 3, hard = tk.hard ?? busy;
       const follow = tk.follow ?? "bass", feel = tk.feel ?? "normal", fillAmt = tk.fillAmt ?? 3;
-      document.getElementById("drparts").value = tk.parts ?? "all";
-      document.getElementById("drbusy").value = String(busy);
-      document.getElementById("drhard").value = String(hard);
-      document.getElementById("drfills").value = String(fillAmt);
+      drPartsSet(tk.parts ?? "all");
+      segSet("drbusy", busy);
+      segSet("drhard", hard);
+      segSet("drfills", fillAmt);
       document.getElementById("drfollow").value = tk.followTi !== undefined ? "t" + tk.followTi : follow;
-      document.getElementById("drfeel").value = feel;
+      segSet("drfeel", feel);
       document.getElementById("drfrom").value = tk.from;
       document.getElementById("drto").value = tk.to;
       if (tk.q) { setBeatPair("drfromq", "drfroms", tk.q[0]); setBeatPair("drtoq", "drtos", tk.q[1]); }
@@ -10607,8 +10634,56 @@ function drRefresh() {
     row.appendChild(b);
   });
 }
+function segGet(id) { const a = document.querySelector("#" + id + " button.active"); return a ? a.dataset.v : null; }
+function segSet(id, v) {
+  for (const b of document.querySelectorAll("#" + id + " button")) b.classList.toggle("active", b.dataset.v === String(v));
+}
+function drPartsGet() {
+  return [...document.querySelectorAll("#drparts button.active")].map(b => b.dataset.part);
+}
+function drPartsSet(arr) {
+  const a = drNormParts(arr);
+  for (const b of document.querySelectorAll("#drparts button")) b.classList.toggle("active", a.includes(b.dataset.part));
+  drPartsSync();
+}
+function drPartsSync() { // fills chip off = the fills knob is inert (scoped rolls skip fills)
+  const on = drPartsGet().includes("fills");
+  const row = document.getElementById("drfillsrow");
+  row.style.opacity = on ? 1 : 0.35;
+  row.style.pointerEvents = on ? "" : "none";
+}
+function drBuildControls() {
+  if (document.querySelector("#drbusy button")) return;
+  const mkSeg = (id, vals, def, labels) => {
+    const el = document.getElementById(id);
+    vals.forEach((v, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.dataset.v = String(v);
+      b.textContent = labels ? labels[i] : String(v);
+      b.addEventListener("click", () => { segSet(id, v); drRefresh(); });
+      el.appendChild(b);
+    });
+    segSet(id, def);
+  };
+  mkSeg("drbusy", [1, 2, 3, 4, 5], 3);
+  mkSeg("drhard", [1, 2, 3, 4, 5], 3);
+  mkSeg("drfills", [0, 1, 2, 3, 4, 5], 3, ["off", "1", "2", "3", "4", "5"]);
+  mkSeg("drfeel", ["normal", "half", "double"], "normal");
+  const pr = document.getElementById("drparts");
+  for (const part of ["kick", "snare", "hats", "fills"]) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.part = part;
+    b.textContent = part;
+    b.classList.add("active");
+    b.addEventListener("click", () => { b.classList.toggle("active"); drPartsSync(); drRefresh(); });
+    pr.appendChild(b);
+  }
+}
 function openDrummer() {
   if (!editableSong()) { setInfo("the Drummer works on your own songs — captures are locked"); return; }
+  drBuildControls();
   const bt = barTicks();
   { // follow picker: every melodic track BY NAME (Josh: "no way to tell it what
     // instrument to follow"), then chords / off; default = the detected bass
@@ -10679,15 +10754,16 @@ function openDrummer() {
 document.getElementById("drgen").addEventListener("click", () => {
   const r = drRange();
   const opts = {
-    busy: parseInt(document.getElementById("drbusy").value, 10) || 3,
-    hard: parseInt(document.getElementById("drhard").value, 10) || 3,
-    fillAmt: (v => isNaN(v) ? 3 : v)(parseInt(document.getElementById("drfills").value, 10)),
-    parts: document.getElementById("drparts").value,
+    busy: parseInt(segGet("drbusy"), 10) || 3,
+    hard: parseInt(segGet("drhard"), 10) || 3,
+    fillAmt: (v => isNaN(v) ? 3 : v)(parseInt(segGet("drfills"), 10)),
+    parts: drPartsGet(),
     follow: (v => v.startsWith("t") ? "bass" : v)(document.getElementById("drfollow").value),
     followTi: (v => v.startsWith("t") ? parseInt(v.slice(1), 10) : undefined)(document.getElementById("drfollow").value),
-    feel: document.getElementById("drfeel").value,
+    feel: segGet("drfeel"),
     fromBar: r.from, toBar: r.to, t0: r.t0, t1: r.t1,
   };
+  if (!opts.parts.length) { setInfo("pick at least one part"); return; }
   const seed = (Math.random() * 0xFFFFFFFF) >>> 0; // the ONLY nondeterminism; takes replay it exactly
   const k = drGenerate(seed, opts);
   if (!k) { drRefresh(); return; }
