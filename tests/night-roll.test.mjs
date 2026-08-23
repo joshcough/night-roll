@@ -1691,3 +1691,16 @@ test("selection editing: move, resize, copy/paste, delete — with undo restorin
   assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 3);
   run(`songKey = null; multiSel = []; multiSelKey = new Set(); song.rawNotes = null;`);
 });
+
+test("silent-switch bypass wav has REAL duration (zero-sample loop = CPU storm)", () => {
+  const w = new Uint8Array(JSON.parse(run(`JSON.stringify([...makeSilentWav()])`)));
+  const dv = new DataView(w.buffer);
+  assert.equal(String.fromCharCode(...w.slice(0, 4)), "RIFF");
+  assert.equal(String.fromCharCode(...w.slice(36, 40)), "data");
+  const dataLen = dv.getUint32(40, true);
+  assert.ok(dataLen >= 1600, "at least 0.1s of samples, got " + dataLen);
+  assert.equal(dv.getUint32(4, true), 36 + dataLen, "RIFF size consistent");
+  const sampleRate = dv.getUint32(24, true);
+  assert.ok(dataLen / 2 / sampleRate >= 0.09, "duration ≥ ~0.1s");
+  assert.ok(w.slice(44).every(b => b === 0), "silence is silent");
+});
