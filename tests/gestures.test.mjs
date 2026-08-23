@@ -169,3 +169,25 @@ test("view menu: grid input wires gridDiv; Off clears it", () => {
   gn.dispatchEvent({ type: "change" });
   assert.equal(app.run(`gridDiv`), null);
 });
+
+test("gesture: grid anchors at the cycle start — 14.2 phase, bar line not a snap target", () => {
+  const app = boot("vm-gest-gridanchor");
+  // arm a cycle at bar 14 beat 2 via a real ruler drag, then set the grid
+  const bt = app.run(`barTicks()`), qt = app.run(`beatTicks()`);
+  const a = 13 * bt + qt; // 14.2
+  app.run(`view.x = ${a} / song.ppq * view.pxq - 100; clampView(); draw();`);
+  const x = t => app.run(`RULER_W + (${t} / song.ppq) * view.pxq - view.x`);
+  drag(app, { x: x(a), y: 10 }, { x: x(a + bt), y: 10 });
+  assert.equal(app.run(`rangeSel.a`), a, "cycle armed at 14.2");
+  app.run(`gridDiv = 10;`);
+  const cell = bt / 10;
+  // ten cells between 14.2 and 15.2, running on the anchor's phase
+  assert.equal(app.run(`gridCellStart(${a + 3 * cell + 20})`), a + 3 * cell);
+  // bar 15's line (26880) sits 7.5 cells in — snapping must NOT land there
+  assert.equal(app.run(`gridCellStart(${14 * bt + 1})`), a + 7 * cell);
+  // phase continues across the bar: 15.2 is exactly cell 10
+  assert.equal(app.run(`gridCellStart(${a + 10 * cell + 5})`), a + 10 * cell);
+  // no cycle -> back to bar-anchored cells
+  app.run(`rangeSel = null;`);
+  assert.equal(app.run(`gridCellStart(${13 * bt + 3 * cell + 20})`), 13 * bt + 3 * cell);
+});

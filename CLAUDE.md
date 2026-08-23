@@ -6,9 +6,12 @@ before touching the player.
 
 ## Shipping checklist — EVERY user-facing feature, no exceptions
 
-1. **Code** + tests green: `npm test` (vm suite) AND `npm run test:e2e`
-   (Playwright, chromium + webkit). The e2e stubs WebAudio — a real
-   AudioContext stalls ~20s headless.
+1. **Code** + tests green: `npm test` (vm suite) locally. The FULL
+   Playwright suite runs ONLY in GitHub Actions (push + nightly) —
+   NEVER locally (Josh, 2026-08-23: headless browsers pinned his CPU
+   and blocked his writing; this is a hard rule). After pushing, check
+   the run with `gh run list/watch` instead. `test:e2e:smoke` (~5s)
+   is allowed locally only when Josh isn't actively using the machine.
 2. **Help sheet** entry in index.html (#helpsheet, right tab section,
    touch gesture first, keyboard equivalent after).
 3. **HELP.md**: `node tools/build_help.mjs` — NEVER hand-edit it.
