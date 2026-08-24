@@ -1758,6 +1758,12 @@ function gridAnchorTick() { // grid phase origin — typed into the grid sheet
   // there — bar lines stay drawn but stop being snap targets)
   return Math.max(0, Math.round((gridAnchor.b - 1) * barTicks() + (gridAnchor.q - 1) * beatTicks()));
 }
+function snapTickAbs(tick) { // nearest grid LINE, honoring a custom grid's anchor
+  const g = moveSnapTicks();
+  if (!gridDiv) return Math.max(0, Math.round(tick / g) * g);
+  const cell = barTicks() / gridDiv, a = gridAnchorTick();
+  return Math.max(0, Math.round(a + Math.round((tick - a) / cell) * cell));
+}
 function gridCellStart(tick) { // pencil cell floor — one continuous phase from
   // the anchor, so cells never drift whatever the division
   const g = moveSnapTicks();
@@ -4318,9 +4324,18 @@ canvas.addEventListener("pointermove", e => {
       }
       else if (drag.noteEdit.kind === "move") {
         const dP = Math.round((drag.spos.y - p.y) / view.rowH);
+        // absolute snap: the GRABBED note lands ON grid lines (an off-phase
+        // note — born on a custom grid — could never reach the "and of 1" by
+        // relative steps; Josh, 2026-08-24); mates keep their offsets
+        const gi = drag.noteEdit.orig.findIndex((o, i) => {
+          const it = drag.noteEdit.items[i]; return it.ti + ":" + it.ni === drag.noteEdit.hitKey;
+        });
+        const go = drag.noteEdit.orig[gi] || drag.noteEdit.orig[0];
+        const dTr = (p.x - drag.spos.x) / pxPerTick();
+        const dMove = snapTickAbs(go.t + dTr) - go.t;
         for (let i = 0; i < drag.noteEdit.items.length; i++) {
           const it = drag.noteEdit.items[i], o = drag.noteEdit.orig[i];
-          it.n.t = Math.max(0, o.t + dT);
+          it.n.t = Math.max(0, o.t + dMove);
           it.n.p = trackIsDrums(it.ti) ? drumStep(o.p, -dP) // lane rows run opposite to slot order
                                        : Math.min(PMAX, Math.max(PMIN, o.p + dP));
         }

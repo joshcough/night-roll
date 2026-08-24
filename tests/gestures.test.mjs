@@ -227,3 +227,15 @@ test("gesture: grabbing a note outside a stale selection moves ONLY that note", 
   assert.deepEqual(JSON.parse(app.run(`JSON.stringify([...multiSelKey])`)), ["0:3"],
     "selection reset to the grabbed note");
 });
+
+test("gesture: off-phase note MOVE lands ON the grid line (and-of-1)", () => {
+  const app = boot("vm-gest-offmove");
+  // a note born on the fives (t=1056, no 16th phase); drag toward beat 1.5 of
+  // bar 2 (tick 2160) — must land exactly there, not 1056+n*120
+  app.run(`song.tracks[0].notes = [{t: 1056, d: 240, p: 64, v: 80}]; multiSel = [{ti:0,ni:0}];
+           multiSelKey = new Set(["0:0"]); mode = "select"; draw();`);
+  const from = noteXY(app, 1056 + 120, 64); // grab mid-note
+  const to = noteXY(app, 2160 + 120, 64);
+  drag(app, from, to);
+  assert.equal(notes(app)[0].t, 2160, "landed on the and of 1, phase gone");
+});
