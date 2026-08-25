@@ -4787,11 +4787,30 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
   } catch (err) { /* webkit: no longtask — fps + gap still tell the story */ }
   const loop = t => { frames++; worst = Math.max(worst, t - last); last = t; requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
+  // self-profiler: WebKit has no longtask attribution — wrap the app's own
+  // hot functions and report top offenders (ms spent in the last second)
+  const acct = {};
+  const wrap = name => {
+    const fn = typeof globalThis[name] === "function" ? globalThis[name] : null;
+    if (!fn) return;
+    globalThis[name] = function () {
+      const t0 = performance.now();
+      try { return fn.apply(this, arguments); }
+      finally { acct[name] = (acct[name] || 0) + (performance.now() - t0); }
+    };
+  };
+  setTimeout(() => ["drawFull", "playbackFrame", "draw", "updateSubtitle",
+                    "scheduleNote", "drumHit", "renderTrackbar", "updateEditButtons",
+                    "secToTick", "drawRuler", "drawInst"].forEach(wrap), 0);
   setInterval(() => {
+    const top = Object.entries(acct).sort((a, b) => b[1] - a[1]).slice(0, 3)
+      .map(([n, ms]) => n + " " + Math.round(ms)).join("  ");
     el.textContent = "fps " + frames + "  worst " + Math.round(worst) + "ms\n" +
                      "longtasks " + longs + (longMax ? " (max " + Math.round(longMax) + "ms)" : "") +
+                     "\nhot: " + (top || "—") +
                      "\nbuild " + (document.lastModified || "?");
     frames = 0; worst = 0; longs = 0; longMax = 0;
+    for (const k in acct) acct[k] = 0;
   }, 1000);
 })();
 let silentUnlock = null;
