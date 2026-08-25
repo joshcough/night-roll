@@ -52,6 +52,35 @@ session start alongside the quiz.)
 15. Guitar audio input (monophonic pitch tracking) — superseded for
     now by the Jamstik/MIDI path, kept as the amp-and-cable dream.
 
+## RESTART CONTEXT — 2026-08-25, mid perf-hunt (Josh rebooting his Mac)
+
+**The hunt:** severe perf degradation, iPad worst (120fps→6, worst
+375ms), now his MAC also crawled (nothing in Activity Monitor, 84% RAM
+free — below-process-stats gremlin). THREE advisor rounds done:
+- R1 found + PROVED the zero-sample silent-wav loop (fixed: 2s real
+  silence, pauses with transport).
+- R2: onended cleanup — but it MISSED the default oscillator paths
+  (the exact voices his compositions play); fixed all 8 paths.
+- R3: verified deploy byte-identical, traced every per-frame path
+  clean; verdict "time is outside app JS or edit-triggered."
+**Josh's decisive live repro:** Airship (chip song) = clean 60fps;
+graveyard-2 healthy after RELOAD through several passes; stutter
+starts AFTER THE FIRST EDIT and persists until reload. Not the drums.
+**Probe build d8a6fb4 is live:** HUD (?perf=1) has hot:-line (wraps
+incl. saveDraft/saveLocalNotes/saveEdits/annoSnapshot/finalizeNotes/
+computeSongEnd), lag probe (blocked-main-thread vs throttled-rAF),
+build stamp (File menu bottom). AWAITING: his hot/lag/fps reading at
+stutter after one edit. Also fixed in-flight: kick-click buffer cache,
+keyset per-frame DOM write guard.
+**Next session:** get the three numbers; the edit-path wrap names the
+offender. If hot≈0 and lag≈worst → GC/audio-IPC; if lag small → rAF
+throttle (environment). He REMOVED the in-app dev-channel/feature-
+request feature (this commit) as both a suspect and a risk — the
+ntfy-app channel still works for him; code lives in git history.
+Perf fixes this arc (all deployed): silent-wav, scene-cache blit,
+28px strip repaint, noise-buffer caches, all-path onended, scene
+realloc guard, keepalive pause-on-stop.
+
 ## Graveyard-2: possible B rewrite (Josh, 2026-08-24)
 
 Bars 14-20 may be rewritten — his ear: "just not that strong." BAR 21

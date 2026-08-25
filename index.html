@@ -761,7 +761,6 @@
   <button id="notebtn">+ Note</button>
   <button id="syncbtn">Sync</button>
   <button id="errbtn" style="display:none;color:#e66767" aria-label="Errors">⚠</button>
-  <button id="claudebtn" style="display:none;color:var(--gold)" aria-label="Messages from Claude">🛰</button>
   <button id="clearbtn" style="display:none">Clear edits</button>
 </footer>
 
@@ -1111,8 +1110,7 @@
       <dt>Scroll while playing</dt><dd>Scrolling away suspends the auto-follow camera so you can study any spot; it latches back on when the playhead reaches what you're looking at.</dd>
       <dt>▤ Tracks view</dt><dd>The arrangement view (𝄞/▤/▦ button cycles Roll → Tracks → Score; also in View ▾): one lane per track, its notes drawn as a thumbnail (each lane scaled to its own range), with the track's color dot, name, M/S, and a volume fader in the lane header — the fader saves as the same vol= annotation as the voice menu's. Tap a note to select it (it sounds); lasso a box and it selects by TIME across every lane it touches — cross-track selection in one gesture. Hold-to-grab a selected note and drag: sideways moves it in time (bar-magnet-free, 16th snap), and <b>dragging up or down carries the whole selection to another lane</b> — pitch kept, one ⟲ undoes it, drums and melodic lanes never mix. Dragging shows a ghost until you release. Tap a lane's header to select that track; tap the selected track's header again for its voice & volume menu. Pencil doesn't draw here (a squeezed lane has no honest pitch) — it draws in Roll or Score; Erase works. The ruler above is the same one as always: sections, cycle, magnetic bars, the playhead triangle.</dd>
       <dt>🎸 Bassist</dt><dd>The 🎸 beside 🎲 (behind ⋯, or Edit ▾ → Bassist…) generates a bassline for the range onto a track you pick (defaults to a NEW bass track unless an empty one exists — it never silently overwrites your notes; the status line says exactly what it replaces). PITCHES COME FROM YOUR DECLARED CHORDS — chord tones, slash basses honored (C♯/F walks to the F), N.C. bars pedal the key root; gaps ride the last chord. With ONLY a melody and no chords, it sketches the melody's harmony internally (duration-weighted, strong beats count more) and plays bass under that sketch — the sketch is never shown or written anywhere, and different seeds read the melody differently, which is the idea machine — declared chords always win bar-by-bar, inference only fills the unannotated gaps. The bass PLAYS THROUGH your Break sections (a Break is bass-alone by your own device). Styles: <b>chug</b> (root 8ths), <b>pump</b> (root–fifth), <b>arp</b> (chord tones cycling), <b>walk</b> (approach notes INTO each coming chord — the leading-tone move, mechanized), <b>riff</b> (rhythm copied from the follow source: the kick, any track, or the chord changes). busy 1–5, octave 1–3, strictly monophonic (NES-legal), same take chips / one-⟲ replace / same-label-sections-restate contract as the Drummer.</dd>
-      <dt>💬 Feature request</dt><dd>File → Feature request… opens a box that sends to the app's dev channel — requests and bug reports from inside the app, auto-tagged with the open song and playhead position, with a 🎤 Speak button: open, talk, Send. Replies stream back as 🛰 lines in the info strip AND light a gold 🛰 badge in the footer (like the ⚠ error button) that stays lit until you tap and read, with a Reply button in the list. The whole two-way history — your requests and the replies, timestamped — persists on this device: 🕘 History in the request sheet (or tap the 🛰 badge) shows it newest-first; Clear wipes it. Powered by two private ntfy topics set once in File → Settings (device-only — the public repo never contains them; without them the feature is inert). The topic names are the password: keep them secret.</dd>
-      <dt>⊞ Insert bars</dt><dd>Edit ▾ → Insert bars… opens a gap anywhere in the song: pick the spot (bar + beat, decimals fine), how much (a count of <b>bars</b>, <b>beats</b>, or <b>16ths</b>), and Insert. Everything from that point onward — notes, sections, chords, keys, the loop point — slides right together. A section that starts before the point and is still open there STRETCHES to span the gap; one that ends exactly at the point stays put (stretch it yourself if you want it covering the new bars). One ⟲ undoes the whole thing.</dd>
+            <dt>⊞ Insert bars</dt><dd>Edit ▾ → Insert bars… opens a gap anywhere in the song: pick the spot (bar + beat, decimals fine), how much (a count of <b>bars</b>, <b>beats</b>, or <b>16ths</b>), and Insert. Everything from that point onward — notes, sections, chords, keys, the loop point — slides right together. A section that starts before the point and is still open there STRETCHES to span the gap; one that ends exactly at the point stays put (stretch it yourself if you want it covering the new bars). One ⟲ undoes the whole thing.</dd>
       <dt>Space</dt><dd>Play / stop, Logic-style — anywhere except while typing in a text field. With a hardware keyboard on iPad too.</dd>
       <dt>▦ Grid</dt><dd>View ▾ → <b>Grid…</b> opens a sheet: tap a number of <b>lines per bar</b> (say 10) and the roll redraws instantly with that many lines in each bar — and pencil entry, note drags and resizes all SNAP to those lines. Pure view-and-snap aid: no note moves, no annotation changes, the time signature stays what it is. This is how a figure the duration buttons can't spell — ten even notes across a 4/4 bar, each 0.4 beats — becomes pencil-drag from line to line; with a grid armed, a pencil tap lays down one cell. Set the <b>anchor</b> right in the sheet — bar and beat, and the beat takes decimals for sub-beat starts (2.5 = the "and" of 2, 2.25 = the second sixteenth) — and the lines run from there (14.2, say), so a figure beginning mid-bar gets its lines exactly where its notes go, continuing bar after bar on that phase across the whole song. Bar lines stay drawn for orientation but stop being snap targets while the grid is armed; a bar line falling between cells is expected, not a bug. <b>Off</b> returns to the meter's own grid (16ths, or triplet steps while a T duration is armed). Transient by design: set it, enter the passage, set it back.</dd>
       <dt>📻 Listener mode</dt><dd>Phones open as a PLAYER: the roll, ⏮ ▶, the readouts, speed and volume — everything else hidden, including the section/chord bands and the notes strip (unreadably small on a phone anyway), because a shared song link is for listening, not editing. A <b>Full app</b> button in the header brings the whole DAW back on that device (and View ▾ → Listener mode folds it away again, on any device). Send someone a ?song= link and their phone just… plays it.</dd>
@@ -1258,7 +1256,6 @@
 
 <div id="filesheet">
   <button class="fitem" id="filesettings">Settings…</button>
-  <button class="fitem" id="fileclaude">💬 Feature request…</button>
   <div class="fdiv"></div>
   <button class="fitem" id="fileopen">Open…</button>
   <button class="fitem" id="filenew">＋ New song…</button>
@@ -1415,33 +1412,6 @@
   </div>
 </div>
 
-<div class="overlay" id="claudealerts">
-  <div class="sheet">
-    <h2>DEV CHANNEL</h2>
-    <div class="status" id="claudealertlist" style="max-height:55vh;overflow-y:auto;white-space:pre-wrap;user-select:text;-webkit-user-select:text;cursor:text"></div>
-    <div class="row" style="margin-top:10px">
-      <button id="claudealertclear">Clear</button>
-      <button class="primary" id="claudealertreply">💬 Reply</button>
-      <button id="claudealertclose" style="margin-left:auto">Close</button>
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="claudesheet">
-  <div class="sheet">
-    <h2>FEATURE REQUEST</h2>
-    <textarea id="claudetext" placeholder="Feature request or bug report — goes straight to the dev channel." style="min-height:110px"></textarea>
-    <div class="meta" id="claudectx" style="white-space:normal;margin:6px 0 0"></div>
-    <div class="row" style="margin-top:10px">
-      <button class="primary" id="claudesend">Send</button>
-      <button id="claudemic">🎤 Speak</button>
-      <button id="claudehist">🕘 History</button>
-      <div class="status" id="claudestatus" style="flex:1"></div>
-      <button id="claudeclose" style="margin-left:auto">Close</button>
-    </div>
-  </div>
-</div>
-
 <div class="overlay" id="settingssheet">
   <div class="sheet">
     <h2>SETTINGS</h2>
@@ -1462,9 +1432,6 @@
         <input type="text" id="cfgnsfrepo" placeholder="owner/repo (writes)" style="width:200px;min-height:36px"></div>
       <div class="row"><span class="lbl">one Save (above) stores the token and all locations together</span></div>
     </div>
-    <div class="row"><span class="lbl" style="width:70px">dev ch.</span>
-      <input type="password" id="cfgclaudecmd" placeholder="request topic (ntfy — stays on this device)" autocomplete="off" style="flex:1;min-height:36px">
-      <input type="password" id="cfgclaudenotify" placeholder="reply topic" autocomplete="off" style="width:200px;min-height:36px"></div>
     <div class="status" id="settingsstatus">Token: GitHub → Settings → Developer settings → Fine-grained tokens → grant every owner/repo configured above, Contents read/write. Data locations: blank read bases load from this site; changing them re-points the whole app (reload after saving).</div>
   </div>
 </div>
@@ -12209,124 +12176,14 @@ function openSettingsSheet() {
   document.getElementById("settingssheet").classList.add("on");
 }
 document.getElementById("filesettings").addEventListener("click", () => {
-  document.getElementById("cfgclaudecmd").value = localStorage.getItem("ff1roll-claude-cmd") || "";
-  document.getElementById("cfgclaudenotify").value = localStorage.getItem("ff1roll-claude-notify") || "";
   closeFileMenus();
   openSettingsSheet();
 });
 document.getElementById("settingsclose").addEventListener("click", () =>
   document.getElementById("settingssheet").classList.remove("on"));
-// ---- Message Claude (Josh, 2026-08-22, requested FROM the channel itself):
-// posts to his private ntfy command topic; replies/deploys stream back in-app.
-// Topics live ONLY in this device's localStorage — never in the repo. ----
-document.getElementById("fileclaude").addEventListener("click", () => {
-  closeFileMenus();
-  if (!localStorage.getItem("ff1roll-claude-cmd")) {
-    setInfo("set the request channel first: File → Settings… (dev channel fields)");
-    return;
-  }
-  const ctx = songKey ? songKey.split("/").pop() + " · " + fmtBarBeat(playCursor) : "no song open";
-  document.getElementById("claudectx").textContent = "will be tagged: " + ctx;
-  document.getElementById("claudestatus").textContent = "";
-  document.getElementById("claudesheet").classList.add("on");
-  document.getElementById("claudetext").focus();
-});
-document.getElementById("claudeclose").addEventListener("click", () => {
-  micStop();
-  document.getElementById("claudesheet").classList.remove("on");
-});
-document.getElementById("claudehist").addEventListener("click", () => {
-  document.getElementById("claudesheet").classList.remove("on");
-  claudeRenderLog();
-  claudeUnread = 0;
-  claudeBadge();
-  document.getElementById("claudealerts").classList.add("on");
-});
-document.getElementById("claudemic").addEventListener("click", () => {
-  if (!SPEECH) { document.getElementById("claudestatus").textContent = "no speech recognition in this browser"; return; }
-  micToggle(document.getElementById("claudemic"), document.getElementById("claudetext"),
-            s2 => document.getElementById("claudestatus").textContent = s2);
-});
-document.getElementById("claudesend").addEventListener("click", async () => {
-  const txt = document.getElementById("claudetext").value.trim();
-  if (!txt) return;
-  const topic = localStorage.getItem("ff1roll-claude-cmd");
-  const ctx = songKey ? " [" + songKey.split("/").pop() + " @ " + fmtBarBeat(playCursor) + "]" : "";
-  try {
-    const r = await fetch("https://ntfy.sh/" + encodeURIComponent(topic),
-      {method: "POST", body: txt + ctx});
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    claudeMsgs.push({t: Date.now(), dir: "out", message: txt + ctx});
-    claudeLogSave();
-    document.getElementById("claudetext").value = "";
-    document.getElementById("claudestatus").textContent = "sent ✓";
-    setInfo("💬 request sent — replies arrive as 🛰 messages here");
-  } catch (err) {
-    document.getElementById("claudestatus").textContent = "send failed: " + err.message;
-  }
-});
-// two-way dev-channel history, persisted on this device (Josh, from bed:
-// "look back through my request history and your responses... timestamps")
-let claudeMsgs = [];
-try { claudeMsgs = JSON.parse(localStorage.getItem("ff1roll-devch-log") || "[]"); } catch (err) { claudeMsgs = []; }
-function claudeLogSave() {
-  if (claudeMsgs.length > 500) claudeMsgs = claudeMsgs.slice(-500);
-  localStorage.setItem("ff1roll-devch-log", JSON.stringify(claudeMsgs));
-}
-let claudeUnread = 0;
-function claudeBadge() { // the 🛰 stays lit until he actually reads (Josh's ask)
-  const b = document.getElementById("claudebtn");
-  b.style.display = claudeUnread > 0 ? "" : "none";
-  b.textContent = "🛰 " + claudeUnread;
-}
-function claudeMsg(title, message) {
-  claudeMsgs.push({t: Date.now(), dir: "in", title, message});
-  claudeLogSave();
-  claudeUnread++;
-  claudeBadge();
-}
-function claudeRenderLog() {
-  const fmt = t => { const d = new Date(t); return d.toLocaleDateString() + " " + d.toLocaleTimeString(); };
-  document.getElementById("claudealertlist").textContent = claudeMsgs.length
-    ? [...claudeMsgs].reverse().map(x =>
-        fmt(x.t) + (x.dir === "out" ? "  → you: " : "  🛰 " + (x.title ? x.title + ": " : "")) + x.message)
-      .join("\n\n")
-    : "No messages.";
-}
-document.getElementById("claudebtn").addEventListener("click", () => {
-  claudeRenderLog();
-  claudeUnread = 0; // reading clears the badge, keeps the history
-  claudeBadge();
-  document.getElementById("claudealerts").classList.add("on");
-});
-document.getElementById("claudealertclose").addEventListener("click", () =>
-  document.getElementById("claudealerts").classList.remove("on"));
-document.getElementById("claudealertclear").addEventListener("click", () => {
-  claudeMsgs = [];
-  claudeLogSave();
-  document.getElementById("claudealertlist").textContent = "No messages.";
-});
-document.getElementById("claudealertreply").addEventListener("click", () => {
-  document.getElementById("claudealerts").classList.remove("on");
-  document.getElementById("fileclaude").click();
-});
-let claudeES = null;
-function claudeListen() { // in-app notifications from the notify topic
-  const topic = localStorage.getItem("ff1roll-claude-notify");
-  if (claudeES) { claudeES.close(); claudeES = null; }
-  if (!topic) return;
-  claudeES = new EventSource("https://ntfy.sh/" + encodeURIComponent(topic) + "/sse");
-  claudeES.onmessage = ev => {
-    try {
-      const m = JSON.parse(ev.data);
-      if (m.event === "message" || m.message) {
-        setInfo("🛰 " + (m.title ? m.title + ": " : "") + m.message);
-        claudeMsg(m.title, m.message);
-      }
-    } catch (err) { /* keepalive */ }
-  };
-}
-claudeListen();
+// (the in-app dev-channel/feature-request feature was removed 2026-08-25 at
+// Josh's order — a perf suspect and a standing risk; git history has it if
+// it ever returns. His phone-side ntfy channel is unaffected.)
 document.getElementById("settingssave").addEventListener("click", () => {
   const tok = document.getElementById("ghtoken").value.trim();
   if (tok) localStorage.setItem("ff1roll-ghtoken", tok);
@@ -12338,11 +12195,6 @@ document.getElementById("settingssave").addEventListener("click", () => {
     nsfBase: document.getElementById("cfgnsfbase").value.trim(),
     nsfRepo: document.getElementById("cfgnsfrepo").value.trim() || "joshcough/nsf-archive",
   });
-  const cc = document.getElementById("cfgclaudecmd").value.trim();
-  const cn = document.getElementById("cfgclaudenotify").value.trim();
-  if (cc) localStorage.setItem("ff1roll-claude-cmd", cc); else localStorage.removeItem("ff1roll-claude-cmd");
-  if (cn) localStorage.setItem("ff1roll-claude-notify", cn); else localStorage.removeItem("ff1roll-claude-notify");
-  claudeListen();
   document.getElementById("settingsstatus").textContent = "Saved ✓ — reload to apply data locations everywhere.";
 });
 document.getElementById("synccancel").addEventListener("click", () => syncsheet.classList.remove("on"));
