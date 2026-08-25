@@ -4773,6 +4773,27 @@ function makeSilentWav() { // 0.1s of REAL silence, 8kHz 16-bit mono. The first
   dv.setUint32(40, n, true);
   return w;
 }
+// ?perf=1 — on-device performance HUD (iPad has no Activity Monitor): fps,
+// worst frame gap, long-task count/max over the last second
+if (new URLSearchParams(location.search).get("perf")) (() => {
+  const el = document.createElement("div");
+  el.style.cssText = "position:fixed;right:8px;bottom:64px;z-index:9999;background:rgba(0,0,0,.75);" +
+    "color:#7fdc7f;font:11px monospace;padding:6px 8px;border-radius:6px;pointer-events:none;white-space:pre";
+  document.body.appendChild(el);
+  let frames = 0, worst = 0, last = performance.now(), longs = 0, longMax = 0;
+  try {
+    new PerformanceObserver(l => { for (const e of l.getEntries()) { longs++; longMax = Math.max(longMax, e.duration); } })
+      .observe({entryTypes: ["longtask"]});
+  } catch (err) { /* webkit: no longtask — fps + gap still tell the story */ }
+  const loop = t => { frames++; worst = Math.max(worst, t - last); last = t; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+  setInterval(() => {
+    el.textContent = "fps " + frames + "  worst " + Math.round(worst) + "ms\n" +
+                     "longtasks " + longs + (longMax ? " (max " + Math.round(longMax) + "ms)" : "") +
+                     "\nbuild " + (document.lastModified || "?");
+    frames = 0; worst = 0; longs = 0; longMax = 0;
+  }, 1000);
+})();
 let silentUnlock = null;
 document.addEventListener("pointerdown", function warm() {
   document.removeEventListener("pointerdown", warm);
@@ -9474,6 +9495,13 @@ function fsubAlbums() {
   for (const group of Object.keys(CATALOG))
     fsubItem(group + "  ›", () => fsubSongs(group));
   if (draftKeys().length) fsubItem("Night Roll drafts  ›", fsubDrafts);
+  { // build stamp: which deploy THIS tab is actually running (stale-cache tell)
+    const d = document.createElement("div");
+    d.className = "meta";
+    d.style.cssText = "padding:6px 10px;opacity:.6;white-space:normal";
+    d.textContent = "build " + (document.lastModified || "unknown");
+    document.getElementById("filesheet").appendChild(d);
+  }
 }
 function fsubSongs(group) {
   filesub.innerHTML = "";
