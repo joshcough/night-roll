@@ -5255,6 +5255,15 @@ function pieceAudible(p) { // any solo active = only solos play; else mutes are 
   const st = pieceState.get(p);
   return anySolo ? st === "solo" : st !== "mute";
 }
+const drumNoise = {}; // len -> AudioBuffer (decay-shaped noise, reusable forever)
+function drumNoiseBuf(len) {
+  const key = String(len);
+  if (drumNoise[key] && drumNoise[key].sampleRate === audio.sampleRate) return drumNoise[key];
+  const buf = audio.createBuffer(1, Math.ceil(audio.sampleRate * len), audio.sampleRate);
+  const ch = buf.getChannelData(0);
+  for (let k = 0; k < ch.length; k++) ch[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / ch.length, 1.5);
+  return (drumNoise[key] = buf);
+}
 function drumHit(ti, p, when, vel) {
   if (!pieceAudible(p)) return; // audition state: the hit is skipped, notes untouched
   const g = audio.createGain();
@@ -5274,6 +5283,7 @@ function drumHit(ti, p, when, vel) {
     g.gain.setValueAtTime(v, when);
     g.gain.exponentialRampToValueAtTime(0.001, when + 0.16);
     o.connect(g);
+    o.onended = () => { try { g.disconnect(); } catch (err) {} };
     o.start(when); o.stop(when + 0.2);
     if (p <= 36) { // beater click: the transient that reads as "kick" on small speakers
       const len = Math.ceil(audio.sampleRate * 0.008);
@@ -5290,11 +5300,11 @@ function drumHit(ti, p, when, vel) {
     }
     return;
   }
-  // snare / hats / cymbals: noise burst, length by GM pitch
+  // snare / hats / cymbals: noise burst, length by GM pitch. Bursts are CACHED
+  // per length — a fresh AudioBuffer noise-filled per hit was pure GC churn
+  // (iPad degraded 120fps -> 52 with 75ms pauses as the graph aged, 2026-08-25)
   const len = p === 38 || p === 40 || p === 39 ? 0.11 : (p === 49 || p === 51 || p === 57 ? 0.3 : 0.045);
-  const buf = audio.createBuffer(1, Math.ceil(audio.sampleRate * len), audio.sampleRate);
-  const ch = buf.getChannelData(0);
-  for (let k = 0; k < ch.length; k++) ch[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / ch.length, 1.5);
+  const buf = drumNoiseBuf(len);
   const src = audio.createBufferSource();
   src.buffer = buf;
   g.gain.value = v * (len < 0.06 ? 0.5 : 0.62); // hats: the 6.5k highpass sheds most of the
@@ -5308,7 +5318,9 @@ function drumHit(ti, p, when, vel) {
     src.connect(hp);
     hp.connect(g);
   } else src.connect(g);
+  src.onended = () => { try { g.disconnect(); } catch (err) {} };
   src.start(when);
+  src.stop(when + len + 0.05);
 }
 function scheduleNote(ti, n, when, durSec) {
   // transport-stopped guard: a pump/chase callback already in flight when Stop
@@ -5343,6 +5355,7 @@ function scheduleNote(ti, n, when, durSec) {
       g.gain.setValueAtTime(vel, Math.max(when + 0.01, end - 0.04));
       g.gain.linearRampToValueAtTime(0, end + 0.09); // release past the gate
       src.connect(g);
+      src.onended = () => { try { g.disconnect(); } catch (err) {} }; // free the chain as it dies
       src.start(when);
       src.stop(end + 0.12);
       return;
@@ -5364,6 +5377,7 @@ function scheduleNote(ti, n, when, durSec) {
     g.gain.setValueAtTime(amp, Math.max(when + 0.01, end - 0.02));
     g.gain.linearRampToValueAtTime(0, end + 0.03);
     src.connect(g);
+    src.onended = () => { try { g.disconnect(); } catch (err) {} };
     src.start(when);
     src.stop(end + 0.06);
     return;
@@ -5378,6 +5392,7 @@ function scheduleNote(ti, n, when, durSec) {
     g.gain.exponentialRampToValueAtTime(Math.max(0.001, amp * Math.exp(-durSec / tau)), end);
     g.gain.linearRampToValueAtTime(0, end + 0.05);
     o1.connect(g); o2.connect(g);
+    o2.onended = () => { try { g.disconnect(); } catch (err) {} };
     o1.start(when); o2.start(when);
     o1.stop(end + 0.1); o2.stop(end + 0.1);
     return;
