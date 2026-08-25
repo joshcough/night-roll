@@ -1,9 +1,11 @@
-{ "version": 1, "song": "graveyard-2", "saved": 1787601505469, "notes": [
+{ "version": 1, "song": "graveyard-2", "saved": 1787621532397, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"lane","lane":35},
   {"at":[1,1],"type":"key","key":"F#m"},
   {"at":[1,1],"type":"tempo","bpm":96},
   {"at":[1,1],"text":"forked from albums/compositions/nightroll/graveyard.mid"},
+  {"at":[1,1],"type":"track","track":"triangle","voice":"triangle"},
+  {"at":[1,1],"type":"track","track":"triangle","voice":"triangle","vol":1.5},
   {"at":[1,4],"to":[5,4],"type":"section","label":"Intro"},
   {"at":[6,1],"type":"tempo","bpm":192},
   {"at":[6,1],"to":[12,4],"type":"section","label":"A"},
@@ -27,6 +29,13 @@
   {"at":[13,4],"to":[14,1],"type":"chord","chord":"C#5"},
   {"at":[14,2],"to":[21,4],"type":"section","label":"B"},
   {"at":[14,2],"to":[17,4],"type":"section","label":"B1"},
+  {"at":[14,2],"to":[15,1],"type":"chord","chord":"D"},
+  {"at":[15,2],"to":[16,1],"type":"chord","chord":"C#"},
+  {"at":[16,2],"to":[17,1],"type":"chord","chord":"D"},
+  {"at":[17,2],"to":[17,4],"type":"chord","chord":"F#5"},
   {"at":[18,1],"to":[21,4],"type":"section","label":"B2"},
+  {"at":[18,1],"to":[18,4],"type":"chord","chord":"D"},
+  {"at":[19,1],"to":[19,4],"type":"chord","chord":"C#"},
+  {"at":[20,1],"to":[20,4],"type":"chord","chord":"D"},
   {"at":[22,1],"type":"loop","loop":"6.1"}
 ] }
