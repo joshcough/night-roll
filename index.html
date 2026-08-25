@@ -1549,6 +1549,12 @@ const PERF_FLAGS = (() => { // hand-rolled: the vm test sandbox has no
   } catch (err) { return {get: () => null}; }
 })();
 const PERF_NOSCENE = PERF_FLAGS.get("scene") === "0";
+//   ?keepalive=0  do not loop the silent <audio> that bypasses the iOS mute
+//             switch. It is the only ~2s-periodic thing in the app, and the
+//             stalls arrive on a 2-2.5s beat. R1 already found one real bug
+//             in this exact mechanism (the zero-sample wav), so it earns a
+//             second look rather than an assumption.
+const PERF_NOKEEP = PERF_FLAGS.get("keepalive") === "0";
 if (PERF_FLAGS.get("dpr")) { // override the source, not the call sites — every
   const forced = +PERF_FLAGS.get("dpr") || 1; // dpr read in the app picks it up
   try { Object.defineProperty(window, "devicePixelRatio", {get: () => forced, configurable: true}); }
@@ -4942,6 +4948,17 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
                     "drawRangeTints", "drawLasso", "updateLCD", "updateTrackGains",
                     "saveDraft", "saveLocalNotes", "saveEdits", "annoSnapshot",
                     "finalizeNotes", "computeSongEnd"].forEach(wrap), 0);
+  // second pass: the edit entry points also mark the timeline, so the report
+  // shows the exact second an edit landed and what it changed
+  setTimeout(() => ["saveEdits", "selEditApply", "insertTime"].forEach(name => {
+    const fn = typeof globalThis[name] === "function" ? globalThis[name] : null;
+    if (!fn) return;
+    globalThis[name] = function () {
+      const r = fn.apply(this, arguments);
+      if (rec) rec.marks.push("  ==== EDIT (" + name + ") @" + rec.sec + "s  " + snapshot());
+      return r;
+    };
+  }), 1);
   // audio-node census: a leaked graph costs time in the realtime render thread,
   // where no page-side profiler can see it. Patched on the prototype so the
   // app's own code stays untouched; 'ended' via addEventListener so an app
@@ -4976,6 +4993,22 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     const dc = AudioNode.prototype.disconnect;
     AudioNode.prototype.disconnect = function () { nodes.disc++; return dc.apply(this, arguments); };
   } catch (err) { /* no WebAudio in this context: the rest of the report stands */ }
+  // Josh's Safari recording: ff1-battle ran 131s with zero stalls in every
+  // second, then graveyard-2 degraded from the second he edited a note and
+  // never recovered. Per-frame JS is identical either side of that line, so
+  // the edit changes the DATA. Snapshot what it changes, at the boundary.
+  const snapshot = () => {
+    const g = (f, d) => { try { const v = f(); return v === undefined ? d : v; } catch (err) { return d; } };
+    const all = g(() => song.tracks.reduce((a, t) => a + t.notes.length, 0), -1);
+    const gone = g(() => song.tracks.reduce((a, t) => a + t.notes.filter(n => n.gone).length, 0), -1);
+    const added = g(() => song.tracks.reduce((a, t) => a + t.notes.filter(n => n.added).length, 0), -1);
+    return "notes " + all + " (gone " + gone + ", added " + added + ")" +
+           "  roll " + g(() => rollnotes.length, -1) +
+           "  sched " + g(() => schedEvents.length, -1) +
+           "  undo " + g(() => editUndo.length, -1) + "/" + g(() => editRedo.length, -1) +
+           "  sceneValid " + g(() => String(sceneValid), "?") +
+           "  songEndTick " + g(() => Math.round(songEndTick), -1);
+  };
   const dims = id => {
     const c = document.getElementById(id);
     return c ? c.width + "x" + c.height : "—";
@@ -5009,7 +5042,9 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
            "   win " + innerWidth + "x" + innerHeight +
            "   screen " + screen.width + "x" + screen.height);
     L.push("flags dpr=" + (PERF_FLAGS.get("dpr") || "off") +
-           "  scene=" + (PERF_NOSCENE ? "0 (cache disabled)" : "on"));
+           "  scene=" + (PERF_NOSCENE ? "0 (cache disabled)" : "on") +
+           "  keepalive=" + (PERF_NOKEEP ? "0 (silent wav parked)" : "on"));
+    L.push("state at stop: " + snapshot());
     L.push("canvas roll " + dims("roll") + "   inst " + dims("instcanvas") +
            "   instOpen " + (typeof instOpen !== "undefined" ? instOpen : "?") +
            "   fall " + (typeof fallOn !== "undefined" ? fallOn : "?") +
@@ -5194,7 +5229,8 @@ document.addEventListener("pointerdown", function warm() {
     silentUnlock = new Audio(URL.createObjectURL(new Blob([makeSilentWav()], {type: "audio/wav"})));
     silentUnlock.loop = true;
     silentUnlock.volume = 0.01;
-    silentUnlock.play().catch(() => { silentUnlock = null; }); // fine if refused — desktop doesn't need it
+    if (!PERF_NOKEEP) // ?keepalive=0: leave it parked, the mute switch wins
+      silentUnlock.play().catch(() => { silentUnlock = null; }); // fine if refused — desktop doesn't need it
   } catch (err) { silentUnlock = null; }
   if (sfPreloadPending) sfPreloadForSong(); // the boot-time preload deferred to this gesture
 }, {capture: true});

@@ -114,7 +114,53 @@ correctly: draft wins), same for the metadata fetches around 2267/2357,
 plus a `setInfo` so a stalled open says so instead of failing mute.
 The silence is what cost the debugging time, not the blip.
 
-## Perf hunt — state after 2026-08-25 (edit theory DEAD)
+## Perf hunt — the edit theory is BACK (Safari recording, 2026-08-25)
+
+I killed the edit theory too early. Josh's Safari recording revived it
+with the cleanest evidence yet, and the per-song A/B did the work:
+
+- ff1-battle: 131s, avg 60.3 fps, worst 49ms, **zero stalls in every
+  single second**.
+- graveyard-2: mildly worse from the start (blk 0-2, worst 60-76),
+  then his edits land at 203-216s — `drawFull` hot in exactly those
+  seconds, 4x saveEdits/saveDraft in the totals — and from ~218s it
+  never recovers: worst 252ms, lag 223ms, the familiar alternating
+  perfect-second / 5-7-stall-second pattern to the end.
+
+So the song matters a little and the EDIT is what tips it over. This
+matches Josh's original report from the previous restart context
+("stutter starts AFTER THE FIRST EDIT and persists until reload")
+which the Brave rounds had appeared to contradict.
+
+What makes it hard: **the per-frame JS is identical either side of
+that line.** Attribution is 1.7% of wall clock before and after,
+drawFull runs 272 times in 278s (the scene cache is working), nothing
+in the heap grows, there is no pixel readback anywhere in the file
+(so no canvas de-acceleration), and resumeAudio closes before it
+rebuilds (so no second AudioContext). The 199 stalls cost 17.3s —
+3.7x the app's entire JS bill — and no wrapper can see them.
+
+Conclusion: the edit changes the DATA, and the cost lands browser-side
+where our instrumentation cannot reach. Probe shipped for it: every
+saveEdits/selEditApply/insertTime now marks the timeline with the
+second it landed plus a snapshot of notes (total/gone/added), roll,
+sched, undo depth, sceneValid and songEndTick — so the next report
+says what an edit actually mutated.
+
+Also shipped: `?keepalive=0`. The stalls arrive on a 2-2.5s beat and
+the looping silent mute-switch wav is the only ~2s-periodic thing in
+the app; R1 already found one real bug in that exact mechanism.
+
+Ruled out and not worth revisiting without new evidence: the song
+alone, the transport loop re-schedule (2 of 963 stalls near a wrap),
+retention/leak (DOM, live nodes, undo all flat), app JS, sample rate
+(48kHz), and audio-graph leakage (6383 created, 6384 ended).
+
+Still open: Brave-vs-Safari. Brave was bad from second one on a fresh
+load; Safari ran 131 clean seconds. Same device. Untested whether that
+is the WKWebView memory ceiling or just a different edit history.
+
+## Perf hunt — earlier state, 2026-08-25 (superseded above)
 
 Josh's numbers, iPad, **without editing**: fps down to ~20, worst
 frame ~200ms, lag spikes to 168ms. Same session on his Mac running the
