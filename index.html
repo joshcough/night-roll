@@ -1549,12 +1549,6 @@ const PERF_FLAGS = (() => { // hand-rolled: the vm test sandbox has no
   } catch (err) { return {get: () => null}; }
 })();
 const PERF_NOSCENE = PERF_FLAGS.get("scene") === "0";
-//   ?keepalive=0  do not loop the silent <audio> that bypasses the iOS mute
-//             switch. It is the only ~2s-periodic thing in the app, and the
-//             stalls arrive on a 2-2.5s beat. R1 already found one real bug
-//             in this exact mechanism (the zero-sample wav), so it earns a
-//             second look rather than an assumption.
-const PERF_NOKEEP = PERF_FLAGS.get("keepalive") === "0";
 if (PERF_FLAGS.get("dpr")) { // override the source, not the call sites — every
   const forced = +PERF_FLAGS.get("dpr") || 1; // dpr read in the app picks it up
   try { Object.defineProperty(window, "devicePixelRatio", {get: () => forced, configurable: true}); }
@@ -4860,17 +4854,6 @@ function openMaster() { // declick: ramp the master up instead of snapping on
   master.gain.linearRampToValueAtTime(MASTER_VOL * masterVol, t + 0.03);
 }
 // first touch anywhere: create + warm the context inside a user gesture
-function makeSilentWav() { // 0.1s of REAL silence, 8kHz 16-bit mono. The first
-  // version was a zero-SAMPLE wav: looping a zero-duration media element spins
-  // Chromium's pipeline in a seek storm — the instant-180%-on-Play freeze
-  // (advisor-proven 2026-08-24; pausing the element dropped ~350% to 1%).
-  const n = 32000, w = new Uint8Array(44 + n), dv = new DataView(w.buffer); // 2s: media-element loops aren't gapless on WebKit — each wrap is a seek; 0.1s = a 10Hz seek drip forever
-  w.set([82, 73, 70, 70], 0); dv.setUint32(4, 36 + n, true);
-  w.set([87, 65, 86, 69, 102, 109, 116, 32, 16, 0, 0, 0, 1, 0, 1, 0,
-         64, 31, 0, 0, 128, 62, 0, 0, 2, 0, 16, 0, 100, 97, 116, 97], 8);
-  dv.setUint32(40, n, true);
-  return w;
-}
 // ?perf=1 — on-device performance HUD (iPad has no Activity Monitor): fps,
 // worst frame gap, long-task count/max over the last second. ⏺ records a
 // session and prints a report Josh can copy out — the iPad has no profiler,
@@ -5042,8 +5025,7 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
            "   win " + innerWidth + "x" + innerHeight +
            "   screen " + screen.width + "x" + screen.height);
     L.push("flags dpr=" + (PERF_FLAGS.get("dpr") || "off") +
-           "  scene=" + (PERF_NOSCENE ? "0 (cache disabled)" : "on") +
-           "  keepalive=" + (PERF_NOKEEP ? "0 (silent wav parked)" : "on"));
+           "  scene=" + (PERF_NOSCENE ? "0 (cache disabled)" : "on"));
     L.push("state at stop: " + snapshot());
     L.push("canvas roll " + dims("roll") + "   inst " + dims("instcanvas") +
            "   instOpen " + (typeof instOpen !== "undefined" ? instOpen : "?") +
@@ -5215,23 +5197,20 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     for (const k in acct) acct[k] = 0;
   }, 1000);
 })();
-let silentUnlock = null;
+// The iOS silent-switch bypass is GONE (Josh, 2026-08-25). It looped a 2.0s
+// silent <audio> forever to hold the tab in the "media playback" category the
+// hardware mute switch does not silence. On WebKit every loop wrap is a seek,
+// and his recordings put a stall burst on exactly that 2.0s beat — clean for
+// 70s, then every other second after one note move, worsening until reload.
+// It was added 2026-08-22 for a friend's "it won't play"; the perf collapse
+// dates from 08-24. A comfort feature is not worth a third of the frame
+// budget. If the mute switch bites someone again: say so in the UI, or hold
+// the classification with a MUCH longer buffer so seeks are rare — do not
+// re-introduce a 2-second loop.
 document.addEventListener("pointerdown", function warm() {
   document.removeEventListener("pointerdown", warm);
   ensureAudio();
   resumeAudio();
-  // iOS SILENT-SWITCH bypass (friends' "it won't play", 2026-08-23): WebAudio
-  // alone routes through the ringer channel, which the hardware mute switch
-  // silences — everything looks like it plays, no sound comes out. Looping a
-  // silent <audio> element on the same gesture upgrades the session to media
-  // playback, which the switch does not mute. Standard web workaround.
-  try {
-    silentUnlock = new Audio(URL.createObjectURL(new Blob([makeSilentWav()], {type: "audio/wav"})));
-    silentUnlock.loop = true;
-    silentUnlock.volume = 0.01;
-    if (!PERF_NOKEEP) // ?keepalive=0: leave it parked, the mute switch wins
-      silentUnlock.play().catch(() => { silentUnlock = null; }); // fine if refused — desktop doesn't need it
-  } catch (err) { silentUnlock = null; }
   if (sfPreloadPending) sfPreloadForSong(); // the boot-time preload deferred to this gesture
 }, {capture: true});
 function trackGain(ti) {
@@ -6067,8 +6046,6 @@ function chipStart(fromSec) {
   }
 }
 async function play(fromSec = 0) {
-  // re-arm the iOS silent-switch keepalive (▶ is a user gesture; it pauses on stop)
-  if (silentUnlock) { try { silentUnlock.play().catch(() => {}); } catch (err) {} }
   if (songLoading) { // starting a transport against a half-loaded song played
     pendingPlay = true; // a couple of chase notes then died (Josh, 2026-08-17)
     document.getElementById("playbtn").textContent = "▶ …";
@@ -6176,7 +6153,6 @@ async function play(fromSec = 0) {
 function stop() {
   pendingPlay = false; // an explicit stop cancels a queued mid-load play
   if (recording) recFinish();
-  if (silentUnlock) { try { silentUnlock.pause(); } catch (err) {} } // keepalive idles with the transport
   if (!playing) { draw(); return; }
   playCursor = secToTick(song, playSec());
   playing = false;

@@ -1692,15 +1692,16 @@ test("selection editing: move, resize, copy/paste, delete — with undo restorin
   run(`songKey = null; multiSel = []; multiSelKey = new Set(); song.rawNotes = null;`);
 });
 
-test("silent-switch bypass wav has REAL duration (zero-sample loop = CPU storm)", () => {
-  const w = new Uint8Array(JSON.parse(run(`JSON.stringify([...makeSilentWav()])`)));
-  const dv = new DataView(w.buffer);
-  assert.equal(String.fromCharCode(...w.slice(0, 4)), "RIFF");
-  assert.equal(String.fromCharCode(...w.slice(36, 40)), "data");
-  const dataLen = dv.getUint32(40, true);
-  assert.ok(dataLen >= 1600, "at least 0.1s of samples, got " + dataLen);
-  assert.equal(dv.getUint32(4, true), 36 + dataLen, "RIFF size consistent");
-  const sampleRate = dv.getUint32(24, true);
-  assert.ok(dataLen / 2 / sampleRate >= 0.09, "duration ≥ ~0.1s");
-  assert.ok(w.slice(44).every(b => b === 0), "silence is silent");
+// The silent-switch bypass is gone (Josh, 2026-08-25). It looped a 2.0s silent
+// <audio> forever so iOS would classify the tab as media playback, which the
+// hardware mute switch does not silence. Every WebKit loop wrap is a seek, and
+// his perf recordings put stall bursts on exactly that 2.0s beat. This test
+// guards the removal: no looping media element may come back.
+test("no looping keepalive media element (the 2.0s seek beat stays gone)", () => {
+  assert.equal(run(`typeof makeSilentWav`), "undefined", "silent wav generator is gone");
+  assert.equal(run(`typeof silentUnlock`), "undefined", "keepalive element is gone");
+  // AudioBufferSourceNode.loop is fine (chip playback uses it) — the banned
+  // thing is an HTMLMediaElement, whose loop wraps are seeks on WebKit
+  const src = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.ok(!/new Audio\s*\(/.test(src), "no HTMLAudioElement is constructed");
 });
