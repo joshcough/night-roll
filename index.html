@@ -1525,6 +1525,35 @@
 // feature inventory, the .rollnotes format spec, this file's section map,
 // and the project conventions (keys are Josh's discoveries — never pre-fill).
 "use strict";
+// -------------------------------------------------------- perf experiments
+// Two URL flags, off by default, that exist to ANSWER a question rather than
+// to be features. Josh's iPad blocks the main thread ~100-220ms repeatedly
+// while the app's own JS accounts for under 2% of wall clock and nothing in
+// the heap grows — so the cost is not in our code, and the next suspects are
+// both about how much canvas memory this page asks a WKWebView for.
+//   ?dpr=1    render at 1x instead of the device's 2x. The roll canvas goes
+//             from 2752x1294 (14MB of backing store) to a quarter of that.
+//   ?scene=0  drop the playback scene cache — one canvas instead of two, at
+//             the cost of a full redraw per frame. The cache was added as a
+//             CPU win (39c551a); on a memory-tight browser that trade can
+//             invert, which is exactly the kind of regression Josh remembers.
+// Both report themselves in the perf report so a pasted report is never
+// ambiguous about which build produced it.
+const PERF_FLAGS = (() => { // hand-rolled: the vm test sandbox has no
+  try {                       // URLSearchParams and no location
+    const q = String(location.search || "").replace(/^\?/, "");
+    const map = {};
+    for (const kv of q.split("&")) { if (!kv) continue; const i = kv.indexOf("="); 
+      map[i < 0 ? kv : kv.slice(0, i)] = i < 0 ? "" : decodeURIComponent(kv.slice(i + 1)); }
+    return {get: k => (k in map ? map[k] : null)};
+  } catch (err) { return {get: () => null}; }
+})();
+const PERF_NOSCENE = PERF_FLAGS.get("scene") === "0";
+if (PERF_FLAGS.get("dpr")) { // override the source, not the call sites — every
+  const forced = +PERF_FLAGS.get("dpr") || 1; // dpr read in the app picks it up
+  try { Object.defineProperty(window, "devicePixelRatio", {get: () => forced, configurable: true}); }
+  catch (err) { /* locked down: the flag simply does nothing */ }
+}
 // ---------------------------------------------------------------- catalog
 let CATALOG = {}; // built from albums/manifest.json at boot — the dropdown
 // mirrors the albums/ directory; run tools/build_manifest.mjs after adding music
@@ -2803,6 +2832,7 @@ let sceneCanvas = null, sceneValid = false, sceneVX = -1, sceneVY = -1, phLastX 
 function draw() { sceneValid = false; drawFull(false); }
 function playbackFrame() {
   if (!song) { draw(); return; }
+  if (PERF_NOSCENE) { drawFull(false); return; } // ?scene=0: never allocate the cache
   if (instOpen) drawInst();
   const dpr = window.devicePixelRatio || 1;
   if (!sceneValid || view.x !== sceneVX || view.y !== sceneVY ||
@@ -4978,6 +5008,8 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     L.push("dpr " + (window.devicePixelRatio || 1) +
            "   win " + innerWidth + "x" + innerHeight +
            "   screen " + screen.width + "x" + screen.height);
+    L.push("flags dpr=" + (PERF_FLAGS.get("dpr") || "off") +
+           "  scene=" + (PERF_NOSCENE ? "0 (cache disabled)" : "on"));
     L.push("canvas roll " + dims("roll") + "   inst " + dims("instcanvas") +
            "   instOpen " + (typeof instOpen !== "undefined" ? instOpen : "?") +
            "   fall " + (typeof fallOn !== "undefined" ? fallOn : "?") +

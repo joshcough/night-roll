@@ -680,6 +680,23 @@ through the wrapper), and the audio-node census patches
 listening for `ended` via `addEventListener` so an app-side `.onended`
 assignment is never clobbered.
 
+Two experiment flags ride alongside it, off by default, added because
+Josh's iPad blocks the main thread 100-220ms repeatedly while app JS
+accounts for under 2% of wall clock and nothing in the heap grows:
+
+- `?dpr=1` — render at 1x. Overrides `window.devicePixelRatio` with a
+  getter rather than editing the eight call sites, so every consumer
+  (roll, scene cache, score, instrument panel) picks it up. On a 2x
+  iPad this cuts the roll canvas from ~14MB of backing store to ~3.5MB.
+- `?scene=0` — skip the playback scene cache entirely: one canvas
+  instead of two, paying a full redraw per frame. The cache was added
+  as a CPU win (39c551a); on a memory-tight WKWebView that trade can
+  invert, which is the shape of regression Josh remembers ("older
+  versions did not have this problem").
+
+Both print into the report's `flags` line, so a pasted report is never
+ambiguous about which build produced it.
+
 What the report carries, and why each part is there:
 
 - **`shape`** — the discriminator. A blocked main thread makes the
