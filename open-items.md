@@ -114,7 +114,47 @@ correctly: draft wins), same for the metadata fetches around 2267/2357,
 plus a `setInfo` so a stalled open says so instead of failing mute.
 The silence is what cost the debugging time, not the blip.
 
-## Perf hunt — the edit theory is BACK (Safari recording, 2026-08-25)
+## PERF HUNT — SOLVED 2026-08-25: the iOS silent-switch keepalive
+
+Cause: the silent mute-switch bypass (fca2d7f, 2026-08-22) looped a
+2.0s silent `<audio>` forever. On WebKit each loop wrap is a seek —
+makeSilentWav's own comment said so. Removed in c704c43 on Josh's
+call ("what if we just remove that?"). He was right; I had killed the
+edit theory too early and gone hunting canvas memory.
+
+Same protocol, before and after, graveyard-2, edit at ~70s:
+
+               stalls  worst frame  worst lag  avg fps
+  with wav        55       120ms       71ms      58.9
+  without          0        37ms        9ms      60.0
+
+7200 of 7320 frames under 17ms. The edit at 69s changed nothing after.
+
+How it hid: app JS was never above ~1.7% of wall clock, nothing in the
+heap grew, the audio graph was clean, and the cost never appeared in
+any wrapper — it was a media-element seek, outside all of it. What
+found it was the PERIOD: stalls alternated on a 2.0s beat, and the wav
+is 32000 bytes at 8kHz 16-bit mono = exactly 2.0s.
+
+Why an EDIT tripped it (still unexplained, and now academic): before
+the edit the same wav looped harmlessly for 70s. Something an edit
+changes makes the seek expensive. Not worth chasing with the wav gone.
+
+Guard: tests/night-roll.test.mjs fails if any `new Audio(` returns.
+AudioBufferSourceNode loops stay legal — chip playback uses them.
+
+If the mute switch bites a friend again: say so in the UI, or hold the
+classification with a MUCH longer buffer. Never a 2-second loop.
+
+Tooling that came out of this arc (all shipped, documented in
+NIGHT-ROLL.md): the ?perf=1 session recorder with per-function
+attribution, stall census, loop-wrap and edit-boundary correlation,
+growth probe, per-song A/B segmentation, and the ?dpr / ?scene=0
+experiment flags.
+
+## Superseded — the hunt while it was still open (kept for the method)
+
+### The edit theory is BACK (Safari recording, 2026-08-25)
 
 I killed the edit theory too early. Josh's Safari recording revived it
 with the cleanest evidence yet, and the per-song A/B did the work:
