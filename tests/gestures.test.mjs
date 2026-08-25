@@ -239,3 +239,33 @@ test("gesture: off-phase note MOVE lands ON the grid line (and-of-1)", () => {
   drag(app, from, to);
   assert.equal(notes(app)[0].t, 2160, "landed on the and of 1, phase gone");
 });
+
+test("insertTime: slide, stretch straddlers, leave exact-enders; one undo", () => {
+  const app = boot("vm-gest-insert");
+  // notes at bars 1 and 6; sections: one 1.1-5.4 (ends AT the point), one
+  // 1.1-8.4 (straddles), one starting 6.1 (at the point); loop past it
+  app.run(`
+    song.tracks[0].notes = [{t: 0, d: 480, p: 60, v: 80}, {t: ${5*1920}, d: 480, p: 64, v: 80}];
+    rollnotes = deriveNoteTypes([
+      {b1: 1, q1: 1, b2: 5, q2: 4, text: "section: Ends", added: true},
+      {b1: 1, q1: 1, b2: 8, q2: 4, text: "section: Straddle", added: true},
+      {b1: 6, q1: 1, b2: 9, q2: 4, text: "section: At", added: true},
+      {b1: 10, q1: 1, text: "loop: 2.1", added: true},
+    ]).map(resolveNote);
+    finalizeNotes(); editUndo = [];
+  `);
+  const k = app.run(`insertTime(${5 * 1920}, ${2 * 1920})`); // 2 bars at 6.1
+  assert.ok(k >= 4, "moved things: " + k);
+  const rn = JSON.parse(app.run(
+    `JSON.stringify(rollnotes.filter(n => n.section || n.text.startsWith("loop")).map(n => ({s: n.text, b1: n.b1, b2: n.b2})))`));
+  const by = t => rn.find(n => n.s.includes(t));
+  assert.deepEqual([by("Ends").b1, by("Ends").b2], [1, 5], "exact-ender untouched");
+  assert.deepEqual([by("Straddle").b1, by("Straddle").b2], [1, 10], "straddler stretched");
+  assert.deepEqual([by("At").b1, by("At").b2], [8, 11], "at-point section slid");
+  assert.equal(by("loop").b1, 12, "loop annotation slid");
+  assert.deepEqual(notes(app).map(n => n.t), [0, 7 * 1920], "note after point slid 2 bars");
+  app.run(`editUndoPop()`);
+  assert.deepEqual(notes(app).map(n => n.t), [0, 5 * 1920], "one undo restores notes");
+  const rn2 = JSON.parse(app.run(`JSON.stringify(rollnotes.filter(n => n.section).map(n => n.b2))`));
+  assert.deepEqual(rn2.sort((a,b)=>a-b), [5, 8, 9], "one undo restores annotations");
+});

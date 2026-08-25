@@ -932,6 +932,30 @@
   </div>
 </div>
 
+<div class="overlay" id="insbarsheet">
+  <div class="sheet">
+    <h2>INSERT TIME</h2>
+    <p class="meta" style="margin:0 0 8px;white-space:normal">Opens a gap: everything from the insert point onward slides
+    right; a section or chord that starts before and is still open at the point stretches instead; one that ends exactly
+    at the point stays put. Notes, sections, chords, the loop — all carried. One ⟲ undoes it.</p>
+    <div class="row" style="align-items:center;gap:8px">
+      <span class="meta">At&nbsp; bar</span>
+      <input id="insb" type="number" min="1" step="1" inputmode="numeric" style="width:64px;min-height:44px;text-align:center;font-size:17px">
+      <span class="meta">beat</span>
+      <input id="insq" type="number" min="1" step="any" inputmode="decimal" style="width:70px;min-height:44px;text-align:center;font-size:17px">
+    </div>
+    <div class="row" style="align-items:center;gap:8px;margin-top:8px">
+      <span class="meta">Insert</span>
+      <input id="insn" type="number" min="1" step="1" inputmode="numeric" value="1" style="width:64px;min-height:44px;text-align:center;font-size:17px">
+      <div class="chiprow" id="insunit" style="flex:1"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="insgo" class="primary">Insert</button>
+      <button id="insclose" style="margin-left:auto">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="gridsheet">
   <div class="sheet">
     <h2>GRID</h2>
@@ -1088,6 +1112,7 @@
       <dt>▤ Tracks view</dt><dd>The arrangement view (𝄞/▤/▦ button cycles Roll → Tracks → Score; also in View ▾): one lane per track, its notes drawn as a thumbnail (each lane scaled to its own range), with the track's color dot, name, M/S, and a volume fader in the lane header — the fader saves as the same vol= annotation as the voice menu's. Tap a note to select it (it sounds); lasso a box and it selects by TIME across every lane it touches — cross-track selection in one gesture. Hold-to-grab a selected note and drag: sideways moves it in time (bar-magnet-free, 16th snap), and <b>dragging up or down carries the whole selection to another lane</b> — pitch kept, one ⟲ undoes it, drums and melodic lanes never mix. Dragging shows a ghost until you release. Tap a lane's header to select that track; tap the selected track's header again for its voice & volume menu. Pencil doesn't draw here (a squeezed lane has no honest pitch) — it draws in Roll or Score; Erase works. The ruler above is the same one as always: sections, cycle, magnetic bars, the playhead triangle.</dd>
       <dt>🎸 Bassist</dt><dd>The 🎸 beside 🎲 (behind ⋯, or Edit ▾ → Bassist…) generates a bassline for the range onto a track you pick (defaults to a NEW bass track unless an empty one exists — it never silently overwrites your notes; the status line says exactly what it replaces). PITCHES COME FROM YOUR DECLARED CHORDS — chord tones, slash basses honored (C♯/F walks to the F), N.C. bars pedal the key root; gaps ride the last chord. With ONLY a melody and no chords, it sketches the melody's harmony internally (duration-weighted, strong beats count more) and plays bass under that sketch — the sketch is never shown or written anywhere, and different seeds read the melody differently, which is the idea machine — declared chords always win bar-by-bar, inference only fills the unannotated gaps. The bass PLAYS THROUGH your Break sections (a Break is bass-alone by your own device). Styles: <b>chug</b> (root 8ths), <b>pump</b> (root–fifth), <b>arp</b> (chord tones cycling), <b>walk</b> (approach notes INTO each coming chord — the leading-tone move, mechanized), <b>riff</b> (rhythm copied from the follow source: the kick, any track, or the chord changes). busy 1–5, octave 1–3, strictly monophonic (NES-legal), same take chips / one-⟲ replace / same-label-sections-restate contract as the Drummer.</dd>
       <dt>💬 Feature request</dt><dd>File → Feature request… opens a box that sends to the app's dev channel — requests and bug reports from inside the app, auto-tagged with the open song and playhead position, with a 🎤 Speak button: open, talk, Send. Replies stream back as 🛰 lines in the info strip AND light a gold 🛰 badge in the footer (like the ⚠ error button) that stays lit until you tap and read, with a Reply button in the list. The whole two-way history — your requests and the replies, timestamped — persists on this device: 🕘 History in the request sheet (or tap the 🛰 badge) shows it newest-first; Clear wipes it. Powered by two private ntfy topics set once in File → Settings (device-only — the public repo never contains them; without them the feature is inert). The topic names are the password: keep them secret.</dd>
+      <dt>⊞ Insert bars</dt><dd>Edit ▾ → Insert bars… opens a gap anywhere in the song: pick the spot (bar + beat, decimals fine), how much (a count of <b>bars</b>, <b>beats</b>, or <b>16ths</b>), and Insert. Everything from that point onward — notes, sections, chords, keys, the loop point — slides right together. A section that starts before the point and is still open there STRETCHES to span the gap; one that ends exactly at the point stays put (stretch it yourself if you want it covering the new bars). One ⟲ undoes the whole thing.</dd>
       <dt>Space</dt><dd>Play / stop, Logic-style — anywhere except while typing in a text field. With a hardware keyboard on iPad too.</dd>
       <dt>▦ Grid</dt><dd>View ▾ → <b>Grid…</b> opens a sheet: tap a number of <b>lines per bar</b> (say 10) and the roll redraws instantly with that many lines in each bar — and pencil entry, note drags and resizes all SNAP to those lines. Pure view-and-snap aid: no note moves, no annotation changes, the time signature stays what it is. This is how a figure the duration buttons can't spell — ten even notes across a 4/4 bar, each 0.4 beats — becomes pencil-drag from line to line; with a grid armed, a pencil tap lays down one cell. Set the <b>anchor</b> right in the sheet — bar and beat, and the beat takes decimals for sub-beat starts (2.5 = the "and" of 2, 2.25 = the second sixteenth) — and the lines run from there (14.2, say), so a figure beginning mid-bar gets its lines exactly where its notes go, continuing bar after bar on that phase across the whole song. Bar lines stay drawn for orientation but stop being snap targets while the grid is armed; a bar line falling between cells is expected, not a bug. <b>Off</b> returns to the meter's own grid (16ths, or triplet steps while a T duration is armed). Transient by design: set it, enter the passage, set it back.</dd>
       <dt>📻 Listener mode</dt><dd>Phones open as a PLAYER: the roll, ⏮ ▶, the readouts, speed and volume — everything else hidden, including the section/chord bands and the notes strip (unreadably small on a phone anyway), because a shared song link is for listening, not editing. A <b>Full app</b> button in the header brings the whole DAW back on that device (and View ▾ → Listener mode folds it away again, on any device). Send someone a ?song= link and their phone just… plays it.</dd>
@@ -1223,6 +1248,7 @@
   <button class="fitem" id="emJoin">⁀  Join notes</button>
   <button class="fitem" id="emMove">⇄  Move to track…</button>
   <button class="fitem" id="emTranspose">⇅  Transpose…</button>
+  <button class="fitem" id="emInsertBars">⊞  Insert bars…</button>
   <div class="fdiv"></div>
   <button class="fitem" id="emChord">♫  Insert chord…</button>
   <button class="fitem" id="emFill">🥁  Drum pattern…</button>
@@ -3770,6 +3796,72 @@ function splitApply(items, cutFor) { // shared: cut each note at cutFor(note)
   draw();
   return items.length;
 }
+function insertTime(T, delta) { // open a gap at tick T of delta ticks; ONE undo
+  if (!editableSong() || delta <= 0) return 0;
+  const annoBefore = annoSnapshot();
+  const modItems = [];
+  song.tracks.forEach((tr, ti) => tr.notes.forEach((n, ni) => {
+    if (!n.gone && n.t >= T) {
+      modItems.push({ti, ni, t: n.t, d: n.d, p: n.p, v: n.v});
+      n.t += delta;
+      const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[ti][n.ri];
+      if (rn) rn.t = n.t + chopS;
+    }
+  }));
+  let touched = 0;
+  for (const n of rollnotes) {
+    if (n.start >= T) { // at/after the point: the whole annotation slides
+      setAnchorBQ(n, n.start + delta);
+      if (n.end !== null && n.end !== undefined) setEndBQ(n, n.end + delta);
+      resolveNote(n); touched++;
+    } else if (n.end !== null && n.end !== undefined && n.end > T) {
+      // straddler: started before, still open PAST the point — stretch; an
+      // annotation ending exactly AT the point stays put (Josh's spec)
+      setEndBQ(n, n.end + delta);
+      resolveNote(n); touched++;
+    }
+  }
+  pushUndo({kind: "group", entries: [{kind: "mod", items: modItems}, {kind: "anno", json: annoBefore}]});
+  finalizeNotes();
+  computeSongEnd();
+  saveLocalNotes();
+  saveDraft();
+  if (viewMode === "score") buildScoreModel();
+  draw();
+  return modItems.length + touched;
+}
+let insUnit = "bars";
+function openInsertBars() {
+  const bt = barTicks(), qt = beatTicks();
+  document.getElementById("insb").value = Math.floor(playCursor / bt) + 1;
+  document.getElementById("insq").value = Math.round(((playCursor % bt) / qt + 1) * 100) / 100;
+  const row = document.getElementById("insunit");
+  row.innerHTML = "";
+  for (const u of ["bars", "beats", "16ths"]) {
+    const b = document.createElement("button");
+    b.textContent = u;
+    b.className = "chip" + (insUnit === u ? " selected" : "");
+    b.style.cssText = "min-height:44px;justify-content:center" +
+      (insUnit === u ? ";background:var(--gold);color:#111;font-weight:700" : "");
+    b.addEventListener("click", () => { insUnit = u; openInsertBars(); });
+    row.appendChild(b);
+  }
+  document.getElementById("insbarsheet").classList.add("on");
+}
+document.getElementById("insgo").addEventListener("click", () => {
+  const bt = barTicks(), qt = beatTicks();
+  const b = Math.max(1, Math.round(+document.getElementById("insb").value || 1));
+  const q = Math.max(1, +document.getElementById("insq").value || 1);
+  const n = Math.max(1, Math.round(+document.getElementById("insn").value || 1));
+  const T = Math.round((b - 1) * bt + (q - 1) * qt);
+  const delta = n * (insUnit === "bars" ? bt : insUnit === "beats" ? qt : qt / 4);
+  const k = insertTime(T, Math.round(delta));
+  document.getElementById("insbarsheet").classList.remove("on");
+  setInfo(k ? "inserted " + n + " " + insUnit + " at " + b + "." + q + " — " + k + " things moved (one ⟲ undoes)"
+            : "nothing to insert into — is this song editable?");
+});
+document.getElementById("insclose").addEventListener("click", () =>
+  document.getElementById("insbarsheet").classList.remove("on"));
 function divideSelection(nParts) { // ➗: each selected note becomes N equal notes
   if (!editableSong()) return 0;
   const items = selEditItems().filter(({n}) => n.d >= nParts);
@@ -9478,6 +9570,7 @@ document.getElementById("editsheetbtn").addEventListener("click", e => {
   proxy("emJoin", () => document.getElementById("joinbtn").click());
   proxy("emMove", () => document.getElementById("movebtn").click());
   proxy("emTranspose", () => document.getElementById("trbtn").click());
+  proxy("emInsertBars", () => { if (editableSong()) openInsertBars(); else setInfo("Insert bars works on your own songs"); });
   proxy("emChord", () => document.getElementById("insbtn").click());
   proxy("emFill", () => document.getElementById("drumfillbtn").click());
   proxy("emDrummer", () => openDrummer());
