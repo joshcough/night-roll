@@ -4858,12 +4858,30 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
   const BUCKETS = [8, 17, 25, 34, 50, 100, 200, Infinity];
   const hist = BUCKETS.map(() => 0);
   let rec = null; // recording session, null when idle
+  // loop-wrap detection without touching app code: playSec() runs backwards
+  // when the transport wraps a cycle. If the stalls land ON wraps it is the
+  // transport's re-schedule; if they land anywhere, it is GC or the platform.
+  let prevSec = null, lastWrap = -1e9;
   const loop = t => {
     frames++;
     const dt = t - last;
     worst = Math.max(worst, dt);
     last = t;
-    if (rec) { rec.frames++; hist[BUCKETS.findIndex(b => dt <= b)]++; }
+    if (rec) {
+      rec.frames++;
+      hist[BUCKETS.findIndex(b => dt <= b)]++;
+      try {
+        const ps = typeof playing !== "undefined" && playing ? playSec() : null;
+        if (ps !== null && prevSec !== null && ps < prevSec - 0.05) { rec.wraps++; lastWrap = t; }
+        prevSec = ps;
+      } catch (err) { /* transport not running: wrap census simply stays empty */ }
+      if (dt > 50) { // a stall worth attributing
+        rec.blocks++;
+        rec.blockMs += dt;
+        if (t - lastWrap < 250) rec.blocksAtWrap++;
+        rec.secBlocks++;
+      }
+    }
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);
@@ -4900,7 +4918,8 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
   // .onended assignment is not clobbered.
   const nodes = {osc: 0, gain: 0, buf: 0, filt: 0, ended: 0, stopped: 0, disc: 0};
   let livePeak = 0;
-  const liveNow = () => nodes.osc + nodes.buf - nodes.ended - nodes.stopped;
+  const liveNow = () => nodes.osc + nodes.buf - nodes.ended; // stop() and 'ended'
+  // fire for the same node — counting both double-subtracts and reads negative
   try {
     const P = (typeof BaseAudioContext !== "undefined" ? BaseAudioContext : AudioContext).prototype;
     const src = (m, key) => {
@@ -4949,7 +4968,7 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     const L = [];
     L.push("NIGHT ROLL PERF REPORT");
     L.push("build " + (document.lastModified || "?") + "   session " + secs.toFixed(1) + "s");
-    L.push("song " + (typeof songKey !== "undefined" ? songKey : "?") +
+    L.push("song at stop " + (typeof songKey !== "undefined" ? songKey : "?") +
            "   tracks " + (typeof song !== "undefined" && song ? song.tracks.length : 0) +
            "   notes " + (typeof song !== "undefined" && song
              ? song.tracks.reduce((a, t) => a + t.notes.filter(n => !n.gone).length, 0) : 0) +
@@ -4982,6 +5001,17 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     L.push("frame deltas  " + BUCKETS.map((b, i) =>
       (b === Infinity ? ">200" : "<=" + b) + ":" + hist[i]).join("  "));
     L.push("");
+    const segs = Object.entries(rec.bySong);
+    if (segs.length > 1) { // only interesting when a song switch actually happened
+      L.push("--- per song (the A/B) ---");
+      for (const [k, v] of segs)
+        L.push(k.padEnd(46) + String(v.secs).padStart(4) + "s  avg fps " +
+               (v.frames / v.secs).toFixed(1).padStart(6) +
+               "  worst " + String(Math.round(v.worst)).padStart(4) + "ms" +
+               "  lag " + String(Math.round(v.lag)).padStart(4) + "ms");
+      L.push("NOTE: attribution below is the WHOLE session, not per song.");
+      L.push("");
+    }
     L.push("--- attribution (session totals) ---");
     const rows = Object.entries(total).sort((a, b) => b[1].ms - a[1].ms).filter(([, v]) => v.ms >= 1);
     if (!rows.length) L.push("(nothing measurable)");
@@ -4995,6 +5025,24 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
            "  filt " + nodes.filt);
     L.push("ended " + nodes.ended + "  stopped " + nodes.stopped + "  disconnect " + nodes.disc +
            "   live(est) " + liveNow() + "   peak " + livePeak);
+    L.push("");
+    L.push("--- stalls (>50ms frames) ---");
+    L.push("count " + rec.blocks + "   mean " +
+           (rec.blocks ? Math.round(rec.blockMs / rec.blocks) : 0) + "ms" +
+           "   loop wraps " + rec.wraps +
+           "   stalls within 250ms of a wrap " + rec.blocksAtWrap +
+           (rec.blocks ? " (" + Math.round(rec.blocksAtWrap / rec.blocks * 100) + "%)" : ""));
+    L.push("read: high % = the transport's loop re-schedule; low % = GC/platform.");
+    L.push("");
+    L.push("--- growth (first vs last, and the slope) ---");
+    if (rec.growth.length > 1) {
+      const a = rec.growth[0], b = rec.growth[rec.growth.length - 1];
+      const span = Math.max(1, b.s - a.s);
+      for (const k of ["dom", "nodes", "live", "sched", "roll", "undo"])
+        L.push(k.padEnd(8) + String(a[k]).padStart(8) + " -> " + String(b[k]).padStart(8) +
+               "   " + ((b[k] - a[k]) / span).toFixed(1) + "/s");
+      L.push("(nodes is cumulative and SHOULD climb; live/dom/sched/roll/undo should not)");
+    } else L.push("(too short)");
     L.push("");
     L.push("--- storage ---");
     L.push(lsReport());
@@ -5043,7 +5091,9 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     for (const k in total) delete total[k];
     for (const k in nodes) nodes[k] = 0;
     livePeak = 0;
-    rec = {t0: performance.now(), frames: 0, worst: 0, lag: 0, longs: 0, longMax: 0, marks: [], sec: 0};
+    rec = {t0: performance.now(), frames: 0, worst: 0, lag: 0, longs: 0, longMax: 0,
+           marks: [], sec: 0, bySong: {}, song: null,
+           wraps: 0, blocks: 0, blockMs: 0, blocksAtWrap: 0, secBlocks: 0, growth: []};
     btn.textContent = "⏹ stop";
     btn.style.color = "#7fdc7f";
   });
@@ -5062,10 +5112,32 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
       rec.lag = Math.max(rec.lag, lagWorst);
       rec.longs += longs;
       rec.longMax = Math.max(rec.longMax, longMax);
+      // song switches mid-recording are the point: airship-vs-his-song in ONE
+      // session is a controlled A/B no bisect can match. Segment by songKey so
+      // the seconds do not blend into one pile.
+      const key = (typeof songKey !== "undefined" && songKey) || "(none)";
+      if (key !== rec.song) { rec.song = key; rec.marks.push("  ---- song -> " + key + " ----"); }
+      const seg = rec.bySong[key] || (rec.bySong[key] = {secs: 0, frames: 0, worst: 0, lag: 0});
+      seg.secs++; seg.frames += frames;
+      seg.worst = Math.max(seg.worst, worst); seg.lag = Math.max(seg.lag, lagWorst);
       rec.marks.push(String(rec.sec).padStart(4) + "s  fps " + String(frames).padStart(3) +
                      "  worst " + String(Math.round(worst)).padStart(4) +
                      "  lag " + String(Math.round(lagWorst)).padStart(4) +
+                     "  blk " + String(rec.secBlocks).padStart(2) +
                      "  " + (entries[0] ? entries[0][0] + " " + Math.round(entries[0][1]) : "—"));
+      rec.secBlocks = 0;
+      // growth probe: the stalls lengthen over a session, so SOMETHING is
+      // being retained. Sample the candidates rather than guess at them.
+      const g = num => { try { return num(); } catch (err) { return -1; } };
+      rec.growth.push({
+        s: rec.sec,
+        dom: document.getElementsByTagName("*").length,
+        nodes: nodes.osc + nodes.buf + nodes.gain + nodes.filt,
+        live: nodes.osc + nodes.buf - nodes.ended,
+        sched: g(() => schedEvents.length),
+        roll: g(() => rollnotes.length),
+        undo: g(() => editUndo.length + editRedo.length),
+      });
     }
     frames = 0; worst = 0; longs = 0; longMax = 0; lagWorst = 0;
     for (const k in acct) acct[k] = 0;
