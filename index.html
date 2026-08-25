@@ -4876,6 +4876,10 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     "color:#7fdc7f;font:11px monospace;padding:6px 8px;border-radius:6px;pointer-events:none;white-space:pre";
   document.body.appendChild(el);
   let frames = 0, worst = 0, last = performance.now(), longs = 0, longMax = 0;
+  let lagWorst = 0, lagExp = performance.now() + 50;
+  setInterval(() => { const n = performance.now(); // event-loop stall probe: fires
+    lagWorst = Math.max(lagWorst, n - lagExp);     // even when rAF is throttled
+    lagExp = n + 50; }, 50);
   try {
     new PerformanceObserver(l => { for (const e of l.getEntries()) { longs++; longMax = Math.max(longMax, e.duration); } })
       .observe({entryTypes: ["longtask"]});
@@ -4896,15 +4900,17 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
   };
   setTimeout(() => ["drawFull", "playbackFrame", "draw", "updateSubtitle",
                     "scheduleNote", "drumHit", "renderTrackbar", "updateEditButtons",
-                    "secToTick", "drawRuler", "drawInst"].forEach(wrap), 0);
+                    "secToTick", "drawRuler", "drawInst",
+                    "saveDraft", "saveLocalNotes", "saveEdits", "annoSnapshot",
+                    "finalizeNotes", "computeSongEnd"].forEach(wrap), 0);
   setInterval(() => {
     const top = Object.entries(acct).sort((a, b) => b[1] - a[1]).slice(0, 3)
       .map(([n, ms]) => n + " " + Math.round(ms)).join("  ");
-    el.textContent = "fps " + frames + "  worst " + Math.round(worst) + "ms\n" +
+    el.textContent = "fps " + frames + "  worst " + Math.round(worst) + "ms  lag " + Math.round(lagWorst) + "ms\n" +
                      "longtasks " + longs + (longMax ? " (max " + Math.round(longMax) + "ms)" : "") +
                      "\nhot: " + (top || "—") +
                      "\nbuild " + (document.lastModified || "?");
-    frames = 0; worst = 0; longs = 0; longMax = 0;
+    frames = 0; worst = 0; longs = 0; longMax = 0; lagWorst = 0;
     for (const k in acct) acct[k] = 0;
   }, 1000);
 })();
@@ -5400,10 +5406,7 @@ function drumHit(ti, p, when, vel) {
     o.onended = () => { try { g.disconnect(); } catch (err) {} };
     o.start(when); o.stop(when + 0.2);
     if (p <= 36) { // beater click: the transient that reads as "kick" on small speakers
-      const len = Math.ceil(audio.sampleRate * 0.008);
-      const buf = audio.createBuffer(1, len, audio.sampleRate);
-      const ch = buf.getChannelData(0);
-      for (let k = 0; k < len; k++) ch[k] = (Math.random() * 2 - 1) * (1 - k / len);
+      const buf = drumNoiseBuf(0.008); // cached — a fresh buffer per kick was a round-2 miss
       const click = audio.createBufferSource();
       click.buffer = buf;
       const cg = audio.createGain();
@@ -6851,9 +6854,10 @@ function refreshKeysetLabel() {
   if (!song || !t) return;
   const mode = keymodeSel.value;
   const bar = Math.floor(playCursor / barTicks()) + 1;
-  keysetBtn.textContent = mode
+  const label = mode
     ? "Set " + keyNameFor(t.pc, mode).name + " @ bar " + bar
     : "Store " + partialNameOf(t) + "? @ bar " + bar;
+  if (keysetBtn.textContent !== label) keysetBtn.textContent = label; // runs per frame
 }
 keysel.addEventListener("change", refreshKeyPreview);
 keymodeSel.addEventListener("change", refreshKeyPreview);
