@@ -9,6 +9,9 @@ Everything here is also in the app: File → Help.
 **▾ Hide controls**
 The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Phones start folded automatically; your explicit choice is remembered per device.
 
+**Closing a sheet**
+Every sheet closes three ways: tap the dimmed area outside it, tap the **✕ pinned to its top-right** (it stays put while a long sheet scrolls, so the notes list never makes you scroll to the bottom to get out), or press **Esc**. Esc closes the topmost one, so stacked sheets unstack one at a time. Saving or sending closes the sheet for you. The only exception is a confirm box — it asked a question, so it waits for an answer.
+
 **𝄞 Score / ▦ Roll**
 Switch between piano roll and engraved sheet music. Same timeline, same everything else. Your choice is remembered.
 

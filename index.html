@@ -496,6 +496,14 @@
     flex-direction: column;
     gap: 10px;
   }
+  /* ✕ pinned to the top of every sheet: the notes list is long enough that
+     finding Close meant scrolling to the bottom (Josh, 2026-08-25) */
+  .sheet .sheetx {
+    position: sticky; top: 0; align-self: flex-end; z-index: 2;
+    min-width: 40px; min-height: 40px; margin: -6px -6px -16px 0;
+    background: var(--panel); border: 1px solid var(--grid); border-radius: 8px;
+    color: var(--dim); font-family: var(--mono); font-size: 14px;
+  }
   .sheet h2 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; color: var(--dim); font-weight: 600; }
   .sheet .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .sheet input[type=number], .sheet input[type=password], .sheet textarea {
@@ -1094,6 +1102,7 @@
     <div class="hsec" data-hsec="views">
     <dl>
       <dt>▾ Hide controls</dt><dd>The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Phones start folded automatically; your explicit choice is remembered per device.</dd>
+      <dt>Closing a sheet</dt><dd>Every sheet closes three ways: tap the dimmed area outside it, tap the <b>✕ pinned to its top-right</b> (it stays put while a long sheet scrolls, so the notes list never makes you scroll to the bottom to get out), or press <b>Esc</b>. Esc closes the topmost one, so stacked sheets unstack one at a time. Saving or sending closes the sheet for you. The only exception is a confirm box — it asked a question, so it waits for an answer.</dd>
       <dt>𝄞 Score / ▦ Roll</dt><dd>Switch between piano roll and engraved sheet music. Same timeline, same everything else. Your choice is remembered.</dd>
       <dt>Drag / pinch</dt><dd>One finger pans; two fingers zoom — spread horizontally to stretch time, vertically to grow/shrink the pitch rows (roll only). Two fingers moving TOGETHER pan — and that works with pencil or select armed; anything the first finger started is rolled back the instant the second finger lands. With an Apple Pencil (or one finger), <b>hold to grab</b>: dwell about a quarter second on a note before it drags, and the pencil tool only places a note on a clean tap or a dwell — a fast passing stroke always PANS, so sweeping across the song never moves a note or plants a stray one. A mouse grabs instantly (pressing a mouse button is already deliberate). Songs open fitted to the screen. In score view, scroll fully left to see the clefs and key signature.</dd>
       <dt>Roll zoom-out limit</dt><dd>Pinch-out stops once the whole song is in view — per axis: when every bar fits, further pinch-out only reveals pitch; when every note is visible — plus a few rows of breathing room above and below, so the top notes never sit against the ruler — it stops. Opening a song lands exactly on this limit.</dd>
@@ -12575,7 +12584,10 @@ document.getElementById("claudesend").addEventListener("click", async () => {
     claudeMsgs.push({t: Date.now(), dir: "out", message: txt + ctx});
     claudeLogSave();
     document.getElementById("claudetext").value = "";
-    document.getElementById("claudestatus").textContent = "sent ✓";
+    // close on success (Josh, 2026-08-25: the tiny "sent ✓" was off where he
+    // wasn't looking, so he sent the same request twice) — the info strip is
+    // the confirmation, and the sheet getting out of the way IS the feedback
+    document.getElementById("claudesheet").classList.remove("on");
     setInfo("💬 request sent — replies arrive as 🛰 messages here");
   } catch (err) {
     document.getElementById("claudestatus").textContent = "send failed: " + err.message;
@@ -12665,9 +12677,39 @@ document.getElementById("settingssave").addEventListener("click", () => {
   if (cc) localStorage.setItem("ff1roll-claude-cmd", cc); else localStorage.removeItem("ff1roll-claude-cmd");
   if (cn) localStorage.setItem("ff1roll-claude-notify", cn); else localStorage.removeItem("ff1roll-claude-notify");
   claudeListen();
-  document.getElementById("settingsstatus").textContent = "Saved ✓ — reload to apply data locations everywhere.";
+  document.getElementById("settingssheet").classList.remove("on"); // Save means done
+  setInfo("settings saved — reload to apply data locations everywhere");
 });
 document.getElementById("synccancel").addEventListener("click", () => syncsheet.classList.remove("on"));
+// Every sheet closes three ways (Josh, 2026-08-25: "I have a lot of problems
+// with our modals" — opening the notes list by mistake meant scrolling to the
+// bottom to find Close). Tap the backdrop, press Esc, or hit a ✕ that stays
+// pinned at the top while the body scrolls. confirmsheet is exempt: it asks a
+// question and has to get an answer.
+const MODAL_KEEP = new Set(["confirmsheet"]);
+if (typeof document.querySelectorAll === "function") { // vm harness stubs document
+for (const ov of document.querySelectorAll(".overlay")) {
+  if (MODAL_KEEP.has(ov.id)) continue;
+  // pointerdown, and only when the backdrop ITSELF is the target — a drag that
+  // starts inside the sheet and releases outside must not count as a dismiss
+  ov.addEventListener("pointerdown", e => { if (e.target === ov) ov.classList.remove("on"); });
+  const sh = ov.querySelector(".sheet");
+  if (!sh || sh.querySelector(".sheetx")) continue;
+  const x = document.createElement("button");
+  x.className = "sheetx";
+  x.textContent = "✕";
+  x.setAttribute("aria-label", "Close");
+  x.addEventListener("click", () => ov.classList.remove("on"));
+  sh.prepend(x);
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  const open = [...document.querySelectorAll(".overlay.on")].filter(o => !MODAL_KEEP.has(o.id));
+  if (!open.length) return;
+  open[open.length - 1].classList.remove("on"); // topmost only, so Esc unstacks
+  e.preventDefault();
+});
+}
 document.getElementById("copyfile").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(serializeRollnotes());
