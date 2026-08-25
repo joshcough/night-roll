@@ -4994,10 +4994,15 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     L.push("longtasks " + rec.longs + (rec.longMax ? " (max " + Math.round(rec.longMax) + "ms)" : ""));
     // the discriminator: a blocked main thread stalls the 50ms timer AND the
     // frame; a throttled rAF starves frames while the timer stays on time
-    L.push("shape " + (rec.frames / secs > 50 ? "healthy"
-      : rec.lag > 100 && rec.worst > 100 ? "main thread BLOCKED (timer and frames both late)"
-      : rec.lag > 100 ? "event loop late, frames not — timers/GC/audio-IPC, not paint"
-      : "frames starved, event loop on time — rAF THROTTLED (environment/backgrounded)"));
+    // average fps is the WRONG test: Josh's 271s recording averaged 56.9 while
+    // stalling 185ms, because it ran clean for two minutes before degrading.
+    // Judge by stall density and by whether the probe timer went late with it.
+    const perMin = rec.blocks / Math.max(1, secs / 60);
+    L.push("shape " + (rec.frames / secs < 20 && rec.lag < 50
+        ? "frames starved, event loop on time — rAF THROTTLED (environment/backgrounded)"
+      : perMin < 2 ? "healthy (no meaningful stalls)"
+      : rec.lag > 100 ? "main thread BLOCKED — " + Math.round(perMin) + " stalls/min, probe timer late too"
+      : "stalls present — " + Math.round(perMin) + "/min, probe timer on time (paint or compositor side)"));
     L.push("frame deltas  " + BUCKETS.map((b, i) =>
       (b === Infinity ? ">200" : "<=" + b) + ":" + hist[i]).join("  "));
     L.push("");
