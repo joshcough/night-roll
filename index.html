@@ -4836,7 +4836,9 @@ function makeSilentWav() { // 0.1s of REAL silence, 8kHz 16-bit mono. The first
   return w;
 }
 // ?perf=1 — on-device performance HUD (iPad has no Activity Monitor): fps,
-// worst frame gap, long-task count/max over the last second
+// worst frame gap, long-task count/max over the last second. ⏺ records a
+// session and prints a report Josh can copy out — the iPad has no profiler,
+// so attribution has to come from the app's own instrumentation.
 if (typeof location !== "undefined" && document.body && new URLSearchParams(location.search).get("perf")) (() => {
   const el = document.createElement("div");
   el.style.cssText = "position:fixed;right:8px;bottom:64px;z-index:9999;background:rgba(0,0,0,.75);" +
@@ -4851,32 +4853,220 @@ if (typeof location !== "undefined" && document.body && new URLSearchParams(loca
     new PerformanceObserver(l => { for (const e of l.getEntries()) { longs++; longMax = Math.max(longMax, e.duration); } })
       .observe({entryTypes: ["longtask"]});
   } catch (err) { /* webkit: no longtask — fps + gap still tell the story */ }
-  const loop = t => { frames++; worst = Math.max(worst, t - last); last = t; requestAnimationFrame(loop); };
+  // frame-delta histogram: separates "uniformly throttled" (one fat bucket)
+  // from "mostly fine with spikes" (bimodal) — the two have different causes
+  const BUCKETS = [8, 17, 25, 34, 50, 100, 200, Infinity];
+  const hist = BUCKETS.map(() => 0);
+  let rec = null; // recording session, null when idle
+  const loop = t => {
+    frames++;
+    const dt = t - last;
+    worst = Math.max(worst, dt);
+    last = t;
+    if (rec) { rec.frames++; hist[BUCKETS.findIndex(b => dt <= b)]++; }
+    requestAnimationFrame(loop);
+  };
   requestAnimationFrame(loop);
   // self-profiler: WebKit has no longtask attribution — wrap the app's own
   // hot functions and report top offenders (ms spent in the last second)
-  const acct = {};
+  const acct = {};   // rolling, cleared every second for the HUD line
+  const total = {};  // session totals: {ms, calls}
   const wrap = name => {
     const fn = typeof globalThis[name] === "function" ? globalThis[name] : null;
     if (!fn) return;
     globalThis[name] = function () {
       const t0 = performance.now();
       try { return fn.apply(this, arguments); }
-      finally { acct[name] = (acct[name] || 0) + (performance.now() - t0); }
+      finally {
+        const d = performance.now() - t0;
+        acct[name] = (acct[name] || 0) + d;
+        if (rec) {
+          const e = total[name] || (total[name] = {ms: 0, calls: 0});
+          e.ms += d; e.calls++;
+        }
+      }
     };
   };
   setTimeout(() => ["drawFull", "playbackFrame", "draw", "updateSubtitle",
                     "scheduleNote", "drumHit", "renderTrackbar", "updateEditButtons",
-                    "secToTick", "drawRuler", "drawInst",
+                    "secToTick", "drawRuler", "drawInst", "drawPiano", "drawGuitar",
+                    "drawFall", "drawTracks", "drawScore", "buildScoreModel",
+                    "drawRangeTints", "drawLasso", "updateLCD", "updateTrackGains",
                     "saveDraft", "saveLocalNotes", "saveEdits", "annoSnapshot",
                     "finalizeNotes", "computeSongEnd"].forEach(wrap), 0);
+  // audio-node census: a leaked graph costs time in the realtime render thread,
+  // where no page-side profiler can see it. Patched on the prototype so the
+  // app's own code stays untouched; 'ended' via addEventListener so an app
+  // .onended assignment is not clobbered.
+  const nodes = {osc: 0, gain: 0, buf: 0, filt: 0, ended: 0, stopped: 0, disc: 0};
+  let livePeak = 0;
+  const liveNow = () => nodes.osc + nodes.buf - nodes.ended - nodes.stopped;
+  try {
+    const P = (typeof BaseAudioContext !== "undefined" ? BaseAudioContext : AudioContext).prototype;
+    const src = (m, key) => {
+      const f = P[m];
+      if (!f) return;
+      P[m] = function () {
+        const n = f.apply(this, arguments);
+        nodes[key]++;
+        livePeak = Math.max(livePeak, liveNow());
+        try {
+          n.addEventListener("ended", () => { nodes.ended++; });
+          const st = n.stop;
+          if (st) n.stop = function () { nodes.stopped++; return st.apply(this, arguments); };
+        } catch (err) { /* node type without stop/ended: creation count still counts */ }
+        return n;
+      };
+    };
+    src("createOscillator", "osc");
+    src("createBufferSource", "buf");
+    for (const [m, k] of [["createGain", "gain"], ["createBiquadFilter", "filt"]]) {
+      const f = P[m];
+      if (f) P[m] = function () { nodes[k]++; return f.apply(this, arguments); };
+    }
+    const dc = AudioNode.prototype.disconnect;
+    AudioNode.prototype.disconnect = function () { nodes.disc++; return dc.apply(this, arguments); };
+  } catch (err) { /* no WebAudio in this context: the rest of the report stands */ }
+  const dims = id => {
+    const c = document.getElementById(id);
+    return c ? c.width + "x" + c.height : "—";
+  };
+  const lsReport = () => {
+    let bytes = 0, keys = 0;
+    const per = [];
+    try {
+      for (const k of Object.keys(localStorage)) {
+        const n = (k.length + (localStorage.getItem(k) || "").length) * 2; // UTF-16
+        bytes += n; keys++; per.push([k, n]);
+      }
+    } catch (err) { return "unavailable"; }
+    per.sort((a, b) => b[1] - a[1]);
+    return Math.round(bytes / 1024) + " KB in " + keys + " keys; top: " +
+      per.slice(0, 4).map(([k, n]) => k + " " + Math.round(n / 1024) + "KB").join(", ");
+  };
+  const report = () => {
+    const secs = (performance.now() - rec.t0) / 1000;
+    const L = [];
+    L.push("NIGHT ROLL PERF REPORT");
+    L.push("build " + (document.lastModified || "?") + "   session " + secs.toFixed(1) + "s");
+    L.push("song " + (typeof songKey !== "undefined" ? songKey : "?") +
+           "   tracks " + (typeof song !== "undefined" && song ? song.tracks.length : 0) +
+           "   notes " + (typeof song !== "undefined" && song
+             ? song.tracks.reduce((a, t) => a + t.notes.filter(n => !n.gone).length, 0) : 0) +
+           "   view " + (typeof viewMode !== "undefined" ? viewMode : "?") +
+           "   playing " + (typeof playing !== "undefined" ? !!playing : "?"));
+    L.push("ua " + navigator.userAgent);
+    L.push("dpr " + (window.devicePixelRatio || 1) +
+           "   win " + innerWidth + "x" + innerHeight +
+           "   screen " + screen.width + "x" + screen.height);
+    L.push("canvas roll " + dims("roll") + "   inst " + dims("instcanvas") +
+           "   instOpen " + (typeof instOpen !== "undefined" ? instOpen : "?") +
+           "   fall " + (typeof fallOn !== "undefined" ? fallOn : "?") +
+           "   scene " + (typeof sceneCanvas !== "undefined" && sceneCanvas
+             ? sceneCanvas.width + "x" + sceneCanvas.height : "none"));
+    try {
+      L.push("audio sr " + audio.sampleRate + "  baseLatency " +
+             Math.round((audio.baseLatency || 0) * 1000) + "ms  state " + audio.state);
+    } catch (err) { L.push("audio —"); }
+    L.push("");
+    L.push("--- frames ---");
+    L.push("frames " + rec.frames + "   avg fps " + (rec.frames / secs).toFixed(1) +
+           "   worst frame " + Math.round(rec.worst) + "ms   worst lag " + Math.round(rec.lag) + "ms");
+    L.push("longtasks " + rec.longs + (rec.longMax ? " (max " + Math.round(rec.longMax) + "ms)" : ""));
+    // the discriminator: a blocked main thread stalls the 50ms timer AND the
+    // frame; a throttled rAF starves frames while the timer stays on time
+    L.push("shape " + (rec.frames / secs > 50 ? "healthy"
+      : rec.lag > 100 && rec.worst > 100 ? "main thread BLOCKED (timer and frames both late)"
+      : rec.lag > 100 ? "event loop late, frames not — timers/GC/audio-IPC, not paint"
+      : "frames starved, event loop on time — rAF THROTTLED (environment/backgrounded)"));
+    L.push("frame deltas  " + BUCKETS.map((b, i) =>
+      (b === Infinity ? ">200" : "<=" + b) + ":" + hist[i]).join("  "));
+    L.push("");
+    L.push("--- attribution (session totals) ---");
+    const rows = Object.entries(total).sort((a, b) => b[1].ms - a[1].ms).filter(([, v]) => v.ms >= 1);
+    if (!rows.length) L.push("(nothing measurable)");
+    for (const [n, v] of rows)
+      L.push(n.padEnd(20) + String(Math.round(v.ms)).padStart(7) + "ms " +
+             String(Math.round(v.ms / (secs * 10))).padStart(4) + "%   calls " + v.calls);
+    L.push("NOTE: drawFull nests inside playbackFrame — percentages overlap.");
+    L.push("");
+    L.push("--- audio nodes ---");
+    L.push("created osc " + nodes.osc + "  buf " + nodes.buf + "  gain " + nodes.gain +
+           "  filt " + nodes.filt);
+    L.push("ended " + nodes.ended + "  stopped " + nodes.stopped + "  disconnect " + nodes.disc +
+           "   live(est) " + liveNow() + "   peak " + livePeak);
+    L.push("");
+    L.push("--- storage ---");
+    L.push(lsReport());
+    L.push("");
+    L.push("--- per second (fps / worst / lag / hottest) ---");
+    for (const s of rec.marks) L.push(s);
+    return L.join("\n");
+  };
+  const sheet = text => {
+    const bg = document.createElement("div");
+    bg.style.cssText = "position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.85);" +
+      "display:flex;flex-direction:column;gap:8px;padding:12px;box-sizing:border-box";
+    const ta = document.createElement("textarea");
+    ta.readOnly = true;
+    ta.value = text;
+    ta.style.cssText = "flex:1;width:100%;box-sizing:border-box;background:#111;color:#7fdc7f;" +
+      "font:11px monospace;border:1px solid #444;border-radius:6px;padding:8px";
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px";
+    const mk = (label, fn) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.style.cssText = "flex:1;padding:10px;font:13px monospace;background:#222;color:#eee;" +
+        "border:1px solid #555;border-radius:6px";
+      b.addEventListener("click", fn);
+      return b;
+    };
+    row.append(mk("Copy", () => {
+      ta.select();
+      const done = () => { row.firstChild.textContent = "Copied ✓"; };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => {
+        try { document.execCommand("copy"); done(); } catch (err) {}
+      });
+      else { try { document.execCommand("copy"); done(); } catch (err) {} }
+    }), mk("Close", () => bg.remove()));
+    bg.append(ta, row);
+    document.body.appendChild(bg);
+  };
+  const btn = document.createElement("button");
+  btn.style.cssText = "position:fixed;right:8px;bottom:8px;z-index:9999;background:rgba(0,0,0,.8);" +
+    "color:#e66767;font:13px monospace;padding:8px 12px;border-radius:6px;border:1px solid #555";
+  btn.textContent = "⏺ rec";
+  btn.addEventListener("click", () => {
+    if (rec) { const t = report(); rec = null; btn.textContent = "⏺ rec"; btn.style.color = "#e66767"; sheet(t); return; }
+    hist.fill(0);
+    for (const k in total) delete total[k];
+    for (const k in nodes) nodes[k] = 0;
+    livePeak = 0;
+    rec = {t0: performance.now(), frames: 0, worst: 0, lag: 0, longs: 0, longMax: 0, marks: [], sec: 0};
+    btn.textContent = "⏹ stop";
+    btn.style.color = "#7fdc7f";
+  });
+  document.body.appendChild(btn);
   setInterval(() => {
-    const top = Object.entries(acct).sort((a, b) => b[1] - a[1]).slice(0, 3)
-      .map(([n, ms]) => n + " " + Math.round(ms)).join("  ");
+    const entries = Object.entries(acct).sort((a, b) => b[1] - a[1]);
+    const top = entries.slice(0, 3).map(([n, ms]) => n + " " + Math.round(ms)).join("  ");
     el.textContent = "fps " + frames + "  worst " + Math.round(worst) + "ms  lag " + Math.round(lagWorst) + "ms\n" +
                      "longtasks " + longs + (longMax ? " (max " + Math.round(longMax) + "ms)" : "") +
                      "\nhot: " + (top || "—") +
-                     "\nbuild " + (document.lastModified || "?");
+                     "\nbuild " + (document.lastModified || "?") +
+                     (rec ? "\nREC " + Math.round((performance.now() - rec.t0) / 1000) + "s" : "");
+    if (rec) {
+      rec.sec++;
+      rec.worst = Math.max(rec.worst, worst);
+      rec.lag = Math.max(rec.lag, lagWorst);
+      rec.longs += longs;
+      rec.longMax = Math.max(rec.longMax, longMax);
+      rec.marks.push(String(rec.sec).padStart(4) + "s  fps " + String(frames).padStart(3) +
+                     "  worst " + String(Math.round(worst)).padStart(4) +
+                     "  lag " + String(Math.round(lagWorst)).padStart(4) +
+                     "  " + (entries[0] ? entries[0][0] + " " + Math.round(entries[0][1]) : "—"));
+    }
     frames = 0; worst = 0; longs = 0; longMax = 0; lagWorst = 0;
     for (const k in acct) acct[k] = 0;
   }, 1000);

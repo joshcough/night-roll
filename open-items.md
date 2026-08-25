@@ -81,6 +81,85 @@ Perf fixes this arc (all deployed): silent-wav, scene-cache blit,
 28px strip repaint, noise-buffer caches, all-path onended, scene
 realloc guard, keepalive pause-on-stop.
 
+## Song open hangs on a CDN blip (found 2026-08-25, NOT fixed — Josh: "naah")
+
+Josh's iPad: two files tapped, neither opened, stayed on graveyard;
+play button flipped straight back to play; reload took ~20s; airship
+opened fine afterward. Not perf — a hung fetch.
+
+`index.html` `loadSongInner`, the cross-device freshness check:
+
+    const r = await fetch(analysisURL(...rollnotes.json) + "?t=" + Date.now(), {cache: "no-cache"});
+
+No timeout, no AbortController. It runs FIRST for any song with a
+local draft (graveyard has one). The `catch` under it only fires on
+rejection — a CDN that hangs never rejects, so the await never
+settles. Consequences, all observed:
+
+- `loadSong` sets `songLoading = true` and its `finally` never runs,
+  so every later tap starts its own hang → "stayed on graveyard".
+- `play()` sees `songLoading`, sets `pendingPlay`, returns without
+  starting the transport → the button reverts. (That guard is correct;
+  it is defending against a load that will never finish.)
+- Airship is an FF1 song with no draft, skips the check entirely,
+  goes straight to `songsURL(path)` — which is why it worked.
+
+No service worker, and every fetch is `cache: "no-cache"` with
+`?t=Date.now()` busting, so nothing is cached and a blip takes out
+every load with no offline fallback.
+
+Fix when wanted: AbortController + ~4s timeout on the freshness check
+(abort → treated as offline, which the existing catch already handles
+correctly: draft wins), same for the metadata fetches around 2267/2357,
+plus a `setInfo` so a stalled open says so instead of failing mute.
+The silence is what cost the debugging time, not the blip.
+
+## Perf hunt — state after 2026-08-25 (edit theory DEAD)
+
+Josh's numbers, iPad, **without editing**: fps down to ~20, worst
+frame ~200ms, lag spikes to 168ms. Same session on his Mac running the
+same song through several loops: 165fps, worst 7ms. So the edit-path
+theory from the previous restart context is dead — degradation happens
+on plain playback, and the Mac/iPad split is a cliff, not a diff.
+
+**Shipped this session: the perf session recorder** (`?perf=1` → `⏺
+rec` → reproduce → `⏹` → Copy). Documented in NIGHT-ROLL.md. Built
+because Josh asked for exactly this: "start performance analysis, end
+performance analysis, give a report, hand the report to you."
+
+**Next step is attribution, not bisect.** Get one recording from the
+iPad at stutter. If a subsystem owns a large share of frame time, the
+answer is in the report and no bisect happens.
+
+Standing suspects the report will confirm or kill:
+- `playbackFrame` and `drawFull` BOTH call `drawInst()` when the
+  instrument panel is open — two panel repaints per frame on the
+  scene-invalid path. Panel arrived in f83ec45 ("fretboard echoes on
+  playback").
+- `updateEditButtons()` runs every frame from `drawFull`.
+- Audio sample rate: this Chrome negotiated **96kHz**. Doubles WebAudio
+  render cost vs a 48kHz device on identical code. Report captures it.
+- Leaked audio graph — realtime render thread outranks the UI thread,
+  and is invisible to Activity Monitor's CPU view. Census now measures
+  created vs ended/stopped.
+
+**Bisect is the FALLBACK, only if attribution comes back flat.** Josh's
+objection (older builds lack drums, so how do you even test) is handled
+by not needing feature parity: deploy historical `index.html` builds
+side by side at their own paths, each with `?perf=1`, and binary-search
+by tapping through them — ~6 measurements, no editing, no feature use.
+No perf bisect over git history has ever been run; advisor rounds R1-R3
+were live-path tracing and deploy-byte verification only.
+
+**Josh's Mac also crawled machine-wide** (2026-08-25, needed a reboot,
+nothing visible in Activity Monitor, 84% RAM free). A renderer cannot
+do that. Candidates outside the renderer: the WebAudio realtime render
+thread, the GPU/WindowServer process, or kernel_task thermal throttle.
+Activity Monitor also defaults to "My Processes" and Chrome fans out
+into helpers, so all three are off-screen by default. Untested — next
+time it happens, close the Night Roll tab first: recovery within ~10s
+means it is us.
+
 ## Graveyard-2: possible B rewrite (Josh, 2026-08-24)
 
 Bars 14-20 may be rewritten — his ear: "just not that strong." BAR 21

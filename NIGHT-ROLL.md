@@ -662,6 +662,44 @@ crash on the arrival downbeat. Velocity table keeps hats ≥25 under
 the bar's backbeat snare (cap 76). Take chips are session-ephemeral UI
 snapshots of (seed, energy, from, to) — the winning take IS the notes.
 
+## Perf HUD + session recorder (?perf=1)
+
+The iPad has no Activity Monitor and WebKit has no longtask
+attribution, so the app profiles itself. `?perf=1` mounts a HUD
+(fps / worst frame / event-loop lag / hot functions / build stamp) and
+a `⏺ rec` button. Recording accumulates a session and prints a report
+into a copyable sheet — the intended workflow is: reproduce the
+stutter, stop, Copy, paste the report into a session.
+
+The whole thing lives in one guarded block near the audio section and
+costs nothing without the query param. It never touches app code:
+hot-function timing wraps `globalThis[name]` (classic-script function
+declarations are global properties, so internal call sites re-resolve
+through the wrapper), and the audio-node census patches
+`BaseAudioContext.prototype` + `AudioNode.prototype.disconnect`,
+listening for `ended` via `addEventListener` so an app-side `.onended`
+assignment is never clobbered.
+
+What the report carries, and why each part is there:
+
+- **`shape`** — the discriminator. A blocked main thread makes the
+  50ms probe timer AND the frame late together; a throttled rAF
+  starves frames while the timer stays on schedule. These have
+  completely different causes, and fps alone cannot tell them apart.
+- **frame-delta histogram** — uniform throttling piles into one
+  bucket; "mostly fine with spikes" is bimodal.
+- **attribution** — session ms + call counts per wrapped function.
+  `drawFull` nests inside `playbackFrame`, so percentages overlap;
+  the report says so rather than pretending they partition.
+- **audio-node census** — created vs ended/stopped/disconnected, live
+  estimate and peak. A leaked graph burns time in the realtime render
+  thread, which no page-side profiler can see and which outranks the
+  UI thread in priority.
+- **context** — canvas dimensions, dpr, `instOpen`/`fall` (both add a
+  full canvas repaint per playback frame), audio sample rate, and
+  localStorage size. Chrome negotiating 96kHz doubles WebAudio render
+  cost against a 48kHz device on the same code.
+
 ## Query tools (tools/*.mjs — deterministic, facts only)
 
 For any session (web sessions especially) that needs to READ music
