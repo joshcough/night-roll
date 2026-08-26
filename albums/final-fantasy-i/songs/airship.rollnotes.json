@@ -1,4 +1,4 @@
-{ "version": 1, "song": "airship", "saved": 1787706425377, "notes": [
+{ "version": 1, "song": "airship", "saved": 1787707022615, "notes": [
   {"at":[1,1],"type":"key","key":"F"},
   {"at":[1,1],"to":[8,2],"type":"section","label":"A"},
   {"at":[1,1],"to":[1,2],"type":"chord","chord":"F"},
@@ -20,6 +20,7 @@
   {"at":[11,1],"to":[11,2],"type":"chord","chord":"Bb"},
   {"at":[11,3],"to":[11,4],"type":"chord","chord":"Ab"},
   {"at":[12,1],"to":[12,2],"type":"chord","chord":"Bb"},
+  {"at":[12,3],"to":[12,4],"type":"chord","chord":"Ab","note":"Looks like the root here is A flat but seems like the rest of the bar is transitioning us to a different key"},
   {"at":[13,1],"to":[13,2],"type":"chord","chord":"G"},
   {"at":[13,3],"to":[13,4],"type":"chord","chord":"Ab"},
   {"at":[14,1],"to":[14,2],"type":"chord","chord":"Bb"},
@@ -27,5 +28,6 @@
   {"at":[15,1],"to":[15,1],"type":"chord","chord":"Gm","note":"Maybe. Only root, triad and 4th. Seems like a transition chord."},
   {"at":[15,1],"text":"Bass starts descending. Destination is F on the loop, but starts at G, because it needs 8 notes, not 7."},
   {"at":[15,2],"to":[15,2],"type":"chord","chord":"F"},
-  {"at":[15,2],"text":"First time the chord rhythm changes"}
+  {"at":[15,2],"text":"First time the chord rhythm changes"},
+  {"at":[15,3],"to":[15,3],"type":"chord","chord":"E","note":"All we have is E and two passing notes, though they do look like C7"}
 ] }
