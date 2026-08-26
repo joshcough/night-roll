@@ -1193,6 +1193,7 @@
       <dt>Loop points</dt><dd>Some songs loop back past an intro (not to bar 1). When you discover one, write a note whose text is <b>loop: B.Q</b> (e.g. "loop: 2.1") — the note's anchor is the jump point: when playback reaches it, it returns to B.Q. If the anchor sits at/before the target, the jump happens at the song end instead.</dd>
       <dt>Sections</dt><dd>Colored bands in the ruler (A, B…). Make one: select a range, + Note, tick "section", give it a short label. Nest them by containment. Tap a band to select its whole range. Sections and chords each get their OWN row group (sections above, chords below), so a section and a chord covering the same bars never fight for a lane.</dd>
       <dt>Chords</dt><dd>Chord bands — like sections, but typed. Select a range, + Note, "Chord", then tap chips (root · ♭♮♯ · quality · extensions · /bass) or type the symbol. Bare root = major, m = minor (Gm). The quality row picks ONE (maj/m/dim/aug/sus2/sus4/5); the extensions row STACKS — tap 7 and add9 on top of m for Cm7add9, tap again to remove one. Anything the chips can't spell, type into the box — the label is free text and typing always wins. Same label = same color, so a recurring chord is spottable at a glance. Add an optional text note to a chord — it shows as ✱ on the band. On YOUR songs, moving a selection of EVERY note in the song takes the entire annotation layer with it — sections, chords, the loop point and its target — with chord and key labels transposing on vertical moves (global facts like meter and tempo keep their bar-1 anchor); that's how you cut an intro and slide everything left without orphaning your analysis. Moving a selection that carries one band's every note takes that band along (position slides, label transposes — Cm dragged up two semitones becomes Dm), When YOU ask for it — the <b>Check labels</b> button in ☰ Notes' CHORDS group — the app compares each label against what sounds in its span and flags mismatches (⚠ on the band, the reading in the list). It never volunteers this and never rewrites your labels; any note edit clears the flags. The check hears EVERY pitch sounding in the span, so passing tones and dense textures can read as "no standard chord match" — a flag is a nudge to listen, not a verdict.</dd>
+      <dt>No accidental duplicates</dt><dd>Re-labelling replaces, it doesn't stack. A <b>key</b> at a beat that already has one replaces it — but a key at 3.1 and a key at 3.3 are two different keys and both stand, so a mid-bar modulation keeps its real anchor. A <b>chord band</b> on the exact same span replaces whatever was there, whatever its label; a shorter band starting at the same beat is left alone. <b>Text notes</b> stack freely — several different thoughts at one anchor is the normal case — and only a repeat of the identical text at the identical anchor is dropped. Sections are untouched by this: nesting is by containment.</dd>
       <dt>Chop</dt><dd>Trim a song without touching the file: put the cursor at the cut, + Note, "Chop", pick "everything before this beat" or "this beat to the end". The chopped part vanishes entirely and bars renumber (chop a 2-bar intro and old bar 3 becomes bar 1 — your annotations shift with it). Delete the chop in ☰ Notes to restore. Made for cleaning up freshly imported captures.</dd>
     </dl>
 
@@ -2487,6 +2488,29 @@ async function buildRollnotesFor(key) {
 function dropLocalKeyAt(bar, q = 1) {
   rollnotes = rollnotes.filter(n =>
     !((n.keydir !== undefined || n.keypartial) && n.b1 === bar && (n.q1 || 1) === q));
+}
+// Editing an annotation used to leave the old one sitting beside the new one:
+// airship ended up with two keys at 1.1, two chord bands on 15.1–15.4, and the
+// same tritone note at two anchors — invisible in the roll, because duplicate
+// bands draw on top of each other (Josh, 2026-08-26: "something feels wrong
+// with the annotation sometimes"). Call this before pushing a new annotation.
+// Josh's rules, per type:
+//   chord — one band per exact span. A new band REPLACES whatever was on that
+//           span, whatever its label; that is what re-labelling a bar means.
+//   note  — several notes at one anchor are legitimate and stay. Only a
+//           byte-identical text at the same anchor is a duplicate.
+//   key   — handled by dropLocalKeyAt (anchor-level).
+// Sections are deliberately left alone: nesting is by containment and he has
+// not asked for a rule there.
+function dropSupersededBy(fresh) {
+  const sameAnchor = n => n.b1 === fresh.b1 && (n.q1 || 1) === (fresh.q1 || 1);
+  const sameSpan = n => sameAnchor(n) && (n.b2 || null) === (fresh.b2 || null) &&
+                                         (n.q2 || null) === (fresh.q2 || null);
+  if (fresh.chord) rollnotes = rollnotes.filter(n => !(n.chord && sameSpan(n)));
+  else if (!isDirective(fresh)) {
+    const t = (fresh.text || "").trim();
+    rollnotes = rollnotes.filter(n => !(!isDirective(n) && sameAnchor(n) && (n.text || "").trim() === t));
+  }
 }
 function isDirective(n) { // anything that isn't a plain text note
   return !!(n.section || n.chord || n.chopdir || n.keydir !== undefined ||
@@ -7617,9 +7641,11 @@ function chordSym(rootPc, qual) { // flat-preferring: ♭VI in Cm is A♭, not G
 }
 function stampChordBand(tick, durTicks, sym) { // the matching ruler annotation
   const bt = barTicks(), qt = beatTicks(), end = tick + durTicks - 1;
-  rollnotes.push(resolveNote({b1: Math.floor(tick / bt) + 1, q1: snapBeat((tick % bt) / qt + 1),
-                              b2: Math.floor(end / bt) + 1, q2: snapBeat((end % bt) / qt + 1),
-                              text: sym, chord: true, added: true}));
+  const fresh = {b1: Math.floor(tick / bt) + 1, q1: snapBeat((tick % bt) / qt + 1),
+                 b2: Math.floor(end / bt) + 1, q2: snapBeat((end % bt) / qt + 1),
+                 text: sym, chord: true, added: true};
+  dropSupersededBy(fresh); // one band per span, same as the dialog path
+  rollnotes.push(resolveNote(fresh));
 }
 function insertChordAt(tick, rootPc, qual, oct, durQ) {
   if (!editableSong()) return 0;
@@ -9584,6 +9610,7 @@ document.getElementById("nsave").addEventListener("click", () => {
   } else {
     fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null, text, added: true};
   }
+  dropSupersededBy(fresh);
   rollnotes.push(resolveNote(fresh));
   rangeSel = null;
   finalizeNotes();

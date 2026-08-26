@@ -728,7 +728,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
-    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right",
+    "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1671,6 +1671,39 @@ test("dropLocalKeyAt replaces synced keys, both key forms, at the exact anchor",
   assert.deepEqual(val(`rollnotes.filter(n => n.b1 === 3).map(n => n.q1 + ":" + n.text)`),
     ["1:key: G", "1:a plain note at the same bar"],
     "anchor-level: 3.3 goes, 3.1's key survives, and non-key notes are never touched");
+  run(`songKey = null; rollnotes = [];`);
+});
+
+// Josh, 2026-08-26: a chord band replaces one on the identical span, but he
+// may legitimately want several DIFFERENT text notes at one anchor — only a
+// byte-identical repeat is a duplicate.
+test("dropSupersededBy: chords replace by span, notes only when the text repeats", () => {
+  installSong();
+  run(`rollnotes = [
+    {b1: 15, q1: 1, b2: 15, q2: 4, text: "Cm7", chord: true},
+    {b1: 15, q1: 1, b2: 15, q2: 2, text: "Bb",  chord: true},
+    {b1: 16, q1: 1, b2: 16, q2: 4, text: "C",   chord: true}
+  ];`);
+  run(`dropSupersededBy({b1: 15, q1: 1, b2: 15, q2: 4, text: "C7", chord: true})`);
+  assert.deepEqual(val(`rollnotes.map(n => n.text)`), ["Bb", "C"],
+    "same span goes whatever its label; a shorter band at the same start survives");
+
+  run(`rollnotes = [
+    {b1: 14, q1: 3, text: "tritone here"},
+    {b1: 14, q1: 3, text: "a different thought"},
+    {b1: 15, q1: 3, text: "tritone here"}
+  ];`);
+  run(`dropSupersededBy({b1: 14, q1: 3, text: "  tritone here  "})`);
+  assert.deepEqual(val(`rollnotes.map(n => n.b1 + "." + n.q1 + " " + n.text)`),
+    ["14.3 a different thought", "15.3 tritone here"],
+    "identical text at the anchor goes (trimmed); a different note there stays, as does the same text elsewhere");
+
+  // a chord must never eat a plain note that happens to share its span
+  run(`rollnotes = [{b1: 15, q1: 1, b2: 15, q2: 4, text: "C7", chord: true},
+                    {b1: 15, q1: 1, b2: 15, q2: 4, text: "C7"}];`);
+  run(`dropSupersededBy({b1: 15, q1: 1, b2: 15, q2: 4, text: "C7", chord: true})`);
+  assert.equal(val(`rollnotes.length`), 1, "only the chord went");
+  assert.equal(val(`!!rollnotes[0].chord`), false, "the plain note with the same text survived");
   run(`songKey = null; rollnotes = [];`);
 });
 
