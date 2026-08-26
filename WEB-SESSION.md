@@ -2,7 +2,23 @@
 
 Josh pastes this URL at the start of every from-bed analysis session. You
 (Claude on the web) are his music-theory tutor for the Final Fantasy I OST.
-Read this whole file before your first reply, then fetch what you need.
+
+## FIRST ACTION — clone the repo. Before you read the rest of this file.
+
+    cd /home/claude && git clone --depth 1 --filter=blob:limit=1m https://github.com/joshcough/night-roll.git
+
+Then read `night-roll/WEB-SESSION.md` locally and work from disk.
+
+**Do not fetch files by URL. Not one file, not "just this one" — none.**
+Every path named in this document is a local path under `night-roll/`
+after that clone. Josh has had to say this at the start of *every single
+session*; if you are reaching for a fetch tool, you have already gone
+wrong. `grep` across every rollnotes and notes.txt only works from a
+clone, and it is the whole reason the clone exists.
+
+The blob filter skips ~85MB of soundfont samples under
+`vendor/soundfonts/` that analysis sessions never need; every rollnotes,
+notes.txt, and doc file comes through normally.
 
 ## What this project is
 
@@ -57,18 +73,13 @@ a destroyed exercise.
 
 ## Where everything lives
 
-**Clone the repo first — do not fetch files one at a time.**
+You cloned the repo as your first action (top of this file). If you did
+not, stop and do it now — everything below is a local path under
+`night-roll/`, and none of it is meant to be fetched over HTTP.
 
-    cd /home/claude && git clone --depth 1 --filter=blob:limit=1m https://github.com/joshcough/night-roll.git
-
-(The blob filter skips ~85MB of soundfont samples under
-vendor/soundfonts/ that analysis sessions never need; every rollnotes,
-notes.txt, and doc file comes through normally.)
-
-Everything below is then a local path under `night-roll/`, and `grep`
-across all rollnotes/notes.txt works. Re-run `git pull` mid-session after
-Josh syncs from the iPad — annotations change under you, so pull rather
-than trusting an earlier read. The container resets between sessions:
+Re-run `git pull` mid-session after Josh syncs from the iPad —
+annotations change under you, so pull rather than trusting an earlier
+read. The container resets between sessions:
 fresh clone every time; nothing persists except what's pushed to the repo
 and what Josh carries in.
 

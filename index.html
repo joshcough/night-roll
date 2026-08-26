@@ -1235,7 +1235,7 @@
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
-      <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies the bootstrap-instructions URL — paste it into a fresh Claude Web chat and it has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format).</dd>
+      <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies a bootstrap instruction — paste it into a fresh Claude Web chat and it clones the repo, reads WEB-SESSION.md from disk, and has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format). It copies the clone command rather than a URL on purpose: a session that starts by fetching keeps fetching, one file at a time, and can't grep across your notes.</dd>
     </dl>
     </div>
 
@@ -9043,12 +9043,19 @@ instbtn.addEventListener("click", () => {
   applyInst();
   draw(); // closing the panel while Fall is active must restore the roll
 });
-// ⎘ Web session (Sync sheet): copies the WEB-SESSION.md raw URL — Josh
-// pastes it into a fresh Claude Web chat to bootstrap a from-bed tutoring
+// ⎘ Web session (Sync sheet): copies the clone-first bootstrap instruction —
+// Josh pastes it into a fresh Claude Web chat to start a from-bed tutoring
 // session with full project context.
 document.getElementById("websess").addEventListener("click", async e => {
-  const url = "https://raw.githubusercontent.com/" + repoName("analysis") + "/main/WEB-SESSION.md";
-  try { await navigator.clipboard.writeText(url); e.target.textContent = "✓ copied — paste to Claude"; }
+  // Copy an INSTRUCTION, not a bare URL (Josh, 2026-08-25: "I have to tell
+  // Claude on the web every single time to clone the repo instead of
+  // following URLs"). Pasting a URL makes the session's first act a fetch,
+  // and it keeps fetching from there. Lead with the clone.
+  const repo = "https://github.com/" + repoName("analysis") + ".git";
+  const msg = "Clone this repo, then read night-roll/WEB-SESSION.md from disk and follow it. " +
+    "Work entirely from the clone — do not fetch any file by URL.\n\n" +
+    "cd /home/claude && git clone --depth 1 --filter=blob:limit=1m " + repo + "\n";
+  try { await navigator.clipboard.writeText(msg); e.target.textContent = "✓ copied — paste to Claude"; }
   catch { e.target.textContent = "✗ copy failed"; }
   setTimeout(() => { e.target.textContent = "⎘ Web session"; }, 1800);
 });
