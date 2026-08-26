@@ -31,6 +31,9 @@ for (const f of readdirSync(path.join(ROOT, dir)).filter(f => f.endsWith(".mid")
     L.push("# ${f} — " + r.timesig[0] + "/" + r.timesig[1] + ", " +
            Math.round(6e7 / r.tempos[0].usq) + "bpm, " + nBars + " bars");
     L.push("# Format: bar N: beat pitch duration-in-quarter-notes");
+    L.push("# duration is GATE TIME (how long the chip held the note), NOT a notated value.");
+    L.push("# RHYTHM comes from ONSET SPACING (the beat column), never from duration:");
+    L.push("# staccato eighths gate at ~0.33 and are still eighths, not triplets.");
     L.push("# Pitches use sharp spelling; the true key is Josh's to discover — this file states no key.");
     r.tracks.forEach((tr, ti) => {
       L.push("");

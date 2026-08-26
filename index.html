@@ -2470,8 +2470,21 @@ async function buildRollnotesFor(key) {
   return {path: base + ".rollnotes.json", stamp,
           content: serializeNotesList(notes, beats, base.split("/").pop(), stamp)};
 }
-function dropLocalKeyAt(bar) { // a new key change replaces any local key marker at the same bar
-  rollnotes = rollnotes.filter(n => !(n.added && n.keydir !== undefined && n.b1 === bar));
+// A new key at a bar REPLACES the key there — never two keys at one point
+// (Josh's rule, 2026-08-25, after setting "F mixolydian" over airship's
+// committed "key F" produced both). Two defects were in the old predicate:
+//   n.added        — only this session's annotations carry it (it isn't
+//                    serialized), so the dedupe was structurally unable to
+//                    replace a key that had ever been synced. That is the
+//                    exact case he hit.
+//   n.keydir       — the tonic-only form stores keypartial and leaves keydir
+//                    unset, so an "F?" marker survived a real key being set.
+//                    Everywhere else in this file tests both forms.
+// Still bar-level, not anchor-level: the button path always writes q1:1 but
+// the note dialog takes q1 from the sheet, so keys at 3.1 and 3.3 are
+// expressible. Awaiting Josh's ruling — it decides what the format means.
+function dropLocalKeyAt(bar) {
+  rollnotes = rollnotes.filter(n => !((n.keydir !== undefined || n.keypartial) && n.b1 === bar));
 }
 function isDirective(n) { // anything that isn't a plain text note
   return !!(n.section || n.chord || n.chopdir || n.keydir !== undefined ||
@@ -10864,6 +10877,11 @@ function notesTxtFor() { // the web-session dump: claude.ai reads text, not .mid
   L.push("# " + (songKey || "song").split("/").pop() + " — " + ts[0] + "/" + ts[1] + ", " +
          Math.round(6e7 / song.tempos[0].usq) + "bpm, " + nBars + " bars");
   L.push("# Format: bar N: beat pitch duration-in-quarter-notes");
+  // gate-vs-notated: the 08-25 web session read 0.33 gates as triplets and
+  // asserted it to Josh twice. Onset spacing is the evidence for rhythm.
+  L.push("# duration is GATE TIME (how long the chip held the note), NOT a notated value.");
+  L.push("# RHYTHM comes from ONSET SPACING (the beat column), never from duration:");
+  L.push("# staccato eighths gate at ~0.33 and are still eighths, not triplets.");
   L.push("# Pitches use sharp spelling; the true key is Josh's to discover — this file states no key.");
   song.tracks.forEach((tr, ti) => {
     L.push("");

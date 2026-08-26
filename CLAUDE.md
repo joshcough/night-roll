@@ -54,6 +54,11 @@ before touching the player.
 - **Plain git/grep for verification.** The rtk wrapper mangles
   `git show`, curl pipes, and some greps — use /usr/bin/git and
   /usr/bin/grep when the answer matters.
+- **Handoffs: `mv` into `handoffs/` FIRST, then apply.** Move, never
+  copy (Josh, 2026-08-25) — the move is what makes a duplicate
+  detectable: hand the same file over twice and the second time the
+  source path is gone and `handoffs/` already holds it. Refuse to
+  overwrite an existing file of that name; say so instead.
 - One-file app: index.html, no build step. Match its comment style —
   comments explain constraints, not narration.
 
