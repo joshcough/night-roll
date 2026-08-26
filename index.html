@@ -588,7 +588,20 @@
   }
   .chiprow button.active { border-color: var(--accent); color: var(--accent); }
 
-  .notegroup { margin-top: 10px; }
+  /* type jump bar: every annotation type reachable from the top of the sheet,
+     without scrolling to find out whether it exists (Josh, 2026-08-25) */
+  #notejump {
+    position: sticky; top: 0; z-index: 1;
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 6px 0; background: var(--panel);
+  }
+  #notejump button {
+    min-height: 34px; padding: 0 10px; border-radius: 8px;
+    border: 1px solid var(--grid); background: transparent;
+    color: var(--dim); font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+  }
+  #notejump button.has { color: var(--fg); border-color: var(--dim); }
+  .notegroup { margin-top: 10px; scroll-margin-top: 52px; }
   .notegroup:first-child { margin-top: 0; }
   .notegroup .ghead {
     display: flex;
@@ -874,6 +887,7 @@
 <div class="overlay" id="notelistsheet">
   <div class="sheet help">
     <h2>ALL NOTES</h2>
+    <div id="notejump"></div>
     <div class="status" id="notelistStatus"></div>
     <div id="notelistrows" style="display:flex;flex-direction:column;gap:7px"></div>
     <div class="row">
@@ -7931,9 +7945,33 @@ const NOTE_GROUPS = [
   {title: "CHOP", type: "chop", match: n => !!n.chopdir},
   {title: "TEXT NOTES", type: "note", match: () => true}, // catches the rest
 ];
+// Jump bar across the top: one chip per annotation type, with its count.
+// Types that HAVE entries scroll to their group; empty ones open the editor
+// preset to that type, because an empty group has nothing to scroll to and
+// "add one of these" is the only thing you could want from it. Josh, 2026-08-25:
+// "I just need a set of buttons at the top to easily go to those sections."
+function renderNoteJump(counts) {
+  const bar = document.getElementById("notejump");
+  bar.innerHTML = "";
+  for (const g of NOTE_GROUPS) {
+    const n = counts.get(g) || 0;
+    const b = document.createElement("button");
+    b.textContent = g.title + (n ? " " + n : "");
+    b.className = n ? "has" : "";
+    b.setAttribute("aria-label", n ? "Go to " + g.title : "Add " + g.title.toLowerCase());
+    b.addEventListener("click", () => {
+      const box = document.querySelector('.notegroup[data-type="' + g.title + '"]');
+      if (box) { box.scrollIntoView({block: "start", behavior: "smooth"}); return; }
+      notelistSheet.classList.remove("on");
+      openEditor(null, g.type);
+    });
+    bar.appendChild(b);
+  }
+}
 function renderNoteList() {
   const rows = document.getElementById("notelistrows");
   rows.innerHTML = "";
+  const counts = new Map();
   const sorted = [...rollnotes].sort((a, b) => a.start - b.start || (a.section ? -1 : 1));
   document.getElementById("notelistStatus").textContent = sorted.length
     ? sorted.length + " notes · tap one to edit or delete · synced-note changes need Sync to stick"
@@ -7944,9 +7982,11 @@ function renderNoteList() {
     for (let i = 0; i < remaining.length; i++) {
       if (g.match(remaining[i])) { mine.push(remaining[i]); remaining.splice(i--, 1); }
     }
+    counts.set(g, mine.length);
     if (!mine.length && g.type !== "note") continue; // hide empty groups; Text notes always shows (its + adds one)
     const box = document.createElement("div");
     box.className = "notegroup";
+    box.dataset.type = g.title; // the jump bar scrolls to this
     const head = document.createElement("div");
     head.className = "ghead";
     head.textContent = g.title + (mine.length ? " · " + mine.length : "");
@@ -8025,6 +8065,7 @@ function renderNoteList() {
     box.append(head, grows);
     rows.appendChild(box);
   }
+  renderNoteJump(counts);
 }
 document.getElementById("listbtn").addEventListener("click", () => {
   if (!song) return;
@@ -9364,8 +9405,11 @@ function openEditor(note, presetType) {
 }
 document.getElementById("notebtn").addEventListener("click", () => {
   if (!song) return;
-  const at = rangeSel ? null : activeNoteAt(playCursor);
-  openEditor(at && at.added ? at : null);
+  // ALWAYS a new note (Josh, 2026-08-25). It used to reopen whatever
+  // annotation the cursor sat on, so a note at 1.1 made the button
+  // permanently un-add-able, with no way to tell whether Save would create or
+  // overwrite. + Note adds; editing an existing one is a tap in ☰ Notes.
+  openEditor(null);
 });
 document.getElementById("ncancel").addEventListener("click", () => { micStop(); editor.classList.remove("on"); });
 let rebarArmed = false; // two-tap confirmation for meter changes that move annotations
@@ -12688,7 +12732,22 @@ document.getElementById("synccancel").addEventListener("click", () => syncsheet.
 // question and has to get an answer.
 const MODAL_KEEP = new Set(["confirmsheet"]);
 if (typeof document.querySelectorAll === "function") { // vm harness stubs document
+// A sheet keeps the scroll position it had when it was last closed, so
+// reopening the notes list dropped Josh halfway down it (2026-08-25). Reset on
+// open wherever the open happens — watching the class beats hunting ~30 call
+// sites and cannot miss a future one. Scoped to the overlays themselves, NOT
+// document.body: an app that repaints at 60fps must not run an observer over
+// every class write in the tree. Overlay classes change only when a sheet
+// opens or closes.
+const SHEET_TOP = new MutationObserver(ms => {
+  for (const m of ms) {
+    if (!m.target.classList.contains("on")) continue;
+    const sh = m.target.querySelector(".sheet");
+    if (sh) sh.scrollTop = 0;
+  }
+});
 for (const ov of document.querySelectorAll(".overlay")) {
+  SHEET_TOP.observe(ov, {attributes: true, attributeFilter: ["class"]}); // incl. confirm
   if (MODAL_KEEP.has(ov.id)) continue;
   // pointerdown, and only when the backdrop ITSELF is the target — a drag that
   // starts inside the sheet and releases outside must not count as a dismiss
