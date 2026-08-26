@@ -1,5 +1,31 @@
-{ "version": 1, "song": "airship", "notes": [
+{ "version": 1, "song": "airship", "saved": 1787706425377, "notes": [
   {"at":[1,1],"type":"key","key":"F"},
   {"at":[1,1],"to":[8,2],"type":"section","label":"A"},
-  {"at":[8,3],"to":[16,4],"type":"section","label":"B"}
+  {"at":[1,1],"to":[1,2],"type":"chord","chord":"F"},
+  {"at":[1,1],"text":"Bass is all 8th notes and constantly bouncing between root and 5th. Gives the song a lot of energy."},
+  {"at":[1,3],"to":[1,4],"type":"chord","chord":"Eb"},
+  {"at":[2,1],"to":[2,2],"type":"chord","chord":"F"},
+  {"at":[2,3],"to":[2,4],"type":"chord","chord":"Eb"},
+  {"at":[3,1],"to":[3,2],"type":"chord","chord":"F"},
+  {"at":[3,3],"to":[3,4],"type":"chord","chord":"Eb"},
+  {"at":[4,1],"to":[4,2],"type":"chord","chord":"F"},
+  {"at":[4,3],"to":[4,4],"type":"chord","chord":"Eb"},
+  {"at":[8,1],"to":[8,2],"type":"chord","chord":"F"},
+  {"at":[8,3],"to":[16,4],"type":"section","label":"B"},
+  {"at":[8,3],"to":[8,4],"type":"chord","chord":"Eb"},
+  {"at":[9,1],"to":[9,2],"type":"chord","chord":"Bb"},
+  {"at":[9,3],"to":[9,4],"type":"chord","chord":"Ab"},
+  {"at":[10,1],"to":[10,2],"type":"chord","chord":"Bb"},
+  {"at":[10,3],"to":[10,4],"type":"chord","chord":"Ab","note":"D’s are on the upstrokes"},
+  {"at":[11,1],"to":[11,2],"type":"chord","chord":"Bb"},
+  {"at":[11,3],"to":[11,4],"type":"chord","chord":"Ab"},
+  {"at":[12,1],"to":[12,2],"type":"chord","chord":"Bb"},
+  {"at":[13,1],"to":[13,2],"type":"chord","chord":"G"},
+  {"at":[13,3],"to":[13,4],"type":"chord","chord":"Ab"},
+  {"at":[14,1],"to":[14,2],"type":"chord","chord":"Bb"},
+  {"at":[14,3],"to":[14,4],"type":"chord","chord":"Db"},
+  {"at":[15,1],"to":[15,1],"type":"chord","chord":"Gm","note":"Maybe. Only root, triad and 4th. Seems like a transition chord."},
+  {"at":[15,1],"text":"Bass starts descending. Destination is F on the loop, but starts at G, because it needs 8 notes, not 7."},
+  {"at":[15,2],"to":[15,2],"type":"chord","chord":"F"},
+  {"at":[15,2],"text":"First time the chord rhythm changes"}
 ] }
