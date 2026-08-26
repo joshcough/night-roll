@@ -1648,6 +1648,32 @@ test("Bassist inference: minor-key V, pedal stability, no wrong-root guesses", (
   run(`songKey = null; rollnotes = []; multiSel = []; multiSelKey = new Set();`);
 });
 
+// Josh's rule (2026-08-25): never two key annotations at the same point in a
+// song — setting a key where one already sits is an edit, not an insert. He
+// hit this on airship: "F mixolydian" over a committed "key F" left both.
+test("dropLocalKeyAt replaces synced keys, both key forms, at the exact anchor", () => {
+  installSong();
+  // a SYNCED key carries no `added` flag — that was the whole bug
+  run(`rollnotes = [
+    {b1: 1, q1: 1, text: "key: F", keydir: -1},
+    {b1: 2, q1: 1, text: "F?", keypartial: "F"},
+    {b1: 3, q1: 1, text: "key: G", keydir: 1, added: true},
+    {b1: 3, q1: 3, text: "key: D", keydir: 2, added: true},
+    {b1: 3, q1: 1, text: "a plain note at the same bar"}
+  ];`);
+  run(`dropLocalKeyAt(1, 1)`);
+  assert.equal(val(`rollnotes.filter(n => n.b1 === 1).length`), 0,
+    "a key loaded from a committed .rollnotes.json is replaceable (no `added` flag)");
+  run(`dropLocalKeyAt(2, 1)`);
+  assert.equal(val(`rollnotes.filter(n => n.b1 === 2).length`), 0,
+    "the tonic-only form (keypartial, no keydir) is dropped too");
+  run(`dropLocalKeyAt(3, 3)`);
+  assert.deepEqual(val(`rollnotes.filter(n => n.b1 === 3).map(n => n.q1 + ":" + n.text)`),
+    ["1:key: G", "1:a plain note at the same bar"],
+    "anchor-level: 3.3 goes, 3.1's key survives, and non-key notes are never touched");
+  run(`songKey = null; rollnotes = [];`);
+});
+
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {
   const { buildHelp } = await import("../tools/build_help.mjs");
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");

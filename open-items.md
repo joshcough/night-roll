@@ -114,6 +114,64 @@ correctly: draft wins), same for the metadata fetches around 2267/2357,
 plus a `setInfo` so a stalled open says so instead of failing mute.
 The silence is what cost the debugging time, not the blip.
 
+## Airship handoff 2026-08-25 — applied in part, ANALYSIS ITEMS OPEN
+
+Handoff archived at `handoffs/handoff-2026-08-25.md`. Code and tooling
+items are done (f52b997 + follow-up); the analysis items are Josh's and
+he chose "walk me through them" — go item by item NEXT SESSION, showing
+evidence, no pre-filled conclusions:
+
+1. `analysis/airship.md` — rewrite the key section. It records F major
+   and says the closing E♮ rules out mixolydian. Josh's reading: F
+   mixolydian for the A section, B♭ mixolydian for the B, resolved by
+   SCOPE (the vamp's E♭ and the descent's E♮ belong to different
+   sections).
+2. `analysis/airship.md` — the "Cheap verification available" paragraph
+   promises a chord track 4 for independent verification. That track
+   does not exist: the chip capture has three channels because the 2A03
+   has three. Stale and misleading. (Pure fact, not analysis — he could
+   wave this one through.)
+3. `analysis/airship.md` — the "what is the E♭ doing" question is partly
+   answered (♭VII as a modal degree in both sections); the FUNCTION
+   question from the sweep still stands.
+4. rollnotes — replace the 15.1–15.4 per-beat chords with one C7 band.
+5. rollnotes — the B♭–E tritone note is anchored 14.3; the tritone is at
+   15.3 (triangle E4, pulse2 A♯4). Josh caught this himself. SECOND
+   logged instance of annotation anchor drift costing session time — the
+   standing drift-check request now has its second piece of evidence.
+6. rollnotes — record both readings on the 13.1 F♮ per his own
+   duration-vs-position convention. Fourth instance of that named
+   pattern (Ship's pulse2 E, graveyard 7.3, graveyard bar 6).
+7. `glossary.md` — the two-kinds-of-movement principle, anchored at
+   airship 15–16. Encountered vs demonstrated is his call.
+
+Still open on the song: D♭ vs C♯ at 14.3 and what D♭→G root motion is
+doing; whether bar 14's third-dyads are substitution or omission; the
+function of ♭VII in both sections; whether the prologue F♯–C tritone
+thread and this one are the same device.
+
+Owed: quiz ×4 (none taken 08-25).
+
+### Done from that handoff (2026-08-26)
+
+- **Duplicate key annotations FIXED.** `dropLocalKeyAt` tested `n.added`
+  — a flag only this session's annotations carry, never serialized — so
+  it could not replace a key that had ever been synced, which is exactly
+  what Josh hit. It also missed the tonic-only `keypartial` form.
+- **Josh's ruling: key anchors are ANCHOR-level, not bar-level.** A key
+  at 3.1 and a key at 3.3 are two keys and both stand; a modulation gets
+  its true beat. Only an exact anchor collision replaces. The keyset
+  button still writes q1:1, so it replaces the bar's downbeat key.
+  Locked by a vm test, mutation-checked against the old predicate.
+- **notes.txt header** now states duration is GATE TIME, not a notated
+  value, and that rhythm comes from onset spacing. Both writers
+  (tools/dump_notes.mjs and the in-app dump). The web session read 0.33
+  gates as triplets and asserted it twice.
+- **Scanned all 48 rollnotes files for duplicate key anchors.** Airship
+  1.1 (`F` + `F mixolydian`) is the only one in the repo. Left in place:
+  it is Josh's annotation, and with the fix in, re-setting the key in
+  the app now collapses it in one tap.
+
 ## PERF HUNT — SOLVED 2026-08-25: the iOS silent-switch keepalive
 
 Cause: the silent mute-switch bypass (fca2d7f, 2026-08-22) looped a

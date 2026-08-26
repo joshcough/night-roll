@@ -2480,11 +2480,13 @@ async function buildRollnotesFor(key) {
 //   n.keydir       — the tonic-only form stores keypartial and leaves keydir
 //                    unset, so an "F?" marker survived a real key being set.
 //                    Everywhere else in this file tests both forms.
-// Still bar-level, not anchor-level: the button path always writes q1:1 but
-// the note dialog takes q1 from the sheet, so keys at 3.1 and 3.3 are
-// expressible. Awaiting Josh's ruling — it decides what the format means.
-function dropLocalKeyAt(bar) {
-  rollnotes = rollnotes.filter(n => !((n.keydir !== undefined || n.keypartial) && n.b1 === bar));
+// ANCHOR-level, not bar-level (Josh's ruling, 2026-08-26): a key at 3.1 and a
+// key at 3.3 are two different keys and both stand — a modulation gets its
+// true beat. Only an exact anchor collision is a replacement. The keyset
+// button always sets q1:1, so it still replaces the bar's downbeat key.
+function dropLocalKeyAt(bar, q = 1) {
+  rollnotes = rollnotes.filter(n =>
+    !((n.keydir !== undefined || n.keypartial) && n.b1 === bar && (n.q1 || 1) === q));
 }
 function isDirective(n) { // anything that isn't a plain text note
   return !!(n.section || n.chord || n.chopdir || n.keydir !== undefined ||
@@ -9508,7 +9510,7 @@ document.getElementById("nsave").addEventListener("click", () => {
     const [pcS, spS] = document.getElementById("nkeysel").value.split(":");
     const pc = +pcS, sp = spS || "";
     const mode = document.getElementById("nkeymode").value;
-    dropLocalKeyAt(b1);
+    dropLocalKeyAt(b1, q1); // anchor-level: only a key at this exact beat is replaced
     if (mode) {
       const full = keyNameFor(pc, mode);
       fresh = {b1, q1, b2: b2raw || null, q2: b2raw ? (q2raw || null) : null,
