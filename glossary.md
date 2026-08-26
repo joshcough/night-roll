@@ -22,6 +22,42 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
 - **Texture hierarchy** — one voice leads, the others make room; busy +
   busy = soup. — `encountered` 2026-08-18. Anchor: Cool Bmaj (still
   pedal melody over driving bass). FF: *(find one)*.
+- **Compound melody** (implied polyphony) — one monophonic line implying
+  two or more voices by alternating between registral strands. —
+  `encountered` 2026-08-23. Anchor: Cool Bmaj (with B part), bass track:
+  the sixteenths are pedal tones on chord roots, the one sustained
+  strong-beat note per bar is the harmonically active voice, usually a
+  third or fifth above (bar 5 short G♯2 / long D♯3; bar 4 short B2 / long
+  F♯3; bar 13 short A2 / long E3; bar 15 is the exception, F♯2 / F♯3 at
+  the octave). Josh predicted the long notes would be thirds or fifths
+  before checking, and was right. Standard reference case: Bach's solo
+  cello and violin. **Explains his failed voice swap** — moving a
+  two-strand line to the top put a bass and a tenor where one soprano
+  belongs. Status stays `encountered`, his call: he found the structure
+  in his own music but did not write it deliberately, and he holds that
+  `demonstrated` implies intent.
+- **Textural density** — the voice budget of a texture; a compound line
+  spends two voices' worth, not one. — `encountered` 2026-08-23. Anchor:
+  Cool Bmaj — Josh's account of why the melody can afford to be plain:
+  the bass is "doing the work of two different people," so a busier
+  melody would imply soprano and alto on top of that, and with the drums
+  also occupying voices "you would have parts stepping on each other."
+  He reasoned to the concept unaided before it was named.
+- **Two kinds of movement (rhythmic and harmonic)** — Josh's principle,
+  2026-08-25: as a default, don't have independent voices doing the same
+  KIND of moving at the same time. Anchor: airship 15–16 — the bass is
+  steady quarters but moving structurally, while the upper voices vary
+  rhythmically (pulse1 sixteenths, pulse2 eighths) over one held harmony.
+  Each layer moves in exactly one dimension. Note this is the inversion
+  of the A section, where the bass was the busy eighth-note bounce.
+  Both halves are defaults with exceptions, which he stated precisely:
+  *rhythmic* — cross-rhythm works when one layer stays steady (triplets
+  over eighths); this is his existing steady-layer principle from Cool
+  Bmaj and it is a rhythmic rule. *Harmonic* — contrary motion is NOT
+  the bad case, it is prized voice-leading; the actual failure is voices
+  implying **different chords at the same moment**, which stays a problem
+  in any direction. His own correction, and it matters: the rule as first
+  stated would have thrown out contrary motion along with the bad case.
 - **Motivic saturation** — the signature idea appears in every layer;
   at cadences it reads as arrival, not redundancy. — `encountered`
   2026-08-18. Anchor: Cool Bmaj close — add9 in chords, melody, then

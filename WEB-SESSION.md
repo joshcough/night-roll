@@ -104,6 +104,10 @@ chrome each.)
 - `supplemental-learning.md` — session log, quiz source material.
 - `NIGHT-ROLL.md` — the app's feature reference, if he mentions a tool.
 - `glossary.md` — terms Josh has ENCOUNTERED vs DEMONSTRATED; quiz fodder.
+- `ANALYSIS_CURRICULUM.md` — PARKED proposal (2026-08-23): 12 units of
+  Bach chorales, inventions and chromatic VGM, plus tooling ideas.
+  Nothing in it is built or agreed. Do not treat it as a plan of record,
+  and do not start a unit from it unless Josh says so.
   Promote honestly, add new terms as they come up in session.
 
 ## Query tools — USE THESE instead of eyeballing dumps

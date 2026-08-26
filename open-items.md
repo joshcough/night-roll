@@ -114,6 +114,76 @@ correctly: draft wins), same for the metadata fetches around 2267/2357,
 plus a `setInfo` so a stalled open says so instead of failing mute.
 The silence is what cost the debugging time, not the blip.
 
+## PARKED BACKLOG — the 2026-08-23 curriculum session (filed 2026-08-26)
+
+Two documents, both archived, nothing built. Josh: "a lot of ideas in
+here that don't necessarily need to be implemented immediately."
+
+- `handoffs/handoff-2026-08-23.md` — the compound-melody derivation and
+  the grading-scale proposal.
+- `ANALYSIS_CURRICULUM.md` (repo root) — 12 units, sources, and four
+  tooling proposals. Stamped PROPOSED/PARKED at the top.
+
+**Applied already:** the two glossary terms (compound melody, textural
+density) are in `glossary.md` at `encountered`, Josh's call — he found
+the structure in his own bass line but did not write it deliberately,
+and he holds that `demonstrated` implies intent.
+
+### Awaiting Josh's ruling
+
+**Replace ENCOUNTERED/DEMONSTRATED with a two-axis scale.** His idea,
+this session, because the binary has nowhere to put "found it in my own
+music but wrote it by accident" — exactly where compound melody landed.
+Recognition axis R1 HEARD / R2 RECOGNIZED / R3 DERIVED / R4 FLUENT;
+production axis P0 none / P1 FOUND / P2 DEMONSTRATED / P3 MASTERY. The
+axes are independent, not a ladder — high-P-low-R is probably his whole
+existing guitar vocabulary. Terms with no production sense get `R2/—`
+rather than `R2/P0`. Migration would be lazy: convert entries as they
+come up, not a retrofit. **Not applied** — it changes how every glossary
+entry is written, so it is his call, not mine.
+
+### Blocking dependency for the entire curriculum
+
+**MIDI import.** The existing importer is NSF-oriented; every curriculum
+target is MIDI or Humdrum kern (kernScores has the 371 chorales, with a
+GitHub mirror whose Makefile generates MIDI). Nothing else on this list
+can start without it.
+
+### Tooling proposals, unscoped
+
+- **Reveal policy system** — per-song/album/collection declaration of
+  which axes (key, spelling, phrase, chords, meter, sections) are
+  revealed vs withheld. Josh's idea, unprompted: constraints should be
+  per-corpus, because different constraint sets train different skills.
+  Would require `WEB-SESSION.md` rule 1 to read the policy instead of
+  being absolute; default all-withheld preserves today's FF1 behaviour.
+- **New annotation types `spelling` and `phrase`** — nothing today
+  carries per-note enharmonic spelling or fermata/phrase boundaries.
+- **Transformation tools** — mode flip, bass reharmonization, voice
+  swap, voice removal, squarify, non-chord-tone strip, rhythm flatten.
+  Stated design principle, and the good part of the idea: *surface the
+  failures rather than smoothing them over* — a naive minor↔major flip
+  destroys leading tones, collapses secondary dominants and mangles
+  Picardy thirds, and the flag list IS the output. Architecture question
+  unsettled: does any of this belong in Night Roll at all?
+- **Quiz generation from annotation data** — cadence classification,
+  hidden-voice identification, Roman numerals drawn from songs he has
+  already analyzed (spaced repetition over his own findings, which also
+  makes it a consistency check against his prior self).
+- **Generated textbook** — a page per glossary term listing every place
+  in the corpus where he derived or encountered it. Depends on analysis
+  docs tagging which terms they exercise: cheap as a convention going
+  forward, expensive as a retrofit.
+
+### Process note worth keeping
+
+The tutor initially told Josh he could analyze Dancing Mad directly.
+He pushed back and was right: FF1 is three diatonic voices, Dancing
+Mad's organ section is dense chromatic writing across many voices, and
+the comparison half of the question needs classical repertoire he would
+have to build from scratch. The curriculum exists because of that
+pushback.
+
 ## Airship handoff 2026-08-25 — applied in part, ANALYSIS ITEMS OPEN
 
 Handoff archived at `handoffs/handoff-2026-08-25.md`. Code and tooling
@@ -121,29 +191,42 @@ items are done (f52b997 + follow-up); the analysis items are Josh's and
 he chose "walk me through them" — go item by item NEXT SESSION, showing
 evidence, no pre-filled conclusions:
 
-1. `analysis/airship.md` — rewrite the key section. It records F major
-   and says the closing E♮ rules out mixolydian. Josh's reading: F
-   mixolydian for the A section, B♭ mixolydian for the B, resolved by
-   SCOPE (the vamp's E♭ and the descent's E♮ belong to different
-   sections).
-2. `analysis/airship.md` — the "Cheap verification available" paragraph
-   promises a chord track 4 for independent verification. That track
-   does not exist: the chip capture has three channels because the 2A03
-   has three. Stale and misleading. (Pure fact, not analysis — he could
-   wave this one through.)
-3. `analysis/airship.md` — the "what is the E♭ doing" question is partly
-   answered (♭VII as a modal degree in both sections); the FUNCTION
-   question from the sweep still stands.
-4. rollnotes — replace the 15.1–15.4 per-beat chords with one C7 band.
-5. rollnotes — the B♭–E tritone note is anchored 14.3; the tritone is at
-   15.3 (triangle E4, pulse2 A♯4). Josh caught this himself. SECOND
-   logged instance of annotation anchor drift costing session time — the
-   standing drift-check request now has its second piece of evidence.
-6. rollnotes — record both readings on the 13.1 F♮ per his own
-   duration-vs-position convention. Fourth instance of that named
-   pattern (Ship's pulse2 E, graveyard 7.3, graveyard bar 6).
-7. `glossary.md` — the two-kinds-of-movement principle, anchored at
-   airship 15–16. Encountered vs demonstrated is his call.
+ALL DONE except item 6. Closed 2026-08-26 on Josh's "do it all without
+me" — he needed to move on from this song.
+
+1. ✅ `analysis/airship.md` key section rewritten: F mixolydian (A),
+   B♭ mixolydian (B), his scope argument, with the per-section census
+   as evidence. Also records that the tutor flagged his reading as an
+   error on the strength of the stale line in that very file, and that
+   he pushed back and the data backed him.
+2. ✅ The "Cheap verification available" chord-track-4 paragraph is
+   gone. Replaced with the fact: three channels, because the 2A03 has
+   three.
+3. ✅ The E♭ question is now recorded as partly answered (♭7 as a modal
+   degree of the declared mode in both sections) with the FUNCTION
+   question still explicitly open, and the sourcing-vs-function
+   reasoning kept because it will recur.
+4. ✅ Bar 15 is one C7 band — Josh did it; the leftover Cm7 was deleted
+   on his say-so 2026-08-26.
+5. ✅ Tritone note now at 15.3 only. Verified against the capture: 14.3
+   sounds D♯5/G♯4/C♯4 (no B♭, no E); 15.3 has triangle E4 sustaining
+   against pulse2 A♯4 on the second half of the beat. **SECOND logged
+   instance of annotation anchor drift costing session time — the
+   standing drift-check request now has its second piece of evidence.**
+6. ⬜ **STILL OPEN — his to write.** rollnotes: record both readings on
+   the 13.1 F♮ per his own duration-vs-position convention. Fourth
+   instance of that named pattern (Ship's pulse2 E, graveyard 7.3,
+   graveyard bar 6). Left undone because it is an analysis call, not
+   clerical.
+7. ✅ `glossary.md` has the two-kinds-of-movement principle, anchored at
+   airship 15–16, with both of his stated exceptions — including his own
+   correction that contrary motion is the prized case and the real
+   failure is voices implying different chords at the same moment.
+
+Also fixed the bug class behind items 4 and 5 while closing them: chord
+bands now replace on an identical span, keys dedupe at the exact anchor,
+and identical text at one anchor drops. Different text at one anchor
+still stacks, which is what he wants.
 
 Still open on the song: D♭ vs C♯ at 14.3 and what D♭→G root motion is
 doing; whether bar 14's third-dyads are substitution or omission; the
