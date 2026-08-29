@@ -729,6 +729,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
+    "Tap a note", "nothing to double",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -1705,6 +1706,41 @@ test("dropSupersededBy: chords replace by span, notes only when the text repeats
   assert.equal(val(`rollnotes.length`), 1, "only the chord went");
   assert.equal(val(`!!rollnotes[0].chord`), false, "the plain note with the same text survived");
   run(`songKey = null; rollnotes = [];`);
+});
+
+// Josh, 2026-08-29: tapping a note in an FF1 or Mega Man song made no sound.
+// All three views call previewNote, but scheduleNote's chip guard swallowed it
+// on exactly the chip-backed corpus he analyzes. Silent failure — worth a test,
+// because nothing about it is visible.
+test("a note preview sounds on a chip song; playback notes still don't double", () => {
+  installSong();
+  // a chip-active song: NSF buffers keyed by track name, track on the auto voice
+  run(`song.tracks = [{name: "pulse1", notes: []}];
+       trackState = [{muted: false, solo: false}];
+       songKey = "albums/final-fantasy-i/songs/overworld.mid";
+       chip.key = songKey; chip.buffers = {pulse1: {}};
+       ensureAudio(); playing = false;`);
+  assert.equal(val(`chipActive()`), true, "chip is active for this song");
+  // the guard returns BEFORE the first createGain, so counting gains says
+  // exactly whether a note got past it
+  run(`_gains = 0; const _cg = audio.createGain.bind(audio);
+       audio.createGain = () => { _gains++; return _cg(); };`);
+
+  run(`_gains = 0; scheduleNote(0, {p: 60, v: 90, ch: 0, _preview: true}, audio.currentTime + 0.01, 0.3)`);
+  assert.ok(val(`_gains`) > 0, "a preview sounds on a chip-backed track");
+
+  run(`_gains = 0; playing = true;
+       scheduleNote(0, {p: 60, v: 90, ch: 0}, audio.currentTime + 0.01, 0.3)`);
+  assert.equal(val(`_gains`), 0, "a playback note stays suppressed — the chip buffer IS the sound");
+
+  run(`_gains = 0; song.tracks[0].voice = "strings";
+       scheduleNote(0, {p: 60, v: 90, ch: 0}, audio.currentTime + 0.01, 0.3)`);
+  assert.ok(val(`_gains`) > 0, "an explicit voice pick still overrides the chip, as before");
+
+  // tests share one vm context: leave trackState at least as long as any
+  // tracks a later test installs, or trackAudible() indexes undefined
+  run(`playing = false; chip.key = null; chip.buffers = null; songKey = null;
+       song.tracks[0].voice = undefined;`);
 });
 
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {

@@ -21,6 +21,7 @@ export async function openApp(page) {
       createBufferSource() { return node(); }
       createBuffer(ch, len, sr) { return { getChannelData: () => new Float32Array(len || 1) }; }
       createPeriodicWave() { return {}; }
+      createBiquadFilter() { const n = node(); n.frequency = param(); n.Q = param(); n.detune = param(); return n; }
       createDynamicsCompressor() { const n = node(); n.threshold = param(); n.knee = param(); n.ratio = param(); n.attack = param(); n.release = param(); return n; }
       decodeAudioData(buf) { return Promise.resolve({ getChannelData: () => new Float32Array(1), duration: 0.01, length: 1, sampleRate: 44100 }); }
     }

@@ -1169,7 +1169,7 @@
     </div>
     <div class="hsec" data-hsec="explore">
     <dl>
-      <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — and plays it.</dd>
+      <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — <b>and plays it</b>, in Roll, Score and Tracks alike. That includes chip songs: during playback the NSF render IS the track's sound, so per-note synthesis is suppressed to avoid doubling, but a tap has nothing to double and sounds a synth voice. Hearing one note at a time is the point of analysis mode.</dd>
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
       <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the <b>8va</b> button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
@@ -5845,8 +5845,12 @@ function scheduleNote(ti, n, when, durSec) {
   // never start an envelope in the past — WebAudio would skip the attack
   // ramp and slam the oscillator on at full amplitude (audible click)
   when = Math.max(when, audio.currentTime + 0.003);
-  // chip audio: the buffer IS this track's sound (auto voice only) — no oscillator doubles
-  if (chipActive() && song.tracks[ti] && chip.buffers[song.tracks[ti].name] &&
+  // chip audio: the buffer IS this track's sound (auto voice only) — no oscillator doubles.
+  // A PREVIEW is exempt (Josh, 2026-08-29: tapping a note in an FF1 or Mega Man
+  // song made no sound). Nothing is sounding underneath a tap, so there is
+  // nothing to double; and the chip buffer is a whole-track render, so there
+  // is no way to sound one note from it. The preview uses the synth voice.
+  if (!n._preview && chipActive() && song.tracks[ti] && chip.buffers[song.tracks[ti].name] &&
       (!song.tracks[ti].voice || song.tracks[ti].voice === "auto")) return;
   if (n.ch === 9 || trackIsDrums(ti)) { drumHit(ti, n.p, when, n.v); return; }
   let v = trackVoice(ti);

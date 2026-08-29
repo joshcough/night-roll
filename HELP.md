@@ -93,7 +93,7 @@ Solo: hide everyone else instead.
 ## Explore
 
 **Tap a note**
-Inspector shows pitch, bar & beat (counted 1e&a), length, velocity, track — and plays it.
+Inspector shows pitch, bar & beat (counted 1e&a), length, velocity, track — **and plays it**, in Roll, Score and Tracks alike. That includes chip songs: during playback the NSF render IS the track's sound, so per-note synthesis is suppressed to avoid doubling, but a tap has nothing to double and sounds a synth voice. Hearing one note at a time is the point of analysis mode.
 
 **Copy the pitch list**
 When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.

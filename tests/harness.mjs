@@ -106,6 +106,8 @@ function fakeAudio(clock) {
     createBufferSource() { return node(); }
     createBuffer(ch, len) { return { getChannelData: () => new Float32Array(len || 1) }; }
     createPeriodicWave() { return {}; }
+    // the "strings" and "bell" voices filter; without this a preview on them throws
+    createBiquadFilter() { const n = node(); n.frequency = param(); n.Q = param(); n.detune = param(); return n; }
     createDynamicsCompressor() { const n = node(); n.threshold = param(); n.knee = param();
       n.ratio = param(); n.attack = param(); n.release = param(); return n; }
     createMediaStreamDestination() { return { stream: {} }; }
