@@ -301,7 +301,10 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   strictly monophonic throughout), and the constraint EXPLAINS the
   piece — horizontal tonic in the intro, F-minor-by-coincidence-of-
   lines, and bar 10 as the piece's single full triad. The organizing
-  principle of graveyard. FF: every song in the corpus.
+  principle of graveyard; Threnody's violin 2 (G beat 1, D beat 2 under
+  the held B) is the same thing by hand. Name not recalled unprompted
+  on 2026-09-07 ("compound harmony?") — quiz the NAME once. FF: every
+  song in the corpus.
 
 ## Form
 
