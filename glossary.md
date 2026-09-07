@@ -24,9 +24,13 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   pedal melody over driving bass). FF: *(find one)*.
 - **Compound melody** (implied polyphony) — one monophonic line implying
   two or more voices by alternating between registral strands. —
-  `encountered` 2026-08-23; used deliberately in Threnody's violin 2 on
-  2026-09-07 (chord tones split across the halves of a beat during his
-  harmonic reduction) but not yet named by him — promote when he does. Anchor: Cool Bmaj (with B part), bass track:
+  `encountered` 2026-08-23. Threnody violin 2, bar 2 (2026-09-07), has
+  the shape in miniature — low strand G3→F3, high strand D4→E♭4, both by
+  step — but at 60 bpm the strands sit seconds apart, so it's the
+  mechanism, not a demonstration. What Josh actually did there (chord
+  completed across beats 1–2, never on one beat) is implied harmony, his
+  term already; his own rule for the order: "tension note first,
+  chord-defining note second." Anchor: Cool Bmaj (with B part), bass track:
   the sixteenths are pedal tones on chord roots, the one sustained
   strong-beat note per bar is the harmonically active voice, usually a
   third or fifth above (bar 5 short G♯2 / long D♯3; bar 4 short B2 / long
@@ -286,9 +290,9 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   A♭ | Fm | G | Cm at half-bar rhythm; Fm never sounds as a full triad
   on any beat (F and A♭ alternate under the C bass), bars 2/6 walk
   G→D for the G chord, and bars 4/8 beat 1 come out G augmented (E♭5
-  over B2/G). The split-the-beat step is compound melody by another
-  route — see that entry. FF: *(find one — the corpus is reduction by
-  construction)*.
+  over B2/G). The split-the-beat step is implied harmony made by hand;
+  his ordering rule: tension note first, chord-defining note second.
+  FF: *(find one — the corpus is reduction by construction)*.
 - **Implied harmony (voice-limited writing)** — with three monophonic
   voices, harmony is an emergent property of simultaneous lines, never
   stacked; a chord costs ALL the voices, so spending them is the most
