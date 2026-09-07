@@ -69,8 +69,10 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   cut in Cool Bmaj). FF: *(find one — where does the corpus thin its
   texture, and how is the edge marked?)*.
 - **Ostinato** — a short pattern repeated obstinately; the steady layer
-  other voices float against. — `encountered` 2026-08-17. Anchor: Cool
-  Bmaj bass gallop. FF: *(find one)*.
+  other voices float against. — `encountered` 2026-08-17. Anchors: Cool
+  Bmaj bass gallop; Threnody triangle (E♭ E♭ C | B – C E♭-D, unchanged
+  for 8 bars, seam D→E♭ on loop — "grief that doesn't end"). FF: *(find
+  one)*.
 
 - **Timbral fusion (octave doubling)** — voices an octave apart fuse
   into one perceived voice; a middle voice inside the octave stops
@@ -267,6 +269,17 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   Only holds within an octave — wider spacing is harmonic-series
   territory, which is why bar 10 rings. — **`demonstrated`**
   2026-08-22: derived the nine-sum rule himself from the fourths.
+- **Harmonic reduction** — collapsing a polyphonic chord track to one
+  line: keep the note per beat that carries the chord's identity, drop
+  the rest; the triads then live across voices and time instead of on
+  any single beat. — **`demonstrated`** 2026-09-07: Josh named the
+  term and the process unprompted ("my harmonic reduction... stripping
+  out notes from Pulse 2, which had the chords track originally") and
+  accepted the side effects as features. Anchor: Threnody (albums/
+  compositions/threnody), pulse2 throughout — A♭ | Fm | G | Cm at
+  half-bar rhythm; Fm never sounds as a full triad on any beat, and
+  bars 4/8 beat 1 come out G augmented (E♭5 over B2/G). FF: *(find
+  one — the corpus is reduction by construction)*.
 - **Implied harmony (voice-limited writing)** — with three monophonic
   voices, harmony is an emergent property of simultaneous lines, never
   stacked; a chord costs ALL the voices, so spending them is the most
