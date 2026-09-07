@@ -94,10 +94,35 @@
    {
     "title": "Key Change Test (07-26)",
     "path": "albums/compositions/KeyChangeTest-07-26.mid"
+   }
+  ]
+ },
+ {
+  "title": "Night Roll Sketches",
+  "songs": [
+   {
+    "title": "Cool Bmaj Progression",
+    "path": "albums/compositions/nightroll/cool-bmaj-progression.mid"
+   },
+   {
+    "title": "Ff1 Battle",
+    "path": "albums/compositions/nightroll/ff1-battle.mid"
+   },
+   {
+    "title": "Graveyard",
+    "path": "albums/compositions/nightroll/graveyard.mid"
+   },
+   {
+    "title": "Graveyard 2",
+    "path": "albums/compositions/nightroll/graveyard-2.mid"
+   },
+   {
+    "title": "Graveyard 3",
+    "path": "albums/compositions/nightroll/graveyard-3.mid"
    },
    {
     "title": "Test Sad Progression",
-    "path": "albums/compositions/test-sad-progression.mid"
+    "path": "albums/compositions/nightroll/test-sad-progression.mid"
    }
   ]
  },
@@ -300,31 +325,6 @@
    {
     "title": "Selection",
     "path": "albums/imports/tmnt-2/selection.mid"
-   }
-  ]
- },
- {
-  "title": "Night Roll Sketches",
-  "songs": [
-   {
-    "title": "Cool Bmaj Progression",
-    "path": "albums/compositions/nightroll/cool-bmaj-progression.mid"
-   },
-   {
-    "title": "Ff1 Battle",
-    "path": "albums/compositions/nightroll/ff1-battle.mid"
-   },
-   {
-    "title": "Graveyard",
-    "path": "albums/compositions/nightroll/graveyard.mid"
-   },
-   {
-    "title": "Graveyard 2",
-    "path": "albums/compositions/nightroll/graveyard-2.mid"
-   },
-   {
-    "title": "Graveyard 3",
-    "path": "albums/compositions/nightroll/graveyard-3.mid"
    }
   ]
  }

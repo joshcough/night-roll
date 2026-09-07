@@ -2442,7 +2442,18 @@ function serializeNotesList(list, beatsPerBar, base, stamp) {
   // one note per line: valid JSON that git-diffs like the old text format.
   // stamp (epoch ms) marks WHEN this state was saved — the cross-device
   // freshness beacon (Josh, 2026-08-16); omitted for pure serialization.
-  const rows = list.map(n => "  " + JSON.stringify(noteToJSON(n)));
+  // Duplicate track: directives are dropped HERE, on the write side, last-wins
+  // per track name. finalizeNotes has done the same on the read side since
+  // 2026-08-18, but the repo file kept accumulating anyway (Josh found
+  // sf-organ2 and square25 both live for pulse2, 2026-09-06) — the resurrection
+  // path was never pinned down. Deduping at serialization makes the mechanism
+  // moot: every writer goes through here (commit, Move, Copy, Download, and
+  // buildRollnotesFor, which merges another song's repo copy with local notes
+  // and is itself a plausible source), so no path can emit two.
+  const lastFor = new Map();
+  for (const n of list) if (n.trackdir) lastFor.set(n.trackdir.name.toLowerCase(), n);
+  const deduped = list.filter(n => !n.trackdir || lastFor.get(n.trackdir.name.toLowerCase()) === n);
+  const rows = deduped.map(n => "  " + JSON.stringify(noteToJSON(n)));
   return '{ "version": 1, "song": ' + JSON.stringify(base) +
          (stamp ? ', "saved": ' + stamp : "") + ', "notes": [\n' +
          rows.join(",\n") + "\n] }\n";
@@ -4760,7 +4771,13 @@ function clampView() {
     ? Math.max(minX, songEndTick * pxPerTick() + 2 * barTicks() * pxPerTick() - (wrap.clientWidth - RULER_W))
     : Infinity;
   view.x = Math.min(maxX, Math.max(minX, view.x));
-  const contentH = viewMode === "tracks" ? song.tracks.length * tracksLaneH()
+  // song can be null here — maxX above already guards for it. This one did not,
+  // and it bricked the app (Josh, 2026-09-06): clampView runs during the load
+  // window, so being in Tracks view when a load starts threw before the load
+  // finished, and viewMode is restored from localStorage, so the reload put him
+  // straight back in Tracks. It read as "the song file is broken" — the file
+  // was fine. Any new song. use in this function needs the same guard.
+  const contentH = viewMode === "tracks" ? (song ? song.tracks.length : 0) * tracksLaneH()
     : viewMode === "score" && scoreModel
     ? scoreContentH()
     : (topRow() - botRow() + 1) * view.rowH;
@@ -10988,12 +11005,19 @@ async function putMidAt(path, h, bytes) { // PUT a .mid (current song unless byt
   if (r.status === 409) r = await putOnce();
   return r;
 }
+// Returns true if the file is gone (deleted, or never there). A failed DELETE
+// used to be invisible: Move reported "Moved ✓" while the old copy survived, so
+// a half-move and a clean move looked identical from the UI. That happened to
+// Josh on 2026-09-06 and left two copies of test-sad-progression in the repo.
 async function deleteRepoFile(path, h) { // tolerate absence: never-synced drafts have no repo file
   const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
-  if (!g.ok) return;
+  if (!g.ok) return true; // nothing there to delete
   const sha = (await g.json()).sha;
-  await fetch(repoApi("songs") + path, {method: "DELETE", headers: h,
+  const del = () => fetch(repoApi("songs") + path, {method: "DELETE", headers: h,
     body: JSON.stringify({message: "Move " + path + " from Night Roll", sha, branch: "main"})});
+  let r = await del();
+  if (r.status === 409) r = await del(); // same one-retry shape as putMidAt
+  return r.ok;
 }
 async function moveComposition(destDir) {
   const oldKey = songKey;
@@ -11026,15 +11050,27 @@ async function moveComposition(destDir) {
     const content = serializeRollnotesStamped(stamp);
     const r2 = await putRollnotes(newKey.replace(/\.mid$/, "") + ".rollnotes.json", content, h);
     if (!r2.ok) throw new Error(".rollnotes.json HTTP " + r2.status);
-    await deleteRepoFile(oldKey, h);
-    await deleteRepoFile(oldKey.replace(/\.mid$/, ".rollnotes.json"), h);
-    await deleteRepoFile(oldKey.replace(/\.mid$/, ".rollnotes"), h); // legacy leftover, if any
+    // saveSong writes THREE files; Move used to carry two, stranding the dump
+    // at the old path until the next Save backfilled it (Josh, 2026-09-06)
+    const r3 = await putSongsText(newKey.replace(/\.mid$/, "") + ".notes.txt", notesTxtFor(), h);
+    if (!r3.ok) throw new Error(".notes.txt HTTP " + r3.status);
+    // a delete that silently fails is how a Move becomes two copies of a song
+    const left = [];
+    for (const p of [oldKey,
+                     oldKey.replace(/\.mid$/, ".rollnotes.json"),
+                     oldKey.replace(/\.mid$/, ".notes.txt"),
+                     oldKey.replace(/\.mid$/, ".rollnotes")]) { // last one: legacy, if any
+      if (!await deleteRepoFile(p, h)) left.push(p.split("/").pop());
+    }
     await updateManifest(h, albums => manifestPlace(albums, oldKey, newKey));
     renameLocal();
     markCurrentSongSynced(content, stamp);
     await initCatalog().catch(() => {});
     updateSongBtn();
-    fileStatus("Moved ✓ → " + newKey);
+    fileStatus(left.length
+      ? "Moved → " + newKey + " — but the old copy could NOT be removed (" +
+        left.join(", ") + "). Both paths now exist; clean up in the repo."
+      : "Moved ✓ → " + newKey);
   } catch (err) { fileStatus("Move failed: " + err.message); }
 }
 { // velocity slider: pencil loudness always; with a selection it LIVE-adjusts

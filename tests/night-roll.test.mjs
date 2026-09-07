@@ -1743,6 +1743,47 @@ test("a note preview sounds on a chip song; playback notes still don't double", 
        song.tracks[0].voice = undefined;`);
 });
 
+// Josh, 2026-09-06: hit live. clampView runs during the load window, so being
+// in Tracks view when a load starts threw on null song — and viewMode is
+// restored from localStorage, so reloading put him right back in Tracks. It
+// presents as a broken song file. Self-perpetuating, so it gets a test.
+test("clampView survives a null song in every view mode", () => {
+  installSong();
+  run(`song = null; scoreModel = null;`);
+  for (const vm of ["roll", "tracks", "score"]) {
+    run(`viewMode = ${JSON.stringify(vm)}`);
+    assert.doesNotThrow(() => run(`clampView()`), `clampView throws in ${vm} view with no song`);
+  }
+  run(`viewMode = "roll";`);
+  installSong();
+});
+
+// Josh, 2026-09-06: pulse2 carried both sf-organ2 and square25 in the committed
+// file. Read-side dedup has existed since 08-18 and the file kept accumulating,
+// so the guarantee moves to the write side — whatever list a writer hands over,
+// what lands on disk has one track: directive per track.
+test("serialization never writes duplicate track: directives (last wins)", () => {
+  installSong();
+  run(`rollnotes = [
+    {b1:1,q1:1,text:"track: pulse2 voice=sf-organ2", trackdir:{name:"pulse2",voice:"sf-organ2"}},
+    {b1:1,q1:1,text:"a plain note"},
+    {b1:1,q1:1,text:"track: pulse2 voice=square25", trackdir:{name:"pulse2",voice:"square25"}},
+    {b1:1,q1:1,text:"track: PULSE1 voice=triangle", trackdir:{name:"PULSE1",voice:"triangle"}},
+    {b1:1,q1:1,text:"track: pulse1 voice=square", trackdir:{name:"pulse1",voice:"square"}}
+  ];`);
+  const out = val(`serializeRollnotes()`);
+  const notes = JSON.parse(out).notes;
+  const dirs = notes.filter(n => n.type === "track");
+  assert.equal(dirs.length, 2, "one directive per track name, not four");
+  assert.deepEqual(dirs.map(d => d.voice), ["square25", "square"], "last one wins for each");
+  assert.equal(notes.filter(n => n.text === "a plain note").length, 1,
+    "ordinary notes are untouched");
+  // name matching is case-insensitive: PULSE1 and pulse1 are one track
+  assert.equal(dirs.filter(d => d.track.toLowerCase() === "pulse1").length, 1,
+    "PULSE1 and pulse1 collapse to one");
+  run(`rollnotes = [];`);
+});
+
 test("HELP.md matches the help sheet (regenerate with node tools/build_help.mjs)", async () => {
   const { buildHelp } = await import("../tools/build_help.mjs");
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
