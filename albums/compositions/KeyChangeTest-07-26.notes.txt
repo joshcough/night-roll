@@ -1,5 +1,8 @@
 # KeyChangeTest-07-26.mid — 4/4, 100bpm, 24 bars
 # Format: bar N: beat pitch duration-in-quarter-notes
+# duration is GATE TIME (how long the chip held the note), NOT a notated value.
+# RHYTHM comes from ONSET SPACING (the beat column), never from duration:
+# staccato eighths gate at ~0.33 and are still eighths, not triplets.
 # Pitches use sharp spelling; the true key is Josh's to discover — this file states no key.
 
 ## track 1 (Melody or Arp Maybe)
