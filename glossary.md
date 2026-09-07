@@ -24,7 +24,9 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   pedal melody over driving bass). FF: *(find one)*.
 - **Compound melody** (implied polyphony) — one monophonic line implying
   two or more voices by alternating between registral strands. —
-  `encountered` 2026-08-23. Anchor: Cool Bmaj (with B part), bass track:
+  `encountered` 2026-08-23; used deliberately in Threnody's violin 2 on
+  2026-09-07 (chord tones split across the halves of a beat during his
+  harmonic reduction) but not yet named by him — promote when he does. Anchor: Cool Bmaj (with B part), bass track:
   the sixteenths are pedal tones on chord roots, the one sustained
   strong-beat note per bar is the harmonically active voice, usually a
   third or fifth above (bar 5 short G♯2 / long D♯3; bar 4 short B2 / long
@@ -275,11 +277,18 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   any single beat. — **`demonstrated`** 2026-09-07: Josh named the
   term and the process unprompted ("my harmonic reduction... stripping
   out notes from Pulse 2, which had the chords track originally") and
-  accepted the side effects as features. Anchor: Threnody (albums/
-  compositions/threnody), pulse2 throughout — A♭ | Fm | G | Cm at
-  half-bar rhythm; Fm never sounds as a full triad on any beat, and
-  bars 4/8 beat 1 come out G augmented (E♭5 over B2/G). FF: *(find
-  one — the corpus is reduction by construction)*.
+  accepted the side effects as features. His procedure, same day: with
+  melody + bass + a chord track there were FIVE notes on a beat; first
+  drop the doubled ones ("that just made sense"), then, where two chord
+  tones remained, split the beat and take one on each half — eyes for
+  the shape, brain for the split, ears to confirm after. Anchor:
+  Threnody (albums/compositions/threnody), the violin 2 line throughout —
+  A♭ | Fm | G | Cm at half-bar rhythm; Fm never sounds as a full triad
+  on any beat (F and A♭ alternate under the C bass), bars 2/6 walk
+  G→D for the G chord, and bars 4/8 beat 1 come out G augmented (E♭5
+  over B2/G). The split-the-beat step is compound melody by another
+  route — see that entry. FF: *(find one — the corpus is reduction by
+  construction)*.
 - **Implied harmony (voice-limited writing)** — with three monophonic
   voices, harmony is an emergent property of simultaneous lines, never
   stacked; a chord costs ALL the voices, so spending them is the most
