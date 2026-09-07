@@ -249,9 +249,17 @@ the old, manifest updated, every per-song localStorage key renamed
 (tokenless fallback: draft-only local move). nightroll/ is its own
 album via a nested album.json; build_manifest.mjs now scans one level
 of subdirectories for album.json, so offline rebuilds agree with what
-the app writes. The editable/locked line is albums/compositions/ as a
-whole (the 08-14 lock is on NSF pipeline output, and moved sketches
-must stay saveable). **Score-side entry SHIPPED same day** (the promised
+the app writes. The editable/locked line (isComposition, 08-15
+tightening): nightroll/ is always editable; a song elsewhere under
+compositions/ is editable only with a local draft on THIS device or a
+provenance note at the top of the rollnotes — "forked from <path>"
+(written by Save As) or "moved from <path>" (written by Move when it
+leaves nightroll/, 2026-09-07). The note is what survives devices and
+git; a draft is one machine's. Josh's Logic exports under compositions/
+have neither and stay locked (writeMidi would strip their CCs/programs).
+**Promoting a sketch by hand (git mv) MUST add the "moved from" note
+too** — Threnody was promoted by rename on 2026-09-07 and came up locked
+on the machine that wrote it. **Score-side entry SHIPPED same day** (the promised
 follow-up): Pencil/Erase work in score view — the tapped stave picks the
 track, the vertical position picks the diatonic step (calibrated at
 runtime from VexFlow's own getYForLine, no magic constants; ledger lines

@@ -537,6 +537,17 @@ test("composition helpers: slugify, isComposition gate, draft store round-trip",
   assert.equal(run(`isComposition()`), false); // chip capture: Save locked
   run(`songKey = "albums/compositions/nightroll/test-tune.mid";`);
   assert.equal(run(`isComposition()`), true);
+  // promoted out of nightroll/: no local draft on this device (git rename, or
+  // a Move done elsewhere) — only a provenance note keeps it editable
+  run(`songKey = "albums/compositions/promoted.mid"; rollnotes = [];`);
+  assert.equal(run(`isComposition()`), false);
+  run(`rollnotes = parseRollnotes('{"version":1,"notes":[{"at":[1,1],"text":"moved from albums/compositions/nightroll/promoted.mid"}]}').map(resolveNote);`);
+  assert.equal(run(`isComposition()`), true);
+  run(`rollnotes = parseRollnotes('{"version":1,"notes":[{"at":[1,1],"text":"forked from albums/final-fantasy-i/songs/town.mid"}]}').map(resolveNote);`);
+  assert.equal(run(`isComposition()`), true);
+  run(`rollnotes = parseRollnotes('{"version":1,"notes":[{"at":[1,1],"text":"note that merely mentions moved from"}]}').map(resolveNote);`);
+  assert.equal(run(`isComposition()`), false); // anchored at line start, not a substring
+  run(`rollnotes = []; songKey = "albums/compositions/nightroll/test-tune.mid";`);
   run(`
     song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}],
             tracks: [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80},
@@ -725,7 +736,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "find:", "Circle of fifths", "key: picker", "mode?", "Instrument panel",
     "Fall", "💬", "Chop", "Loop points", "Sections", "Chords",
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
-    "New song", "Save As", "Move to…", "Download .mid", "Open…", "Score entry",
+    "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",

@@ -1128,6 +1128,16 @@ park.
 
 ### Composition mode + File menu — v1 SHIPPED 2026-08-15
 
+**Promotion must carry a provenance note (2026-09-07).** Threnody was
+promoted to compositions/ by git rename (d3bc466) and came up LOCKED
+for Josh: isComposition recognized promoted songs only by a local draft
+or a "forked from" note, and a git mv leaves neither. Fix shipped: Move
+now writes "moved from <old path>" when leaving nightroll/, and the
+gate accepts it — so promotion holds on every device, not just the one
+that did the Move. Hand promotions (Claude Code, git mv) MUST add that
+note to the rollnotes. Threnody's own note awaits Josh's approval
+(his file).
+
 Josh's design rulings: setup dialog for New; roll entry v1 with
 **score-side note entry as the PROMISED immediate next project** (he
 accepted roll-first reluctantly); scratch home albums/compositions/
