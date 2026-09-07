@@ -3565,16 +3565,15 @@ function drawRuler(W, H) {
     ctx.fillText(String(Math.round(t / bt) + 1), x + 4, 15);
   }
   // Logic-style subdivision ticks along the ruler's bottom edge: bars always,
-  // beats when there's room, 16ths when zoomed right in — density-adaptive
-  {
+  // beats when there's room, 16ths when zoomed right in — density-adaptive.
+  // xFrom/xTo restrict the pass to a pixel span (the cycle strip's re-ink).
+  const drawTicks = (xFrom, xTo) => {
     const qt = beatTicks();
     const step = qt * ppt >= 96 ? qt / 4 : qt * ppt >= 14 ? qt : bt;
-    ctx.strokeStyle = css("--dim");
-    ctx.globalAlpha = 0.7;
     ctx.beginPath();
     for (let t = Math.floor(t0 / step) * step; t < t1; t += step) {
       const x = Math.round(RULER_W + t * ppt - view.x) + 0.5;
-      if (x < RULER_W) continue;
+      if (x < RULER_W || x < xFrom || x >= xTo) continue;
       const onBar = Math.abs(t / bt - Math.round(t / bt)) < 1e-6;
       const onBeat = Math.abs(t / qt - Math.round(t / qt)) < 1e-6;
       const h = onBar ? 9 : onBeat ? 6 : 3;
@@ -3582,8 +3581,11 @@ function drawRuler(W, H) {
       ctx.moveTo(x, BASE_RULER_H - 1); ctx.lineTo(x, BASE_RULER_H - 1 - h);
     }
     ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
+  };
+  ctx.strokeStyle = css("--dim");
+  ctx.globalAlpha = 0.7;
+  drawTicks(-Infinity, Infinity);
+  ctx.globalAlpha = 1;
   if (rangeSel) {
     // amber = Logic's cycle strip (▶ loops this); a band-tap selection keeps
     // the quiet accent tint — it feeds + Note but never hijacks playback
@@ -3593,6 +3595,12 @@ function drawRuler(W, H) {
     ctx.globalAlpha = (rangeSel.cycle ? 0.75 : 0.3) * (rangeSel.off ? 0.35 : 1); // dimmed = parked, tap to re-arm
     ctx.fillRect(rsx, 0, rse - rsx, BASE_RULER_H); // number strip only — lanes stay readable
     ctx.globalAlpha = 1;
+    if (rangeSel.cycle && !rangeSel.off) { // the bright amber swallows the dim ticks: re-ink them dark (Josh, 2026-09-07)
+      ctx.strokeStyle = "#000";
+      ctx.globalAlpha = 0.8;
+      drawTicks(rsx, rse);
+      ctx.globalAlpha = 1;
+    }
   }
   // in score view, band edges follow the ENGRAVED positions (scoreTickToX,
   // the playhead's own map) — linear time put "A part" a hair off its notes
