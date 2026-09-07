@@ -3557,13 +3557,17 @@ function drawRuler(W, H) {
   ctx.strokeStyle = css("--grid");
   ctx.beginPath(); ctx.moveTo(0, RULER_H - 0.5); ctx.lineTo(W, RULER_H - 0.5); ctx.stroke();
   ctx.font = "10px " + css("--mono");
-  ctx.fillStyle = css("--text"); // bright like the octave labels — dim was hard to read
   ctx.textAlign = "left";
-  for (let t = Math.floor(t0 / bt) * bt; t < t1; t += bt) {
-    const x = RULER_W + t * ppt - view.x;
-    if (x < RULER_W - 4) continue;
-    ctx.fillText(String(Math.round(t / bt) + 1), x + 4, 15);
-  }
+  // xFrom/xTo restrict the pass to a pixel span (the cycle strip's re-ink)
+  const drawNumbers = (xFrom, xTo) => {
+    for (let t = Math.floor(t0 / bt) * bt; t < t1; t += bt) {
+      const x = RULER_W + t * ppt - view.x;
+      if (x < RULER_W - 4 || x < xFrom || x >= xTo) continue;
+      ctx.fillText(String(Math.round(t / bt) + 1), x + 4, 15);
+    }
+  };
+  ctx.fillStyle = css("--text"); // bright like the octave labels — dim was hard to read
+  drawNumbers(-Infinity, Infinity);
   // Logic-style subdivision ticks along the ruler's bottom edge: bars always,
   // beats when there's room, 16ths when zoomed right in — density-adaptive.
   // xFrom/xTo restrict the pass to a pixel span (the cycle strip's re-ink).
@@ -3595,11 +3599,14 @@ function drawRuler(W, H) {
     ctx.globalAlpha = (rangeSel.cycle ? 0.75 : 0.3) * (rangeSel.off ? 0.35 : 1); // dimmed = parked, tap to re-arm
     ctx.fillRect(rsx, 0, rse - rsx, BASE_RULER_H); // number strip only — lanes stay readable
     ctx.globalAlpha = 1;
-    if (rangeSel.cycle && !rangeSel.off) { // the bright amber swallows the dim ticks: re-ink them dark (Josh, 2026-09-07)
+    if (rangeSel.cycle && !rangeSel.off) { // the bright amber swallows the ticks and numbers: re-ink them black (Josh, 2026-09-07)
       ctx.strokeStyle = "#000";
       ctx.globalAlpha = 0.8;
       drawTicks(rsx, rse);
       ctx.globalAlpha = 1;
+      ctx.fillStyle = "#000";
+      ctx.font = "10px " + css("--mono"); // the tick pass doesn't touch it, but stay explicit
+      drawNumbers(rsx, rse);
     }
   }
   // in score view, band edges follow the ENGRAVED positions (scoreTickToX,
