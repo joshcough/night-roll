@@ -529,6 +529,19 @@ test("composition: writeMidi round-trips through the app's own parser", () => {
   assert.deepEqual(back.notes[1], [[0, 960, 46, 80]]); // gone note not written
 });
 
+test("document title names the song first: '<Song> · Night Roll', bare app otherwise", () => {
+  installSong();
+  run(`setDocTitle("Threnody")`);
+  assert.equal(val(`document.title`), "Threnody · Night Roll");
+  run(`setDocTitle(null)`);
+  assert.equal(val(`document.title`), "Night Roll");
+  // the breadcrumb refresh is the one writer once a song is open
+  run(`CATALOG["My Compositions"] = [["Threnody", "albums/compositions/threnody.mid"]]; currentPath = "albums/compositions/threnody.mid"; updateSongBtn();`);
+  assert.equal(val(`document.title`), "Threnody · Night Roll");
+  run(`currentPath = null; updateSongBtn();`);
+  assert.equal(val(`document.title`), "Night Roll");
+});
+
 test("composition helpers: slugify, isComposition gate, draft store round-trip", () => {
   installSong();
   assert.equal(run(`slugify("  My New Song! ")`), "my-new-song");
@@ -737,6 +750,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Fall", "💬", "Chop", "Loop points", "Sections", "Chords",
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
+    "Share a song", "link preview",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",

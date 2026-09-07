@@ -777,3 +777,18 @@ chord name, key inference, or note classification; findings are Josh's.
    Browser-verify via claude-in-chrome, commit, push with hash check;
    the push-triggered Pages build deploys on its own (manual kicks
    collide with it and email failure noise — only kick if it hangs).
+
+## Shareable links and the document title (2026-09-07)
+
+The address bar always carries `?song=<path>` for catalog songs
+(reflectSongURL; local/ drafts are stripped since nobody else can load
+them). The tab title and `og:title` are "<Song> · Night Roll"
+(setDocTitle): set synchronously from the query string at script start
+using the filename title, then refined by updateSongBtn once the catalog
+supplies the display title. Rationale: a pasted link in Messages should
+preview as the song, not the app. Messages' preview fetcher runs scripts,
+so the synchronous set is what it sees; fetchers that don't run scripts
+get the static "Night Roll". If a per-song preview is ever needed for
+script-less fetchers, the route is static per-song stub pages with their
+own `<title>`/`og:title` that redirect into the app — not built, not
+needed yet.
