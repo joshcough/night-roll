@@ -233,7 +233,11 @@ doing; whether bar 14's third-dyads are substitution or omission; the
 function of ♭VII in both sections; whether the prologue F♯–C tritone
 thread and this one are the same device.
 
-Owed: quiz ×4 (none taken 08-25).
+Owed: quiz ×4 (none taken 08-25). **Why none were taken (Josh,
+2026-09-07): every quiz was hard end to end and long, so he stopped
+asking.** New streak rule in quizzes.md: all terms quizzable, retire at
+five sessions in a row, miss resets; ~3 easy + 2 stretch per session,
+minutes not hours. Next session: run one under the new rule.
 
 ### Done from that handoff (2026-08-26)
 

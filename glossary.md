@@ -5,7 +5,10 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
 - **Status:** `encountered` = named in conversation, not yet owned.
   `demonstrated` = Josh used it deliberately AND can name it — promotion
   requires evidence (a song edit, a quiz answer, an analysis call), noted
-  inline. Quizzes draw from `encountered` terms; passing promotes them.
+  inline. Quizzes draw from ALL terms — `demonstrated` ones are asked for
+  the name only — until a term is answered five sessions in a row, then
+  it retires; a miss resets it (rule + ledger in quizzes.md, 2026-09-07).
+  Passing an `encountered` term with evidence promotes it.
 - **Anchors:** song + bar/beat where the idea audibly happens. Josh's own
   songs give exact anchors. FF anchors marked *(find one)* are left blank
   on purpose — locating them IS the analysis exercise.

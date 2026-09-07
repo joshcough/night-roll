@@ -21,6 +21,35 @@ they live in the analysis docs, and in Josh.
 
 Status marks: `[ ]` not yet asked · `[x]` answered well · `[~]` shaky, re-ask.
 
+### Streak rule (Josh's, 2026-09-07)
+
+Every glossary term is quizzable — `demonstrated` included — until it is
+answered correctly **five sessions in a row**. Then it retires. A miss at
+any point (in a quiz, or in the wild — "compound harmony?" for implied
+harmony, 2026-09-07) resets the streak to zero and the term comes back
+next session. One attempt per term per session; a streak can't be run
+up in one sitting.
+
+- What's tested: `encountered` terms → concept AND name. `demonstrated`
+  terms → the NAME only, against Josh's own anchor ("bar 2 of Threnody,
+  G then D under the held B — what's that called?").
+- Pick order: lowest streak first, then longest since last asked.
+- **Mix per session: about 3 that he should just know, 2 that stretch.**
+  Reason (Josh, 2026-09-07): every quiz so far was hard end to end and
+  took a long time, so he stopped asking for them. Easy ones reinforce
+  what he knows AND make the quiz something he'll sit for. A quiz should
+  take minutes, not a session.
+- The ledger below is the source of truth; the bank sections above are
+  the deeper questions the "stretch" slots draw from.
+
+### Streak ledger
+
+term | streak | last asked | note
+---- | ------ | ---------- | ----
+(all glossary terms start at 0; filled in as they're asked)
+implied harmony | 0 | 2026-09-07 | name missed in the wild ("compound harmony")
+compound melody | 0 | — | encountered 08-23, never named by him
+
 ## From 2026-07-21 (Overworld bass session)
 
 - [ ] Read "V/ii" aloud. What does the slash mean, and which chord is it in G major?
