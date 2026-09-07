@@ -94,6 +94,10 @@
    {
     "title": "Key Change Test (07-26)",
     "path": "albums/compositions/KeyChangeTest-07-26.mid"
+   },
+   {
+    "title": "Test Sad Progression",
+    "path": "albums/compositions/test-sad-progression.mid"
    }
   ]
  },
@@ -321,10 +325,6 @@
    {
     "title": "Graveyard 3",
     "path": "albums/compositions/nightroll/graveyard-3.mid"
-   },
-   {
-    "title": "Test Sad Progression",
-    "path": "albums/compositions/nightroll/test-sad-progression.mid"
    }
   ]
  }
