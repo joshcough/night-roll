@@ -1,8 +1,8 @@
-{ "version": 1, "song": "test-sad-progression", "saved": 1788753559192, "notes": [
+{ "version": 1, "song": "test-sad-progression", "saved": 1788754239537, "notes": [
   {"at":[1,1],"type":"lane","lane":44},
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"key","key":"Cm"},
-  {"at":[1,1],"type":"track","track":"pulse1","voice":"sf-violin"},
   {"at":[1,1],"type":"track","track":"triangle","voice":"sf-cello"},
-  {"at":[1,1],"type":"track","track":"pulse2","voice":"sf-organ2"}
+  {"at":[1,1],"type":"track","track":"pulse2","voice":"sf-organ2"},
+  {"at":[1,1],"type":"track","track":"pulse1","voice":"sf-violin"}
 ] }
