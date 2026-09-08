@@ -1,7 +1,6 @@
-{ "version": 1, "song": "running-with-the-runs", "saved": 1788835855602, "notes": [
+{ "version": 1, "song": "running-with-the-runs", "saved": 1788838097267, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"to":[8,4],"type":"section","label":"Intro Whoa"},
-  {"at":[1,1],"type":"track","track":"pulse1","vol":1.35},
   {"at":[9,1],"to":[16,4.25],"type":"section","label":"Verse"},
   {"at":[17,1],"to":[24,4],"type":"section","label":"Verse"},
   {"at":[25,1],"to":[36,4],"type":"section","label":"Chorus"},
