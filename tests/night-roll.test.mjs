@@ -585,6 +585,26 @@ test("track delete/add are undo steps: delete → ⟲ restores at the same index
   run(`songKey = null; editUndo = []; editRedo = []; trackState = [];`);
 });
 
+test("pencil: a second tap on the same tick+pitch adds nothing (no twins, no undo entry)", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/twin-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}], tracks: [{name: "pulse1", notes: []}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; pencilVel = 80;
+    trackState = [{muted: false, solo: false}];
+  `);
+  const first = val(`placePencilNote({t: 480, pitch: 64, snap: 240})`);
+  assert.equal(first.ni, 0);
+  const again = val(`placePencilNote({t: 480, pitch: 64, snap: 240})`);
+  assert.equal(again.ni, 0); // the existing note, not a new one
+  assert.equal(again.existing, true);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 1);
+  assert.equal(val(`editUndo.length`), 1); // nothing to undo for the second tap
+  run(`song.tracks[0].notes[0].gone = true;`); // an erased note doesn't block the spot
+  assert.equal(val(`placePencilNote({t: 480, pitch: 64, snap: 240})`).ni, 1);
+  run(`songKey = null; editUndo = []; editRedo = [];`);
+});
+
 test("midiStatusLine: names the reason ● hears nothing", () => {
   installSong();
   assert.match(run(`midiStatusLine()`), /no Web MIDI/); // harness navigator has no requestMIDIAccess

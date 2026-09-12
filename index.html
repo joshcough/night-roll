@@ -4300,6 +4300,10 @@ document.addEventListener("touchend", e => {
 
 function placePencilNote(pp) { // deferred pencil: called by the dwell timer or a clean tap
   const tr = song.tracks[selTrack];
+  // a note already at this tick+pitch: tapping it again must not stack a twin
+  // (Josh, 2026-09-12) — hand back the existing one so a drag still stretches it
+  const dup = tr.notes.findIndex(n => !n.gone && n.t === pp.t && n.p === pp.pitch);
+  if (dup >= 0) { previewNote(selTrack, pp.pitch); return {ti: selTrack, ni: dup, t: pp.t, snap: pp.snap, existing: true}; }
   const added = !isComposition();
   tr.notes.push({t: pp.t, d: pp.snap, p: pp.pitch, v: pencilVel, added});
   if (song.rawNotes) song.rawNotes[selTrack].push({t: pp.t + chopS, d: pp.snap, p: pp.pitch, v: pencilVel, added});
@@ -4925,6 +4929,7 @@ function tap(pos) {
     const snap = pencilTicks();
     const t = Math.round(tick / snap) * snap;
     const tr = song.tracks[selTrack];
+    if (tr.notes.some(n => !n.gone && n.t === t && n.p === pitch)) { previewNote(selTrack, pitch); return; } // no twins
     const added = !isComposition(); // in a composition the note IS the song, not an overlay
     tr.notes.push({t, d: snap, p: pitch, v: pencilVel, added});
     if (song.rawNotes) song.rawNotes[selTrack].push({t: t + chopS, d: snap, p: pitch, v: pencilVel, added});
@@ -6939,6 +6944,7 @@ function scorePencil(pos) {
   const t = Math.max(0, Math.round(scorePencilTick(pos.x) / snap) * snap);
   selTrack = st.ti;
   const tr = song.tracks[st.ti];
+  if (tr.notes.some(n => !n.gone && n.t === t && n.p === pitch)) { previewNote(st.ti, pitch); return; } // no twins
   const added = !isComposition();
   tr.notes.push({t, d: snap, p: pitch, v: pencilVel, added});
   if (song.rawNotes) song.rawNotes[st.ti].push({t: t + chopS, d: snap, p: pitch, v: pencilVel, added});
