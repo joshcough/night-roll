@@ -1216,7 +1216,7 @@
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> to change its length, or its <b>left edge</b> to move the start while the end stays put — every selected note adjusts by the same amount, so "play this chord half as long" is one gesture. Notes too small on screen to have edge zones are all move-handle — zoom in to resize them. Keyboard: Option+←→.</dd>
       <dt>Copy</dt><dd>A real copy and a real paste: <b>⧉</b> copies whatever is lasso'd (or tapped), <b>✂</b> cuts (copies to the clipboard AND deletes, one ⟲ restores), <b>📋</b> pastes at the blue cursor — and the copy SURVIVES scrolling, changing selection, even changing tools, so "lasso bar 3, scroll to bar 16, paste" is exactly three gestures. ⌘C fills the same clipboard. Pasting and chord inserts never stack an identical note on an existing one. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → 📋 at each cursor stop. Buttons that can't do anything right now are grayed — no selection grays copy/delete/split/join/⇄, an empty clipboard grays paste, empty histories gray ⟲⟳. With a keyboard there's also Option-drag (drags out an in-place copy) and ⌘C/⌘V.</dd>
-      <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
+      <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. Or <b>type your own</b> in the box above the list — i – VI – VII – V, hyphens or commas or spaces all fine, lowercase for minor chords, ♭/♯ (or b/#) in front, °/7/maj7/6 after — and pick the scale the numerals count against: <b>minor scale</b> makes VI and VII the natural-minor degrees (in E: C and D), <b>major scale</b> reads them the textbook way (C♯ and D♯, so write ♭VI there). A minor key at the cursor pre-selects minor. Full chords land; erase tones to leave the arpeggio you want. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
       <dt>Transpose</dt><dd>Lasso notes → <b>⇅</b> (behind ⋯, or Edit ▾): half/whole-step chromatic buttons, octave jumps (▲/▼ 8va), plus <b>in key ▲/▼</b>: every note moves one SCALE DEGREE of the declared key — the "whole step up that stays in the key," where some notes move 1 and some move 2. Out-of-scale notes slide chromatically; no declared key = chromatic with a warning. For a WHOLE track, open its voice &amp; color menu (tap the selected chip again) — the <b>octave ▼/▲ 8va</b> row shifts every note on that track, one tap per octave, each tap one ⟲ step. "What if the bass lived three octaves up?" is three taps, no lassoing, no muting. Notes at the range edge stay put; the drum track never transposes (kit pitches are instruments, not notes).</dd>
       <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
       <dt>Drum fill (🥁)</dt><dd>Tap <b>🥁</b>: a one-bar step grid for kick, snare, and hat, sized to your meter (8ths or 16ths), pre-seeded with a standard backbeat. Toggle cells, set the range — bar typed, beat and 16th-subdivision (· e &amp; a) picked from dropdowns, pre-filled from the cursor, so drums can enter at bar 2 beat 4 exactly — and Fill: the pattern repeats from that point on the drums track (created automatically if the song has none), skipping hits that already exist. One ⟲ undoes the whole fill; embellish afterwards with the pencil in the kit lane.</dd>
@@ -7780,22 +7780,31 @@ function insertChordAt(tick, rootPc, qual, oct, durQ) {
 // Numeral → chord: major-scale-relative degrees, case = quality, suffix refines
 const NUM_DEG = {I: 0, II: 1, III: 2, IV: 3, V: 4, VI: 5, VII: 6};
 const MAJ_STEP = [0, 2, 4, 5, 7, 9, 11];
-function parseNumeral(tok) {
-  const m = tok.match(/^([♭♯#b]?)(vii|vi|v|iv|iii|ii|i)(°|maj7|7|6)?$/i);
+const MIN_STEP = [0, 2, 3, 5, 7, 8, 10]; // natural minor: unaltered VI/VII sit a half-step lower
+// Numerals read against the major scale unless minorScale: the mood library
+// is written major-relative (♭VI, ♭VII), but a typed minor-key progression
+// says i–VI–VII–V and means Em C D B (Josh, 2026-09-12). Case still sets
+// quality, so V in minor is the major dominant and v the natural one.
+function parseNumeral(tok, minorScale) {
+  const m = tok.match(/^([♭♯#b]?)(vii|vi|v|iv|iii|ii|i)(°|dim|maj7|7|6)?$/i);
   if (!m) return null;
   const acc = (m[1] === "♭" || m[1] === "b") ? -1 : m[1] ? 1 : 0;
   const minor = m[2] === m[2].toLowerCase();
-  const suf = m[3] || "";
+  const suf = (m[3] || "").toLowerCase();
   let qual = minor ? "m" : "maj";
-  if (suf === "°") qual = "dim";
+  if (suf === "°" || suf === "dim") qual = "dim";
   else if (suf === "maj7") qual = "maj7";
   else if (suf === "7") qual = minor ? "m7" : "7";
   else if (suf === "6") qual = minor ? "m6" : "6";
-  return {pcOff: (MAJ_STEP[NUM_DEG[m[2].toUpperCase()]] + acc + 12) % 12, qual};
+  const steps = minorScale ? MIN_STEP : MAJ_STEP;
+  return {pcOff: (steps[NUM_DEG[m[2].toUpperCase()]] + acc + 12) % 12, qual};
 }
-function insertProgressionAt(tick, progStr, tonicPc, oct, durQ) {
+// progStr separators: the library's " – ", or whatever a thumb types
+// (hyphen, comma, arrow, spaces)
+function splitProgression(progStr) { return progStr.split(/[\s–—\-,→>|]+/).filter(Boolean); }
+function insertProgressionAt(tick, progStr, tonicPc, oct, durQ, minorScale) {
   if (!editableSong()) return 0;
-  const chords = progStr.split("–").map(t => parseNumeral(t.trim()));
+  const chords = splitProgression(progStr).map(t => parseNumeral(t, minorScale));
   if (!chords.length || chords.some(c => !c)) return 0;
   const snap = Math.max(1, Math.round(song.ppq * (durQ || pencilDur)));
   let t0 = Math.max(0, Math.round(tick / snap) * snap);
@@ -7868,6 +7877,11 @@ const PROG_LIB = [
       '</select><span class="lbl">duration</span><select id="pgdur">' +
         INS_DURS.map(([lb, q]) => '<option value="' + q + '"' + (q === 1 ? ' selected' : '') + '>' + lb + '</option>').join("") +
       '</select><span class="lbl" style="opacity:.7">tap a progression to insert it at the cursor — one chord per slot</span></div>' +
+    '<div class="row" style="flex-wrap:wrap;gap:6px;padding:0 2px 8px">' +
+      '<span class="lbl">type your own</span>' +
+      '<input type="text" id="pgcustom" placeholder="i – VI – VII – V" style="flex:1;min-width:160px;min-height:40px">' +
+      '<select id="pgmode"><option value="major">major scale</option><option value="minor">minor scale</option></select>' +
+      '<button id="pggo">Insert</button></div>' +
     PROG_LIB.map(([mood, prog, why], i) =>
       '<div class="prow" data-prog="' + i + '"><b>' + mood + '</b><span class="pchords">' + prog + '</span><small>' + why + '</small></div>'
     ).join("");
@@ -7884,12 +7898,33 @@ const PROG_LIB = [
     setInfo(k ? "inserted " + mood + " in " + CHORD_ROOTS[tonicPc].split("/")[0] + " (" + k + " notes) — stretch or move them from here"
               : "couldn't insert — check the octave fits C1..C7");
   });
+  // typed progression: the same insert, numerals read against the chosen
+  // scale (minor pre-selects itself from a minor key at the cursor)
+  const insertCustom = () => {
+    const prog = document.getElementById("pgcustom").value.trim();
+    if (!prog) { setInfo("type a progression first — numerals like i – VI – VII – V"); return; }
+    if (!editableSong()) { setInfo("progressions insert on your own songs — captures are locked"); return; }
+    const minorScale = document.getElementById("pgmode").value === "minor";
+    const bad = splitProgression(prog).filter(t => !parseNumeral(t, minorScale));
+    if (bad.length) { setInfo("couldn't read " + bad.join(", ") + " — use I..VII, lowercase for minor, ♭/♯ or b/# in front, °/7/maj7/6 after"); return; }
+    const tonicPc = +document.getElementById("pgtonic").value;
+    const oct = parseInt(document.getElementById("pgoct").value, 10);
+    chordInsDur = parseFloat(document.getElementById("pgdur").value);
+    document.getElementById("chdur").value = document.getElementById("pgdur").value;
+    const k = insertProgressionAt(playCursor, prog, tonicPc, oct, chordInsDur, minorScale);
+    setInfo(k ? "inserted " + prog + " in " + CHORD_ROOTS[tonicPc].split("/")[0] + (minorScale ? " minor" : "") + " (" + k + " notes) — erase tones to make arpeggios"
+              : "couldn't insert — check the octave fits C1..C7");
+  };
+  document.getElementById("pggo").addEventListener("click", insertCustom);
+  document.getElementById("pgcustom").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); insertCustom(); } });
   // one panel, two homes (Josh: "let's do both") — it reparents into whichever
   // dialog summons it
   const tabC = document.getElementById("chtab-chord"), tabP = document.getElementById("chtab-prog");
   const seedTonic = () => { // declared key at the cursor pre-fills the tonic (override freely)
-    const pc = song ? tonicPcOfName(keyNameAt(playCursor)) : null;
+    const name = song ? keyNameAt(playCursor) : null;
+    const pc = name ? tonicPcOfName(name) : null;
     if (pc !== null) document.getElementById("pgtonic").value = pc;
+    if (name) document.getElementById("pgmode").value = /m$|minor|aeolian|dorian|phrygian/i.test(name) ? "minor" : "major";
   };
   const setTab = prog => {
     if (prog) { document.getElementById("chprogslot").appendChild(panel); seedTonic(); }

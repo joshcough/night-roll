@@ -750,7 +750,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Fall", "💬", "Chop", "Loop points", "Sections", "Chords",
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
-    "Share a song", "link preview",
+    "Share a song", "link preview", "type your own", "minor scale",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
@@ -1013,6 +1013,23 @@ test("insert progression: numerals resolve, chords land in slots, one undo", () 
   // one undo removes the whole second progression
   run(`editUndoPop()`);
   assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 12);
+  // typed minor-key progression (Josh, 2026-09-12): hyphens, no ♭ — in E minor
+  // with the minor scale, i–VI–VII–V is Em C D B; the same string read against
+  // the major scale would give C♯ and D♯
+  run(`playCursor = 0; song.tracks[0].notes = [];`);
+  assert.equal(run(`insertProgressionAt(0, "i-VI-VII-V", 4, 4, 0.5, true)`), 12);
+  assert.deepEqual(val(`song.tracks[0].notes.map(n => n.p % 12)`), [
+    4, 7, 11,   // Em
+    0, 4, 7,    // C
+    2, 6, 9,    // D
+    11, 3, 6,   // B major — uppercase V keeps the leading tone
+  ]);
+  run(`song.tracks[0].notes = [];`);
+  assert.equal(run(`insertProgressionAt(0, "i, VI VII → V", 4, 4, 0.5, false)`), 12);
+  assert.deepEqual(val(`song.tracks[0].notes.slice(3, 9).map(n => n.p % 12)`), [1, 5, 8, 3, 7, 10]); // C♯, D♯ major-relative
+  assert.deepEqual(val(`splitProgression("i – ♭VI – ♭III – ♭VII")`), ["i", "♭VI", "♭III", "♭VII"]);
+  assert.equal(run(`insertProgressionAt(0, "i - VIII", 4, 4, 0.5, true)`), 0); // one bad numeral: nothing inserted
+  run(`song.tracks[0].notes = []; editUndo = [];`);
   // explicit duration overrides the pencil: half-note chords
   run(`playCursor = 0;`);
   assert.equal(run(`insertChordAt(0, 0, "maj", 4, 2)`), 3);
