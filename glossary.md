@@ -117,6 +117,13 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   Anchor: graveyard pulse1 6–9 — a 16:1 range of note length in four
   bars (whole note to six sixteenths). FF: *(find one)*.
 
+- **Density ramp (rhythmic acceleration)** — attacks get closer together
+  bar by bar while tempo and pitch hold still; the ear hears speeding up
+  and arrival without either. — `encountered` 2026-09-12. Anchor:
+  Ambush intro, bars 1–4, both pulses on one pitch in octaves: hits on
+  1 | 1 | 1 3 | 1 2 3 4 over the gallop. FF: *(find one — battle
+  intros are the place to look)*.
+
 ## Melody & motive
 
 - **Pedal tone** — a note held (or restruck) while harmony moves under
