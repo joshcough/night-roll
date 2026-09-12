@@ -1148,7 +1148,7 @@
       <dt>💬 Feature request</dt><dd>Hidden unless the page is opened with <code>?dev=1</code> — a normal visitor never sees the menu item and the app never opens the reply connection. With the flag on, File → Feature request… opens a box that sends to the app's dev channel — requests and bug reports from inside the app, auto-tagged with the open song and playhead position, with a 🎤 Speak button: open, talk, Send. Replies stream back as 🛰 lines in the info strip AND light a gold 🛰 badge in the footer (like the ⚠ error button) that stays lit until you tap and read, with a Reply button in the list. The whole two-way history — your requests and the replies, timestamped — persists on this device: 🕘 History in the request sheet (or tap the 🛰 badge) shows it newest-first; Clear wipes it. Powered by two private ntfy topics set once in File → Settings (device-only — the public repo never contains them; without them the feature is inert). The topic names are the password: keep them secret.</dd>
       <dt>⊞ Insert bars</dt><dd>Edit ▾ → Insert bars… opens a gap anywhere in the song: pick the spot (bar + beat, decimals fine), how much (a count of <b>bars</b>, <b>beats</b>, or <b>16ths</b>), and Insert. Everything from that point onward — notes, sections, chords, keys, the loop point — slides right together. A section that starts before the point and is still open there STRETCHES to span the gap; one that ends exactly at the point stays put (stretch it yourself if you want it covering the new bars). One ⟲ undoes the whole thing.</dd>
       <dt>Space</dt><dd>Play / stop, Logic-style — anywhere except while typing in a text field. With a hardware keyboard on iPad too.</dd>
-      <dt>▦ Grid</dt><dd>Notes move and resize on a 16th grid, or on triplet steps while a <b>T</b> duration is active — and the duration chips stay visible in <b>Select</b>, where they are that move grid, so changing it never means a trip through Pencil. Touching a note <b>picks up its grid</b> automatically: grab a triplet note and moves go in triplet steps, grab a straight one and they go in 16ths; tap a chip afterwards to override. View ▾ → <b>Grid…</b> opens a sheet: tap a number of <b>lines per bar</b> (say 10) and the roll redraws instantly with that many lines in each bar — and pencil entry, note drags and resizes all SNAP to those lines. Pure view-and-snap aid: no note moves, no annotation changes, the time signature stays what it is. This is how a figure the duration buttons can't spell — ten even notes across a 4/4 bar, each 0.4 beats — becomes pencil-drag from line to line; with a grid armed, a pencil tap lays down one cell. Set the <b>anchor</b> right in the sheet — bar and beat, and the beat takes decimals for sub-beat starts (2.5 = the "and" of 2, 2.25 = the second sixteenth) — and the lines run from there (14.2, say), so a figure beginning mid-bar gets its lines exactly where its notes go, continuing bar after bar on that phase across the whole song. Bar lines stay drawn for orientation but stop being snap targets while the grid is armed; a bar line falling between cells is expected, not a bug. <b>Off</b> returns to the meter's own grid (16ths, or triplet steps while a T duration is armed). Transient by design: set it, enter the passage, set it back.</dd>
+      <dt>▦ Grid</dt><dd>Notes move and resize on a 16th grid, or on triplet steps while a <b>T</b> duration is active — and the duration chips stay visible in <b>Select</b>, where they are that move grid, so changing it never means a trip through Pencil. Touching a note <b>picks up its grid</b> automatically: grab a triplet note and moves go in triplet steps, grab a straight one and they go in 16ths; tap a chip afterwards to override. View ▾ → <b>Grid…</b> opens a sheet: tap a number of <b>lines per bar</b> (say 10) and the roll redraws instantly with that many lines in each bar — and pencil entry, note drags and resizes all SNAP to those lines. Pure view-and-snap aid: no note moves, no annotation changes, the time signature stays what it is. This is how a figure the duration buttons can't spell — ten even notes across a 4/4 bar, each 0.4 beats — becomes pencil-drag from line to line; with a grid armed, a pencil tap lays down one cell — in the roll, the fall view and the score alike — so 6 lines per bar pencils quarter-note triplets and 12 pencils eighth triplets without touching the duration chips (they dim while a grid rules). Set the <b>anchor</b> right in the sheet — bar and beat, and the beat takes decimals for sub-beat starts (2.5 = the "and" of 2, 2.25 = the second sixteenth) — and the lines run from there (14.2, say), so a figure beginning mid-bar gets its lines exactly where its notes go, continuing bar after bar on that phase across the whole song. Bar lines stay drawn for orientation but stop being snap targets while the grid is armed; a bar line falling between cells is expected, not a bug. <b>Off</b> returns to the meter's own grid (16ths, or triplet steps while a T duration is armed). Transient by design: set it, enter the passage, set it back.</dd>
       <dt>📻 Listener mode</dt><dd>Phones open as a PLAYER: the roll, ⏮ ▶, the readouts, speed and volume — everything else hidden, including the section/chord bands and the notes strip (unreadably small on a phone anyway), because a shared song link is for listening, not editing. A <b>Full app</b> button in the header brings the whole DAW back on that device (and View ▾ → Listener mode folds it away again, on any device). Send someone a ?song= link and their phone just… plays it.</dd>
       <dt>View ▾ menu</dt><dd>Beside Edit in the header (always there, even on locked songs) — one place for every hide/show: 𝄞 Score view, ◂ Tracks, 🛠 Edit toolbar, ▦ Bottom bar, 🎹 Instrument panel, 💬 Notes strip, and ▸ Section levels with −/+ steppers (shows "2 of 3"; the gutter chevron still one-tap cycles). ✓ means visible; the menu STAYS OPEN while you flip several at once, and closes on a tap anywhere else. Every item mirrors an existing button — the buttons are the fast path, the menu is the findable one. The header itself never hides, so View ▾ is always the way back; hiding the bottom bar floats the ▴ restore button bottom-left (one tap brings everything back). The old ▾ hide buttons are gone — hiding lives here now.</dd>
       <dt>Speed &amp; volume buttons</dt><dd>The speed slider folded into a <b>percentage button</b> — tap to open the slider, tap anywhere else and it folds back (the reset chip appears when off-native). Beside it, <b>🔊</b> is a master volume the same way: tap, slide (10–200%), tap away; the setting sticks per device and the button shows the number when it's not 100%.</dd>
@@ -1875,6 +1875,14 @@ function snapTickAbs(tick) { // nearest grid LINE, honoring a custom grid's anch
   if (!gridDiv) return Math.max(0, Math.round(tick / g) * g);
   const cell = barTicks() / gridDiv, a = gridAnchorTick();
   return Math.max(0, Math.round(a + Math.round((tick - a) / cell) * cell));
+}
+// Pencil placement off the roll (fall view, score): under a custom grid a tap
+// is one CELL — 6/bar gives quarter triplets, 12/bar eighth triplets — the
+// same rule the roll pencil already followed (Josh, 2026-09-12)
+function pencilCellAt(tick) {
+  if (gridDiv) return {t: gridCellStart(tick), snap: moveSnapTicks()};
+  const snap = pencilTicks();
+  return {t: Math.max(0, Math.round(tick / snap) * snap), snap};
 }
 function gridCellStart(tick) { // pencil cell floor — one continuous phase from
   // the anchor, so cells never drift whatever the division
@@ -4928,8 +4936,7 @@ function tap(pos) {
   if (mode === "pencil") { // reached only where pencil-drag isn't wired (fall view)
     const {tick, pitch} = posToTickPitch(pos);
     if (pitch < PMIN || pitch > PMAX || tick < 0) return;
-    const snap = pencilTicks();
-    const t = Math.round(tick / snap) * snap;
+    const {t, snap} = pencilCellAt(tick);
     const tr = song.tracks[selTrack];
     if (tr.notes.some(n => !n.gone && n.t === t && n.p === pitch)) { previewNote(selTrack, pitch); return; } // no twins
     const added = !isComposition(); // in a composition the note IS the song, not an overlay
@@ -6942,8 +6949,7 @@ function scorePencil(pos) {
     : +pencilAcc;
   const pitch = (octave + 1) * 12 + LETTER_PC[letter] + acc;
   if (pitch < 0 || pitch > 127) return;
-  const snap = pencilTicks();
-  const t = Math.max(0, Math.round(scorePencilTick(pos.x) / snap) * snap);
+  const {t, snap} = pencilCellAt(scorePencilTick(pos.x));
   selTrack = st.ti;
   const tr = song.tracks[st.ti];
   if (tr.notes.some(n => !n.gone && n.t === t && n.p === pitch)) { previewNote(st.ti, pitch); return; } // no twins
@@ -8671,6 +8677,9 @@ document.getElementById("durseg").addEventListener("click", e => {
 });
 function syncDurSeg() {
   if (typeof document.querySelectorAll !== "function") return; // vm harness
+  const seg = document.getElementById("durseg"); // a custom grid outranks the chips: say so
+  seg.style.opacity = gridDiv ? "0.45" : "";
+  seg.title = gridDiv ? "custom grid " + gridDiv + "/bar rules — pencil taps and moves use its cells (View → Grid… → Off to return)" : "";
   for (const x of document.querySelectorAll("#durseg button"))
     x.classList.toggle("active", x.dataset.nv ? +x.dataset.nv === pencilNV
                                               : parseFloat(x.dataset.mod) === pencilMod);
@@ -10058,7 +10067,7 @@ function openGridSheet() {
     b.className = "chip" + (gridDiv === n ? " selected" : "");
     b.style.cssText = "min-width:52px;min-height:44px;font-size:17px;justify-content:center" +
       (gridDiv === n ? ";background:var(--gold);color:#111;font-weight:700" : "");
-    b.addEventListener("click", () => { gridDiv = n; draw(); openGridSheet(); });
+    b.addEventListener("click", () => { gridDiv = n; syncDurSeg(); draw(); openGridSheet(); });
     row.appendChild(b);
   }
   const ab = document.getElementById("gridab"), aq = document.getElementById("gridaq");
@@ -10078,7 +10087,7 @@ for (const id of ["gridab", "gridaq"]) document.getElementById(id).addEventListe
   if (gridDiv) an.textContent = "Lines run from " + b + "." + q + ", every 1/" + gridDiv +
     " of a bar, across the whole song. Bar lines stay visible but don't snap.";
 });
-document.getElementById("gridoff").addEventListener("click", () => { gridDiv = null; draw(); openGridSheet(); });
+document.getElementById("gridoff").addEventListener("click", () => { gridDiv = null; syncDurSeg(); draw(); openGridSheet(); });
 document.getElementById("gridclose").addEventListener("click", () => {
   document.getElementById("gridsheet").classList.remove("on");
   setInfo(gridDiv ? "grid: " + gridDiv + " lines/bar — View ▾ → Grid to change" : "grid off");
