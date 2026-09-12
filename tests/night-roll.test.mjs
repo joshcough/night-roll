@@ -542,6 +542,20 @@ test("document title names the song first: '<Song> · Night Roll', bare app othe
   assert.equal(val(`document.title`), "Night Roll");
 });
 
+test("midiStatusLine: names the reason ● hears nothing", () => {
+  installSong();
+  assert.match(run(`midiStatusLine()`), /no Web MIDI/); // harness navigator has no requestMIDIAccess
+  run(`navigator.requestMIDIAccess = () => Promise.resolve(); midiErr = new Error("Permission denied");`);
+  assert.match(run(`midiStatusLine()`), /MIDI blocked: Permission denied/);
+  run(`midiErr = null; midiAccess = null;`);
+  assert.match(run(`midiStatusLine()`), /not ready/);
+  run(`midiAccess = {inputs: new Map()};`);
+  assert.match(run(`midiStatusLine()`), /no MIDI inputs found/);
+  run(`midiAccess = {inputs: new Map([["a", {name: "MPK mini 3", state: "connected"}]])};`);
+  assert.match(run(`midiStatusLine()`), /MIDI in: MPK mini 3 — play/);
+  run(`midiAccess = null; delete navigator.requestMIDIAccess;`);
+});
+
 test("composition helpers: slugify, isComposition gate, draft store round-trip", () => {
   installSong();
   assert.equal(run(`slugify("  My New Song! ")`), "my-new-song");
@@ -750,7 +764,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Fall", "💬", "Chop", "Loop points", "Sections", "Chords",
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
-    "Share a song", "link preview", "type your own", "minor scale",
+    "Share a song", "link preview", "type your own", "minor scale", "no MIDI inputs found", "MIDI blocked",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",

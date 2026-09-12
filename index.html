@@ -1209,7 +1209,7 @@
     <div class="hsec" data-hsec="editor">
     <dl>
       <dt>Edit row</dt><dd>On your own songs (never on captures) a dedicated row appears above the footer: Select / Pencil / Erase (tap the active tool again to turn it OFF — then dragging only pans, and no note can be grabbed by accident), durations 32nd–whole incl. dotted, plus 16· (dotted 16th) and 8T/16T triplets — picking a triplet also switches the snap grid to triplet steps, and the grid only goes 32nd-fine when the song actually CONTAINS 32nds — to add the first one, pencil it on the beat (the grid upgrades the moment it exists) and drag it where it belongs (Logic's grid-division trick: your 4/4 stays 4/4, entry just lands on thirds until you pick a straight duration again), p/mf/f velocity, the ♮♯♭ accidental segment in score view, and ⟲ undo.</dd>
-      <dt>● Record</dt><dd>On your own songs: tap the chip of the track you want to record onto, then ● beside Play arms the take — the 🎹 panel opens, ● blinks red, the transport rolls (count-in applies), and every key you play lands on that track at the playhead — hold a key for a long note, slide across keys for runs — or play a REAL MIDI device (a Jamstik, a keyboard): the browser's MIDI input records with your actual velocities, chords included (Chrome/Edge on the computer; Safari/iPad has no Web MIDI). Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step.</dd>
+      <dt>● Record</dt><dd>On your own songs: tap the chip of the track you want to record onto, then ● beside Play arms the take — the 🎹 panel opens, ● blinks red, the transport rolls (count-in applies), and every key you play lands on that track at the playhead — hold a key for a long note, slide across keys for runs — or play a REAL MIDI device (a Jamstik, a keyboard): the browser's MIDI input records with your actual velocities, chords included (Chrome/Edge on the computer; Safari/iPad has no Web MIDI). Starts and durations snap to the move grid (16ths, or triplet steps with a T duration active). ● again or ■ stops; the whole take is one ⟲ step. ● also says what it sees in the status line: your MIDI inputs by name; <b>no MIDI inputs found</b> when nothing is plugged in or the browser can't see it (Chrome lists what it sees at chrome://settings/content/midiDevices); <b>MIDI blocked</b> when the permission prompt was dismissed — allow it from the icon in the address bar and reload; or <b>no Web MIDI</b> on Safari.</dd>
       <dt>Pencil drag</dt><dd>In Pencil mode, tap places one grid-unit of note — or <b>keep dragging</b> and the note stretches under your finger, snapped to the duration grid. The duration picker is <b>note value × modifier</b>: pick 1/2/4/8/16/32 (whole through 32nd), then — (plain), · (dotted), or T (triplet) — every duration a staff can write, two taps. A tap lands the note in the CELL you touch: press anywhere in a gap and the note starts at that gap's gridline, no edge-hunting.</dd>
       <dt>Drum chart (score view)</dt><dd>The kit renders as a real percussion staff at the BOTTOM of the score: percussion clef, positions are roles not pitches (kick in the bottom space, snare in the third, toms by size, hats above the top line), x-noteheads for hats and cymbals, stems up for hands and down for feet. Read-only for now — kit entry lives in the roll's drum lane; lasso and tap work on the chart like anywhere else.</dd>
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
@@ -9020,11 +9020,24 @@ function recFinish() { // called from stop(): close pendings, commit the take
 // velocities, chords included. Notes PREVIEW through the selected track's
 // voice any time MIDI is connected; while ● is armed they also record.
 // Chrome/Edge only (Safari has no Web MIDI — so desktop, not the iPad).
-let midiReady = false;
+let midiReady = false, midiAccess = null, midiErr = null;
+// What ● can tell you about MIDI right now — the old path swallowed every
+// failure, so a blocked permission, Safari, or an unplugged device all
+// looked identical: nothing (Josh's MPK Mini, 2026-09-12)
+function midiStatusLine() {
+  if (typeof navigator === "undefined" || !navigator.requestMIDIAccess)
+    return "this browser has no Web MIDI (Safari) — use Chrome or Edge on the computer";
+  if (midiErr) return "MIDI blocked: " + (midiErr.message || midiErr) + " — allow MIDI for this site from the icon in the address bar, then reload";
+  if (!midiAccess) return "MIDI not ready yet — tap anywhere once, then try ●";
+  const names = [...midiAccess.inputs.values()].map(i => i.name + (i.state === "connected" ? "" : " (" + i.state + ")"));
+  return names.length ? "MIDI in: " + names.join(", ") + " — play, and ● records it"
+                      : "no MIDI inputs found — plug the device in (or check chrome://settings/content/midiDevices)";
+}
 function initWebMidi() {
   if (midiReady || !navigator.requestMIDIAccess) return;
   midiReady = true;
   navigator.requestMIDIAccess({sysex: false}).then(access => {
+    midiAccess = access;
     const hook = input => input.addEventListener("midimessage", e => {
       const [st, note, vel] = e.data;
       const cmd = st & 0xf0;
@@ -9043,8 +9056,8 @@ function initWebMidi() {
       setInfo("MIDI " + e.port.state + ": " + e.port.name);
     });
     const names = [...access.inputs.values()].map(i => i.name);
-    if (names.length) setInfo("MIDI in: " + names.join(", ") + " — play, and ● records it");
-  }).catch(() => {});
+    if (names.length || recording) setInfo(midiStatusLine()); // silence at first tap unless there's a device or ● is waiting
+  }).catch(err => { midiErr = err; midiReady = false; setInfo(midiStatusLine()); }); // retry on the next tap
 }
 document.addEventListener("pointerdown", function midiWarm() {
   document.removeEventListener("pointerdown", midiWarm);
@@ -9058,7 +9071,7 @@ document.getElementById("recbtn").addEventListener("click", async () => {
   recTake = [];
   document.getElementById("recbtn").classList.add("rec");
   initWebMidi();
-  setInfo("recording onto " + (song.tracks[selTrack].name || "track") + " — play the 🎹 keys or a MIDI device; ● or ■ stops");
+  setInfo("recording onto " + (song.tracks[selTrack].name || "track") + " — 🎹 keys or MIDI; ● or ■ stops · " + midiStatusLine());
   await play(playCursor > 0 ? tickToSec(song, playCursor) : 0);
   if (!recording && playing) stop(); // ● was released while play() was still waking the audio context
 });
