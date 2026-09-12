@@ -605,6 +605,25 @@ test("pencil: a second tap on the same tick+pitch adds nothing (no twins, no und
   run(`songKey = null; editUndo = []; editRedo = [];`);
 });
 
+test("gridFollowNote: the move grid follows the note you touch", () => {
+  installSong();
+  run(`song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}], tracks: [{name: "pulse1", notes: []}]};
+       gridDiv = null; pencilNV = 8; pencilMod = 1; pencilDur = 0.5;`);
+  assert.equal(val(`moveSnapTicks()`), 120); // 16ths with a straight duration
+  assert.equal(val(`gridFollowNote({t: 160, d: 160})`), true); // triplet-8th position + length
+  assert.equal(val(`pencilDur`), 1 / 3);
+  assert.equal(val(`moveSnapTicks()`), 160);
+  assert.equal(val(`gridFollowNote({t: 480, d: 160})`), false); // on the beat but triplet-long: stays triplet
+  assert.equal(val(`gridFollowNote({t: 480, d: 240})`), true); // straight note: back to 16ths
+  assert.equal(val(`pencilDur`), 0.25);
+  assert.equal(val(`moveSnapTicks()`), 120);
+  assert.equal(val(`gridFollowNote({t: 80, d: 80})`), true); // triplet 16th
+  assert.equal(val(`pencilDur`), 1 / 6);
+  run(`gridDiv = 10;`);
+  assert.equal(val(`gridFollowNote({t: 480, d: 240})`), false); // a custom grid outranks the note
+  run(`gridDiv = null; pencilNV = 8; pencilMod = 1; pencilDur = 0.5;`);
+});
+
 test("midiStatusLine: names the reason ● hears nothing", () => {
   installSong();
   assert.match(run(`midiStatusLine()`), /no Web MIDI/); // harness navigator has no requestMIDIAccess
@@ -828,7 +847,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
     "Share a song", "link preview", "type your own", "minor scale", "no MIDI inputs found", "MIDI blocked",
-    "⌘Z", "Delete track is one ⟲ away", "chains straight on",
+    "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
