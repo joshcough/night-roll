@@ -105,6 +105,10 @@
   "title": "Night Roll Sketches",
   "songs": [
    {
+    "title": "Ambush",
+    "path": "albums/compositions/nightroll/ambush.mid"
+   },
+   {
     "title": "Cool Bmaj Progression",
     "path": "albums/compositions/nightroll/cool-bmaj-progression.mid"
    },
