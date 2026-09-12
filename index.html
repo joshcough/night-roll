@@ -7935,6 +7935,9 @@ const PROG_LIB = [
   };
   tabC.addEventListener("click", () => setTab(false));
   tabP.addEventListener("click", () => setTab(true));
+  // reopening the dialog re-reads the key too: Josh set a key with the
+  // dialog already on the Progression tab and it kept the stale scale
+  document.getElementById("insbtn").addEventListener("click", () => { if (editableSong()) seedTonic(); });
   const cofBtn = document.getElementById("cofprogbtn");
   cofBtn.addEventListener("click", () => {
     const showing = panel.parentElement.id === "cofprogslot" && panel.style.display !== "none";
