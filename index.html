@@ -3783,11 +3783,10 @@ function ridealongChordBands(pre, post) { // Phase 1 (open-items plan): a rigid
       }
     }
     if (!any || !covered) continue;
-    const bt = barTicks(), qt = beatTicks();
     const ns = band.start + dT, ne = band.end + dT;
     if (ns < 0) continue;
-    band.b1 = Math.floor(ns / bt) + 1; band.q1 = snapBeat((ns % bt) / qt + 1);
-    band.b2 = Math.floor((ne - 1) / bt) + 1; band.q2 = snapBeat((((ne - 1) % bt)) / qt + 1);
+    setAnchorBQ(band, ns);
+    setEndBQ(band, ne); // same inclusive-beat convention as the editor — the old last-tick math grew a beat per move
     if (dP !== 0) band.text = transposeChordLabel(band.text, dP);
     band.added = true; // the change must persist and sync
     changed = true;
@@ -7694,10 +7693,11 @@ function chordSym(rootPc, qual) { // flat-preferring: ♭VI in Cm is A♭, not G
   return CHORD_FLAT[rootPc] + (qual === "maj" ? "" : qual);
 }
 function stampChordBand(tick, durTicks, sym) { // the matching ruler annotation
-  const bt = barTicks(), qt = beatTicks(), end = tick + durTicks - 1;
-  const fresh = {b1: Math.floor(tick / bt) + 1, q1: snapBeat((tick % bt) / qt + 1),
-                 b2: Math.floor(end / bt) + 1, q2: snapBeat((end % bt) / qt + 1),
-                 text: sym, chord: true, added: true};
+  // end via setEndBQ (inclusive last beat): deriving it from the last tick
+  // rounded every band up a beat, so bar-long chords overlapped (Josh, 2026-09-12)
+  const fresh = {text: sym, chord: true, added: true};
+  setAnchorBQ(fresh, tick);
+  setEndBQ(fresh, tick + durTicks);
   dropSupersededBy(fresh); // one band per span, same as the dialog path
   rollnotes.push(resolveNote(fresh));
 }

@@ -1053,6 +1053,12 @@ test("insert progression: numerals resolve, chords land in slots, one undo", () 
   assert.deepEqual(val(`song.tracks[0].notes.slice(3, 9).map(n => n.p % 12)`), [1, 5, 8, 3, 7, 10]); // C♯, D♯ major-relative
   assert.deepEqual(val(`splitProgression("i – ♭VI – ♭III – ♭VII")`), ["i", "♭VI", "♭III", "♭VII"]);
   assert.equal(run(`insertProgressionAt(0, "i - VIII", 4, 4, 0.5, true)`), 0); // one bad numeral: nothing inserted
+  // bar-long chords get bar-long bands, end to end, no overlap (Josh, 2026-09-12:
+  // each band came out a quarter note long and they overlapped)
+  run(`song.tracks[0].notes = []; rollnotes = []; editUndo = []; playCursor = 0;`);
+  assert.equal(run(`insertProgressionAt(0, "i-VI-VII-V", 4, 4, 4, true)`), 12);
+  assert.deepEqual(val(`rollnotes.filter(n => n.chord).map(b => [b.b1, b.q1, b.b2, b.q2, b.start, b.end])`), [
+    [1, 1, 1, 4, 0, 1920], [2, 1, 2, 4, 1920, 3840], [3, 1, 3, 4, 3840, 5760], [4, 1, 4, 4, 5760, 7680]]);
   run(`song.tracks[0].notes = []; editUndo = [];`);
   // explicit duration overrides the pencil: half-note chords
   run(`playCursor = 0;`);
@@ -1238,6 +1244,9 @@ test("chord bands ride rigid moves; stale flag when notes stop matching", () => 
   assert.equal(band.text, "D");
   assert.equal(band.b1, 1);
   assert.equal(band.q1, 2);
+  // the band keeps its two-beat length: [1.1–1.2] slid one beat is [1.2–1.3]
+  // (the last-tick math used to grow it a beat per move)
+  assert.deepEqual(val(`(() => { const b = rollnotes.find(n => n.chord); return [b.b2, b.q2, b.end]; })()`), [1, 3, 1440]);
   // now move ONE note out from under the band: no ride — and no unsolicited
   // flag either (label review is on-demand only; Josh's rule)
   run(`multiSel = [{ti: 0, ni: 1}]; multiSelKey = new Set(["0:1"]);`);
