@@ -1009,10 +1009,20 @@ test("insert progression: numerals resolve, chords land in slots, one undo", () 
   assert.equal(val(`playCursor`), 960);
   assert.equal(val(`multiSel.length`), 12);
   // sevenths + diminished parse: "Imaj7 – vi7 – ♯iv°" in C
+  const bands = () => val(`rollnotes.filter(n => n.chord || /^chord:/i.test(n.text)).length`);
+  const b0 = bands();
   assert.equal(run(`insertProgressionAt(playCursor, "Imaj7 – vi7 – ♯iv°", 0, 4)`), 11);
-  // one undo removes the whole second progression
+  // one undo removes the whole second progression — notes AND its ruler bands
+  // (Josh, 2026-09-12: undo took the notes and left the annotations)
+  assert.equal(bands(), b0 + 3); // one band per chord
   run(`editUndoPop()`);
   assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 12);
+  assert.equal(bands(), b0);
+  run(`editRedoPop()`);
+  assert.equal(bands(), b0 + 3);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 23);
+  run(`editUndoPop()`);
+  assert.equal(bands(), b0);
   // typed minor-key progression (Josh, 2026-09-12): hyphens, no ♭ — in E minor
   // with the minor scale, i–VI–VII–V is Em C D B; the same string read against
   // the major scale would give C♯ and D♯
@@ -1035,6 +1045,9 @@ test("insert progression: numerals resolve, chords land in slots, one undo", () 
   assert.equal(run(`insertChordAt(0, 0, "maj", 4, 2)`), 3);
   assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).slice(-1)[0].d`), 960);
   assert.equal(val(`playCursor`), 960);
+  const b1 = bands();
+  run(`editUndoPop()`); // single chord: its band goes too
+  assert.equal(bands(), b1 - 1);
   run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = [];`);
 });
 
