@@ -1228,7 +1228,7 @@
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
       <dt>Divide (➗)</dt><dd>Select notes, tap <b>➗</b>, pick N (2–7): each note becomes N equal notes — pitch, velocity, and total span unchanged. This is how triplets happen: 3 on a half note = quarter-note triplets (the 1 · 1.667 · 2.333 placement no grid offers), 3 on a quarter = eighth triplets, 6 on a held two-beat note = a run of six. The pieces are free notes — drag them anywhere after.</dd>
-      <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete, divide — is exactly one ⟲ step.</dd>
+      <dt>Undo</dt><dd>Every gesture above — move, resize, copy, paste, delete, divide — is exactly one ⟲ step. Keyboard: <b>⌘Z</b> undoes, <b>⇧⌘Z</b> (or ⌘Y) redoes, when you're not typing in a box. Everything that adds or removes notes is one step — pencil, erase, paste, split, join, chord and progression inserts (bands included), a recorded take, Drummer and Bassist takes — and so is adding or deleting a track: ✕ Delete track is one ⟲ away, and a kit or bass track a generator created leaves with its take.</dd>
     </dl>
     </div>
     <div class="hsec" data-hsec="files">
@@ -2844,10 +2844,8 @@ function renderTrackbar() {
     add.setAttribute("aria-label", "Add track");
     add.title = "Add track";
     add.addEventListener("click", () => {
-      song.tracks.push({name: "voice" + (song.tracks.length + 1), notes: []});
-      if (song.rawNotes) song.rawNotes.push([]);
-      trackState.push({muted: false, solo: false});
-      selTrack = song.tracks.length - 1;
+      selTrack = addTrackUndoable({name: "voice" + (song.tracks.length + 1), notes: []});
+      pushUndo({kind: "trackRemove", ti: selTrack});
       trackExpand = true; // the new chip may land in the overflow rows — show it (Josh's iPad)
       saveDraft();
       renderTrackbar(); buildScoreModel(); updateTrackGains(); draw();
@@ -2861,10 +2859,8 @@ function renderTrackbar() {
       drums.setAttribute("aria-label", "Add drum track");
       drums.title = "Add drum track";
       drums.addEventListener("click", () => {
-        song.tracks.push({name: "drums", notes: []});
-        if (song.rawNotes) song.rawNotes.push([]);
-        trackState.push({muted: false, solo: false});
-        selTrack = song.tracks.length - 1;
+        selTrack = addTrackUndoable({name: "drums", notes: []});
+        pushUndo({kind: "trackRemove", ti: selTrack});
         trackExpand = true; // ditto: never hide the track just added
         saveDraft();
         renderTrackbar(); buildScoreModel(); updateTrackGains(); draw();
@@ -5770,17 +5766,17 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
     let armed = false;
     del.addEventListener("click", () => {
       if (!armed) { armed = true; del.textContent = "✕ Really delete " + (tr.name || "track") + "? Tap again"; return; }
+      pushUndo({kind: "trackInsert", ti, track: song.tracks[ti], raw: song.rawNotes ? song.rawNotes[ti] : null, state: trackState[ti]});
       song.tracks.splice(ti, 1);
       if (song.rawNotes) song.rawNotes.splice(ti, 1);
       trackState.splice(ti, 1);
       selTrack = Math.max(0, Math.min(selTrack, song.tracks.length - 1));
       multiSel = []; multiSelKey = new Set(); selNote = null;
-      editUndo = []; // undo entries hold track indexes — stale ones would corrupt
       menu.classList.remove("on");
       saveDraft();
       renderTrackbar(); buildScoreModel(); updateTrackGains(); computeSongEnd(); draw();
       requestAnimationFrame(renderTrackbar); // second pass: chip wrap settles (iPad left ＋ stranded on row 2)
-      setInfo("track deleted (undo history cleared — Save is what makes it permanent)");
+      setInfo("track deleted — one ⟲ (⌘Z) brings it back; Save is what makes it permanent");
     });
     menu.appendChild(del);
   }
@@ -11285,11 +11281,9 @@ document.getElementById("drumfillbtn").addEventListener("click", () => {
 });
 document.getElementById("dpfill").addEventListener("click", () => {
   let di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
-  if (di < 0) { // no kit yet: create one
-    song.tracks.push({name: "drums", notes: []});
-    if (song.rawNotes) song.rawNotes.push([]);
-    trackState.push({muted: false, solo: false});
-    di = song.tracks.length - 1;
+  const madeTrack = di < 0, undoLen = editUndo.length;
+  if (madeTrack) { // no kit yet: create one
+    di = addTrackUndoable({name: "drums", notes: []});
     saveDraft(); // the chip path saves; this path silently lost the track on reload
     renderTrackbar();
   }
@@ -11316,6 +11310,7 @@ document.getElementById("dpfill").addEventListener("click", () => {
   }
   if (added.length) {
     pushUndo({kind: "addBatch", items: added});
+  if (madeTrack) undoTrackAdd(di, undoLen); // the new kit leaves with its fill
     saveEdits();
     computeSongEnd();
     if (viewMode === "score") buildScoreModel();
@@ -11498,11 +11493,9 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
     return 0;
   }
   let di = song.tracks.findIndex((_, ti) => trackIsDrums(ti));
-  if (di < 0) {
-    song.tracks.push({name: "drums", notes: []});
-    if (song.rawNotes) song.rawNotes.push([]);
-    trackState.push({muted: false, solo: false});
-    di = song.tracks.length - 1;
+  const madeTrack = di < 0, undoLen = editUndo.length;
+  if (madeTrack) {
+    di = addTrackUndoable({name: "drums", notes: []});
     saveDraft();
     renderTrackbar();
   }
@@ -11693,6 +11686,7 @@ function drGenerate(seed, energyOrOpts, fromBar, toBar, t0Override, t1Override, 
     added.push({ti: di, ni: tr.notes.length - 1});
   }
   pushUndo({kind: "group", entries: [{kind: "eraseBatch", items: erased}, {kind: "addBatch", items: added}]});
+  if (madeTrack) undoTrackAdd(di, undoLen); // a kit the Drummer made leaves with its take
   saveEdits();
   computeSongEnd();
   if (viewMode === "score") buildScoreModel();
@@ -12152,11 +12146,9 @@ document.getElementById("bassistbtn").addEventListener("click", openBassist);
 document.getElementById("bsgen").addEventListener("click", () => {
   const r = bsRange();
   let targetTi = document.getElementById("bstarget").value;
-  if (targetTi === "new") {
-    song.tracks.push({name: "bass", notes: []});
-    if (song.rawNotes) song.rawNotes.push([]);
-    trackState.push({muted: false, solo: false});
-    targetTi = song.tracks.length - 1;
+  const madeTrack = targetTi === "new", undoLen = editUndo.length;
+  if (madeTrack) {
+    targetTi = addTrackUndoable({name: "bass", notes: []});
     saveDraft();
     renderTrackbar();
     // rebuild the pickers so the new track is selectable next time
@@ -12174,6 +12166,7 @@ document.getElementById("bsgen").addEventListener("click", () => {
   };
   const seed = (Math.random() * 0xFFFFFFFF) >>> 0;
   const k = bsGenerate(seed, opts);
+  if (madeTrack) undoTrackAdd(targetTi, undoLen); // the new bass track is part of the same ⟲ step
   if (!k) { bsRefresh(); return; }
   bsTakes.push({seed, opts, style: opts.style, busy: opts.busy, oct: opts.oct,
                 followSel: fv, targetTi,
@@ -12570,8 +12563,25 @@ function updateEditButtons() { // disabled = "this can't do anything right now"
   set("pastebtn", st[3]); set("emPaste", st[3]);
 }
 function pushUndo(entry) { editUndo.push(entry); editRedo = []; } // a fresh edit forks history
+// Track add/delete are undo steps too (Josh, 2026-09-12: a deleted track was
+// gone for good). Deleting used to wipe the history because entries hold track
+// indexes; LIFO makes that unnecessary — nothing older can be reached until the
+// delete itself is undone, which puts the track back at the same index.
+function addTrackUndoable(track) { // push a track and return its index; caller records the undo
+  song.tracks.push(track);
+  if (song.rawNotes) song.rawNotes.push([]);
+  trackState.push({muted: false, solo: false});
+  return song.tracks.length - 1;
+}
+function undoTrackAdd(ti, lenBefore) { // fold a generator's own entry (if it pushed one) into the same step
+  const own = editUndo.length > lenBefore ? editUndo.pop() : null;
+  pushUndo(own ? {kind: "group", entries: [{kind: "trackRemove", ti}, own]} : {kind: "trackRemove", ti});
+}
 function invertEdit(u) { // the entry that would undo an applyU(u), captured NOW
   if (u.kind === "group") return {kind: "group", entries: u.entries.map(invertEdit).reverse()};
+  if (u.kind === "trackRemove") return {kind: "trackInsert", ti: u.ti, track: song.tracks[u.ti],
+    raw: song.rawNotes ? song.rawNotes[u.ti] : null, state: trackState[u.ti]};
+  if (u.kind === "trackInsert") return {kind: "trackRemove", ti: u.ti};
   if (u.kind === "mod") return {kind: "mod", items: u.items.map(({ti, ni}) => {
     const n = song.tracks[ti].notes[ni];
     return {ti, ni, t: n.t, d: n.d, p: n.p, v: n.v};
@@ -12616,6 +12626,20 @@ function applyEditEntry(u) {
       finalizeNotes();
       saveLocalNotes();
       if (viewMode === "score") buildScoreModel();
+    } else if (v.kind === "trackInsert") { // put a deleted track back where it was
+      song.tracks.splice(v.ti, 0, v.track);
+      if (song.rawNotes) song.rawNotes.splice(v.ti, 0, v.raw || []);
+      trackState.splice(v.ti, 0, v.state || {muted: false, solo: false});
+      selTrack = v.ti;
+      multiSel = []; multiSelKey = new Set(); selNote = null;
+      renderTrackbar(); updateTrackGains();
+    } else if (v.kind === "trackRemove") {
+      song.tracks.splice(v.ti, 1);
+      if (song.rawNotes) song.rawNotes.splice(v.ti, 1);
+      trackState.splice(v.ti, 1);
+      selTrack = Math.max(0, Math.min(selTrack, song.tracks.length - 1));
+      multiSel = []; multiSelKey = new Set(); selNote = null;
+      renderTrackbar(); updateTrackGains();
     } else if (v.kind === "addBatch") { for (const it of v.items) setGone(it.ti, it.ni, true); }
     else if (v.kind === "eraseBatch") { for (const it of v.items) setGone(it.ti, it.ni, false); }
     else setGone(v.ti, v.ni, v.kind === "add"); // undo an add = remove it; undo an erase = restore it
@@ -12647,6 +12671,12 @@ document.addEventListener("keydown", e => {
     if (k) { setInfo("pasted " + k + " note" + (k === 1 ? "" : "s") + " (selected — arrows move them)"); e.preventDefault(); }
     return;
   }
+  if (meta && e.key.toLowerCase() === "z") { // ⌘Z / ⇧⌘Z (Josh, 2026-09-12: ⌘Z did nothing on his Mac)
+    if (e.shiftKey) editRedoPop(); else editUndoPop();
+    e.preventDefault();
+    return;
+  }
+  if (meta && e.key.toLowerCase() === "y") { editRedoPop(); e.preventDefault(); return; }
   if (meta) return; // don't eat browser shortcuts
   if (e.key === "Backspace" || e.key === "Delete") {
     if (deleteSelection()) e.preventDefault();

@@ -542,6 +542,49 @@ test("document title names the song first: '<Song> · Night Roll', bare app othe
   assert.equal(val(`document.title`), "Night Roll");
 });
 
+test("track delete/add are undo steps: delete → ⟲ restores at the same index with its notes; redo removes again", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/track-undo.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]},
+               {name: "pulse2", notes: [{t: 0, d: 480, p: 64, v: 80}, {t: 480, d: 480, p: 65, v: 80}]},
+               {name: "triangle", notes: [{t: 0, d: 480, p: 40, v: 80}]}]};
+    song.rawNotes = null; chopS = 0; selTrack = 1; editUndo = []; editRedo = [];
+    trackState = song.tracks.map(() => ({muted: false, solo: false}));
+    multiSel = []; multiSelKey = new Set(); selNote = null;
+    // what the ✕ Delete track handler does, minus the DOM
+    pushUndo({kind: "trackInsert", ti: 1, track: song.tracks[1], raw: null, state: trackState[1]});
+    song.tracks.splice(1, 1); trackState.splice(1, 1);
+  `);
+  assert.deepEqual(val(`song.tracks.map(t => t.name)`), ["pulse1", "triangle"]);
+  run(`editUndoPop()`);
+  assert.deepEqual(val(`song.tracks.map(t => t.name)`), ["pulse1", "pulse2", "triangle"]);
+  assert.equal(val(`song.tracks[1].notes.length`), 2);
+  assert.equal(val(`trackState.length`), 3);
+  run(`editRedoPop()`);
+  assert.deepEqual(val(`song.tracks.map(t => t.name)`), ["pulse1", "triangle"]);
+  run(`editUndoPop()`);
+  assert.deepEqual(val(`song.tracks.map(t => t.name)`), ["pulse1", "pulse2", "triangle"]);
+  // a generator that created its track: one step removes the notes AND the track
+  run(`
+    editUndo = []; editRedo = [];
+    const lenBefore = editUndo.length;
+    const ti = addTrackUndoable({name: "bass", notes: []});
+    song.tracks[ti].notes.push({t: 0, d: 480, p: 45, v: 80});
+    pushUndo({kind: "addBatch", items: [{ti, ni: 0}]}); // what bsGenerate pushes
+    undoTrackAdd(ti, lenBefore);
+  `);
+  assert.deepEqual(val(`song.tracks.map(t => t.name)`), ["pulse1", "pulse2", "triangle", "bass"]);
+  assert.equal(val(`editUndo.length`), 1);
+  run(`editUndoPop()`);
+  assert.deepEqual(val(`song.tracks.map(t => t.name)`), ["pulse1", "pulse2", "triangle"]);
+  run(`editRedoPop()`);
+  assert.deepEqual(val(`song.tracks.map(t => t.name)`), ["pulse1", "pulse2", "triangle", "bass"]);
+  assert.equal(val(`song.tracks[3].notes.filter(n => !n.gone).length`), 1);
+  run(`songKey = null; editUndo = []; editRedo = []; trackState = [];`);
+});
+
 test("midiStatusLine: names the reason ● hears nothing", () => {
   installSong();
   assert.match(run(`midiStatusLine()`), /no Web MIDI/); // harness navigator has no requestMIDIAccess
@@ -765,6 +808,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
     "Share a song", "link preview", "type your own", "minor scale", "no MIDI inputs found", "MIDI blocked",
+    "⌘Z", "Delete track is one ⟲ away",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
