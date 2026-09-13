@@ -635,6 +635,30 @@ test("gridFollowNote: the move grid follows the note you touch", () => {
   run(`gridDiv = null; pencilNV = 8; pencilMod = 1; pencilDur = 0.5;`);
 });
 
+test("Paste to…: the clipboard lands on a chosen track, shifted, same rhythm", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/paste-to.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [{name: "pulse1", notes: []}, {name: "pulse2", notes: []},
+               {name: "triangle", notes: [{t: 0, d: 240, p: 45, v: 100}, {t: 240, d: 120, p: 45, v: 90}, {t: 360, d: 120, p: 45, v: 90}]}]};
+    song.rawNotes = null; chopS = 0; selTrack = 2; editUndo = []; editRedo = [];
+    trackState = song.tracks.map(() => ({muted: false, solo: false}));
+    multiSel = [{ti: 2, ni: 0}, {ti: 2, ni: 1}, {ti: 2, ni: 2}]; multiSelKey = new Set(["2:0", "2:1", "2:2"]); selNote = null;
+  `);
+  assert.equal(run(`copySelection()`), 3);
+  assert.equal(run(`pasteClipboard(0, {ti: 1, dP: 12})`), 3); // the gallop onto pulse2, an octave up
+  assert.deepEqual(val(`song.tracks[1].notes.map(n => [n.t, n.d, n.p])`), [[0, 240, 57], [240, 120, 57], [360, 120, 57]]);
+  assert.equal(val(`song.tracks[2].notes.length`), 3); // source untouched
+  assert.equal(val(`playCursor`), 480); // cursor at the pasted end, as any paste
+  assert.equal(run(`pasteClipboard(0, {ti: 1, dP: 15})`), 3); // a third above that: harmony
+  assert.deepEqual(val(`song.tracks[1].notes.slice(3).map(n => n.p)`), [60, 60, 60]);
+  assert.equal(run(`pasteClipboard(0, {ti: 0, dP: 200})`), 0); // off the roll: nothing lands
+  run(`editUndoPop();`); // one step per paste
+  assert.equal(val(`song.tracks[1].notes.filter(n => !n.gone).length`), 3);
+  run(`songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = []; editRedo = []; noteClipboard = null; trackState = [];`);
+});
+
 test("midiStatusLine: names the reason ● hears nothing", () => {
   installSong();
   assert.match(run(`midiStatusLine()`), /no Web MIDI/); // harness navigator has no requestMIDIAccess
@@ -858,7 +882,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
     "Share a song", "link preview", "type your own", "minor scale", "no MIDI inputs found", "MIDI blocked",
-    "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid", "quarter-note triplets", "▦N", "turns the grid off",
+    "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid", "quarter-note triplets", "▦N", "turns the grid off", "Paste to…",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
