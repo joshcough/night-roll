@@ -1192,7 +1192,7 @@
     <dl>
       <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — <b>and plays it</b>, in Roll, Score and Tracks alike. That includes chip songs: during playback the NSF render IS the track's sound, so per-note synthesis is suppressed to avoid doubling, but a tap has nothing to double and sounds a synth voice. Hearing one note at a time is the point of analysis mode.</dd>
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
-      <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the <b>8va</b> button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks. Drag the box up into the ruler to take the annotations there too (chord and section bands, text notes): the box draws over the ruler, the bands it covers get a <b>gold outline</b> (text-note flags a gold ring) for as long as the selection lives, and those ride along with ⧉ and ✂ and land with 📋.</dd>
+      <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the <b>8va</b> button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks. Drag the box up into the ruler to take the annotations there too, lane by lane — up to the chord row takes the chords, higher takes the section row as well, all the way up takes the text-note flags: the box draws over the ruler, the bands it covers get a <b>gold outline</b> (text-note flags a gold ring) for as long as the selection lives, and those ride along with ⧉ and ✂ and land with 📋.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
@@ -3285,8 +3285,10 @@ function finalizeLasso() {
   const ppt = pxPerTick();
   let t0 = (x0 - RULER_W + view.x) / ppt;
   const t1 = (x1 - RULER_W + view.x) / ppt;
-  // the box reaching into the ruler is what makes its bands part of the copy
-  lassoAnno = viewMode === "roll" && !fallActive() && y0 < RULER_H ? {t0, t1} : null;
+  // the box reaching into the ruler is what makes its bands part of the copy —
+  // and only the LANES it covers: a box up to the chord row takes chords, not
+  // the section row above it (Josh, 2026-09-13)
+  lassoAnno = viewMode === "roll" && !fallActive() && y0 < RULER_H ? {t0, t1, y0, y1} : null;
   // union: a new box ADDS to the selection (taps toggle individuals; an
   // empty-space tap clears) — rectangle-only couldn't isolate interleaved
   // targets like undersea-shrine's offbeat pedal (Josh, 2026-08-07)
@@ -3646,9 +3648,10 @@ function drawRuler(W, H) {
   let hl = lassoAnno;
   if (lassoRect && viewMode === "roll" && !fallActive() && Math.min(lassoRect.y0, lassoRect.y1) < RULER_H) {
     const xa = Math.min(lassoRect.x0, lassoRect.x1), xb = Math.max(lassoRect.x0, lassoRect.x1);
-    hl = {t0: (xa - RULER_W + view.x) / ppt, t1: (xb - RULER_W + view.x) / ppt};
+    hl = {t0: (xa - RULER_W + view.x) / ppt, t1: (xb - RULER_W + view.x) / ppt,
+          y0: Math.min(lassoRect.y0, lassoRect.y1), y1: Math.max(lassoRect.y0, lassoRect.y1)};
   }
-  const taken = n => hl && n.start < hl.t1 && (n.b2 ? n.end : n.start + 1) > hl.t0;
+  const taken = n => annoInLasso(n, hl);
   for (const n of rollnotes) {
     if (!n.section && !n.chord) continue;
     if (n.lane === null) continue; // collapsed level: folded out of the ruler
@@ -3680,7 +3683,7 @@ function drawRuler(W, H) {
     if (n.section || n.chord || n.chopdir) continue; // chop anchors are raw-space: no flag
     const x = RULER_W + n.start * ppt - view.x;
     if (x < RULER_W - 8 || x > W) continue;
-    if (taken(n) && !isDirective(n)) { // lasso'd text note: a ring behind its flag
+    if (taken(n)) { // lasso'd text note: a ring behind its flag
       ctx.strokeStyle = css("--gold");
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(x, BASE_RULER_H - 7, 7, 0, Math.PI * 2); ctx.stroke();
@@ -3883,8 +3886,18 @@ let noteClipboard = null; // [{dt, p, d, v, ti}] relative to the earliest onset
 // bands and text notes whose anchor falls inside the selected notes' span —
 // never the song-level directives (key, meter, tempo, track, lane, loop, chop)
 let annoClipboard = [];
-let lassoAnno = null; // {t0, t1} when the last lasso reached INTO the ruler — only then are its bands "lasso'd"
+let lassoAnno = null; // {t0, t1, y0, y1} when the last lasso reached INTO the ruler — only then are its bands "lasso'd"
 const isCopyableAnno = n => n.chord || n.section || !isDirective(n);
+function annoInLasso(n, L) { // lane-precise: the band's own row must be inside the box, and its time
+  if (!L || !isCopyableAnno(n)) return false;
+  if (!(n.start < L.t1 && (n.b2 ? n.end : n.start + 1) > L.t0)) return false;
+  if (n.section || n.chord) {
+    if (n.lane === null || n.lane === undefined) return false; // folded out of the ruler
+    const y = BASE_RULER_H + n.lane * LANE_H;
+    return y < L.y1 && y + LANE_H > L.y0;
+  }
+  return L.y0 < BASE_RULER_H; // text-note flags live in the number strip
+}
 function copySelection() {
   const items = selEditItems();
   if (!items.length) return 0;
@@ -3896,7 +3909,7 @@ function copySelection() {
   // A tap-built selection, or a box that stayed among the notes, copies none.
   const L = lassoAnno && lassoAnno.t1 > t0 && lassoAnno.t0 < tEnd ? lassoAnno : null;
   annoClipboard = !L ? [] : rollnotes
-    .filter(n => isCopyableAnno(n) && n.start < L.t1 && (n.b2 ? n.end : n.start + 1) > L.t0)
+    .filter(n => annoInLasso(n, L))
     .map(n => ({dt: n.start - t0, len: n.b2 ? n.end - n.start : null, json: noteToJSON(n), src: n})); // b2 = a real end anchor; point notes get a synthetic end elsewhere
   return noteClipboard.length;
 }
