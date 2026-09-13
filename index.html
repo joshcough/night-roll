@@ -1192,7 +1192,7 @@
     <dl>
       <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — <b>and plays it</b>, in Roll, Score and Tracks alike. That includes chip songs: during playback the NSF render IS the track's sound, so per-note synthesis is suppressed to avoid doubling, but a tap has nothing to double and sounds a synth voice. Hearing one note at a time is the point of analysis mode.</dd>
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
-      <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the <b>8va</b> button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks. Annotations under the lasso'd notes (chord and section bands, text notes) ride along with ⧉ and land with 📋.</dd>
+      <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the <b>8va</b> button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks. Drag the box up into the ruler to take the annotations there too (chord and section bands, text notes): they ride along with ⧉ and ✂ and land with 📋.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
@@ -1235,7 +1235,7 @@
       <dt>Score entry</dt><dd>Pencil and Erase work on the engraved score too: tap a staff position and the note lands there — the stave you tap picks the track, the height picks the pitch (ledger lines included), and the key signature supplies sharps/flats automatically. The key/♮/♯/♭ segment overrides the signature when you want an accidental. Erase taps a notehead out.</dd>
       <dt>Move</dt><dd>Select notes (lasso or tap one), then <b>drag them</b> — up/down transposes, left/right slides in time on a 16th-note grid (triplet steps while a T duration is active), and the whole selection moves together, so a chord moves as a chord. Works straight from lasso mode: start the drag on a selected note. Keyboard: arrows (Shift+↑↓ = octave).</dd>
       <dt>Resize</dt><dd>Drag a selected note's <b>right edge</b> to change its length, or its <b>left edge</b> to move the start while the end stays put — every selected note adjusts by the same amount, so "play this chord half as long" is one gesture. Notes too small on screen to have edge zones are all move-handle — zoom in to resize them. Keyboard: Option+←→.</dd>
-      <dt>Copy</dt><dd>A real copy and a real paste: <b>⧉</b> copies whatever is lasso'd (or tapped) — and the chord bands, section bands and text notes anchored inside those notes' span ride along, so a copied phrase pastes with its labels (chord labels transpose if Paste to… shifts the pitch; key, meter, tempo and track directives never copy) — <b>✂</b> cuts (copies to the clipboard AND deletes, one ⟲ restores), <b>📋</b> pastes at the blue cursor and moves the cursor to the end of what landed, so the next 📋 (or ⌘V) chains straight on; Edit ▾ → <b>Paste to…</b> is the richer paste: the same clipboard, onto a track you pick, shifted by octaves and/or semitones — the bass line's exact rhythm onto pulse2 an octave up, or up a third for a harmony, in one go instead of paste, move, retrack — and the copy SURVIVES scrolling, changing selection, even changing tools, so "lasso bar 3, scroll to bar 16, paste" is exactly three gestures. ⌘C fills the same clipboard. Pasting and chord inserts never stack an identical note on an existing one. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → 📋 at each cursor stop. Buttons that can't do anything right now are grayed — no selection grays copy/delete/split/join/⇄, an empty clipboard grays paste, empty histories gray ⟲⟳. With a keyboard there's also Option-drag (drags out an in-place copy) and ⌘C/⌘V.</dd>
+      <dt>Copy</dt><dd>A real copy and a real paste: <b>⧉</b> copies whatever is lasso'd (or tapped) — and when the lasso box itself reaches up into the ruler over them, the chord bands, section bands and text notes it spans ride along, so a copied phrase pastes with its labels (a box that stays among the notes, or a tapped selection, copies notes only; chord labels transpose if Paste to… shifts the pitch; key, meter, tempo and track directives never copy) — <b>✂</b> cuts (copies to the clipboard AND deletes — lasso'd annotations included — one ⟲ restores all of it), <b>📋</b> pastes at the blue cursor and moves the cursor to the end of what landed, so the next 📋 (or ⌘V) chains straight on; Edit ▾ → <b>Paste to…</b> is the richer paste: the same clipboard, onto a track you pick, shifted by octaves and/or semitones — the bass line's exact rhythm onto pulse2 an octave up, or up a third for a harmony, in one go instead of paste, move, retrack — and the copy SURVIVES scrolling, changing selection, even changing tools, so "lasso bar 3, scroll to bar 16, paste" is exactly three gestures. ⌘C fills the same clipboard. Pasting and chord inserts never stack an identical note on an existing one. For stacks from older drafts, <b>🧹 Remove duplicate notes</b> in the ⇄ sheet sweeps the whole song (within each track; deliberate unisons BETWEEN tracks are always safe) — then SAVE, so a stale draft can't resurrect them. A chord progression is pencil one chord → ⧉ → 📋 at each cursor stop. Buttons that can't do anything right now are grayed — no selection grays copy/delete/split/join/⇄, an empty clipboard grays paste, empty histories gray ⟲⟳. With a keyboard there's also Option-drag (drags out an in-place copy) and ⌘C/⌘V.</dd>
       <dt>Insert chord (♫)</dt><dd>Tap <b>♫</b> in the edit row: pick a root, a quality (maj, m, 7, maj7, m7, dim, sus… — triads insert three notes, sevenths four), an octave, and a duration (16th to whole, dotted included), then Insert — the whole chord lands at the blue cursor on the selected track, a matching chord band appears in the ruler, and the cursor walks forward one slot. Repeated inserts build a progression without closing the dialog; the inserted notes arrive selected, ready to nudge. The dialog's <b>Progression</b> tab holds a library of whole progressions organized by emotion — triumphant, yearning, ominous, grieving, and twenty more, in Roman numerals so they work anywhere: the tonic pre-fills from the song's declared key when there is one; pick octave and duration, tap a mood, and the entire progression lands one chord per slot with matching chord bands in the ruler, all selected, one ⟲ step. Stretch or rearrange afterwards. Or <b>type your own</b> in the box above the list — i – VI – VII – V, hyphens or commas or spaces all fine, lowercase for minor chords, ♭/♯ (or b/#) in front, °/7/maj7/6 after — and pick the scale the numerals count against: <b>minor scale</b> makes VI and VII the natural-minor degrees (in E: C and D), <b>major scale</b> reads them the textbook way (C♯ and D♯, so write ♭VI there). A minor key at the cursor pre-selects minor. Full chords land; erase tones to leave the arpeggio you want. The same mood list is also behind the <b>Progressions</b> button in the ◯5 dialog, for browsing while analyzing.</dd>
       <dt>Transpose</dt><dd>Lasso notes → <b>⇅</b> (behind ⋯, or Edit ▾): half/whole-step chromatic buttons, octave jumps (▲/▼ 8va), plus <b>in key ▲/▼</b>: every note moves one SCALE DEGREE of the declared key — the "whole step up that stays in the key," where some notes move 1 and some move 2. Out-of-scale notes slide chromatically; no declared key = chromatic with a warning. For a WHOLE track, open its voice &amp; color menu (tap the selected chip again) — the <b>octave ▼/▲ 8va</b> row shifts every note on that track, one tap per octave, each tap one ⟲ step. "What if the bass lived three octaves up?" is three taps, no lassoing, no muting. Notes at the range edge stay put; the drum track never transposes (kit pitches are instruments, not notes).</dd>
       <dt>Move to track (⇄)</dt><dd>Select notes and tap <b>⇄</b>, then pick a track — the notes switch instrument, keeping their time and pitch (play a passage into one voice, then deal melody, harmony, and bass out to pulse1/pulse2/triangle). When the selection spans several tracks (doubled unisons), a <b>move only</b> row lets you move just one track's copies and leave the others — or solo a track BEFORE lassoing: hidden tracks can't be selected at all. </dd>
@@ -3268,6 +3268,7 @@ let challengeSec = null; // chord band armed for a challenge (tap on the ruler)
 function clearMultiSel() {
   if (typeof sweepStrandedClones === "function") sweepStrandedClones();
   challengeSec = null;
+  lassoAnno = null;
   if (!multiSel.length && !lassoRect) {
     document.getElementById("chordbtn").style.display = "none";
     return;
@@ -3284,6 +3285,8 @@ function finalizeLasso() {
   const ppt = pxPerTick();
   let t0 = (x0 - RULER_W + view.x) / ppt;
   const t1 = (x1 - RULER_W + view.x) / ppt;
+  // the box reaching into the ruler is what makes its bands part of the copy
+  lassoAnno = viewMode === "roll" && !fallActive() && y0 < RULER_H ? {t0, t1} : null;
   // union: a new box ADDS to the selection (taps toggle individuals; an
   // empty-space tap clears) — rectangle-only couldn't isolate interleaved
   // targets like undersea-shrine's offbeat pedal (Josh, 2026-08-07)
@@ -3860,6 +3863,7 @@ let noteClipboard = null; // [{dt, p, d, v, ti}] relative to the earliest onset
 // bands and text notes whose anchor falls inside the selected notes' span —
 // never the song-level directives (key, meter, tempo, track, lane, loop, chop)
 let annoClipboard = [];
+let lassoAnno = null; // {t0, t1} when the last lasso reached INTO the ruler — only then are its bands "lasso'd"
 const isCopyableAnno = n => n.chord || n.section || !isDirective(n);
 function copySelection() {
   const items = selEditItems();
@@ -3867,12 +3871,35 @@ function copySelection() {
   const t0 = Math.min(...items.map(({n}) => n.t));
   const tEnd = Math.max(...items.map(({n}) => n.t + n.d));
   noteClipboard = items.map(({ti, n}) => ({dt: n.t - t0, p: n.p, d: n.d, v: n.v || pencilVel, ti}));
-  annoClipboard = rollnotes.filter(n => isCopyableAnno(n) && n.start >= t0 && n.start < tEnd)
-    .map(n => ({dt: n.start - t0, len: n.b2 ? n.end - n.start : null, json: noteToJSON(n)})); // b2 = a real end anchor; point notes get a synthetic end elsewhere
+  // Josh's rule (2026-09-13): annotations ride only when the lasso itself
+  // went over them — the box reached into the ruler and spans them in time.
+  // A tap-built selection, or a box that stayed among the notes, copies none.
+  const L = lassoAnno && lassoAnno.t1 > t0 && lassoAnno.t0 < tEnd ? lassoAnno : null;
+  annoClipboard = !L ? [] : rollnotes
+    .filter(n => isCopyableAnno(n) && n.start < L.t1 && (n.b2 ? n.end : n.start + 1) > L.t0)
+    .map(n => ({dt: n.start - t0, len: n.b2 ? n.end - n.start : null, json: noteToJSON(n), src: n})); // b2 = a real end anchor; point notes get a synthetic end elsewhere
   return noteClipboard.length;
+}
+function cutSelection() { // ✂: copy, delete the notes, and delete lasso'd annotations with them — one undo
+  const k = copySelection();
+  if (!k) return 0;
+  const before = annoSnapshot();
+  const srcs = annoClipboard.map(a => a.src).filter(Boolean);
+  deleteSelection(); // pushes its own eraseBatch
+  if (srcs.length) {
+    for (const n of srcs) tombstone(n);
+    rollnotes = rollnotes.filter(n => !srcs.includes(n));
+    finalizeNotes();
+    saveLocalNotes();
+    const own = editUndo.pop();
+    pushUndo({kind: "group", entries: [{kind: "anno", json: before}, own]});
+    draw();
+  }
+  return k;
 }
 function pasteAnnotations(t0, dP) { // re-anchored copies; chord labels transpose with a pitch shift (band-ride rule)
   for (const a of annoClipboard) {
+    if (t0 + a.dt < 0) continue; // a band that began before the first copied note, pasted at the very start
     const arr = [jsonToRawNote(a.json)];
     deriveNoteTypes(arr);
     const n = arr[0];
@@ -9738,7 +9765,7 @@ document.getElementById("nsave").addEventListener("click", () => {
   const q1 = Math.max(1, getBeatPair("nq1", "ns1"));
   const b2raw = +document.getElementById("nb2").value || 0;
   const q2raw = document.getElementById("nb2").value === "" ? 0 : getBeatPair("nq2", "ns2");
-  if (editingNote) rollnotes = rollnotes.filter(n => n !== editingNote);
+  if (editingNote) retireEdited(editingNote);
   let fresh;
   if (type === "key") {
     const [pcS, spS] = document.getElementById("nkeysel").value.split(":");
@@ -9877,6 +9904,19 @@ document.getElementById("ndelete").addEventListener("click", () => {
 // cleared when a Sync commits the post-deletion file as the new canon
 function tombKey() { return "ff1roll-tombs-" + songKey; }
 function noteIdentity(n) { return JSON.stringify(noteToJSON(n)); }
+// Editing a SYNCED annotation replaces it with a local copy; without a
+// tombstone the repo original came back on reload underneath the rename
+// (Josh, 2026-09-13: "renaming makes a new one over the top of the old one")
+function retireEdited(n) { tombstone(n); rollnotes = rollnotes.filter(x => x !== n); }
+function pruneTombstones() { // an undo put notes back: their tombstones must not re-kill them on reload
+  if (!songKey) return;
+  try {
+    const t = JSON.parse(localStorage.getItem(tombKey()) || "[]");
+    const live = new Set(rollnotes.filter(n => !n.added).map(noteIdentity));
+    const keep = t.filter(id => !live.has(id));
+    if (keep.length !== t.length) localStorage.setItem(tombKey(), JSON.stringify(keep));
+  } catch (err) {}
+}
 function tombstone(n) {
   if (!songKey || n.added) return; // never-synced notes die with saveLocalNotes
   try {
@@ -12661,10 +12701,10 @@ document.getElementById("divbtn").addEventListener("click", () => {
 document.getElementById("divclose").addEventListener("click", () =>
   document.getElementById("divsheet").classList.remove("on"));
 document.getElementById("cutbtn").addEventListener("click", () => {
-  const k = copySelection();
+  const k = cutSelection();
   if (!k) { setInfo("nothing selected — lasso or tap notes first"); return; }
-  deleteSelection();
-  setInfo("cut " + k + " note" + (k === 1 ? "" : "s") + " — 📋 pastes them at the cursor (⟲ restores)");
+  const a = annoClipboard.length;
+  setInfo("cut " + k + " note" + (k === 1 ? "" : "s") + (a ? " and " + a + " annotation" + (a === 1 ? "" : "s") : "") + " — 📋 pastes them at the cursor (⟲ restores)");
 });
 document.getElementById("splitbtn").addEventListener("click", () => {
   let k = splitSelectionAt(playCursor), how = "at the cursor";
@@ -12761,6 +12801,7 @@ function applyEditEntry(u) {
       annoRestore(v.json);
       finalizeNotes();
       saveLocalNotes();
+      pruneTombstones();
       if (viewMode === "score") buildScoreModel();
     } else if (v.kind === "trackInsert") { // put a deleted track back where it was
       song.tracks.splice(v.ti, 0, v.track);

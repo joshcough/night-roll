@@ -651,7 +651,11 @@ test("copy/paste carries the annotations under the selection: bands re-anchor, l
       {at: [3, 1], to: [3, 4], type: "chord", chord: "C"}]})).map(resolveNote);
     finalizeNotes();
     multiSel = [{ti: 0, ni: 0}, {ti: 0, ni: 1}, {ti: 0, ni: 2}]; multiSelKey = new Set(["0:0", "0:1", "0:2"]); selNote = null;
+    lassoAnno = null;
   `);
+  assert.equal(run(`copySelection()`), 3);
+  assert.deepEqual(val(`annoClipboard.length`), 0); // no lasso into the ruler: notes only (Josh's rule)
+  run(`lassoAnno = {t0: 1920, t1: 3840};`); // the box reached the ruler across bar 2
   assert.equal(run(`copySelection()`), 3);
   assert.deepEqual(val(`annoClipboard.map(a => [a.dt, a.len, a.json.type || "text"])`),
     [[0, 1920, "section"], [0, 1920, "chord"], [960, null, "text"]]); // bar 2's bands + note; bar 3's chord and the key stay out
@@ -666,7 +670,24 @@ test("copy/paste carries the annotations under the selection: bands re-anchor, l
   // Paste to… up a minor third: the chord label follows, the section and note don't change
   assert.equal(run(`pasteClipboard(3840 * 2, {ti: 0, dP: 3})`), 3);
   assert.deepEqual(val(`rollnotes.filter(n => n.added).map(n => n.text)`), ["A", "Gm", "the sigh"]);
-  run(`editUndoPop(); songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = []; editRedo = []; noteClipboard = null; annoClipboard = []; rollnotes = []; trackState = [];`);
+  run(`editUndoPop();`);
+  // ✂ with a lasso'd SYNCED band: the band goes, a tombstone is written, undo brings it back and prunes the tombstone
+  run(`rollnotes.forEach(n => { n.added = false; }); localStorage.removeItem("ff1roll-tombs-" + songKey);
+       multiSel = [{ti: 0, ni: 0}, {ti: 0, ni: 1}, {ti: 0, ni: 2}]; multiSelKey = new Set(["0:0", "0:1", "0:2"]); lassoAnno = {t0: 1920, t1: 3840};`);
+  const nBefore = val(`rollnotes.length`);
+  assert.equal(run(`cutSelection()`), 3);
+  assert.equal(val(`rollnotes.length`), nBefore - 3);
+  assert.equal(val(`rollnotes.some(n => n.chord && n.text === "Em")`), false);
+  assert.equal(val(`JSON.parse(localStorage.getItem("ff1roll-tombs-" + songKey) || "[]").length`), 3);
+  run(`editUndoPop()`);
+  assert.equal(val(`rollnotes.length`), nBefore);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 3);
+  assert.equal(val(`JSON.parse(localStorage.getItem("ff1roll-tombs-" + songKey) || "[]").length`), 0); // pruned: they're alive again
+  // renaming a synced annotation retires the original with a tombstone (the "new one over the old one" bug)
+  run(`retireEdited(rollnotes.find(n => n.chord && n.text === "C"))`);
+  assert.equal(val(`rollnotes.some(n => n.chord && n.text === "C")`), false);
+  assert.equal(val(`JSON.parse(localStorage.getItem("ff1roll-tombs-" + songKey) || "[]").length`), 1);
+  run(`localStorage.removeItem("ff1roll-tombs-" + songKey); songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = []; editRedo = []; noteClipboard = null; annoClipboard = []; lassoAnno = null; rollnotes = []; trackState = [];`);
 });
 
 test("Paste to…: the clipboard lands on a chosen track, shifted, same rhythm", () => {
@@ -916,7 +937,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
     "Share a song", "link preview", "type your own", "minor scale", "no MIDI inputs found", "MIDI blocked",
-    "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid", "quarter-note triplets", "▦N", "turns the grid off", "Paste to…", "ride along",
+    "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid", "quarter-note triplets", "▦N", "turns the grid off", "Paste to…", "ride along", "reaches up into the ruler",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
