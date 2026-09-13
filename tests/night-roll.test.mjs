@@ -635,6 +635,40 @@ test("gridFollowNote: the move grid follows the note you touch", () => {
   run(`gridDiv = null; pencilNV = 8; pencilMod = 1; pencilDur = 0.5;`);
 });
 
+test("copy/paste carries the annotations under the selection: bands re-anchor, labels transpose, directives stay", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/anno-copy.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [{name: "pulse1", notes: [{t: 1920, d: 480, p: 64, v: 80}, {t: 2400, d: 480, p: 67, v: 80}, {t: 2880, d: 960, p: 71, v: 80}]}]};
+    song.rawNotes = null; chopS = 0; selTrack = 0; editUndo = []; editRedo = []; annoClipboard = [];
+    trackState = [{muted: false, solo: false}];
+    rollnotes = parseRollnotes(JSON.stringify({version: 1, notes: [
+      {at: [1, 1], type: "key", key: "Em"},
+      {at: [2, 1], to: [2, 4], type: "section", label: "A"},
+      {at: [2, 1], to: [2, 4], type: "chord", chord: "Em"},
+      {at: [2, 3], text: "the sigh"},
+      {at: [3, 1], to: [3, 4], type: "chord", chord: "C"}]})).map(resolveNote);
+    finalizeNotes();
+    multiSel = [{ti: 0, ni: 0}, {ti: 0, ni: 1}, {ti: 0, ni: 2}]; multiSelKey = new Set(["0:0", "0:1", "0:2"]); selNote = null;
+  `);
+  assert.equal(run(`copySelection()`), 3);
+  assert.deepEqual(val(`annoClipboard.map(a => [a.dt, a.len, a.json.type || "text"])`),
+    [[0, 1920, "section"], [0, 1920, "chord"], [960, null, "text"]]); // bar 2's bands + note; bar 3's chord and the key stay out
+  const before = val(`rollnotes.length`);
+  assert.equal(run(`pasteClipboard(3840 * 2)`), 3); // bar 5
+  assert.deepEqual(val(`rollnotes.filter(n => n.added).map(n => [n.b1, n.q1, n.b2, n.q2, n.text])`),
+    [[5, 1, 5, 4, "A"], [5, 1, 5, 4, "Em"], [5, 3, null, null, "the sigh"]]);
+  assert.equal(val(`rollnotes.filter(n => n.keydir !== undefined).length`), 1); // the key directive did not duplicate
+  run(`editUndoPop()`); // one step takes notes and bands together
+  assert.equal(val(`rollnotes.length`), before);
+  assert.equal(val(`song.tracks[0].notes.filter(n => !n.gone).length`), 3);
+  // Paste to… up a minor third: the chord label follows, the section and note don't change
+  assert.equal(run(`pasteClipboard(3840 * 2, {ti: 0, dP: 3})`), 3);
+  assert.deepEqual(val(`rollnotes.filter(n => n.added).map(n => n.text)`), ["A", "Gm", "the sigh"]);
+  run(`editUndoPop(); songKey = null; multiSel = []; multiSelKey = new Set(); editUndo = []; editRedo = []; noteClipboard = null; annoClipboard = []; rollnotes = []; trackState = [];`);
+});
+
 test("Paste to…: the clipboard lands on a chosen track, shifted, same rhythm", () => {
   installSong();
   run(`
@@ -882,7 +916,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Roll zoom-out limit", "Score zoom limit", "Pencil", "undo",
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
     "Share a song", "link preview", "type your own", "minor scale", "no MIDI inputs found", "MIDI blocked",
-    "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid", "quarter-note triplets", "▦N", "turns the grid off", "Paste to…",
+    "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid", "quarter-note triplets", "▦N", "turns the grid off", "Paste to…", "ride along",
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
