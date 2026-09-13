@@ -4,6 +4,30 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## HANDOFF 2026-09-12 — note length editing (handoffs/handoff-2026-09-12-note-length-editing.md)
+
+Cloud-session proposal, Josh signs off before the model changes. Landed
+the same day, no sign-off needed (its own "first fix regardless"): the
+▦N chip in the duration row whenever a custom grid rules, and the grid
+turning off when another song opens. Also landed earlier the same day:
+duration chips visible in Select, gridFollowNote (the grid follows the
+note you touch), pencil = one cell under a custom grid everywhere.
+
+**Awaiting Josh's word (the handoff's §4):**
+1. One chip row `32 · 16 · 8 · 4 · T · ▦N` = THE snap for move, resize,
+   pencil length, pencil drag, paste, record — and kill the "32nds only
+   when the song contains them" rule (32 is a chip).
+2. Pencil = insert one cell, then the note is ordinary; value × modifier
+   picker goes away (dotted = drag one more cell, or a long-press).
+3. Resize = drag the edge in Select: finger-sized edge zones
+   (max(14px, 30% of width); narrow notes: right 40% resizes, left 60%
+   moves), a visible handle, "resize" in the arm message, NO dwell for
+   edge grabs, live length readout.
+4. gridFollowNote: keep, make opt-in, or drop? (It flips the chip to a
+   quarter-triplet snap when you touch Ambush's lead — the handoff names
+   it as a candidate for "everything moves in quarters".)
+Acceptance list is in the handoff §5 (Playwright, iPad viewport).
+
 ## THE MENU — everything on deck (consolidated 2026-08-19)
 
 **Music (the point of all of this):**

@@ -4,6 +4,13 @@ name: tests
 on:
   push:
     branches: [main]
+    # App saves push albums/** (three commits per Save) and docs pushes touch
+    # only .md — neither can change what the suite tests, and each run that
+    # fails mails Josh. Code pushes still run everything; nightly covers the rest.
+    paths-ignore:
+      - "albums/**"
+      - "handoffs/**"
+      - "**.md"
   schedule:
     - cron: "0 9 * * *" # nightly
   workflow_dispatch:

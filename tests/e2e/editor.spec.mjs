@@ -69,7 +69,9 @@ test("⧉ copies, 📋 pastes at the cursor — surviving a dead selection, neve
   await page.click("#pastebtn");
   const pasted = (await notes(page)).filter(n => n.t === 960);
   expect(pasted.map(n => n.p).sort((a, b) => a - b)).toEqual([60, 64, 67]);
-  await page.click("#pastebtn"); // identical paste refuses to stack
+  expect(await page.evaluate(() => playCursor)).toBe(1440); // paste walks the cursor to the pasted notes' end
+  await page.evaluate(() => { playCursor = 960; }); // back on top of them: an identical paste refuses to stack
+  await page.click("#pastebtn");
   expect(await notes(page)).toHaveLength(6);
 });
 
