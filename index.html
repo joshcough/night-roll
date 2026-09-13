@@ -1192,7 +1192,7 @@
     <dl>
       <dt>Tap a note</dt><dd>Inspector shows pitch, bar &amp; beat (counted 1e&amp;a), length, velocity, track — <b>and plays it</b>, in Roll, Score and Tracks alike. That includes chip songs: during playback the NSF render IS the track's sound, so per-note synthesis is suppressed to avoid doubling, but a tap has nothing to double and sounds a synth voice. Hearing one note at a time is the point of analysis mode.</dd>
       <dt>Copy the pitch list</dt><dd>When the lasso strip lists selected pitches, tap the text (or the ⧉ copy chip) to copy them comma-separated — after "Chord?", the chord name comes along too.</dd>
-      <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the <b>8va</b> button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks. Drag the box up into the ruler to take the annotations there too, lane by lane — up to the chord row takes the chords, higher takes the section row as well, all the way up takes the text-note flags: the box draws over the ruler, the bands it covers get a <b>gold outline</b> (text-note flags a gold ring) for as long as the selection lives, and those ride along with ⧉ and ✂ and land with 📋.</dd>
+      <dt>⊞ Lasso</dt><dd>Toggle on, then drag a box over notes (works in all views). Boxes ADD to the selection — draw as many as you need. Tap any note to toggle it in or out (surgical removal of a pedal or neighbor); tap empty space to clear. Shows all the pitch names, low to high — and the <b>8va</b> button beside Chord? toggles the octave numbers: off collapses duplicates to bare pitch classes (C · E · G), the chord-reading view; the setting sticks. Drag the box up into the ruler to take the annotations there too, lane by lane — up to the chord row takes the chords, higher takes the section row as well, all the way up takes the text-note flags: the box draws over the ruler, the bands it covers get a <b>gold outline</b> (text-note flags a gold ring) for as long as the selection lives, and those ride along with ⧉ and ✂ and land with 📋; 🗑 (or Backspace) deletes them with the notes, one ⟲ restores all of it.</dd>
       <dt>◯5 Circle of fifths</dt><dd>The classic chart, live: majors outside with their signatures, relative minors inside, diminished chords at the center, and the movable degree window (IV·I·V over ii·vi·iii over vii°). Two independent motions: <b>drag the wheel</b> (or ⟲ ⟳) to spin it — put any key at 12 o'clock; <b>tap a wedge</b> to move the degree window there. Opens with the song's key on top and highlighted. Below the wheel: the window key's signature accidentals, full scale, all seven triads, and its IV/V neighbors.</dd>
       <dt>find: (pitch finder)</dt><dd>Pick a pitch class in the footer dropdown and every occurrence lights up across all visible channels — everything else dims, so nothing lit means a confident zero. Works by pitch class (find B♭ catches A#), shows the count and channels in the strip, and labels the degree when a key is set. Made for mode-hunting: chasing the one accidental that separates two candidate modes.</dd>
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
@@ -3898,11 +3898,12 @@ function annoInLasso(n, L) { // lane-precise: the band's own row must be inside 
   }
   return L.y0 < BASE_RULER_H; // text-note flags live in the number strip
 }
-function copySelection() {
+function copySelection() { // returns notes + annotations copied (0 = nothing to copy)
   const items = selEditItems();
-  if (!items.length) return 0;
-  const t0 = Math.min(...items.map(({n}) => n.t));
-  const tEnd = Math.max(...items.map(({n}) => n.t + n.d));
+  const lassoed = lassoedAnnos(); // bands alone are a copy too (Josh, 2026-09-13: ⧉ was gray with only chords lasso'd)
+  if (!items.length && !lassoed.length) return 0;
+  const t0 = items.length ? Math.min(...items.map(({n}) => n.t)) : Math.min(...lassoed.map(n => n.start));
+  const tEnd = items.length ? Math.max(...items.map(({n}) => n.t + n.d)) : Infinity;
   noteClipboard = items.map(({ti, n}) => ({dt: n.t - t0, p: n.p, d: n.d, v: n.v || pencilVel, ti}));
   // Josh's rule (2026-09-13): annotations ride only when the lasso itself
   // went over them — the box reached into the ruler and spans them in time.
@@ -3911,23 +3912,12 @@ function copySelection() {
   annoClipboard = !L ? [] : rollnotes
     .filter(n => annoInLasso(n, L))
     .map(n => ({dt: n.start - t0, len: n.b2 ? n.end - n.start : null, json: noteToJSON(n), src: n})); // b2 = a real end anchor; point notes get a synthetic end elsewhere
-  return noteClipboard.length;
+  return noteClipboard.length + annoClipboard.length;
 }
-function cutSelection() { // ✂: copy, delete the notes, and delete lasso'd annotations with them — one undo
+function cutSelection() { // ✂: copy, then delete — notes and lasso'd annotations, one undo (deleteSelection does both)
   const k = copySelection();
   if (!k) return 0;
-  const before = annoSnapshot();
-  const srcs = annoClipboard.map(a => a.src).filter(Boolean);
-  deleteSelection(); // pushes its own eraseBatch
-  if (srcs.length) {
-    for (const n of srcs) tombstone(n);
-    rollnotes = rollnotes.filter(n => !srcs.includes(n));
-    finalizeNotes();
-    saveLocalNotes();
-    const own = editUndo.pop();
-    pushUndo({kind: "group", entries: [{kind: "anno", json: before}, own]});
-    draw();
-  }
+  deleteSelection();
   return k;
 }
 function pasteAnnotations(t0, dP) { // re-anchored copies; chord labels transpose with a pitch shift (band-ride rule)
@@ -3948,14 +3938,22 @@ function pasteAnnotations(t0, dP) { // re-anchored copies; chord labels transpos
 // opts (Paste to…, Josh 2026-09-13): ti = every note onto this track instead
 // of its source track; dP = semitone shift — the bass rhythm onto pulse2 an
 // octave up, or up a third for a harmony, without the paste-move-retrack dance
+function clipboardHas() { return !!((noteClipboard && noteClipboard.length) || annoClipboard.length); }
+function clipSummary() { // "3 notes and 2 annotations"
+  const n = noteClipboard ? noteClipboard.length : 0, a = annoClipboard.length;
+  const parts = [];
+  if (n) parts.push(n + " note" + (n === 1 ? "" : "s"));
+  if (a) parts.push(a + " annotation" + (a === 1 ? "" : "s"));
+  return parts.join(" and ") || "nothing";
+}
 function pasteClipboard(atTick, opts = {}) {
-  if (!editableSong() || !noteClipboard || !noteClipboard.length) return 0;
+  if (!editableSong() || !clipboardHas()) return 0;
   const snap = moveSnapTicks(); // same grid as moves
   const t0 = Math.max(0, Math.round(atTick / snap) * snap);
   const dP = opts.dP || 0;
   const annoBefore = annoSnapshot(); // bands come along: one undo for both
   const added = [];
-  for (const c of noteClipboard) {
+  for (const c of noteClipboard || []) {
     const ti = opts.ti !== undefined && song.tracks[opts.ti] ? opts.ti : song.tracks[c.ti] ? c.ti : selTrack;
     const tr = song.tracks[ti];
     const p = c.p + dP;
@@ -3966,41 +3964,54 @@ function pasteClipboard(atTick, opts = {}) {
     if (song.rawNotes) song.rawNotes[ti].push({t: t0 + c.dt + chopS, d: c.d, p, v: c.v, added: isAdd});
     added.push({ti, ni: tr.notes.length - 1});
   }
-  if (!added.length) return 0; // nothing landed: no undo step, selection and cursor untouched
+  if (!added.length && !annoClipboard.length) return 0; // nothing landed: no undo step, selection and cursor untouched
+  let annoEnd = -1;
   if (annoClipboard.length) {
     pasteAnnotations(t0, dP);
     finalizeNotes();
     saveLocalNotes();
-    pushUndo({kind: "group", entries: [{kind: "anno", json: annoBefore}, {kind: "addBatch", items: added}]});
+    annoEnd = Math.max(...annoClipboard.map(a => t0 + a.dt + (a.len || 0)));
+    pushUndo(added.length ? {kind: "group", entries: [{kind: "anno", json: annoBefore}, {kind: "addBatch", items: added}]}
+                          : {kind: "anno", json: annoBefore});
   } else pushUndo({kind: "addBatch", items: added});
   multiSel = added.slice();
   multiSelKey = new Set(added.map(({ti, ni}) => ti + ":" + ni));
   { // cursor to the end of what landed, on the grid: ⌘V again chains (Josh, 2026-09-12)
-    const end = Math.max(...added.map(({ti, ni}) => { const n = song.tracks[ti].notes[ni]; return n.t + n.d; }));
+    const end = Math.max(annoEnd, ...added.map(({ti, ni}) => { const n = song.tracks[ti].notes[ni]; return n.t + n.d; }));
     playCursor = Math.ceil(end / snap) * snap;
   }
   saveEdits();
   computeSongEnd();
   if (viewMode === "score") buildScoreModel();
   draw();
-  return added.length;
+  return added.length + annoClipboard.length;
 }
-function deleteSelection() {
+function lassoedAnnos() { return lassoAnno ? rollnotes.filter(n => annoInLasso(n, lassoAnno)) : []; }
+function deleteSelection() { // notes AND the lasso'd annotations (Josh, 2026-09-13) — one undo step
   if (!editableSong()) return 0;
   const items = selEditItems();
-  if (!items.length) return 0;
+  const annos = lassoedAnnos();
+  if (!items.length && !annos.length) return 0;
+  const before = annos.length ? annoSnapshot() : null;
   for (const it of items) {
     it.n.gone = true;
     const rn = song.rawNotes && it.n.ri !== undefined && song.rawNotes[it.ti][it.n.ri];
     if (rn) rn.gone = true;
   }
-  pushUndo({kind: "eraseBatch", items: items.map(({ti, ni}) => ({ti, ni}))});
-  multiSel = []; multiSelKey = new Set(); selNote = null;
+  const erase = {kind: "eraseBatch", items: items.map(({ti, ni}) => ({ti, ni}))};
+  if (annos.length) {
+    for (const n of annos) tombstone(n); // synced ones must stay gone across a reload
+    rollnotes = rollnotes.filter(n => !annos.includes(n));
+    finalizeNotes();
+    saveLocalNotes();
+    pushUndo({kind: "group", entries: [{kind: "anno", json: before}, erase]});
+  } else pushUndo(erase);
+  multiSel = []; multiSelKey = new Set(); selNote = null; lassoAnno = null;
   saveEdits();
   computeSongEnd();
   if (viewMode === "score") buildScoreModel();
   draw();
-  return items.length;
+  return items.length + annos.length;
 }
 let dupPending = null; // ⧉ clones awaiting a move — {clones, origs, entry}
 function sweepStrandedClones() { // a ⧉ that never got dragged left an invisible stack; it evaporates
@@ -11378,7 +11389,7 @@ async function moveComposition(destDir) {
 document.getElementById("copybtn").addEventListener("click", () => {
   const k = copySelection();
   if (!k) { setInfo("nothing selected — lasso or tap notes first"); return; }
-  setInfo("copied " + k + " note" + (k === 1 ? "" : "s") + " — move the cursor anywhere, 📋 pastes there");
+  setInfo("copied " + clipSummary() + " — move the cursor anywhere, 📋 pastes there");
   updateEditButtons();
 });
 const DP_PIECES = [["hat", 42], ["snare", 38], ["kick", 36]]; // hat on top, kick on the bottom — standard order
@@ -12613,7 +12624,7 @@ document.getElementById("mvclose").addEventListener("click", () =>
 let ptTarget = 0;
 function openPasteTo() {
   if (!editableSong()) { setInfo("paste works on your own songs — captures are locked"); return; }
-  if (!noteClipboard || !noteClipboard.length) { setInfo("nothing copied yet — select notes and tap ⧉ (or ⌘C) first"); return; }
+  if (!clipboardHas()) { setInfo("nothing copied yet — select notes and tap ⧉ (or ⌘C) first"); return; }
   ptTarget = selTrack;
   const box = document.getElementById("pttracks");
   box.innerHTML = song.tracks.map((tr, ti) =>
@@ -12642,7 +12653,7 @@ document.getElementById("ptclose").addEventListener("click", () =>
 document.getElementById("pastebtn").addEventListener("click", () => {
   if (!editableSong()) { setInfo("paste works on your own songs — captures are locked"); return; }
   const k = pasteClipboard(playCursor); // pastes the last ⧉/⌘C copy — surviving any scrolling
-  setInfo(k ? "pasted " + k + " note" + (k === 1 ? "" : "s") + " — cursor moved to their end, paste again to chain"
+  setInfo(k ? "pasted " + clipSummary() + " — cursor moved to their end, paste again to chain"
             : "nothing copied yet — select notes and tap ⧉ (or ⌘C) first");
 });
 document.getElementById("octupbtn").addEventListener("click", () => {
@@ -12736,8 +12747,7 @@ document.getElementById("divclose").addEventListener("click", () =>
 document.getElementById("cutbtn").addEventListener("click", () => {
   const k = cutSelection();
   if (!k) { setInfo("nothing selected — lasso or tap notes first"); return; }
-  const a = annoClipboard.length;
-  setInfo("cut " + k + " note" + (k === 1 ? "" : "s") + (a ? " and " + a + " annotation" + (a === 1 ? "" : "s") : "") + " — 📋 pastes them at the cursor (⟲ restores)");
+  setInfo("cut " + clipSummary() + " — 📋 pastes them at the cursor (⟲ restores)");
 });
 document.getElementById("splitbtn").addEventListener("click", () => {
   let k = splitSelectionAt(playCursor), how = "at the cursor";
@@ -12759,16 +12769,17 @@ let editRedo = [];
 let editBtnCache = "";
 function updateEditButtons() { // disabled = "this can't do anything right now"
   const sel = song ? selEditItems().length : 0;
-  const st = [!editUndo.length, !editRedo.length, !sel, !(noteClipboard && noteClipboard.length)];
+  const annos = song && lassoAnno ? lassoedAnnos().length : 0;
+  const st = [!editUndo.length, !editRedo.length, !sel, !clipboardHas(), !(sel || annos)];
   const key = st.join("|");
   if (key === editBtnCache) return;
   editBtnCache = key;
   const set = (id, off) => { const b = document.getElementById(id); if (b) b.disabled = off; };
   set("undobtn", st[0]); set("emUndo", st[0]);
   set("redobtn", st[1]); set("emRedo", st[1]);
-  for (const id of ["copybtn", "emDup", "delbtn", "emDelete", "splitbtn", "emSplit",
-                    "joinbtn", "emJoin", "movebtn", "emMove", "cutbtn", "emCut",
+  for (const id of ["splitbtn", "emSplit", "joinbtn", "emJoin", "movebtn", "emMove",
                     "divbtn", "emDivide", "trbtn", "emTranspose"]) set(id, st[2]);
+  for (const id of ["copybtn", "emDup", "cutbtn", "emCut", "delbtn", "emDelete"]) set(id, st[4]); // these also act on lasso'd annotations, notes or not
   set("pastebtn", st[3]); set("emPaste", st[3]); set("emPasteTo", st[3]);
 }
 function pushUndo(entry) { editUndo.push(entry); editRedo = []; } // a fresh edit forks history
@@ -12873,12 +12884,12 @@ document.addEventListener("keydown", e => {
   const meta = e.metaKey || e.ctrlKey;
   if (meta && e.key.toLowerCase() === "c") {
     const k = copySelection();
-    if (k) { setInfo("copied " + k + " note" + (k === 1 ? "" : "s") + " — ⌘V pastes at the playhead"); e.preventDefault(); }
+    if (k) { setInfo("copied " + clipSummary() + " — ⌘V pastes at the playhead"); e.preventDefault(); }
     return;
   }
   if (meta && e.key.toLowerCase() === "v") {
     const k = pasteClipboard(playCursor);
-    if (k) { setInfo("pasted " + k + " note" + (k === 1 ? "" : "s") + " (selected — arrows move them; cursor at their end, ⌘V again chains)"); e.preventDefault(); }
+    if (k) { setInfo("pasted " + clipSummary() + " (selected — arrows move them; cursor at their end, ⌘V again chains)"); e.preventDefault(); }
     return;
   }
   if (meta && e.key.toLowerCase() === "z") { // ⌘Z / ⇧⌘Z (Josh, 2026-09-12: ⌘Z did nothing on his Mac)
