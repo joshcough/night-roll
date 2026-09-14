@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Night Roll</title>
+<style>html,body{background:#0D1120;color:#9aa3c7;font:14px ui-monospace,Menlo,monospace;margin:0}
+main{padding:40px 24px}a{color:#5B78E8}</style>
+<script>
+// Song links are the song's path without its extension (…/albums/…/ambush);
+// Pages has no such file, so this page routes them into the app as ?song=.
+// The same path WITH .mid is a real file and never lands here.
+(function () {
+  var p = location.pathname, i = p.indexOf("/albums/");
+  if (i < 0) return;
+  var root = p.slice(0, i + 1), rel = decodeURIComponent(p.slice(i + 1)).replace(/\/+$/, "");
+  var name = rel.split("/").pop().replace(/\.midi?$/i, "").split("-").map(function (w) { return w ? w[0].toUpperCase() + w.slice(1) : w; }).join(" ");
+  document.title = name + " \u00b7 Night Roll";
+  var q = location.search ? location.search.slice(1).split("&").filter(function (kv) { return kv && kv.split("=")[0] !== "song"; }) : [];
+  q.unshift("song=" + encodeURIComponent(/\.midi?$/i.test(rel) ? rel : rel + ".mid"));
+  location.replace(root + "?" + q.join("&") + location.hash);
+})();
+</script></head>
+<body><main>Nothing at this address. <a href="/">Night Roll</a></main></body></html>

@@ -778,17 +778,33 @@ chord name, key inference, or note classification; findings are Josh's.
    the push-triggered Pages build deploys on its own (manual kicks
    collide with it and email failure noise — only kick if it hangs).
 
-## Shareable links and the document title (2026-09-07)
+## Shareable links and the document title (2026-09-07, path form 2026-09-14)
 
-The address bar always carries `?song=<path>` for catalog songs
-(reflectSongURL; local/ drafts are stripped since nobody else can load
-them). The tab title and `og:title` are "<Song> · Night Roll"
-(setDocTitle): set synchronously from the query string at script start
-using the filename title, then refined by updateSongBtn once the catalog
-supplies the display title. Rationale: a pasted link in Messages should
-preview as the song, not the app. Messages' preview fetcher runs scripts,
-so the synchronous set is what it sees; fetchers that don't run scripts
-get the static "Night Roll". If a per-song preview is ever needed for
-script-less fetchers, the route is static per-song stub pages with their
-own `<title>`/`og:title` that redirect into the app — not built, not
-needed yet.
+**A song's link is its path with no extension**, and the same path with
+`.mid` is the file (Pages serves it as audio/midi):
+
+    https://joshcough.github.io/night-roll/albums/compositions/nightroll/ambush
+    https://joshcough.github.io/night-roll/albums/compositions/nightroll/ambush.mid
+
+Mechanics: `reflectSongURL` puts the path form in the address bar
+(replaceState; other query params like `?perf=1` survive). Pages has no
+file at the extensionless path, so `404.html` (repo root = the custom 404
+for the project site) routes it: it finds `/albums/` in the pathname,
+sets the tab title from the slug, and `location.replace`s to
+`<root>?song=<path>.mid`. The app reads `songPathFromURL` — `?song=` in
+either form (the pre-09-14 links keep working) or the path form — and
+then reflects the path form again. One redirect hop per open/reload.
+
+`APP_BASE` is the app directory snapshotted at script start and pinned
+as a `<base>` element, so relative loads (vendor/soundfonts, albums/,
+the dynamic `tools/nsf` imports, `songsBase` default "") keep resolving
+against the app, not the song path, after the address bar changes.
+
+Tab title and `og:title` are "<Song> · Night Roll" (setDocTitle): set
+synchronously from the URL at script start, refined by updateSongBtn
+once the catalog supplies the display title. Preview fetchers that run
+scripts (Messages) see the song on the `?song=` hop; on the path form
+they see 404.html's title — whether Messages previews a 404 response is
+UNVERIFIED (2026-09-14). If it doesn't, the route is static per-song
+stub directories (`albums/…/ambush/index.html`) with their own titles,
+which also makes previews work for script-less fetchers — not built.
