@@ -4,6 +4,15 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## Album play — SHIPPED v1 2026-09-14
+
+Advisor round (design report in this session), Josh's picks: transport
+▶▶ + picker row, hidden behind View ▾ → Album buttons (off by default);
+2 passes per looping song; screen-on OK for v1. Details in NIGHT-ROLL.md
+"Album play". Open: lock-screen controls (needs a media element —
+reproduce the August stall on his iPad first), repeat-album, a passes
+pref if 2 turns out wrong for a song, shuffle.
+
 ## HANDOFF 2026-09-12 — note length editing (handoffs/handoff-2026-09-12-note-length-editing.md)
 
 Cloud-session proposal, Josh signs off before the model changes. Landed

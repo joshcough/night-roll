@@ -808,3 +808,41 @@ they see 404.html's title — whether Messages previews a 404 response is
 UNVERIFIED (2026-09-14). If it doesn't, the route is static per-song
 stub directories (`albums/…/ambush/index.html`) with their own titles,
 which also makes previews work for script-less fetchers — not built.
+
+## Album play (2026-09-14)
+
+Josh's decisions: transport button + picker row, both hidden behind View
+▾ → Album buttons (device pref `ff1roll-albumui`, off by default); two
+passes per looping song; screen-on is acceptable for v1 (no Media
+Session, no media element — the silent `<audio>` keep-alive stalled the
+iPad in August).
+
+**The core problem:** nothing in the player ends. Every song wraps forever
+(its `loop:` directive or the whole song); chip audio loops in hardware
+(`chipStart` sets `src.loop`). Album play supplies the ending:
+`albumEndSec(seg, wholeEnd, hasMaterial, passes)` = intro + ALBUM_PASSES
+(2) of the loop body, once through when nothing lies inside the segment,
+capped at ALBUM_CAP_SEC (300). `play()` computes `albumEndAbs` (seconds
+after `playT0`) when `albumRun` is set; the pump schedules nothing past
+it, `chipStart` adds `src.stop()` at it, and the rAF tick fades the
+master over ALBUM_FADE (1.5 s) then calls `albumAdvance()` — idempotent,
+so a resumed clock after a screen lock advances once.
+
+**Sequencer:** `albumRun = {album, list, idx, passes, gen}` (session only).
+`albumStart(album, idx)` → `albumPlayIdx(idx)`: set crumb/URL, `await
+loadSong(path)`, `await song.notesReady` (the `loop:` directive must be in
+before `play()` reads `currentLoop()` — this also fixed the old
+`pendingPlay` race), `await updateChipBtn()` and, if the console render
+is in flight, `chip.renderPromise` with a 15 s cap, then
+`play(0, {noCountIn: true})`. A load failure skips the song. `gen`
+guards every await: a newer start/skip abandons the older one.
+
+**Never a dialog mid-run:** `loadSongInner` keeps a dirty draft when the
+repo is newer and says so in the status line instead of `appConfirm`.
+
+**The user takes the wheel:** ▶/■, Space, picking a song in Open…, ●,
+Download audio all call `albumClear()`. ⏮ inside a run = previous song
+within 3 s, else restart (CD convention). ▶▶ reads ⏭ while running. The
+crumb shows " · 3/19". Editing stays live during a run.
+
+Out of v1: shuffle, queue, repeat-album, lock-screen controls.

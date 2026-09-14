@@ -766,6 +766,33 @@ test("song links: path form in, ?song= form in (either), path form out", () => {
   assert.equal(val(`songShareURL("albums/final-fantasy-i/songs/town.mid", "http://localhost:8735/")`), "http://localhost:8735/albums/final-fantasy-i/songs/town");
 });
 
+test("album play: pass math, album lookup, and no dialog mid-run", async () => {
+  installSong();
+  // pass 1 = intro + loop body, each further pass = the body again; nothing looping = once; capped
+  assert.equal(val(`albumEndSec({start: 10, end: 40}, 50, true, 2, 300)`), 70);
+  assert.equal(val(`albumEndSec({start: 10, end: 40}, 50, true, 1, 300)`), 40);
+  assert.equal(val(`albumEndSec({start: 10, end: 40}, 50, true, 3, 300)`), 100);
+  assert.equal(val(`albumEndSec({start: 0, end: 50}, 50, true, 2, 300)`), 100); // whole-song wrap: twice through
+  assert.equal(val(`albumEndSec({start: 10, end: 40}, 50, false, 2, 300)`), 50); // nothing inside the segment: play once
+  assert.equal(val(`albumEndSec({start: 0, end: 200}, 200, true, 2, 300)`), 300); // the cap
+  run(`for (const k of Object.keys(CATALOG)) delete CATALOG[k];
+       CATALOG["Test Album"] = [["First", "albums/t/first.mid"], ["Second", "albums/t/second.mid"]];`);
+  assert.deepEqual(val(`(() => { const p = albumPos("albums/t/second.mid"); return [p.album, p.idx, p.list.length]; })()`), ["Test Album", 1, 2]);
+  assert.equal(val(`albumPos("local/x.mid")`), null);
+  // a dirty draft with a newer repo save: outside a run the app asks; inside a run it keeps the draft silently
+  run(`
+    fetch = async () => ({ok: true, text: async () => JSON.stringify({saved: 9e12})});
+    appConfirm = () => { throw new Error("dialog during album play"); };
+    localStorage.setItem("ff1roll-draft-albums/t/first.mid", JSON.stringify({savedStamp: 1, dirty: true, ppq: 480, timesig: [4, 4],
+      tempos: [{tick: 0, usq: 500000}], tracks: [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]}]}));
+    albumRun = {album: "Test Album", list: CATALOG["Test Album"], idx: 0, passes: 2, gen: 0};
+  `);
+  await run(`loadSongInner("albums/t/first.mid")`); // a real promise from the vm realm — awaitable
+  assert.equal(val(`songKey`), "albums/t/first.mid"); // the draft opened, no throw
+  assert.equal(val(`song.tracks[0].notes.length`), 1);
+  run(`albumRun = null; localStorage.removeItem("ff1roll-draft-albums/t/first.mid"); for (const k of Object.keys(CATALOG)) delete CATALOG[k]; songKey = null;`);
+});
+
 test("midiStatusLine: names the reason ● hears nothing", () => {
   installSong();
   assert.match(run(`midiStatusLine()`), /no Web MIDI/); // harness navigator has no requestMIDIAccess
@@ -990,7 +1017,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
     "Share a song", "link preview", "type your own", "minor scale", "no MIDI inputs found", "MIDI blocked",
     "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid", "quarter-note triplets", "▦N", "turns the grid off", "Paste to…", "ride along", "reaches up into the ruler", "gold outline", "lane by lane", "Backspace) deletes them", "Add .mid to the end",
-    "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip",
+    "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip", "Play album", "Album buttons",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
     "Tap a note", "nothing to double",

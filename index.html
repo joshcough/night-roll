@@ -674,6 +674,7 @@
   <div id="transport">
     <button id="rwbtn" aria-label="Back to start">⏮</button>
     <button class="primary" id="playbtn">▶ Play</button>
+    <button id="albumbtn" aria-label="Play this album from here" title="Play this album from here" style="display:none">▶▶</button>
     <button id="recbtn" aria-label="Record onto the selected track" style="display:none">●</button>
     <div id="lcd">
       <div class="lcdseg"><span class="lcdbig" id="lcdbar">1</span><span class="lcdlbl">bar</span></div>
@@ -1157,7 +1158,8 @@
     </div>
     <div class="hsec" data-hsec="playback">
     <dl>
-      <dt>▶ Play / ■ Stop</dt><dd>NES-style voices; drum tracks get a real kit. Songs loop at their final bar forever.</dd>
+      <dt>▶ Play / ■ Stop</dt><dd>NES-style voices; drum tracks get a real kit. Songs loop at their final bar forever (album play, below, is what ends them).</dd>
+      <dt>💿 Play album</dt><dd>View ▾ → <b>Album buttons</b> (off by default) adds <b>▶▶</b> beside Play and a <b>▶▶ Play album</b> row at the top of each album in File → Open…. Tap ▶▶ and the current song's album plays straight through from here, like a record: each song gets its intro plus two passes of its loop (the OST-CD convention; a song that doesn't loop plays once; five-minute cap), fades, and the next one loads — the console's own sound is waited for when it's still rendering. While it runs, ▶▶ becomes <b>⏭</b> (next), ⏮ goes back a song if tapped within three seconds and otherwise restarts this one, and the song title shows <b>3/19</b>. Anything you do to the transport by hand — ■, Space, picking a song, ● — ends the album run and you have the wheel; editing while it plays is fine. No dialog will interrupt a run: a song with a newer save on the repo plays from this device's draft and says so. Keep the screen on — locking the iPad pauses it, and unlocking picks up where it stopped.</dd>
       <dt>⏱ Metronome</dt><dd>Any meter (1–12 over 2/4/8/16 — bpm counts the denominator beat), tap each beat cell to cycle accent → normal → silent, subdivisions in 2/3/4, slider or tap-tempo. Three modes: <b>free-running</b> (its own clock); <b>follow song</b> — clicks ride the song's own grid, phase-perfect on the declared meter through tempo changes, speed slider, and loops; <b>trial meter</b> — click a meter of YOUR choosing over the real music to A/B candidates by ear (the "shift accents" ‹ › slides the pattern's starting beat, since a right meter can sit offset). Settings stick.</dd>
       <dt>Count-in</dt><dd>Optional one-bar click lead-in, only when play starts from bar 1 beat 1 — never mid-song, never when the song loops back around.</dd>
       <dt>⏮</dt><dd>Back to bar 1.</dd>
@@ -1281,6 +1283,7 @@
   <div class="fdiv"></div>
   <button class="fitem" id="vwInst">🎹  Instrument panel</button>
   <button class="fitem" id="vwSub">💬  Notes strip</button>
+  <button class="fitem" id="vwAlbum">💿  Album buttons</button>
   <div class="fdiv"></div>
   <button class="fitem" id="vwGrid">▦  Grid…</button>
   <div class="fdiv" id="vwLevelsDiv"></div>
@@ -2780,9 +2783,10 @@ async function loadSong(path) {
     await loadSongInner(path);
   } finally {
     songLoading = false;
-    if (pendingPlay) { // play pressed mid-load: honor it now the song is real
-      pendingPlay = false;
-      play(0).catch(() => { /* audio context refusal */ });
+    if (pendingPlay) { // play pressed mid-load: honor it now the song is real — and its notes
+      pendingPlay = false; // (the loop: directive arrives with them; playing before it wrapped the whole song)
+      const ready = song && song.notesReady ? song.notesReady : Promise.resolve();
+      ready.then(() => play(0)).catch(() => { /* audio context refusal */ });
     }
   }
 }
@@ -2800,14 +2804,19 @@ async function loadSongInner(path) {
       if (r.ok) repoStamp = (JSON.parse(await r.text()).saved || 0);
     } catch (err) { /* offline / not yet saved: draft wins */ }
     if (d && repoStamp > (d.savedStamp || 0)) {
-      if (!d.dirty || await appConfirm("NEWER SAVE EXISTS",
+      // an album run never asks: it keeps the draft and says so (nothing is lost)
+      const takeNewer = !d.dirty || (!albumRun && await appConfirm("NEWER SAVE EXISTS",
         "This song was saved from another device more recently than this draft.",
         "Use the newer save (discard this device's changes)",
-        "Keep this device's draft")) {
+        "Keep this device's draft"));
+      if (takeNewer) {
         for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"])
           localStorage.removeItem(pre + path);
         // fall through to the normal repo load below
-      } else { openDraftDoc(d, path); return; } // keep the local draft, knowingly
+      } else {
+        if (albumRun) setInfo("draft kept — a newer save of this song exists on the repo");
+        openDraftDoc(d, path); return; // keep the local draft, knowingly
+      }
     } else if (d) { openDraftDoc(d, path); return; } // draft is the newest known state
   }
   const gen = ++loadGen;
@@ -2851,7 +2860,7 @@ function setSong(parsed, key) {
   clampView();
   setInfo("tap a note");
   draw();
-  loadNotes();
+  song.notesReady = loadNotes(); // awaited by anything that must see the loop: directive before playing
 }
 
 // ---------------------------------------------------------------- track chips
@@ -6331,7 +6340,7 @@ async function updateChipBtn() { // name kept for call sites; now just the auto-
   if (available && chip.key !== songKey && chip.rendering !== songKey) {
     chip.rendering = songKey;
     const forKey = songKey;
-    chipRender().catch(() => { /* not renderable: synth carries the song */ })
+    chip.renderPromise = chipRender().catch(() => false) // not renderable: synth carries the song
       .finally(() => { if (chip.rendering === forKey) chip.rendering = null; });
   }
 }
@@ -6382,10 +6391,11 @@ function chipStart(fromSec) {
     }
     src.connect(trackGain(ti));
     src.start(playT0, Math.min(chip.lead + fromSec * playRate, buffer.duration));
+    if (albumEndAbs !== null) src.stop(playT0 + albumEndAbs); // the hardware loop still wraps; album play just ends it
     chip.srcs.push(src);
   }
 }
-async function play(fromSec = 0) {
+async function play(fromSec = 0, opts = {}) {
   if (songLoading) { // starting a transport against a half-loaded song played
     pendingPlay = true; // a couple of chase notes then died (Josh, 2026-08-17)
     document.getElementById("playbtn").textContent = "▶ …";
@@ -6402,7 +6412,7 @@ async function play(fromSec = 0) {
   // starts from 1.1 — never mid-song, and loops can't retrigger it because
   // wraps never re-enter play(). Implemented by pushing playT0 one bar out
   // and clicking the gap; playSec() clamps at 0, so the playhead waits.
-  if (met.countIn && fromSec < 1e-6 && song && songEndTick > 0) {
+  if (met.countIn && !opts.noCountIn && fromSec < 1e-6 && song && songEndTick > 0) { // album tracks never count in
     ensureMetGain();
     const beats = beatsPerBarDisp();
     const beatSec = tickToSec(song, beatTicks());
@@ -6421,6 +6431,14 @@ async function play(fromSec = 0) {
     loopSeg = {start: tickToSec(song, rangeSel.a),
                end: tickToSec(song, Math.min(rangeSel.b, songEndTick))};
     playOffset = fromSec = loopSeg.start; // ▶ always replays from the cycle's top (Logic habit — Josh, 2026-08-19)
+  }
+  // album play: this song ends after its passes (2 of the loop body after the
+  // intro; once through if nothing loops), then the next one loads
+  albumEndAbs = null; albumFading = false;
+  if (albumRun && !cycling) {
+    const wi = schedEvents.findIndex(e => e.sec >= loopSeg.start);
+    const hasMaterial = wi >= 0 && schedEvents[wi].sec < loopSeg.end;
+    albumEndAbs = albumEndSec(loopSeg, tickToSec(song, songEndTick), hasMaterial, albumRun.passes) - playOffset;
   }
   updateTrackGains();
   song.tracks.forEach((_, ti) => trackGain(ti)); // pre-create so gains exist before first event
@@ -6463,6 +6481,7 @@ async function play(fromSec = 0) {
                                   : loopSeg.end + (loopPass - 1) * segLen + (e.sec - loopSeg.start))
                   - playOffset; // seconds after playT0
       if (abs >= now + 0.2) break;
+      if (albumEndAbs !== null && abs >= albumEndAbs) break; // the pass count is spent: nothing past the end
       if (abs >= -0.05) scheduleNote(e.ti, e.n, playT0 + abs, e.dur);
       schedIdx++;
     }
@@ -6472,6 +6491,17 @@ async function play(fromSec = 0) {
   followFree = false;
   const tick = () => {
     if (!playing) return;
+    if (albumRun && albumEndAbs !== null) { // fade into the end of the last pass, then the next song
+      const t = audio.currentTime - playT0;
+      if (!albumFading && t >= albumEndAbs - ALBUM_FADE) {
+        albumFading = true;
+        const at = audio.currentTime;
+        master.gain.cancelScheduledValues(at);
+        master.gain.setValueAtTime(master.gain.value, at);
+        master.gain.linearRampToValueAtTime(0, at + ALBUM_FADE);
+      }
+      if (t >= albumEndAbs) { albumAdvance(); return; }
+    }
     const x = secToTick(song, playSec()) * pxPerTick();
     const W = wrap.clientWidth - RULER_W;
     const handMidGesture = drag && (drag.ruler || drag.rangeEdge || drag.bandEdge || drag.cursor);
@@ -6512,6 +6542,97 @@ function stop() {
   updateSubtitle();
   draw();
 }
+// ---------------------------------------------------------------- album play
+// Hit ▶▶ and hear the album straight through, like a record (Josh, 2026-09-14).
+// Every song here loops forever on its own, so the run decides the ending: the
+// intro plus ALBUM_PASSES of the loop body (the OST-CD convention), a fade,
+// then the next song. Explicit transport actions (▶ ■ Space ⏮ past the prev
+// window, picking a song, ●, Download audio) take the wheel back: albumClear().
+// Nothing pops mid-run — a newer repo save is kept out of the way, not asked about.
+const ALBUM_PASSES = 2, ALBUM_CAP_SEC = 300, ALBUM_FADE = 1.5;
+// off by default; View ▾ → Album buttons shows ▶▶ and the picker row. albumRun is
+// session state only — a run can't survive a reload (no autoplay without a gesture)
+let albumUI = localStorage.getItem("ff1roll-albumui") === "1";
+let albumRun = null, albumEndAbs = null, albumFading = false;
+function albumEndSec(seg, wholeEnd, hasMaterial, passes = ALBUM_PASSES, cap = ALBUM_CAP_SEC) {
+  const len = seg.end - seg.start;
+  const end = hasMaterial && len > 0 ? seg.end + (passes - 1) * len : wholeEnd; // pass 1 = intro + body; each further pass = the body again
+  return Math.min(end, cap);
+}
+function albumPos(path) { // which album holds this song, and where
+  for (const [album, list] of Object.entries(CATALOG)) {
+    const idx = list.findIndex(([, p]) => p === path);
+    if (idx >= 0) return {album, list, idx};
+  }
+  return null;
+}
+function albumButtonText() {
+  const b = document.getElementById("albumbtn");
+  if (!b) return;
+  b.textContent = albumRun ? "⏭" : "▶▶";
+  const label = albumRun ? "Next song in the album" : "Play this album from here";
+  b.setAttribute("aria-label", label); b.title = label;
+}
+function applyAlbumUI() {
+  const b = document.getElementById("albumbtn");
+  if (b) b.style.display = albumUI ? "" : "none";
+  albumButtonText();
+}
+function albumClear() {
+  if (!albumRun) return;
+  albumRun = null; albumEndAbs = null;
+  albumButtonText();
+  if (typeof updateSongBtn === "function" && currentPath) updateSongBtn();
+}
+async function albumStart(album, idx) {
+  const list = CATALOG[album];
+  if (!list || !list[idx]) return;
+  albumRun = {album, list, idx, passes: ALBUM_PASSES, gen: 0};
+  albumButtonText();
+  await albumPlayIdx(idx);
+}
+function albumNext() { if (albumRun) albumPlayIdx(albumRun.idx + 1); }
+function albumPrev() { if (albumRun) albumPlayIdx(Math.max(0, albumRun.idx - 1)); }
+async function albumPlayIdx(idx) {
+  const run = albumRun;
+  if (!run) return;
+  if (idx >= run.list.length) { stop(); setInfo("album finished: " + run.album); albumClear(); return; }
+  run.idx = idx;
+  const gen = ++run.gen; // any later start/skip supersedes this one
+  const [title, path] = run.list[idx];
+  currentPath = path;
+  localStorage.setItem("ff1roll-lastsong", path);
+  reflectSongURL(path);
+  updateSongBtn();
+  const stale = () => albumRun !== run || run.gen !== gen;
+  try { await loadSong(path); }
+  catch (err) {
+    setInfo("couldn't load " + title + " — skipping: " + err.message);
+    if (!stale()) return albumPlayIdx(idx + 1);
+    return;
+  }
+  if (stale()) return;
+  if (song && song.notesReady) await song.notesReady; // the loop: directive must be in before play() reads it
+  if (stale()) return;
+  await updateChipBtn(); // kicks the console render when there is one
+  if (chip.rendering === songKey && chip.renderPromise) { // worth the wait: the chip is the real sound
+    setInfo("rendering the console's voice for " + title + "…");
+    await Promise.race([chip.renderPromise, new Promise(r => setTimeout(r, 15000))]);
+    if (stale()) return;
+  }
+  const next = run.list[idx + 1];
+  setInfo("album: " + run.album + " · " + (idx + 1) + "/" + run.list.length + (next ? " — next: " + next[0] : " — last song"));
+  await play(0, {noCountIn: true});
+}
+function albumAdvance() { // from the transport tick, once the pass count is spent; idempotent
+  const run = albumRun;
+  if (!run || run.advancing) return;
+  run.advancing = true;
+  stop();
+  run.advancing = false;
+  if (albumRun === run) albumPlayIdx(run.idx + 1);
+}
+applyAlbumUI(); // the markup is above the script; the pref shows the button from the first frame
 
 // ---------------------------------------------------------------- score view
 const VF = (() => {
@@ -7210,6 +7331,12 @@ function updateSongBtn() { // breadcrumb: Album › Title, with the real path di
   const title = document.createElement("span");
   title.textContent = songTitleOf(currentPath);
   songtitleEl.append(crumb, title);
+  if (albumRun) { // now playing: 3/19
+    const pos = document.createElement("span");
+    pos.style.color = "var(--dim)";
+    pos.textContent = " · " + (albumRun.idx + 1) + "/" + albumRun.list.length;
+    songtitleEl.appendChild(pos);
+  }
   if (songDirtyFlag()) { // unsaved edits: the gold dot every editor uses
     const dot = document.createElement("span");
     dot.textContent = " ●";
@@ -7296,9 +7423,23 @@ function openSongPicker() {
 document.getElementById("songsheetclose").addEventListener("click", () => songsheet.classList.remove("on"));
 document.getElementById("playbtn").addEventListener("click", () => {
   if (!song) return; // first song still fetching
+  albumClear(); // ▶/■ by hand ends an album run
   playing ? stop() : play(playCursor > 0 ? tickToSec(song, playCursor) : 0);
 });
+document.getElementById("albumbtn").addEventListener("click", () => {
+  if (!song) return;
+  if (albumRun) { albumNext(); return; } // ⏭
+  const pos = albumPos(songKey);
+  if (!pos) { setInfo("this song isn't in an album — open one from File → Open… and tap ▶▶ there"); return; }
+  albumStart(pos.album, pos.idx);
+});
 document.getElementById("rwbtn").addEventListener("click", () => {
+  if (albumRun && playing) { // CD convention: ⏮ early in a song = previous song, later = restart it
+    if (playSec() < 3 && albumRun.idx > 0) { albumPrev(); return; }
+    stop(); playCursor = 0; view.x = viewMode === "score" ? -SCORE_INTRO_W : 0;
+    play(0, {noCountIn: true});
+    return;
+  }
   const startX = viewMode === "score" ? -SCORE_INTRO_W : 0;
   // an armed cycle owns the transport: ⏮ returns to ITS start, not bar 1
   const home = rangeSel && rangeSel.cycle && !rangeSel.off ? rangeSel.a : 0;
@@ -9266,6 +9407,7 @@ document.addEventListener("pointerdown", function midiWarm() {
   initWebMidi(); // permission prompt wants a user gesture
 }, {capture: true});
 document.getElementById("recbtn").addEventListener("click", async () => {
+  albumClear();
   if (recording || playing) { stop(); return; } // ● while rolling = stop (commits the take)
   if (!song || !editableSong()) { setInfo("recording works on your own songs"); return; }
   if (!instOpen) { instOpen = true; localStorage.setItem("ff1roll-inst-open", "1"); applyInst(); }
@@ -10212,7 +10354,7 @@ function renderViewMenu() { // ✓ = visible; labels never shift (fixed 2-char s
     b.style.opacity = dim ? 0.55 : 1;
   };
   const base = {vwScore: "𝄞  Score view", vwListener: "📻  Listener mode", vwTracksView: "▤  Tracks view", vwTracks: "◂  Tracks", vwEdit: "🛠  Edit toolbar",
-                vwFooter: "▦  Bottom bar", vwInst: "🎹  Instrument panel", vwSub: "💬  Notes strip"};
+                vwFooter: "▦  Bottom bar", vwInst: "🎹  Instrument panel", vwSub: "💬  Notes strip", vwAlbum: "💿  Album buttons"};
   for (const [id, label] of Object.entries(base)) document.getElementById(id).textContent = label;
   set("vwScore", viewMode === "score");
   set("vwTracksView", viewMode === "tracks");
@@ -10222,6 +10364,7 @@ function renderViewMenu() { // ✓ = visible; labels never shift (fixed 2-char s
   set("vwFooter", !footerHidden);
   set("vwInst", typeof instOpen !== "undefined" && instOpen);
   set("vwSub", subOn);
+  set("vwAlbum", albumUI);
   set("vwGrid", !!gridDiv);
   document.getElementById("vwGrid").textContent = (gridDiv ? "✓ " : "   ") +
     "▦  Grid…" + (gridDiv ? "  " + gridDiv + "/bar" : "");
@@ -10277,7 +10420,7 @@ document.addEventListener("keydown", e => { // space = play/stop, Logic-style
             t.isContentEditable || t.tagName === "BUTTON")) return; // typing/tabbing wins
   if (!song) return;
   e.preventDefault(); // page must not scroll
-  if (playing) stop(); else document.getElementById("playbtn").click();
+  if (playing) { albumClear(); stop(); } else document.getElementById("playbtn").click();
 });
 document.getElementById("viewsheetbtn").addEventListener("click", e => {
   const sheet = document.getElementById("viewsheet");
@@ -10303,6 +10446,7 @@ document.getElementById("viewsheetbtn").addEventListener("click", e => {
   on("vwFooter", () => { footerHidden = !footerHidden; applyChrome(); });
   on("vwInst", () => document.getElementById("instbtn").click());
   on("vwSub", () => document.getElementById("subbtn").click());
+  on("vwAlbum", () => { albumUI = !albumUI; localStorage.setItem("ff1roll-albumui", albumUI ? "1" : "0"); applyAlbumUI(); });
   on("vwGrid", () => { document.getElementById("viewsheet").classList.remove("on"); openGridSheet(); });
   on("vwLevelsMinus", () => setSecDepth(Math.min(secDepthCap(), secMaxDepth - 1) - 1));
   on("vwLevelsPlus", () => setSecDepth(Math.min(secDepthCap(), secMaxDepth - 1) + 1));
@@ -10423,9 +10567,11 @@ function fsubAlbums() {
 function fsubSongs(group) {
   filesub.innerHTML = "";
   fsubItem("‹ " + group, fsubAlbums, true);
+  if (albumUI) fsubItem("▶▶  Play album", () => { closeFileMenus(); albumStart(group, 0); });
   for (const [title, path] of CATALOG[group])
     fsubItem(title + (path === currentPath ? "   ✓" : ""), () => {
       closeFileMenus();
+      albumClear(); // picking a song by hand ends an album run
       currentPath = path;
       localStorage.setItem("ff1roll-lastsong", path);
       reflectSongURL(path);
@@ -10713,6 +10859,7 @@ document.getElementById("filedlaudio").addEventListener("click", async () => {
     setInfo("audio saved: " + name + " (" + Math.round(blob.size / 1024) + " KB)");
   };
   rec.onstop = finish;
+  albumClear();
   exporting = true;
   stop();
   rec.start();
