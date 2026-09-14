@@ -775,6 +775,15 @@ test("album play: pass math, album lookup, and no dialog mid-run", async () => {
   assert.equal(val(`albumEndSec({start: 0, end: 50}, 50, true, 2, 300)`), 100); // whole-song wrap: twice through
   assert.equal(val(`albumEndSec({start: 10, end: 40}, 50, false, 2, 300)`), 50); // nothing inside the segment: play once
   assert.equal(val(`albumEndSec({start: 0, end: 200}, 200, true, 2, 300)`), 300); // the cap
+  // past the last song: repeat-all wraps, repeat-one wraps too (⏭ is manual there), off ends the run
+  assert.equal(val(`albumNextIdx(1, 2, "all")`), 1);
+  assert.equal(val(`albumNextIdx(2, 2, "all")`), 0);
+  assert.equal(val(`albumNextIdx(2, 2, "one")`), 0);
+  assert.equal(val(`albumNextIdx(2, 2, "off")`), null);
+  assert.equal(val(`albumPrevIdx(1, 2, "all")`), 0);
+  assert.equal(val(`albumPrevIdx(0, 2, "all")`), 1); // wraps to the last song
+  assert.equal(val(`albumPrevIdx(0, 2, "off")`), 0);
+  assert.equal(val(`albumRepeat`), "all"); // the default
   run(`for (const k of Object.keys(CATALOG)) delete CATALOG[k];
        CATALOG["Test Album"] = [["First", "albums/t/first.mid"], ["Second", "albums/t/second.mid"]];`);
   assert.deepEqual(val(`(() => { const p = albumPos("albums/t/second.mid"); return [p.album, p.idx, p.list.length]; })()`), ["Test Album", 1, 2]);
@@ -1017,7 +1026,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "New song", "Save As", "Move to…", "moved from", "Download .mid", "Open…", "Score entry",
     "Share a song", "link preview", "type your own", "minor scale", "no MIDI inputs found", "MIDI blocked",
     "⌘Z", "Delete track is one ⟲ away", "chains straight on", "picks up its grid", "quarter-note triplets", "▦N", "turns the grid off", "Paste to…", "ride along", "reaches up into the ruler", "gold outline", "lane by lane", "Backspace) deletes them", "Add .mid to the end",
-    "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip", "Play album", "Album buttons",
+    "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip", "Play album", "Album buttons", "🔂 song",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
     "Tap a note", "nothing to double",

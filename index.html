@@ -674,7 +674,8 @@
   <div id="transport">
     <button id="rwbtn" aria-label="Back to start">⏮</button>
     <button class="primary" id="playbtn">▶ Play</button>
-    <button id="albumbtn" aria-label="Play this album from here" title="Play this album from here" style="display:none">▶▶</button>
+    <button id="albumbtn" aria-label="Play this album from here" title="Play this album from here" style="display:none">💿 Album</button>
+    <button id="albumrepeatbtn" aria-label="Album repeat mode" title="Repeat: the whole album" style="display:none">🔁 album</button>
     <button id="recbtn" aria-label="Record onto the selected track" style="display:none">●</button>
     <div id="lcd">
       <div class="lcdseg"><span class="lcdbig" id="lcdbar">1</span><span class="lcdlbl">bar</span></div>
@@ -1159,7 +1160,7 @@
     <div class="hsec" data-hsec="playback">
     <dl>
       <dt>▶ Play / ■ Stop</dt><dd>NES-style voices; drum tracks get a real kit. Songs loop at their final bar forever (album play, below, is what ends them).</dd>
-      <dt>💿 Play album</dt><dd>View ▾ → <b>Album buttons</b> (off by default) adds <b>▶▶</b> beside Play and a <b>▶▶ Play album</b> row at the top of each album in File → Open…. Tap ▶▶ and the current song's album plays straight through from here, like a record: each song gets its intro plus two passes of its loop (the OST-CD convention; a song that doesn't loop plays once; five-minute cap), fades, and the next one loads — the console's own sound is waited for when it's still rendering. While it runs, ▶▶ becomes <b>⏭</b> (next), ⏮ goes back a song if tapped within three seconds and otherwise restarts this one, and the song title shows <b>3/19</b>. Anything you do to the transport by hand — ■, Space, picking a song, ● — ends the album run and you have the wheel; editing while it plays is fine. No dialog will interrupt a run: a song with a newer save on the repo plays from this device's draft and says so. Keep the screen on — locking the iPad pauses it, and unlocking picks up where it stopped.</dd>
+      <dt>💿 Play album</dt><dd>View ▾ → <b>Album buttons</b> (off by default) adds <b>💿 Album</b> and a repeat button beside Play, and a <b>💿 Play album</b> row at the top of each album in File → Open…. Tap 💿 Album and the current song's album plays straight through from here, like a record: each song gets its intro plus two passes of its loop (the OST-CD convention; a song that doesn't loop plays once; five-minute cap), fades, and the next one loads — the console's own sound is waited for when it's still rendering. While it runs the buttons read <b>⏭ Next</b> and <b>⏮ Prev</b> (previous song — wrapping around when the album repeats), and the song title shows <b>3/19</b>. The repeat button cycles <b>🔁 album</b> (the list wraps around forever — the default), <b>🔂 song</b> (this song loops forever, as plain Play does, until ⏭), and <b>→ end</b> (stop after the last song); it sticks per device. Anything you do to the transport by hand — ■, Space, picking a song, ● — ends the album run and you have the wheel; editing while it plays is fine. No dialog will interrupt a run: a song with a newer save on the repo plays from this device's draft and says so. Keep the screen on — locking the iPad pauses it, and unlocking picks up where it stopped.</dd>
       <dt>⏱ Metronome</dt><dd>Any meter (1–12 over 2/4/8/16 — bpm counts the denominator beat), tap each beat cell to cycle accent → normal → silent, subdivisions in 2/3/4, slider or tap-tempo. Three modes: <b>free-running</b> (its own clock); <b>follow song</b> — clicks ride the song's own grid, phase-perfect on the declared meter through tempo changes, speed slider, and loops; <b>trial meter</b> — click a meter of YOUR choosing over the real music to A/B candidates by ear (the "shift accents" ‹ › slides the pattern's starting beat, since a right meter can sit offset). Settings stick.</dd>
       <dt>Count-in</dt><dd>Optional one-bar click lead-in, only when play starts from bar 1 beat 1 — never mid-song, never when the song loops back around.</dd>
       <dt>⏮</dt><dd>Back to bar 1.</dd>
@@ -6435,7 +6436,7 @@ async function play(fromSec = 0, opts = {}) {
   // album play: this song ends after its passes (2 of the loop body after the
   // intro; once through if nothing loops), then the next one loads
   albumEndAbs = null; albumFading = false;
-  if (albumRun && !cycling) {
+  if (albumRun && !cycling && albumRepeat !== "one") { // repeat-one: this song never ends on its own
     const wi = schedEvents.findIndex(e => e.sec >= loopSeg.start);
     const hasMaterial = wi >= 0 && schedEvents[wi].sec < loopSeg.end;
     albumEndAbs = albumEndSec(loopSeg, tickToSec(song, songEndTick), hasMaterial, albumRun.passes) - playOffset;
@@ -6555,6 +6556,19 @@ const ALBUM_PASSES = 2, ALBUM_CAP_SEC = 300, ALBUM_FADE = 1.5;
 // session state only — a run can't survive a reload (no autoplay without a gesture)
 let albumUI = localStorage.getItem("ff1roll-albumui") === "1";
 let albumRun = null, albumEndAbs = null, albumFading = false;
+// repeat: "all" = the list wraps forever (default — Josh, 2026-09-14: ⏭ past the
+// last song looked like it replayed it); "one" = this song loops forever, as
+// plain ▶ does, until ⏭; "off" = stop after the last song
+const ALBUM_REPEATS = ["all", "one", "off"];
+let albumRepeat = ALBUM_REPEATS.includes(localStorage.getItem("ff1roll-albumrepeat")) ? localStorage.getItem("ff1roll-albumrepeat") : "all";
+function albumNextIdx(idx, len, repeat = albumRepeat) { // null = the run is over
+  if (idx < len) return idx;
+  return repeat === "off" ? null : idx % len;
+}
+function albumPrevIdx(idx, len, repeat = albumRepeat) { // ⏮ in a run is ALWAYS the previous song (Josh, 2026-09-14: the 3 s restart window read as "no way back")
+  if (idx > 0) return idx - 1;
+  return repeat === "off" ? 0 : len - 1;
+}
 function albumEndSec(seg, wholeEnd, hasMaterial, passes = ALBUM_PASSES, cap = ALBUM_CAP_SEC) {
   const len = seg.end - seg.start;
   const end = hasMaterial && len > 0 ? seg.end + (passes - 1) * len : wholeEnd; // pass 1 = intro + body; each further pass = the body again
@@ -6570,14 +6584,35 @@ function albumPos(path) { // which album holds this song, and where
 function albumButtonText() {
   const b = document.getElementById("albumbtn");
   if (!b) return;
-  b.textContent = albumRun ? "⏭" : "▶▶";
+  b.textContent = albumRun ? "⏭ Next" : "💿 Album"; // words, not glyphs: ⏭ alone read as fast-forward
   const label = albumRun ? "Next song in the album" : "Play this album from here";
   b.setAttribute("aria-label", label); b.title = label;
+  const rw = document.getElementById("rwbtn");
+  if (rw) { rw.textContent = albumRun ? "⏮ Prev" : "⏮"; rw.title = albumRun ? "Previous song in the album" : "Back to start"; rw.setAttribute("aria-label", rw.title); }
+  const r = document.getElementById("albumrepeatbtn");
+  if (!r) return;
+  const txt = {all: "🔁 album", one: "🔂 song", off: "→ end"}[albumRepeat];
+  const tip = {all: "Repeat: the whole album, forever", one: "Repeat: this song, forever (⏭ to move on)", off: "Repeat: off — stop after the last song"}[albumRepeat];
+  r.textContent = txt; r.title = tip; r.setAttribute("aria-label", tip);
 }
 function applyAlbumUI() {
-  const b = document.getElementById("albumbtn");
-  if (b) b.style.display = albumUI ? "" : "none";
+  for (const id of ["albumbtn", "albumrepeatbtn"]) {
+    const b = document.getElementById(id);
+    if (b) b.style.display = albumUI ? "" : "none";
+  }
   albumButtonText();
+}
+function albumCycleRepeat() {
+  albumRepeat = ALBUM_REPEATS[(ALBUM_REPEATS.indexOf(albumRepeat) + 1) % ALBUM_REPEATS.length];
+  localStorage.setItem("ff1roll-albumrepeat", albumRepeat);
+  albumButtonText();
+  if (albumRun && playing) {
+    if (albumRepeat === "one") { // takes hold now: this song stops ending
+      albumEndAbs = null;
+      if (albumFading) { albumFading = false; openMaster(); }
+    } // "all"/"off" differ only at the end of the list — nothing to change mid-song
+  }
+  setInfo({all: "repeat: the whole album, forever", one: "repeat: this song, forever — ⏭ moves on", off: "repeat off — the album stops after its last song"}[albumRepeat]);
 }
 function albumClear() {
   if (!albumRun) return;
@@ -6593,11 +6628,13 @@ async function albumStart(album, idx) {
   await albumPlayIdx(idx);
 }
 function albumNext() { if (albumRun) albumPlayIdx(albumRun.idx + 1); }
-function albumPrev() { if (albumRun) albumPlayIdx(Math.max(0, albumRun.idx - 1)); }
+function albumPrev() { if (albumRun) albumPlayIdx(albumPrevIdx(albumRun.idx, albumRun.list.length)); }
 async function albumPlayIdx(idx) {
   const run = albumRun;
   if (!run) return;
-  if (idx >= run.list.length) { stop(); setInfo("album finished: " + run.album); albumClear(); return; }
+  const next = albumNextIdx(idx, run.list.length);
+  if (next === null) { stop(); setInfo("album finished: " + run.album); albumClear(); return; }
+  idx = next;
   run.idx = idx;
   const gen = ++run.gen; // any later start/skip supersedes this one
   const [title, path] = run.list[idx];
@@ -6621,8 +6658,9 @@ async function albumPlayIdx(idx) {
     await Promise.race([chip.renderPromise, new Promise(r => setTimeout(r, 15000))]);
     if (stale()) return;
   }
-  const next = run.list[idx + 1];
-  setInfo("album: " + run.album + " · " + (idx + 1) + "/" + run.list.length + (next ? " — next: " + next[0] : " — last song"));
+  const after = albumNextIdx(idx + 1, run.list.length);
+  setInfo("album: " + run.album + " · " + (idx + 1) + "/" + run.list.length +
+          (albumRepeat === "one" ? " — repeating this song; ⏭ moves on" : after !== null ? " — next: " + run.list[after][0] : " — last song"));
   await play(0, {noCountIn: true});
 }
 function albumAdvance() { // from the transport tick, once the pass count is spent; idempotent
@@ -7434,13 +7472,9 @@ document.getElementById("albumbtn").addEventListener("click", () => {
   if (!pos) { setInfo("this song isn't in an album — open one from File → Open… and tap ▶▶ there"); return; }
   albumStart(pos.album, pos.idx);
 });
+document.getElementById("albumrepeatbtn").addEventListener("click", albumCycleRepeat);
 document.getElementById("rwbtn").addEventListener("click", () => {
-  if (albumRun && playing) { // CD convention: ⏮ early in a song = previous song, later = restart it
-    if (playSec() < 3 && albumRun.idx > 0) { albumPrev(); return; }
-    stop(); playCursor = 0; view.x = viewMode === "score" ? -SCORE_INTRO_W : 0;
-    play(0, {noCountIn: true});
-    return;
-  }
+  if (albumRun) { albumPrev(); return; } // in a run ⏮ is the previous song, nothing else
   const startX = viewMode === "score" ? -SCORE_INTRO_W : 0;
   // an armed cycle owns the transport: ⏮ returns to ITS start, not bar 1
   const home = rangeSel && rangeSel.cycle && !rangeSel.off ? rangeSel.a : 0;
@@ -10568,7 +10602,7 @@ function fsubAlbums() {
 function fsubSongs(group) {
   filesub.innerHTML = "";
   fsubItem("‹ " + group, fsubAlbums, true);
-  if (albumUI) fsubItem("▶▶  Play album", () => { closeFileMenus(); albumStart(group, 0); });
+  if (albumUI) fsubItem("💿  Play album", () => { closeFileMenus(); albumStart(group, 0); });
   for (const [title, path] of CATALOG[group])
     fsubItem(title + (path === currentPath ? "   ✓" : ""), () => {
       closeFileMenus();

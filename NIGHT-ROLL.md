@@ -843,8 +843,14 @@ guards every await: a newer start/skip abandons the older one.
 repo is newer and says so in the status line instead of `appConfirm`.
 
 **The user takes the wheel:** ▶/■, Space, picking a song in Open…, ●,
-Download audio all call `albumClear()`. ⏮ inside a run = previous song
-within 3 s, else restart (CD convention). ▶▶ reads ⏭ while running. The
+Download audio all call `albumClear()`. ⏮ inside a run = previous song, always ("⏮ Prev";
+the 3 s CD-style restart window read as "no way back" and went, 09-14). ▶▶ reads ⏭ while running. The
 crumb shows " · 3/19". Editing stays live during a run.
 
-Out of v1: shuffle, queue, repeat-album, lock-screen controls.
+**Repeat** (`albumRepeat`, device pref `ff1roll-albumrepeat`, button
+beside 💿 Album): `all` (default) wraps the list forever — `albumNextIdx`
+— `one` loops the current song forever (play() sets no `albumEndAbs`;
+⏭ still advances), `off` stops after the last song. Buttons carry
+words ("💿 Album", "⏭ Next"): the bare ⏭ glyph read as fast-forward.
+
+Out of v1: shuffle, queue, lock-screen controls.
