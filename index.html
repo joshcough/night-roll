@@ -13407,6 +13407,7 @@ try { // a capture beacon surviving into a fresh load = the tab was killed mid-c
   currentPath = qsong ? qsong
     : loadable(last) ? last : "albums/final-fantasy-i/songs/overworld.mid";
   updateSongBtn();
+  reflectSongURL(currentPath); // the address bar is the share link from the first frame: path form, never ?song=
   // a dead link (moved/renamed song in ?song= or a stale last-song) must not
   // strand you on a blank page: warn, then fall back to something that exists
   const bootFallback = why => {
@@ -13414,6 +13415,7 @@ try { // a capture beacon surviving into a fresh load = the tab was killed mid-c
     setInfo("⚠ " + why + " — opening " + fb.split("/").pop() + " instead (the song may have moved: use Open…)");
     currentPath = fb;
     updateSongBtn();
+    reflectSongURL(fb);
     return loadSong(fb);
   };
   if (qsong && !loadable(currentPath)) {
