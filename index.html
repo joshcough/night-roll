@@ -6459,6 +6459,18 @@ async function play(fromSec = 0, opts = {}) {
     const segLen = loopSeg.end - loopSeg.start;
     if (!schedEvents.length || segLen <= 0) return;
     const now = audio.currentTime - playT0;
+    if (albumRun && albumEndAbs !== null) { // fade into the end of the last pass, then the next song.
+      // Here, on the scheduler's timer, not the rAF tick: a background tab
+      // gets no frames, and an album must keep going while Josh is in another tab
+      if (!albumFading && now >= albumEndAbs - ALBUM_FADE) {
+        albumFading = true;
+        const at = audio.currentTime;
+        master.gain.cancelScheduledValues(at);
+        master.gain.setValueAtTime(master.gain.value, at);
+        master.gain.linearRampToValueAtTime(0, at + ALBUM_FADE);
+      }
+      if (now >= albumEndAbs) { albumAdvance(); return; }
+    }
     for (;;) {
       // every pass ends at the loop point; material past it (a written-out
       // repeat, e.g. ship's bar 25.5 seam) is shown but never played
@@ -6491,17 +6503,6 @@ async function play(fromSec = 0, opts = {}) {
   followFree = false;
   const tick = () => {
     if (!playing) return;
-    if (albumRun && albumEndAbs !== null) { // fade into the end of the last pass, then the next song
-      const t = audio.currentTime - playT0;
-      if (!albumFading && t >= albumEndAbs - ALBUM_FADE) {
-        albumFading = true;
-        const at = audio.currentTime;
-        master.gain.cancelScheduledValues(at);
-        master.gain.setValueAtTime(master.gain.value, at);
-        master.gain.linearRampToValueAtTime(0, at + ALBUM_FADE);
-      }
-      if (t >= albumEndAbs) { albumAdvance(); return; }
-    }
     const x = secToTick(song, playSec()) * pxPerTick();
     const W = wrap.clientWidth - RULER_W;
     const handMidGesture = drag && (drag.ruler || drag.rangeEdge || drag.bandEdge || drag.cursor);

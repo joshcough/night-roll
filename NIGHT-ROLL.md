@@ -824,9 +824,11 @@ iPad in August).
 (2) of the loop body, once through when nothing lies inside the segment,
 capped at ALBUM_CAP_SEC (300). `play()` computes `albumEndAbs` (seconds
 after `playT0`) when `albumRun` is set; the pump schedules nothing past
-it, `chipStart` adds `src.stop()` at it, and the rAF tick fades the
-master over ALBUM_FADE (1.5 s) then calls `albumAdvance()` — idempotent,
-so a resumed clock after a screen lock advances once.
+it, `chipStart` adds `src.stop()` at it, and the pump (the scheduler's
+setInterval, NOT the rAF tick — background tabs get no frames and the
+album must go on while he's in another tab) fades the master over
+ALBUM_FADE (1.5 s) then calls `albumAdvance()` — idempotent, so a
+resumed clock after a screen lock advances once.
 
 **Sequencer:** `albumRun = {album, list, idx, passes, gen}` (session only).
 `albumStart(album, idx)` → `albumPlayIdx(idx)`: set crumb/URL, `await
