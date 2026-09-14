@@ -809,48 +809,53 @@ UNVERIFIED (2026-09-14). If it doesn't, the route is static per-song
 stub directories (`albums/…/ambush/index.html`) with their own titles,
 which also makes previews work for script-less fetchers — not built.
 
-## Album play (2026-09-14)
+## Album play (2026-09-14; strip model the same day)
 
-Josh's decisions: transport button + picker row, both hidden behind View
-▾ → Album buttons (device pref `ff1roll-albumui`, off by default); two
-passes per looping song; screen-on is acceptable for v1 (no Media
-Session, no media element — the silent `<audio>` keep-alive stalled the
-iPad in August).
+**The album is a strip, the transport is the song.** A second advisor
+round after Josh found the first version confusing (a transport button
+that meant "Album" idle and "Next" running; ⏮ meaning previous song
+mid-run; a silent end that then restarted from the last song; a
+three-state repeat button). Rulings, all shipped:
 
-**The core problem:** nothing in the player ends. Every song wraps forever
-(its `loop:` directive or the whole song); chip audio loops in hardware
-(`chipStart` sets `src.loop`). Album play supplies the ending:
-`albumEndSec(seg, wholeEnd, hasMaterial, passes)` = intro + ALBUM_PASSES
-(2) of the loop body, once through when nothing lies inside the segment,
-capped at ALBUM_CAP_SEC (300). `play()` computes `albumEndAbs` (seconds
-after `playT0`) when `albumRun` is set; the pump schedules nothing past
-it, `chipStart` adds `src.stop()` at it, and the pump (the scheduler's
-setInterval, NOT the rAF tick — background tabs get no frames and the
-album must go on while he's in another tab) fades the master over
-ALBUM_FADE (1.5 s) then calls `albumAdvance()` — idempotent, so a
-resumed clock after a screen lock advances once.
+- **Entry only from File → Open… → album → 💿 Play album** (`fsubSongs`;
+  "from 12/19" when the open song is in that album). No transport
+  buttons, no View toggle.
+- **A tinted strip** (`#albumstrip`, under `#trackrow`) exists exactly
+  while `albumRun` does: "💿 3/19 Song · next: X", ⏮ Prev, ⏭ Next, ✕.
+  `albumStrip()` renders it; `stop()`/`play()` call it so it dims while
+  paused. Shown regardless of listener mode.
+- **The transport never changes meaning.** ⏮ = bar 1. ▶/■/Space start
+  and stop this song; inside a run that is pause/resume — `albumRun`
+  stays, `play(fromSec)` recomputes `albumEndAbs` against `playOffset`,
+  so the resumed song still ends and advances.
+- **Prev/Next always mean songs and wrap at both ends**
+  (`albumNextIdx`/`albumPrevIdx`). The list wraps forever; no repeat
+  control — "this song forever" is ✕ (plain ▶ already loops).
+- **✕ (`albumLeave`)** drops the run and keeps the song playing without
+  an ending; with chip audio it restarts in place because the buffer
+  source has a `stop()` scheduled that can't be unscheduled.
+- **Leaving happens only on actions that change what is loaded:** ✕,
+  picking a song in Open…, ● record, Download audio (`albumClear`).
+- An armed cycle range makes the song loop the cycle and the album wait
+  ("cycling — album waits" in the strip; `play()` sets no end).
 
-**Sequencer:** `albumRun = {album, list, idx, passes, gen}` (session only).
-`albumStart(album, idx)` → `albumPlayIdx(idx)`: set crumb/URL, `await
-loadSong(path)`, `await song.notesReady` (the `loop:` directive must be in
-before `play()` reads `currentLoop()` — this also fixed the old
-`pendingPlay` race), `await updateChipBtn()` and, if the console render
-is in flight, `chip.renderPromise` with a 15 s cap, then
+**Ending a song (unchanged):** every song wraps forever on its own and
+chip audio loops in hardware, so `albumEndSec` supplies the ending —
+intro + ALBUM_PASSES (2) of the loop body, once through when nothing
+lies inside the segment, capped at ALBUM_CAP_SEC (300). `play()` sets
+`albumEndAbs`; the pump schedules nothing past it, `chipStart` adds
+`src.stop()` at it, and the pump (the scheduler's setInterval, NOT the
+rAF tick — background tabs get no frames) fades the master over
+ALBUM_FADE (1.5 s) then calls `albumAdvance()`, idempotent.
+
+**Sequencer:** `albumRun = {album, list, idx, passes, gen}`.
+`albumPlayIdx(idx)`: wrap, crumb/URL, `await loadSong`, `await
+song.notesReady` (the `loop:` directive must be in before `play()` reads
+`currentLoop()` — this also fixed the old `pendingPlay` race), `await
+updateChipBtn()` and an in-flight `chip.renderPromise` (15 s cap), then
 `play(0, {noCountIn: true})`. A load failure skips the song. `gen`
-guards every await: a newer start/skip abandons the older one.
+guards every await. **Never a dialog mid-run:** `loadSongInner` keeps a
+dirty draft when the repo is newer and says so in the status line.
 
-**Never a dialog mid-run:** `loadSongInner` keeps a dirty draft when the
-repo is newer and says so in the status line instead of `appConfirm`.
-
-**The user takes the wheel:** ▶/■, Space, picking a song in Open…, ●,
-Download audio all call `albumClear()`. ⏮ inside a run = previous song, always ("⏮ Prev";
-the 3 s CD-style restart window read as "no way back" and went, 09-14). ▶▶ reads ⏭ while running. The
-crumb shows " · 3/19". Editing stays live during a run.
-
-**Repeat** (`albumRepeat`, device pref `ff1roll-albumrepeat`, button
-beside 💿 Album): `all` (default) wraps the list forever — `albumNextIdx`
-— `one` loops the current song forever (play() sets no `albumEndAbs`;
-⏭ still advances), `off` stops after the last song. Buttons carry
-words ("💿 Album", "⏭ Next"): the bare ⏭ glyph read as fast-forward.
-
-Out of v1: shuffle, queue, lock-screen controls.
+Out of v1: shuffle, queue, lock-screen controls (needs a media element;
+the silent `<audio>` keep-alive stalled the iPad in August).

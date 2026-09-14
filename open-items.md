@@ -4,14 +4,18 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
-## Album play — SHIPPED v1 2026-09-14
+## Album play — SHIPPED 2026-09-14, redesigned the same day
 
-Advisor round (design report in this session), Josh's picks: transport
-▶▶ + picker row, hidden behind View ▾ → Album buttons (off by default);
-2 passes per looping song; screen-on OK for v1. Details in NIGHT-ROLL.md
-"Album play". Open: lock-screen controls (needs a media element —
-reproduce the August stall on his iPad first), repeat-album, a passes
-pref if 2 turns out wrong for a song, shuffle.
+Round 1 (transport button behind a View toggle) confused Josh within an
+hour: the button changed meaning, ⏮ changed meaning, the run ended
+silently. Round 2 advisor ruling, shipped: the album is a STRIP under
+the track row that exists only during a run (3/19 · next, ⏮ Prev, ⏭
+Next, ✕); the only entry is File → Open → 💿 Play album; the transport
+never changes meaning (■ pauses, ▶ resumes); the list wraps forever; no
+repeat control. Two passes per looping song; screen-on OK. Details in
+NIGHT-ROLL.md "Album play". Open: lock-screen controls (needs a media
+element — reproduce the August stall on his iPad first), a passes pref
+if 2 turns out wrong for a song, shuffle.
 
 ## HANDOFF 2026-09-12 — note length editing (handoffs/handoff-2026-09-12-note-length-editing.md)
 
