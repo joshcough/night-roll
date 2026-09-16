@@ -6778,7 +6778,8 @@ function applyAudioDirs() { // called from finalizeNotes: last-wins per track na
     tr.clip = {file: n.audiodir.file, at: Math.max(0, Math.round(n.start)), offset: n.audiodir.offset || 0,
                local: !!n.audiodir.local, note: n,
                buffer: cached ? cached.buffer : null, peaks: cached ? cached.peaks : null,
-               dur: cached ? cached.dur : 0, status: cached ? cached.status : "pending"};
+               dur: cached ? cached.dur : 0, status: cached ? cached.status : "pending",
+               where: cached ? cached.where : null}; // device / folder / repo — the sheet's "where its bytes are"
     if (!cached) audioEnsure(ti);
   }
 }

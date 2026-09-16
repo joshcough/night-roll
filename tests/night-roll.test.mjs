@@ -1073,9 +1073,11 @@ test("audio tracks: the audio: annotation round-trips and derives kind/clip onto
   if (run(`!!scoreModel`)) assert.equal(val(`scoreModel.staves.map(s => s.ti)`).includes(2), false);
   // moving the clip rewrites the annotation (fresh added note, one anno undo entry)
   const before = run(`editUndo.length`);
+  run(`audioBufCache.get(audioCacheKey("take.wav")).where = "device";`); // what audioEnsure records
   run(`setClipDir(2, {at: 4 * 480});`);
   assert.equal(run(`editUndo.length`), before + 1);
   assert.equal(run(`song.tracks[2].clip.at`), 4 * 480);
+  assert.equal(run(`song.tracks[2].clip.where`), "device"); // the rebuilt clip keeps knowing where its bytes are
   assert.equal(val(`rollnotes.filter(n => n.audiodir).map(n => n.text)`).length, 1);
   assert.equal(run(`rollnotes.find(n => n.audiodir).text`), "audio: guitar file=take.wav offset=0.5");
   assert.equal(run(`rollnotes.find(n => n.audiodir).b1`), 2);
