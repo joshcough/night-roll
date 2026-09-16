@@ -3178,7 +3178,7 @@ function drawFull(skipCursor) {
     return;
   }
   if (viewMode === "tracks") {
-    drawTracks(W, H);
+    drawTracks(W, H, skipCursor);
     drawRuler(W, H);
     return;
   }
@@ -3740,7 +3740,7 @@ function hitTracksClip(pos) { // ti of the clip under the point, or null
   const {x0, x1} = clipSpanX(tr.clip);
   return pos.x >= x0 - 4 && pos.x <= x1 + 4 ? ti : null;
 }
-function drawTracks(W, H) {
+function drawTracks(W, H, skipCursor) {
   const ppt = pxPerTick();
   drawRangeTints(W, H);
   for (let ti = 0; ti < song.tracks.length; ti++) {
@@ -3816,7 +3816,11 @@ function drawTracks(W, H) {
     ctx.fillText(Math.round(vol * 100) + "%", RULER_W - 8, g.y0 + 14);
     ctx.textAlign = "left";
   }
-  // playhead
+  // playhead — never into the scene cache: playbackFrame lays the live one
+  // over the cached scene, and a wheel scroll mid-play re-cached this view
+  // WITH a playhead, so a frozen twin stood beside the moving one (Josh,
+  // 2026-09-16, graveyard-2 in Tracks)
+  if (skipCursor) return;
   const x = RULER_W + (playing ? secToTick(song, playSec()) : playCursor) * ppt - view.x;
   ctx.fillStyle = playing ? css("--gold") : css("--accent");
   ctx.fillRect(x - (playing ? 0 : 1), 0, playing ? 1.5 : 2.5, H);
