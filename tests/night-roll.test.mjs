@@ -1145,6 +1145,13 @@ test("audio import helpers: byte sniff, file slugs, mono WAV encoder", () => {
   assert.equal(dv.getInt16(48, true), -32768);  // −1.0
   app.context.__wavProbe = bytes;
   assert.equal(run(`audioMagic(__wavProbe)`), true);
+  // onset: first peak bucket over the floor → seconds (256 samples per bucket)
+  const peaks = new Float32Array(20 * 2); // 20 buckets, silence until bucket 8
+  for (let k = 8; k < 20; k++) { peaks[k * 2] = -0.5; peaks[k * 2 + 1] = 0.5; }
+  peaks[3 * 2 + 1] = 0.01; // sub-floor noise does not count
+  app.context.__clip = { peaks, buffer: { sampleRate: 25600 }, dur: 1 };
+  assert.equal(run(`clipOnsetSec(__clip)`), 0.08); // 8 × 256 / 25600
+  assert.equal(run(`clipOnsetSec({peaks: null, buffer: null})`), null);
 });
 
 test("local MIDI imports persist as device drafts: editable, drums intact, never synced", () => {

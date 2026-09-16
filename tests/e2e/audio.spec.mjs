@@ -41,25 +41,22 @@ test.describe("audio tracks", () => {
     expect(tr.at).toBe(4 * 480);
     // the OfflineAudioContext decode lands without any user gesture
     await page.waitForFunction(() => song.tracks[song.tracks.length - 1].clip.status === "ready", null, { timeout: 10000 });
-    const clip = await page.evaluate(() => { const c = song.tracks[song.tracks.length - 1].clip; return { dur: c.dur, peaks: c.peaks.length, where: c.where }; });
+    const clip = await page.evaluate(() => { const c = song.tracks[song.tracks.length - 1].clip; return { dur: c.dur, peaks: c.peaks.length, where: c.where, offset: c.offset }; });
     expect(clip.dur).toBeCloseTo(1.0, 1);
     expect(clip.peaks).toBeGreaterThan(100);
     expect(clip.where).toBe("device");
-    // one clip event in the schedule, at bar 2 = 2s at 120bpm, lasting the file
-    const ev = await page.evaluate(() => { buildSchedule(); return schedEvents.filter(e => e.n._clip).map(e => ({ sec: e.sec, dur: e.dur })); });
-    expect(ev.length).toBe(1);
-    expect(ev[0].sec).toBeCloseTo(2, 3);
-    expect(ev[0].dur).toBeCloseTo(1, 1);
-    // align-first-sound finds the 250ms of leading silence
-    await page.evaluate(() => {
-      const ti = song.tracks.length - 1, c = song.tracks[ti].clip;
-      const nb = c.peaks.length / 2; let k = 0;
-      while (k < nb && Math.max(-c.peaks[k * 2], c.peaks[k * 2 + 1]) < 0.02) k++;
-      setClipDir(ti, { offset: +(k * PEAK_BUCKET / c.buffer.sampleRate).toFixed(3) });
-    });
-    const off = await page.evaluate(() => song.tracks[song.tracks.length - 1].clip.offset);
+    // import trimmed the fixture's 250ms of leading silence on arrival: the first sound sits on bar 2
+    const off = clip.offset;
     expect(off).toBeGreaterThan(0.2);
     expect(off).toBeLessThan(0.3);
+    // one clip event in the schedule: the FILE starts `offset` before bar 2 (= 2s at 120bpm), lasting the file
+    const ev = await page.evaluate(() => { buildSchedule(); return schedEvents.filter(e => e.n._clip).map(e => ({ sec: e.sec, dur: e.dur })); });
+    expect(ev.length).toBe(1);
+    expect(ev[0].sec).toBeCloseTo(2 - off, 3);
+    expect(ev[0].dur).toBeCloseTo(1, 1);
+    // re-align from the sheet is idempotent
+    await page.evaluate(() => { const ti = song.tracks.length - 1; setClipDir(ti, { offset: clipOnsetSec(song.tracks[ti].clip) }); });
+    expect(await page.evaluate(() => song.tracks[song.tracks.length - 1].clip.offset)).toBeCloseTo(off, 3);
     // Save: the bytes land in <song>.audio/ next to the .mid, and the clip knows it
     await page.evaluate(async () => { await commitCompositionNow({ textContent: "" }); });
     const saved = await page.evaluate(async () => {
