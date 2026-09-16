@@ -77,8 +77,13 @@ test.describe("audio tracks", () => {
     });
     await page.goto(OPFS);
     await page.waitForFunction(() => { try { return !!song && Object.keys(CATALOG).length > 0; } catch (e) { return false; } }, null, { timeout: 15000 });
-    await page.evaluate(async k => { await loadSong(k); await song.notesReady; }, KEY);
-    await page.waitForFunction(() => { const t = song.tracks[song.tracks.length - 1]; return t.kind === "audio" && t.clip.status === "ready"; }, null, { timeout: 10000 });
+    await page.evaluate(async k => { if (songKey !== k) await loadSong(k); if (song && song.notesReady) await song.notesReady; }, KEY);
+    // the boot may still be loading the last song when we get here: wait for THIS song, with tracks, clip decoded
+    await page.waitForFunction(k => {
+      if (songKey !== k || !song || !song.tracks.length) return false;
+      const t = song.tracks[song.tracks.length - 1];
+      return t.kind === "audio" && !!t.clip && t.clip.status === "ready";
+    }, KEY, { timeout: 15000 });
     const again = await page.evaluate(() => { const c = song.tracks[song.tracks.length - 1].clip; return { where: c.where, at: c.at, offset: c.offset }; });
     expect(again.where).toBe("folder");
     expect(again.at).toBe(4 * 480);
