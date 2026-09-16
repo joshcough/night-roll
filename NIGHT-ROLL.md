@@ -947,6 +947,23 @@ migrates the directive. `serializeNotesList` dedupes `audio:` per track
 like `track:`. Filenames are slugified (`slugFile`) — the kv grammar is
 `\S+`.
 
+**Pieces (same day, Josh: "trim, cut, and move").** A track holds
+`tr.clips[]`, one per `audio:` note; `len=<sec>` joins `offset=`. A piece
+spans `[at, at + len]` in song time and plays the file from `offset`
+(nothing sounds before its anchor — the earlier "file head before the
+anchor" reading is gone). `clipLen(c)` = `len` or the rest of the file.
+Dedupe is exact-twin only (anchor + text), not per track. `writeClips(ti,
+clips)` rewrites all of a track's audio: notes in one `anno` undo step;
+`setClipDir(ti, ci, patch)`, `moveClip`, `trimClip(ti, ci, "L"|"R",
+dTicks)` (left keeps the sound in place: anchor and offset move together),
+`splitClipAt(ti, ci, tick)`, `deleteClip(ti, ci)` all go through it.
+`selClip = {ti, ci}`. `hitTracksClip` returns `{ti, ci, zone}` with
+finger-sized edge zones (`clipL`/`clipR`, only on an already-selected
+piece); the ghost carries the zone so the waveform's visible window
+stretches with a trim. The edit row's ✂ splits a selected piece when no
+notes are selected; Erase tap removes a piece. Files decode once per
+file (`audioEnsureFile`), shared by every piece; upload is per file.
+
 **Bytes.** `audioBytesFor(key, file)`: this device's IndexedDB
 (`ff1roll` v3, store `audio`, key `<songKey>|<file>`, written at import
 BEFORE decode — Safari detaches the buffer) → `readData("songs",
@@ -1015,7 +1032,7 @@ serialization dedupe, sniff/slug/WAV encoder. Playwright
 decode → schedule → align → Save beside the .mid → reload from the
 folder.
 
-**Not in v1:** mic recording, trim/split, per-clip looping, fades,
+**Not in v1:** mic recording, per-piece looping, fades,
 time-stretch, a waveform in the roll, a dedicated audio repo (bytes go
 where the song goes: folder or songs repo — Josh's ruling pending),
 Save As / Move to… carrying `.audio/` along (they copy the annotation;

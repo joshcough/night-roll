@@ -1272,7 +1272,7 @@
       <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (opens the Save &amp; Commit sheet: on your own songs its button commits the .mid AND the annotations together in one go; on analyzed songs the same door is the annotation Sync — one workflow, and what gets pushed is whatever the mode owns), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Revert to repo copy… (the escape hatch: discards THIS device's draft, unsynced annotations, and deletions for the open song, then loads the repo's last save — for when local edits went somewhere you can't undo your way out of), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic), Download audio (records the app's own sound by playing the song through once — loop off, keep quiet hands during the take; saves .m4a on Safari / .webm on Chrome, both shareable anywhere including iMessage). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. <b>Drafts is not a folder — it's this device's working copies.</b> A song you've saved lives in its album (new songs go to Night Roll Sketches) AND keeps a drafts row here; each row says which: <b>unsaved</b> (exists only on this device), <b>saved to Night Roll Sketches</b> (committed, this row is just your local copy), or <b>edited since save</b> (local changes not yet committed). Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together; the row names the song's current album first, and the dropdown lists only where it can go — New song and Save always land in Sketches); leaving Sketches adds a "moved from" note at bar 1, which is what keeps the song editable on your other devices (as "forked from" does for Save As), so leave it in place. A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its the kit gets its own labeled LANE that starts docked under your lowest melodic note — and you can DRAG it anywhere by its labels in the left gutter; the position saves as a normal synced annotation ("lane: N"), so it follows the song to every device. The working trio — hat, snare, kick — sits at the TOP of the lane, closest to your notes; below them only pieces the song actually uses appear (no toms in the song, no tom rows), and the <b>⋯ row</b> under the lane toggles the full 15-piece kit when you want to pencil something new (sticks per device). Tap a piece's gutter label to cycle <b>normal → solo → mute</b> (S in gold / ✕ dimmed; session-only, notes untouched): one tap on snare and ONLY the snare plays; solo more pieces to add them; use mute for "everything but the kick." Third tap returns to normal. Closed hats are bright (high-passed) so they cut through regular instruments instead of fighting the pulses for the same band. Delete any track from its voice &amp; color menu (tap the selected chip again → ✕ Delete track, tap twice), penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
       <dt>Share a song</dt><dd>The address bar is always a shareable link to the open song, and it is the song's path with no extension — …/night-roll/albums/compositions/nightroll/ambush. <b>Add .mid to the end and the same link is the MIDI file</b> (Logic opens it); take it off and it's the player again. Older ?song= links still open the player. The tab title and the link preview in Messages name the song first — "Threnody · Night Roll" — so a pasted link reads as the song, not the app.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
-      <dt>∿ Audio tracks (recordings)</dt><dd>A recording — a guitar take, a vocal, a phone memo, a DAW bounce — as a track next to your MIDI voices. Tap the <b>＋∿</b> chip in the track bar (compositions and local drafts; File → Import… also recognizes audio files) and pick wav, aiff, mp3, or m4a. The clip lands at the cursor's bar as a new track named after the file, with the usual chip: M, S, color, fader, rename, ✕ Delete track. Leading silence is trimmed on arrival, so the take's FIRST SOUND sits on that bar (the status line says how much it trimmed). It plays in time with the song, loops with it (a clip longer than the notes extends the song's end), rides the speed slider tape-style (slower = lower pitch, like chip audio), and is in the exported audio. <b>Tracks view</b> shows the waveform; <b>tap the clip</b> to select it (the status line says file, length, where its bytes are, and where it starts), <b>tap again to play from its start</b>, and in <b>Select</b> mode <b>hold and drag</b> to slide it in time (16th snap, one ⟲ undoes; with no tool armed a drag pans, as with notes). Every other view shows a thin ∿ strip under the ruler marking where the recording plays. Tap the selected chip for the <b>recording sheet</b>: nudge <b>starts</b> by a bar, a beat, or a 16th, <b>offset</b> by 10 ms or 100 ms (how far into the file the anchor falls — the last hair of alignment), <b>⇤ Align first sound</b> (re-trims leading silence to the current anchor), <b>Replace file…</b>, and <b>☐ someone else's recording</b>: tick it for a band's track you play along with and it is never uploaded — GitHub removes such files on a rights holder's notice, and a public site is distribution. Storage: until you Save, the bytes live on this device only (the sheet says so; Safari can evict browser storage after a week away, so Save soon); Save writes them beside the song as <code>&lt;song&gt;.audio/&lt;file&gt;</code> — into your folder in folder mode, into the songs repo otherwise. Files over 20 MB get one question: <b>store as 16-bit mono WAV</b> (lossless for a mono source, half a stereo bounce) or import as-is. m4a/mp3 note: Safari and Chrome trim the encoder's lead-in differently, so millisecond alignment is honest only for WAV/AIFF. Not yet: recording from the mic, trimming or splitting a clip, looping a clip by itself, keeping pitch when slowing down, iPad/Safari playback of webm.</dd>
+      <dt>∿ Audio tracks (recordings)</dt><dd>A recording — a guitar take, a vocal, a phone memo, a DAW bounce — as a track next to your MIDI voices. Tap the <b>＋∿</b> chip in the track bar (compositions and local drafts; File → Import… also recognizes audio files) and pick wav, aiff, mp3, or m4a. The clip lands at the cursor's bar as a new track named after the file, with the usual chip: M, S, color, fader, rename, ✕ Delete track. Leading silence is trimmed on arrival, so the take's FIRST SOUND sits on that bar (the status line says how much it trimmed). It plays in time with the song, loops with it (a clip longer than the notes extends the song's end), rides the speed slider tape-style (slower = lower pitch, like chip audio), and is in the exported audio. <b>Tracks view</b> shows the waveform; <b>tap the clip</b> to select it (the status line says file, length, where its bytes are, and where it starts), <b>tap again to play from its start</b>, and in <b>Select</b> mode <b>hold and drag</b> to slide it in time (16th snap, one ⟲ undoes; with no tool armed a drag pans, as with notes). Every other view shows a thin ∿ strip under the ruler marking where the recording plays. <b>Pieces:</b> a recording can be cut into pieces that move on their own. <b>✂ Split at cursor</b> (the edit row's ✂, Edit ▾, or the recording sheet) cuts the selected piece where the play cursor is; <b>trim</b> by dragging a selected piece's left or right edge in Select (left trim keeps the sound where it is); <b>Erase</b> tap on a piece removes just that piece (the track stays); each piece drags separately. One ⟲ undoes any of it. Tap the selected chip for the <b>recording sheet</b> (‹ prev / next › step between pieces): nudge <b>starts</b> by a bar, a beat, or a 16th, <b>offset</b> by 10 ms or 100 ms (how far into the file the piece starts — the last hair of alignment), <b>⇤ Align first sound</b> (re-trims leading silence to the current anchor), <b>✂ Split at cursor</b>, <b>🗑 Remove piece</b>, <b>Replace file…</b>, and <b>☐ someone else's recording</b>: tick it for a band's track you play along with and it is never uploaded — GitHub removes such files on a rights holder's notice, and a public site is distribution. Storage: until you Save, the bytes live on this device only (the sheet says so; Safari can evict browser storage after a week away, so Save soon); Save writes them beside the song as <code>&lt;song&gt;.audio/&lt;file&gt;</code> — into your folder in folder mode, into the songs repo otherwise. Files over 20 MB get one question: <b>store as 16-bit mono WAV</b> (lossless for a mono source, half a stereo bounce) or import as-is. m4a/mp3 note: Safari and Chrome trim the encoder's lead-in differently, so millisecond alignment is honest only for WAV/AIFF. Not yet: recording from the mic, trimming or splitting a clip, looping a clip by itself, keeping pitch when slowing down, iPad/Safari playback of webm.</dd>
       <dt>📁 Folder on this computer</dt><dd>Saving without GitHub. In File → Settings, tap <b>Choose folder…</b> and pick a folder on this computer: from then on every Save writes the song, its annotations, and its notes dump into that folder (laid out exactly like the repo — <code>albums/…/song.mid</code> beside its <code>.rollnotes.json</code>), nothing goes to GitHub, and no token is needed. The song picker lists the folder's albums alongside the site's; a song that exists in both opens from the folder. FF1 songs still load from the site — annotate one and the annotations save to your folder. Chrome may ask for the folder again after a restart: <b>📁 Reconnect folder</b> appears at the top of the File menu (until you tap it, reads fall back to the site). <b>Forget</b> in Settings returns saves to GitHub; the files stay where they are. Needs Chrome or Edge on a computer — Safari and the iPad have no way to write files, and the row says so there. Brave ships the door switched off: enable <code>brave://flags/#file-system-access-api</code> and relaunch (the row tells you). Recordings that aren't yours belong here, not in a repo (see the design docs).</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
@@ -2139,8 +2139,8 @@ function applyChop(S, E) {
 function computeSongEnd() { // re-run whenever the effective meter changes
   let lastTick = 0;
   song.tracks.forEach(tr => tr.notes.forEach(n => { lastTick = Math.max(lastTick, n.t + n.d); }));
-  song.tracks.forEach(tr => { // an audio clip can outlast every note (an audio-only song must not loop one bar)
-    if (tr.kind === "audio" && tr.clip && tr.clip.dur) lastTick = Math.max(lastTick, clipEndTick(tr.clip));
+  song.tracks.forEach(tr => { // an audio piece can outlast every note (an audio-only song must not loop one bar)
+    if (tr.kind === "audio") for (const c of tr.clips) if (c.dur) lastTick = Math.max(lastTick, clipEndTick(c));
   });
   const bt = barTicks();
   songEndTick = Math.max(bt, Math.ceil(lastTick / bt - 0.05) * bt);
@@ -2184,7 +2184,7 @@ function jsonToRawNote(j) { // schema entry -> the raw shape the deriver expects
       (j.voice ? " voice=" + j.voice : "") + (j.color ? " color=" + j.color : "") +
       (j.vol !== undefined ? " vol=" + j.vol : "") + att; break;
     case "loop": n.text = "loop: " + (j.loop || "") + att; break;
-    case "audio": n.text = audioDirText({track: j.track || "", file: j.file || "", offset: j.offset || 0, local: !!j.local}) + att; break;
+    case "audio": n.text = audioDirText({track: j.track || "", file: j.file || "", offset: j.offset || 0, len: j.len || null, local: !!j.local}) + att; break;
     case "chop": n.text = "chop: " + (j.chop || ""); break;
     case "lane": n.text = "lane: " + j.lane; break;
     default: n.text = j.text || "";
@@ -2252,11 +2252,12 @@ function deriveNoteTypes(out) {
     // "Audio tracks"). local=1 = someone else's recording: never uploaded.
     const am = n.text.match(/^audio:\s*(.+?)((?:\s+\w+=\S+)*)\s*$/i);
     if (am) {
-      const d = {track: am[1].trim(), file: "", offset: 0, local: false};
+      const d = {track: am[1].trim(), file: "", offset: 0, len: null, local: false};
       for (const kv of am[2].trim().split(/\s+/).filter(Boolean)) {
         const [k, v] = kv.split("=");
         if (k === "file") d.file = v;
         if (k === "offset") d.offset = parseFloat(v) || 0;
+        if (k === "len") { const l = parseFloat(v); d.len = isFinite(l) && l > 0 ? l : null; }
         if (k === "local") d.local = v === "1" || v === "true";
       }
       n.audiodir = d;
@@ -2265,8 +2266,11 @@ function deriveNoteTypes(out) {
   });
   return out.filter(n => n.text);
 }
+// one PIECE of a recording: anchor = where it starts in the song; offset = where
+// in the file it starts; len = how much of the file it plays (absent = the rest)
 function audioDirText(d) {
-  return "audio: " + d.track + " file=" + d.file + (d.offset ? " offset=" + (+d.offset.toFixed(3)) : "") + (d.local ? " local=1" : "");
+  return "audio: " + d.track + " file=" + d.file + (d.offset ? " offset=" + (+(+d.offset).toFixed(3)) : "") +
+    (d.len ? " len=" + (+(+d.len).toFixed(3)) : "") + (d.local ? " local=1" : "");
 }
 function noteToJSON(n) { // enriched-or-stashed note -> schema entry (text prefixes are truth)
   const j = {at: n.q1 !== 1 ? [n.b1, n.q1] : [n.b1, 1]};
@@ -2296,6 +2300,7 @@ function noteToJSON(n) { // enriched-or-stashed note -> schema entry (text prefi
       const [k, v] = kv.split("=");
       if (k === "file") j.file = v;
       if (k === "offset") j.offset = parseFloat(v) || 0;
+      if (k === "len" && parseFloat(v) > 0) j.len = parseFloat(v);
       if (k === "local" && (v === "1" || v === "true")) j.local = true;
     }
     return withNote(j);
@@ -2609,10 +2614,12 @@ function serializeNotesList(list, beatsPerBar, base, stamp) {
   // and is itself a plausible source), so no path can emit two.
   const lastFor = new Map();
   for (const n of list) if (n.trackdir) lastFor.set(n.trackdir.name.toLowerCase(), n);
-  const lastAudio = new Map(); // same rule for audio: — one clip per track name
-  for (const n of list) if (n.audiodir) lastAudio.set(n.audiodir.track.toLowerCase(), n);
-  const deduped = list.filter(n => (!n.trackdir || lastFor.get(n.trackdir.name.toLowerCase()) === n) &&
-                                   (!n.audiodir || lastAudio.get(n.audiodir.track.toLowerCase()) === n));
+  const seenAudio = new Set(); // audio: pieces — many per track; only an exact twin drops
+  const deduped = list.filter(n => {
+    if (n.trackdir) return lastFor.get(n.trackdir.name.toLowerCase()) === n;
+    if (n.audiodir) { const k = n.b1 + ":" + n.q1 + ":" + n.text; if (seenAudio.has(k)) return false; seenAudio.add(k); }
+    return true;
+  });
   const rows = deduped.map(n => "  " + JSON.stringify(noteToJSON(n)));
   return '{ "version": 1, "song": ' + JSON.stringify(base) +
          (stamp ? ', "saved": ' + stamp : "") + ', "notes": [\n' +
@@ -3628,23 +3635,31 @@ function hitTracksNote(pos) {
 }
 let tracksGhost = null; // {dT, dLane} while dragging a selection between lanes
 let selClip = null; // ti of the selected audio clip (tracks view), or null
-function clipStartTick(c) { return secToTick(song, tickToSec(song, c.at) - c.offset / playRate); }
-function clipSpanX(c) { // screen x0/x1 of the clip's body, ghost offset applied while it drags
+// selClip = {ti, ci} of the selected piece. A piece spans [at, at + len] in
+// song time and plays the file from `offset`; nothing sounds before its anchor.
+function selClipIs(ti, ci) { return !!selClip && selClip.ti === ti && selClip.ci === ci; }
+function selClipObj() { return selClip && song.tracks[selClip.ti] && song.tracks[selClip.ti].clips ? song.tracks[selClip.ti].clips[selClip.ci] || null : null; }
+function clipSpanX(c) { // screen x0/x1 of the piece's body, ghost applied while it drags (move or a trim edge)
   const ppt = pxPerTick();
-  const g = selClip !== null && tracksGhost && song.tracks[selClip] && song.tracks[selClip].clip === c ? tracksGhost.dT : 0;
-  const t0 = clipStartTick(c) + g;
-  const t1 = (c.dur ? clipEndTick(c) : c.at + barTicks()) + g;
+  const sel = selClipObj() === c && tracksGhost ? tracksGhost : null;
+  let t0 = c.at, t1 = c.dur ? clipEndTick(c) : c.at + barTicks();
+  if (sel) {
+    if (sel.zone === "clip") { t0 += sel.dT; t1 += sel.dT; }
+    else if (sel.zone === "clipL") t0 = Math.min(t1 - 1, t0 + sel.dT);
+    else if (sel.zone === "clipR") t1 = Math.max(t0 + 1, t1 + sel.dT);
+  }
   return {x0: RULER_W + t0 * ppt - view.x, x1: RULER_W + t1 * ppt - view.x};
 }
 function clipStatusText(c) {
   return c.status === "ready" ? "" : c.status === "missing" ? "audio missing on this device"
        : c.status === "undecodable" ? "can't decode this file" : "decoding…";
 }
-function clipLabel(ti) {
-  const c = song.tracks[ti].clip;
-  const where = c.where === "device" || c.where === undefined ? "on this device only" : c.where === "folder" ? "in your folder" : "in the repo";
-  return (song.tracks[ti].name || "track") + " · " + c.file + (c.dur ? " · " + fmtSec(c.dur) : "") +
-    " · starts " + fmtBarBeat(c.at) + (c.offset ? " · offset " + c.offset.toFixed(3) + "s" : "") +
+function clipLabel(ti, ci) {
+  const tr = song.tracks[ti], c = tr.clips[ci];
+  const where = c.where === "device" || !c.where ? "on this device only" : c.where === "folder" ? "in your folder" : "in the repo";
+  return (tr.name || "track") + (tr.clips.length > 1 ? " · piece " + (ci + 1) + "/" + tr.clips.length : "") + " · " + c.file +
+    (c.dur ? " · " + fmtSec(clipLen(c)) + " of " + fmtSec(c.dur) : "") +
+    " · starts " + fmtBarBeat(c.at) + (c.offset ? " · from " + c.offset.toFixed(3) + "s in" : "") +
     " · " + (clipStatusText(c) || where) + (c.local ? " · someone else's recording — never uploaded" : "");
 }
 function fmtSec(s) { const m = Math.floor(s / 60); return m + ":" + String(Math.floor(s - m * 60)).padStart(2, "0"); }
@@ -3656,25 +3671,24 @@ function drawAudioStrip(W) { // every view: one bar per clip, "a recording plays
   ctx.font = "10px " + css("--mono");
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
-  song.tracks.forEach((tr, ti) => {
-    if (tr.kind !== "audio" || !tr.clip) return;
-    const {x0, x1} = clipSpanX(tr.clip);
+  forEachClip((c, ti) => {
+    const {x0, x1} = clipSpanX(c);
     if (x1 < RULER_W || x0 > W) return;
     const l = Math.max(RULER_W, x0), r = Math.min(W, x1);
     ctx.fillStyle = trackColor(ti);
-    ctx.globalAlpha = tr.clip.status === "ready" ? 0.55 : 0.25;
+    ctx.globalAlpha = c.status === "ready" ? 0.55 : 0.25;
     ctx.fillRect(l, y + 3, Math.max(2, r - l), AUDIO_STRIP_H - 6);
     ctx.globalAlpha = 1;
     ctx.fillStyle = css("--text");
-    const label = "∿ " + (tr.name || "audio") + (clipStatusText(tr.clip) ? " — " + clipStatusText(tr.clip) : "");
+    const label = "∿ " + (song.tracks[ti].name || "audio") + (clipStatusText(c) ? " — " + clipStatusText(c) : "");
     if (r - l > 40) ctx.fillText(label.slice(0, Math.floor((r - l) / 6)), l + 4, y + AUDIO_STRIP_H / 2);
   });
   ctx.textBaseline = "alphabetic";
 }
-function drawClipLane(ti, g, W) { // tracks view: the waveform (peaks per pixel column)
-  const c = song.tracks[ti].clip;
+function drawClipLane(ti, ci, g, W) { // tracks view: one piece's waveform (peaks per pixel column)
+  const c = song.tracks[ti].clips[ci];
   const {x0, x1} = clipSpanX(c);
-  if (x1 < RULER_W || x0 > W) return;
+  if (x1 < RULER_W || x0 > W || x1 <= x0) return;
   const l = Math.max(RULER_W, x0), r = Math.min(W, x1);
   const mid = g.y0 + g.lh / 2, half = (g.lh - 10) / 2;
   ctx.fillStyle = trackColor(ti);
@@ -3688,10 +3702,17 @@ function drawClipLane(ti, g, W) { // tracks view: the waveform (peaks per pixel 
     ctx.fillText(c.file + " — " + clipStatusText(c), l + 6, mid);
     return;
   }
-  const nb = c.peaks.length / 2, bps = nb / (x1 - x0); // buckets per pixel
+  // pixel → file time: the piece shows file seconds [offset, offset + len] across [x0, x1]
+  // (a trim-edge ghost stretches the visible window with it, so the sound stays put)
+  const sel = selClipObj() === c && tracksGhost ? tracksGhost : null;
+  let off = c.offset, len = clipLen(c);
+  if (sel && sel.zone === "clipL") { const d = (tickToSec(song, c.at + sel.dT) - tickToSec(song, c.at)) * playRate; off += d; len -= d; }
+  if (sel && sel.zone === "clipR") len += (tickToSec(song, c.at + sel.dT) - tickToSec(song, c.at)) * playRate;
+  const nb = c.peaks.length / 2, bpsec = nb / c.dur; // buckets per file second
   ctx.globalAlpha = 0.75;
   for (let x = Math.floor(l); x < r; x++) {
-    const k0 = Math.floor((x - x0) * bps), k1 = Math.max(k0 + 1, Math.floor((x + 1 - x0) * bps));
+    const f0 = off + ((x - x0) / (x1 - x0)) * len, f1 = off + ((x + 1 - x0) / (x1 - x0)) * len;
+    const k0 = Math.floor(f0 * bpsec), k1 = Math.max(k0 + 1, Math.floor(f1 * bpsec));
     let lo = 1, hi = -1;
     for (let k = Math.max(0, k0); k < Math.min(nb, k1); k++) { const a = c.peaks[k * 2], b = c.peaks[k * 2 + 1]; if (a < lo) lo = a; if (b > hi) hi = b; }
     if (hi < lo) continue;
@@ -3699,46 +3720,117 @@ function drawClipLane(ti, g, W) { // tracks view: the waveform (peaks per pixel 
     ctx.fillRect(x, yTop, 1, Math.max(1, yBot - yTop));
   }
   ctx.globalAlpha = 1;
-  ctx.fillRect(l, g.y0 + 4, 1, g.lh - 8); // clip edges
+  ctx.fillRect(l, g.y0 + 4, 1, g.lh - 8); // piece edges — also the trim handles in Select
   ctx.fillRect(r - 1, g.y0 + 4, 1, g.lh - 8);
-  if (selClip === ti) {
+  if (selClipIs(ti, ci)) {
     ctx.strokeStyle = css("--gold");
     ctx.strokeRect(l + 0.5, g.y0 + 3.5, r - l - 1, g.lh - 7);
+    if (mode === "select") { // handle nubs so the edges read as grabbable
+      ctx.fillStyle = css("--gold");
+      ctx.fillRect(l, mid - 8, 3, 16);
+      ctx.fillRect(r - 3, mid - 8, 3, 16);
+    }
   }
 }
-// rewrite a clip's audio: annotation. Moving changes the note's identity, so
-// the old one is tombstoned (or the repo copy resurrects it beside the new
-// one on the next load) and a fresh added note takes its place. One ⟲ step.
-function setClipDir(ti, patch) {
+// Rewrite a track's audio: annotations from a list of pieces. Every change to a
+// piece changes its note's identity, so old notes are tombstoned (or the repo
+// copy resurrects them on the next load) and fresh added notes take their
+// place. One ⟲ step per call.
+function writeClips(ti, clips) {
   const tr = song.tracks[ti];
-  if (!tr || tr.kind !== "audio" || !tr.clip) return;
-  const c = tr.clip;
+  if (!tr) return;
+  const name = tr.name || "tr" + (ti + 1);
   pushUndo({kind: "anno", json: annoSnapshot()});
-  const d = {track: tr.name || "tr" + (ti + 1), file: c.file, offset: c.offset, local: c.local, ...patch};
-  const at = patch.at !== undefined ? patch.at : c.at;
-  for (const n of rollnotes) if (n.audiodir && n.audiodir.track.toLowerCase() === d.track.toLowerCase()) tombstone(n);
-  rollnotes = rollnotes.filter(n => !(n.audiodir && n.audiodir.track.toLowerCase() === d.track.toLowerCase()));
-  const n = {b1: 1, q1: 1, b2: null, q2: null, text: audioDirText(d), added: true};
-  setAnchorBQ(n, Math.max(0, at));
-  rollnotes.push(resolveNote(deriveNoteTypes([n])[0]));
+  for (const n of rollnotes) if (n.audiodir && n.audiodir.track.toLowerCase() === name.toLowerCase()) tombstone(n);
+  rollnotes = rollnotes.filter(n => !(n.audiodir && n.audiodir.track.toLowerCase() === name.toLowerCase()));
+  for (const c of clips) {
+    if (!c.file) continue;
+    const d = {track: name, file: c.file, offset: Math.max(0, c.offset || 0), len: c.len || null, local: !!c.local};
+    const n = {b1: 1, q1: 1, b2: null, q2: null, text: audioDirText(d), added: true};
+    setAnchorBQ(n, Math.max(0, c.at));
+    rollnotes.push(resolveNote(deriveNoteTypes([n])[0]));
+  }
   finalizeNotes();
   saveLocalNotes();
   computeSongEnd();
   if (playing) buildSchedule();
   draw();
 }
-function moveClip(ti, dT) {
-  const c = song.tracks[ti].clip;
-  setClipDir(ti, {at: Math.max(0, c.at + dT)});
-  setInfo(clipLabel(ti) + " — one ⟲ undoes the move");
+function setClipDir(ti, ci, patch) { // one piece changes; the others stand
+  const tr = song.tracks[ti];
+  if (!tr || tr.kind !== "audio" || !tr.clips[ci]) return;
+  const next = tr.clips.map((c, i) => i === ci ? {...c, ...patch} : c);
+  const moved = next[ci];
+  writeClips(ti, next);
+  // keep the selection on the same piece after the re-sort by anchor
+  const nci = tr.clips.findIndex(c => c.at === Math.max(0, Math.round(moved.at)) && c.file === moved.file && Math.abs(c.offset - (moved.offset || 0)) < 1e-6);
+  if (nci >= 0) selClip = {ti, ci: nci};
 }
-function hitTracksClip(pos) { // ti of the clip under the point, or null
+function moveClip(ti, ci, dT) {
+  const c = song.tracks[ti].clips[ci];
+  setClipDir(ti, ci, {at: Math.max(0, c.at + dT)});
+  if (selClip) setInfo(clipLabel(selClip.ti, selClip.ci) + " — one ⟲ undoes the move");
+}
+// trim: drag an edge in Select. Left keeps the SOUND in place (anchor and
+// file offset move together); right only changes how much plays.
+function trimClip(ti, ci, side, dT) {
+  const c = song.tracks[ti].clips[ci];
+  if (!c || !c.dur) return;
+  const dSec = (tickToSec(song, c.at + dT) - tickToSec(song, c.at)) * playRate; // buffer seconds
+  const len = clipLen(c);
+  if (side === "L") {
+    const d = Math.max(-c.offset, Math.min(len - 0.05, dSec));
+    setClipDir(ti, ci, {at: c.at + secToTick(song, tickToSec(song, c.at) + d / playRate) - c.at, offset: +(c.offset + d).toFixed(3), len: +(len - d).toFixed(3)});
+  } else {
+    const nl = Math.max(0.05, Math.min(c.dur - c.offset, len + dSec));
+    setClipDir(ti, ci, {len: +nl.toFixed(3)});
+  }
+  if (selClip) setInfo(clipLabel(selClip.ti, selClip.ci) + " — trimmed; one ⟲ undoes it");
+}
+function splitClipAt(ti, ci, tick) { // two pieces out of one, at a song tick strictly inside it
+  const c = song.tracks[ti].clips[ci];
+  if (!c || !c.dur) return false;
+  const end = clipEndTick(c);
+  if (tick <= c.at + 1 || tick >= end - 1) return false;
+  const leftLen = +((tickToSec(song, tick) - tickToSec(song, c.at)) * playRate).toFixed(3);
+  const total = clipLen(c);
+  if (leftLen < 0.05 || total - leftLen < 0.05) return false;
+  const left = {...c, len: leftLen};
+  const right = {...c, at: tick, offset: +(c.offset + leftLen).toFixed(3), len: +(total - leftLen).toFixed(3)};
+  const next = song.tracks[ti].clips.slice();
+  next.splice(ci, 1, left, right);
+  writeClips(ti, next);
+  const nci = song.tracks[ti].clips.findIndex(x => x.at === tick && x.file === c.file);
+  selClip = nci >= 0 ? {ti, ci: nci} : null;
+  return true;
+}
+function splitSelectedClipAtCursor() {
+  if (!selClip) return false;
+  const ok = splitClipAt(selClip.ti, selClip.ci, Math.round(playCursor));
+  setInfo(ok ? "split at " + fmtBarBeat(playCursor) + " — two pieces now; one ⟲ rejoins them"
+             : "put the cursor inside the piece to split it");
+  return ok;
+}
+function deleteClip(ti, ci) { // the piece goes; the track stays
+  const tr = song.tracks[ti];
+  if (!tr || !tr.clips[ci]) return;
+  writeClips(ti, tr.clips.filter((_, i) => i !== ci));
+  selClip = null;
+  setInfo("piece removed — one ⟲ brings it back" + (tr.clips && tr.clips.length ? "" : " (the track stays; ✕ Delete track removes it)"));
+}
+function hitTracksClip(pos) { // {ti, ci, zone: "clip" | "clipL" | "clipR"} for the piece under the point, or null
   const ti = trackLaneAt(pos.y);
   if (ti < 0 || pos.x < RULER_W) return null;
   const tr = song.tracks[ti];
-  if (tr.kind !== "audio" || !tr.clip) return null;
-  const {x0, x1} = clipSpanX(tr.clip);
-  return pos.x >= x0 - 4 && pos.x <= x1 + 4 ? ti : null;
+  if (tr.kind !== "audio" || !tr.clips.length) return null;
+  for (let ci = tr.clips.length - 1; ci >= 0; ci--) {
+    const {x0, x1} = clipSpanX(tr.clips[ci]);
+    if (pos.x < x0 - 4 || pos.x > x1 + 4) continue;
+    const edge = Math.max(8, Math.min(14, (x1 - x0) * 0.3)); // finger-sized edge zones, never the whole piece
+    const zone = x1 - x0 < 24 ? "clip" : pos.x <= x0 + edge ? "clipL" : pos.x >= x1 - edge ? "clipR" : "clip";
+    return {ti, ci, zone};
+  }
+  return null;
 }
 function drawTracks(W, H, skipCursor) {
   const ppt = pxPerTick();
@@ -3757,7 +3849,7 @@ function drawTracks(W, H, skipCursor) {
     ctx.beginPath(); ctx.moveTo(0, g.y0 + g.lh - 0.5); ctx.lineTo(W, g.y0 + g.lh - 0.5); ctx.stroke();
     // notes (thumbnail): per-lane normalized; ghost offset applies to the selection
     const tr = song.tracks[ti];
-    if (tr.kind === "audio" && tr.clip) drawClipLane(ti, g, W);
+    if (tr.kind === "audio") tr.clips.forEach((c, ci) => drawClipLane(ti, ci, g, W));
     const noteH = Math.max(2, Math.min(8, (g.lh - 8) / Math.max(12, g.hi - g.lo)));
     tr.notes.forEach((n, ni) => {
       if (n.gone) return;
@@ -4786,11 +4878,12 @@ canvas.addEventListener("pointerdown", e => {
   // a clip slides in time like a note — in Select mode only, like a note: with no
   // tool armed a drag over it pans (Josh, 2026-09-16: a pan moved his take to bar 5)
   if (editableSong() && mode === "select" && viewMode === "tracks" && !noteEdit && !pendingEdit && !lasso && p.y >= RULER_H && p.x >= RULER_W) {
-    const ch = hitTracksClip(p); // selected = instant grab, cold = dwell
-    if (ch !== null) {
-      pendingEdit = {kind: "clip", ti: ch, items: [], orig: [], reselect: false};
-      if (instantGrab || selClip === ch) { noteEdit = pendingEdit; pendingEdit = null; }
-      selClip = ch;
+    const ch = hitTracksClip(p); // selected = instant grab, cold = dwell; edges trim, the body moves
+    if (ch) {
+      const wasSel = selClipIs(ch.ti, ch.ci);
+      pendingEdit = {kind: wasSel ? ch.zone : "clip", ti: ch.ti, ci: ch.ci, items: [], orig: [], reselect: false}; // edges only on a selected piece
+      if (instantGrab || wasSel) { noteEdit = pendingEdit; pendingEdit = null; }
+      selClip = {ti: ch.ti, ci: ch.ci};
     }
   }
   if (viewMode === "tracks" && p.x < RULER_W && p.y >= RULER_H && song) { // lane header column
@@ -4961,8 +5054,8 @@ canvas.addEventListener("pointermove", e => {
       const p = evtPos(e);
       const snap = moveSnapTicks();
       const dT = Math.round((p.x - drag.spos.x) / pxPerTick() / snap) * snap;
-      if (drag.noteEdit.kind === "clip") { // ghost only; the annotation rewrites on release
-        tracksGhost = {dT, dLane: 0};
+      if (drag.noteEdit.kind === "clip" || drag.noteEdit.kind === "clipL" || drag.noteEdit.kind === "clipR") {
+        tracksGhost = {dT, dLane: 0, zone: drag.noteEdit.kind}; // ghost only; the annotation rewrites on release
         draw();
       }
       else if (drag.noteEdit.kind === "move" && viewMode === "tracks") {
@@ -5141,10 +5234,13 @@ function endPointer(e) {
     draw();
   }
   else if (drag.lasso && drag.moved) finalizeLasso();
-  else if (drag.noteEdit && drag.noteEdit.kind === "clip") {
+  else if (drag.noteEdit && /^clip/.test(drag.noteEdit.kind)) {
     const dT = drag.moved && tracksGhost ? tracksGhost.dT : 0;
+    const zone = drag.noteEdit.kind;
     tracksGhost = null;
-    if (dT !== 0) moveClip(drag.noteEdit.ti, dT); else draw();
+    if (dT === 0) draw();
+    else if (zone === "clip") moveClip(drag.noteEdit.ti, drag.noteEdit.ci, dT);
+    else trimClip(drag.noteEdit.ti, drag.noteEdit.ci, zone === "clipL" ? "L" : "R", dT);
   }
   else if (drag.noteEdit && drag.moved && viewMode === "tracks" && tracksGhost && drag.noteEdit.kind === "move") {
     const {dT, dLane} = tracksGhost;
@@ -5263,17 +5359,18 @@ function tap(pos) {
       return;
     }
     const ch = hitTracksClip(pos);
-    if (ch !== null) { // a clip: first tap selects (and says what it is), second tap plays from its start
-      if (selClip === ch && editableSong()) {
-        const from = tickToSec(song, song.tracks[ch].clip.at);
+    if (ch) { // a piece: erase removes it; first tap selects (and says what it is), second tap plays from its start
+      if (mode === "erase" && editableSong()) { deleteClip(ch.ti, ch.ci); return; }
+      if (selClipIs(ch.ti, ch.ci) && editableSong()) {
+        const from = tickToSec(song, song.tracks[ch.ti].clips[ch.ci].at);
         stop();
         play(from, {noCountIn: true}).catch(() => {});
-        setInfo("playing from " + (song.tracks[ch].name || "the clip") + "'s start");
+        setInfo("playing from the piece's start");
       } else {
-        selClip = ch; selTrack = ch;
+        selClip = {ti: ch.ti, ci: ch.ci}; selTrack = ch.ti;
         clearMultiSel();
         renderTrackbar();
-        setInfo(clipLabel(ch));
+        setInfo(clipLabel(ch.ti, ch.ci));
       }
       draw();
       return;
@@ -6089,7 +6186,7 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
   const cur = tr.voice || "auto";
   const curLabel = cur === "auto" ? "auto: " + autoVoiceLabel(ti)
     : (VOICES.find(([id]) => id === cur) || [, cur])[1];
-  if (tr.kind === "audio" && tr.clip) buildClipControls(ti, menu, tr); // a clip has no instrument: placement instead
+  if (tr.kind === "audio" && tr.clips.length) buildClipControls(ti, menu, tr); // a clip has no instrument: placement instead
   else if (voiceMenuGroup === null) { // level 1: the instrument families
     for (const [title, vs] of VOICE_GROUPS) {
       const b = document.createElement("button");
@@ -6224,8 +6321,10 @@ function buildVoiceMenu(ti) { // content only — picks refresh in place; every
     menu.appendChild(del);
   }
 }
-function buildClipControls(ti, menu, tr) { // the audio track's sheet: what, where, and placement
-  const c = tr.clip;
+function buildClipControls(ti, menu, tr) { // the audio track's sheet: what, where, and placement of ONE piece
+  const ci = selClip && selClip.ti === ti && tr.clips[selClip.ci] ? selClip.ci : 0;
+  const c = tr.clips[ci];
+  selClip = {ti, ci};
   const line = (txt, dim) => {
     const d = document.createElement("div");
     d.style.cssText = "padding:4px 10px;font-family:var(--mono);font-size:11px;color:" + (dim ? "var(--dim)" : "var(--text)") + ";white-space:normal";
@@ -6233,8 +6332,22 @@ function buildClipControls(ti, menu, tr) { // the audio track's sheet: what, whe
     menu.appendChild(d);
     return d;
   };
-  line(c.file + (c.dur ? " · " + fmtSec(c.dur) : "") + " · " +
+  line((tr.clips.length > 1 ? "piece " + (ci + 1) + " of " + tr.clips.length + " · " : "") + c.file +
+       (c.dur ? " · plays " + fmtSec(clipLen(c)) + " of " + fmtSec(c.dur) : "") + " · " +
        (clipStatusText(c) || (c.where === "folder" ? "in your folder" : c.where === "repo" ? "in the repo" : "on this device only — Save puts it with the song")));
+  if (tr.clips.length > 1) { // step between pieces without leaving the sheet
+    const pr = document.createElement("div");
+    pr.style.cssText = "display:flex;gap:4px;padding:2px 10px";
+    for (const [txt, d] of [["‹ prev piece", -1], ["next piece ›", 1]]) {
+      const b = document.createElement("button");
+      b.textContent = txt;
+      b.style.cssText = "flex:1;min-height:34px;font-size:12px";
+      b.disabled = ci + d < 0 || ci + d >= tr.clips.length;
+      b.addEventListener("click", () => { selClip = {ti, ci: ci + d}; buildVoiceMenu(ti); draw(); });
+      pr.appendChild(b);
+    }
+    menu.appendChild(pr);
+  }
   const row = (label, btns) => {
     const r = document.createElement("div");
     r.style.cssText = "display:flex;align-items:center;gap:4px;padding:4px 10px";
@@ -6252,40 +6365,57 @@ function buildClipControls(ti, menu, tr) { // the audio track's sheet: what, whe
     menu.appendChild(r);
   };
   const bt = barTicks(), qt = beatTicks();
+  const set = patch => setClipDir(ti, ci, patch);
   row("starts " + fmtBarBeat(c.at), [
-    ["◀ bar", () => setClipDir(ti, {at: Math.max(0, c.at - bt)})],
-    ["◀ beat", () => setClipDir(ti, {at: Math.max(0, c.at - qt)})],
-    ["beat ▶", () => setClipDir(ti, {at: c.at + qt})],
-    ["bar ▶", () => setClipDir(ti, {at: c.at + bt})]]);
+    ["◀ bar", () => set({at: Math.max(0, c.at - bt)})],
+    ["◀ beat", () => set({at: Math.max(0, c.at - qt)})],
+    ["beat ▶", () => set({at: c.at + qt})],
+    ["bar ▶", () => set({at: c.at + bt})]]);
   row("offset " + c.offset.toFixed(3) + "s", [
-    ["−100ms", () => setClipDir(ti, {offset: Math.max(0, c.offset - 0.1)})],
-    ["−10ms", () => setClipDir(ti, {offset: Math.max(0, c.offset - 0.01)})],
-    ["+10ms", () => setClipDir(ti, {offset: c.offset + 0.01})],
-    ["+100ms", () => setClipDir(ti, {offset: c.offset + 0.1})]]);
+    ["−100ms", () => set({offset: Math.max(0, c.offset - 0.1)})],
+    ["−10ms", () => set({offset: Math.max(0, c.offset - 0.01)})],
+    ["+10ms", () => set({offset: c.offset + 0.01})],
+    ["+100ms", () => set({offset: c.offset + 0.1})]]);
   const st = Math.round(song.ppq / 4); // a 16th: where "the a of 1" lives
   row("16ths", [
-    ["◀ 16th", () => setClipDir(ti, {at: Math.max(0, c.at - st)})],
-    ["16th ▶", () => setClipDir(ti, {at: c.at + st})]]);
+    ["◀ 16th", () => set({at: Math.max(0, c.at - st)})],
+    ["16th ▶", () => set({at: c.at + st})]]);
   const align = document.createElement("button");
   align.className = "fitem";
   align.textContent = "⇤ Align first sound to the start";
-  align.title = "trims leading silence: the first audible sample lands on the clip's bar.beat (imports do this on arrival)";
+  align.title = "trims leading silence: the first audible sample lands on the piece's bar.beat (imports do this on arrival)";
   align.disabled = !c.peaks;
   align.addEventListener("click", () => {
     const sec = clipOnsetSec(c);
     if (sec === null) return;
-    setClipDir(ti, {offset: sec});
+    set({offset: sec, len: c.len ? +Math.max(0.05, c.len - (sec - c.offset)).toFixed(3) : null});
     setInfo("first sound was " + sec.toFixed(3) + "s in — it now lands on " + fmtBarBeat(c.at));
     buildVoiceMenu(ti);
   });
   menu.appendChild(align);
+  const cutRow = document.createElement("div");
+  cutRow.style.cssText = "display:flex;gap:4px;padding:2px 10px";
+  for (const [txt, title, fn] of [
+    ["✂ Split at cursor", "two pieces from one, at the play cursor (put it inside the piece first)", () => { splitSelectedClipAtCursor(); buildVoiceMenu(ti); }],
+    ["🗑 Remove piece", "this piece goes; the track and its other pieces stay", () => { deleteClip(ti, ci); if (tr.clips && tr.clips.length) { selClip = {ti, ci: Math.min(ci, tr.clips.length - 1)}; buildVoiceMenu(ti); } else document.getElementById("voicemenu").classList.remove("on"); }]]) {
+    const b = document.createElement("button");
+    b.textContent = txt; b.title = title;
+    b.style.cssText = "flex:1;min-height:36px;font-size:12px";
+    b.addEventListener("click", fn);
+    cutRow.appendChild(b);
+  }
+  menu.appendChild(cutRow);
+  line("Trim: in Select, drag a piece's left or right edge in the Tracks view (left keeps the sound in place).", true);
   if (/\.(m4a|mp4|aac|mp3)$/i.test(c.file))
     line("m4a/mp3: browsers trim the encoder's lead-in differently, so the same file can start 20–50 ms apart on Safari vs Chrome. Millisecond alignment is honest only for WAV/AIFF.", true);
   const loc = document.createElement("button");
   loc.className = "fitem";
   loc.textContent = (c.local ? "☑" : "☐") + " someone else's recording — never upload it";
   loc.title = "a band's track you play along with stays on this device or in your folder; it is never sent to GitHub";
-  loc.addEventListener("click", () => { setClipDir(ti, {local: !c.local}); buildVoiceMenu(ti); });
+  loc.addEventListener("click", () => { // the rule is per FILE: every piece of it flips together
+    writeClips(ti, tr.clips.map(x => x.file === c.file ? {...x, local: !c.local} : x));
+    buildVoiceMenu(ti);
+  });
   menu.appendChild(loc);
   const rep = document.createElement("button");
   rep.className = "fitem";
@@ -6556,13 +6686,12 @@ function buildSchedule() {
       if (n.gone) continue;
       schedEvents.push({ti, n, sec: tickToSec(song, n.t), dur: Math.max(0.04, tickToSec(song, n.t + n.d) - tickToSec(song, n.t))});
     }
-    if (tr.kind === "audio" && tr.clip && tr.clip.dur) { // one event per clip; sec/dur are WALL
+    if (tr.kind === "audio") for (const c of tr.clips) { // one event per piece; sec/dur are WALL
       // seconds like every event (tickToSec already divides by playRate), the
-      // file offset is buffer seconds. The stub n keeps the chase filters and
-      // the transport-stopped guard shape-compatible.
-      const c = tr.clip;
-      schedEvents.push({ti, n: {ch: 0, v: 100, _clip: c},
-                        sec: tickToSec(song, c.at) - c.offset / playRate, dur: c.dur / playRate});
+      // file offset/len are buffer seconds. The stub n keeps the chase filters
+      // and the transport-stopped guard shape-compatible.
+      if (!c.dur || clipLen(c) <= 0) continue;
+      schedEvents.push({ti, n: {ch: 0, v: 100, _clip: c}, sec: tickToSec(song, c.at), dur: clipLen(c) / playRate});
     }
   });
   schedEvents.sort((a, b) => a.sec - b.sec);
@@ -6750,16 +6879,23 @@ let audioSrcs = []; // live buffer sources: stop() must kill them (MIDI nodes di
 const PEAK_BUCKET = 256; // samples per min/max pair (~3 min = 31k pairs)
 function audioDirFor(key) { return (key || "").replace(/\.midi?$/i, "") + ".audio"; }
 function audioCacheKey(file) { return songKey + "|" + file; }
-function songHasAudio() { return !!song && song.tracks.some(tr => tr.kind === "audio" && tr.clip); }
+function songHasAudio() { return !!song && song.tracks.some(tr => tr.kind === "audio" && tr.clips.length); }
+function clipLen(c) { return c.len || Math.max(0, c.dur - c.offset); } // buffer seconds this piece plays
 function clipEndTick(c) { // rate-independent: both conversions carry playRate
-  return secToTick(song, tickToSec(song, c.at) - c.offset / playRate + c.dur / playRate);
+  return secToTick(song, tickToSec(song, c.at) + clipLen(c) / playRate);
 }
 function clipClamp(d, ...limits) { for (const l of limits) if (l < d) d = l; return d; }
-function applyAudioDirs() { // called from finalizeNotes: last-wins per track name, like track:
-  const lastFor = new Map();
-  for (const n of rollnotes) if (n.audiodir) lastFor.set(n.audiodir.track.toLowerCase(), n);
-  rollnotes = rollnotes.filter(n => !n.audiodir || lastFor.get(n.audiodir.track.toLowerCase()) === n);
-  song.tracks.forEach(tr => { if (tr.kind === "audio") { delete tr.kind; delete tr.clip; } });
+function applyAudioDirs() { // called from finalizeNotes: every audio: note is one piece on its named track
+  const seen = new Set(); // exact twins (same anchor + text) collapse; the rest all stand
+  rollnotes = rollnotes.filter(n => {
+    if (!n.audiodir) return true;
+    const k = n.b1 + ":" + n.q1 + ":" + n.text;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  song.tracks.forEach(tr => { if (tr.kind === "audio") { delete tr.kind; delete tr.clips; } });
+  const files = new Set();
   for (const n of rollnotes) {
     if (!n.audiodir || !n.audiodir.file) continue;
     let ti = song.tracks.findIndex((tr, i) =>
@@ -6775,13 +6911,20 @@ function applyAudioDirs() { // called from finalizeNotes: last-wins per track na
     const tr = song.tracks[ti];
     const cached = audioBufCache.get(audioCacheKey(n.audiodir.file));
     tr.kind = "audio";
-    tr.clip = {file: n.audiodir.file, at: Math.max(0, Math.round(n.start)), offset: n.audiodir.offset || 0,
-               local: !!n.audiodir.local, note: n,
-               buffer: cached ? cached.buffer : null, peaks: cached ? cached.peaks : null,
-               dur: cached ? cached.dur : 0, status: cached ? cached.status : "pending",
-               where: cached ? cached.where : null}; // device / folder / repo — the sheet's "where its bytes are"
-    if (!cached) audioEnsure(ti);
+    if (!tr.clips) tr.clips = [];
+    tr.clips.push({file: n.audiodir.file, at: Math.max(0, Math.round(n.start)), offset: n.audiodir.offset || 0,
+                   len: n.audiodir.len || null, local: !!n.audiodir.local, note: n,
+                   buffer: cached ? cached.buffer : null, peaks: cached ? cached.peaks : null,
+                   dur: cached ? cached.dur : 0, status: cached ? cached.status : "pending",
+                   where: cached ? cached.where : null}); // device / folder / repo — the sheet's "where its bytes are"
+    if (!cached) files.add(n.audiodir.file);
   }
+  song.tracks.forEach(tr => { if (tr.kind === "audio") tr.clips.sort((a, b) => a.at - b.at); });
+  for (const f of files) audioEnsureFile(f);
+}
+function forEachClip(fn) { // fn(clip, ti, ci)
+  if (!song) return;
+  song.tracks.forEach((tr, ti) => { if (tr.kind === "audio") tr.clips.forEach((c, ci) => fn(c, ti, ci)); });
 }
 // bytes: this device's IndexedDB first (written at import, BEFORE decode —
 // Safari's decodeAudioData detaches the input buffer), then the song's
@@ -6859,17 +7002,16 @@ function peaksOf(data) { // min/max per bucket, interleaved
   }
   return out;
 }
-async function audioEnsure(ti) { // resolve + decode one track's clip; idempotent per file
-  const tr = song && song.tracks[ti];
-  if (!tr || tr.kind !== "audio" || !tr.clip) return;
-  const key = songKey, file = tr.clip.file, ck = audioCacheKey(file);
+async function audioEnsureFile(file) { // resolve + decode one file; every piece using it gets the buffer
+  if (!song) return;
+  const key = songKey, ck = audioCacheKey(file);
   if (audioBufCache.has(ck)) return;
   const entry = {buffer: null, peaks: null, dur: 0, status: "decoding", where: null};
   audioBufCache.set(ck, entry);
-  const apply = () => { // the track object may have been rebuilt by a later finalizeNotes: find it by file
+  const apply = () => { // the clip objects may have been rebuilt by a later finalizeNotes: find them by file
     if (songKey !== key || !song) return;
-    for (const t of song.tracks) if (t.kind === "audio" && t.clip && t.clip.file === file)
-      Object.assign(t.clip, {buffer: entry.buffer, peaks: entry.peaks, dur: entry.dur, status: entry.status, where: entry.where});
+    forEachClip(c => { if (c.file === file)
+      Object.assign(c, {buffer: entry.buffer, peaks: entry.peaks, dur: entry.dur, status: entry.status, where: entry.where}); });
     computeSongEnd();
     if (playing) buildSchedule(); // a clip decoded mid-play joins the next pass
     draw();
@@ -6877,13 +7019,14 @@ async function audioEnsure(ti) { // resolve + decode one track's clip; idempoten
       // on import the first sound lands on the bar it was dropped at (Josh's export
       // had most of a bar of recorder silence, 2026-09-16). Re-alignable in the sheet.
       autoAlignFiles.delete(file);
-      const ti2 = song.tracks.findIndex(t => t.kind === "audio" && t.clip && t.clip.file === file);
-      const sec = ti2 >= 0 ? clipOnsetSec(song.tracks[ti2].clip) : null;
+      let hit = null;
+      forEachClip((c, ti, ci) => { if (!hit && c.file === file) hit = {ti, ci, c}; });
+      const sec = hit ? clipOnsetSec(hit.c) : null;
       if (sec !== null && sec > 0.005) {
-        setClipDir(ti2, {offset: sec});
+        setClipDir(hit.ti, hit.ci, {offset: sec});
         editUndo.pop(); // part of the import, not a step of its own
-        setInfo("added " + (song.tracks[ti2].name || file) + " ∿ — trimmed " + sec.toFixed(2) + "s of silence so the first sound sits on " +
-                fmtBarBeat(song.tracks[ti2].clip.at) + " · tap its chip again to nudge or re-align");
+        setInfo("added " + (song.tracks[hit.ti].name || file) + " ∿ — trimmed " + sec.toFixed(2) + "s of silence so the first sound sits on " +
+                fmtBarBeat(hit.c.at) + " · tap its chip again to nudge or re-align");
       }
     }
   };
@@ -6904,17 +7047,17 @@ function clipOnsetSec(c) { // seconds into the file where sound starts (first pe
   return +Math.min(c.dur, k * PEAK_BUCKET / c.buffer.sampleRate).toFixed(3);
 }
 let autoAlignFiles = new Set(); // freshly imported clips: trim the lead-in once they decode
-function audioReady() { // resolves when every clip in the song has settled (ready or not)
-  const waits = [];
-  if (song) song.tracks.forEach((tr, ti) => {
-    if (tr.kind === "audio" && tr.clip && tr.clip.status !== "ready" && tr.clip.status !== "missing" && tr.clip.status !== "undecodable")
-      waits.push(new Promise(res => { const t = setInterval(() => { const c = song.tracks[ti] && song.tracks[ti].clip; if (!c || c.status === "ready" || c.status === "missing" || c.status === "undecodable") { clearInterval(t); res(); } }, 100); }));
-  });
-  return Promise.all(waits);
+function audioReady() { // resolves when every file in the song has settled (ready or not)
+  const settled = e => !e || e.status === "ready" || e.status === "missing" || e.status === "undecodable";
+  const files = new Set();
+  forEachClip(c => { if (!settled(audioBufCache.get(audioCacheKey(c.file)))) files.add(c.file); });
+  return Promise.all([...files].map(f => new Promise(res => {
+    const t = setInterval(() => { if (settled(audioBufCache.get(audioCacheKey(f)))) { clearInterval(t); res(); } }, 100);
+  })));
 }
 function scheduleClip(ti, clip, when, durSec) { // durSec = WALL seconds left to play from `when`
   if (!clip.buffer || durSec <= 0.01) return;
-  const off = clip.dur - durSec * playRate; // buffer seconds already elapsed at `when`
+  const off = clip.offset + clipLen(clip) - durSec * playRate; // buffer seconds: piece start + what has elapsed
   if (off >= clip.buffer.duration) return;
   const g = audio.createGain();
   g.connect(trackGain(ti));
@@ -9515,7 +9658,7 @@ async function importAudioFiles(items) { // items: {name, bytes: Uint8Array, typ
     }
     // unique slug and track name within the song
     let file = slugFile(it.name), k = 2;
-    const taken = f => song.tracks.some(t => t.kind === "audio" && t.clip && t.clip.file === f);
+    const taken = f => { let t = false; forEachClip(c => { if (c.file === f) t = true; }); return t; };
     while (taken(file)) { file = slugFile(it.name).replace(/(\.[^.]+)?$/, "-" + k++ + "$1"); }
     const stem = file.replace(/\.[^.]+$/, "");
     let name = stem, j = 2;
@@ -9524,7 +9667,9 @@ async function importAudioFiles(items) { // items: {name, bytes: Uint8Array, typ
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
     if (audioReplaceTi !== null && song.tracks[audioReplaceTi] && song.tracks[audioReplaceTi].kind === "audio") {
       const ti = audioReplaceTi; audioReplaceTi = null;
-      setClipDir(ti, {file, offset: 0});
+      // every piece of the old file swaps to the new one, placement kept
+      const old = (song.tracks[ti].clips[0] || {}).file;
+      writeClips(ti, song.tracks[ti].clips.map(c => c.file === old ? {...c, file, offset: 0, len: null} : c));
       lastTi = ti;
       setInfo("replaced the recording on " + (song.tracks[ti].name || "the track") + " — one ⟲ brings the old one back");
       continue;
@@ -12132,20 +12277,21 @@ async function putSongsText(path, text, h) { // text sibling files in the songs 
 // content on notice; a public Pages URL is distribution).
 async function uploadAudioClips(h, status) {
   if (!song) return;
-  for (const tr of song.tracks) {
-    if (tr.kind !== "audio" || !tr.clip) continue;
-    const c = tr.clip;
-    if (c.local) { status.textContent = c.file + ": kept local (someone else's recording)"; continue; }
+  const files = new Map(); // one upload per file, however many pieces use it
+  forEachClip(c => { if (!files.has(c.file)) files.set(c.file, c); });
+  for (const [file, c] of files) {
+    if (c.local) { status.textContent = file + ": kept local (someone else's recording)"; continue; }
     if (c.where === "folder" || c.where === "repo") continue; // already with the song
-    const rec = await idbAudioGet(songKey + "|" + c.file);
+    const rec = await idbAudioGet(songKey + "|" + file);
     if (!rec || !rec.bytes) continue; // nothing on this device to send
     const bytes = new Uint8Array(rec.bytes);
-    status.textContent = (folderActive() ? "writing " : "uploading ") + c.file + " (" + (bytes.length / 1e6).toFixed(1) + " MB)…";
-    const r = await putMidAt(audioDirFor(songKey) + "/" + c.file, h, bytes); // same PUT shape: any bytes
-    if (!r.ok) throw new Error(c.file + " HTTP " + r.status);
-    c.where = folderActive() ? "folder" : "repo";
-    const e = audioBufCache.get(audioCacheKey(c.file));
-    if (e) e.where = c.where;
+    status.textContent = (folderActive() ? "writing " : "uploading ") + file + " (" + (bytes.length / 1e6).toFixed(1) + " MB)…";
+    const r = await putMidAt(audioDirFor(songKey) + "/" + file, h, bytes); // same PUT shape: any bytes
+    if (!r.ok) throw new Error(file + " HTTP " + r.status);
+    const where = folderActive() ? "folder" : "repo";
+    forEachClip(x => { if (x.file === file) x.where = where; });
+    const e = audioBufCache.get(audioCacheKey(file));
+    if (e) e.where = where;
   }
 }
 async function commitCompositionNow(status) { // .mid + annotations + notes.txt, one flow
@@ -13663,6 +13809,7 @@ document.getElementById("cutbtn").addEventListener("click", () => {
   setInfo("cut " + clipSummary() + " — 📋 pastes them at the cursor (⟲ restores)");
 });
 document.getElementById("splitbtn").addEventListener("click", () => {
+  if (selClip && !multiSel.length && editableSong()) { splitSelectedClipAtCursor(); return; } // a selected audio piece splits like a note would
   let k = splitSelectionAt(playCursor), how = "at the cursor";
   if (!k) { k = splitSelectionHalves(); how = "in half"; }
   setInfo(k ? "split " + k + " note" + (k === 1 ? "" : "s") + " " + how
@@ -13683,14 +13830,16 @@ let editBtnCache = "";
 function updateEditButtons() { // disabled = "this can't do anything right now"
   const sel = song ? selEditItems().length : 0;
   const annos = song && lassoAnno ? lassoedAnnos().length : 0;
-  const st = [!editUndo.length, !editRedo.length, !sel, !clipboardHas(), !(sel || annos)];
+  const piece = !!(song && selClip && selClipObj()); // a selected audio piece splits too
+  const st = [!editUndo.length, !editRedo.length, !sel, !clipboardHas(), !(sel || annos), !(sel || piece)];
   const key = st.join("|");
   if (key === editBtnCache) return;
   editBtnCache = key;
   const set = (id, off) => { const b = document.getElementById(id); if (b) b.disabled = off; };
   set("undobtn", st[0]); set("emUndo", st[0]);
   set("redobtn", st[1]); set("emRedo", st[1]);
-  for (const id of ["splitbtn", "emSplit", "joinbtn", "emJoin", "movebtn", "emMove",
+  set("splitbtn", st[5]); set("emSplit", st[5]);
+  for (const id of ["joinbtn", "emJoin", "movebtn", "emMove",
                     "divbtn", "emDivide", "trbtn", "emTranspose"]) set(id, st[2]);
   for (const id of ["copybtn", "emDup", "cutbtn", "emCut", "delbtn", "emDelete"]) set(id, st[4]); // these also act on lasso'd annotations, notes or not
   set("pastebtn", st[3]); set("emPaste", st[3]); set("emPasteTo", st[3]);

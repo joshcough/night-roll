@@ -1019,10 +1019,10 @@ test("local folder mode: reads fall back to the site, writes need no token, cata
 
 test("audio tracks: the audio: annotation round-trips and derives kind/clip onto a named track", () => {
   // text ⇄ JSON identity, like every other type
-  const j = val(`noteToJSON(parseRollnotes("[5.1]\\naudio: guitar file=take-2.m4a offset=0.25 local=1\\n")[0])`);
-  assert.deepEqual(j, {at: [5, 1], type: "audio", track: "guitar", file: "take-2.m4a", offset: 0.25, local: true});
+  const j = val(`noteToJSON(parseRollnotes("[5.1]\\naudio: guitar file=take-2.m4a offset=0.25 len=3.5 local=1\\n")[0])`);
+  assert.deepEqual(j, {at: [5, 1], type: "audio", track: "guitar", file: "take-2.m4a", offset: 0.25, len: 3.5, local: true});
   const back = val(`jsonToRawNote(${JSON.stringify(j)})`);
-  assert.equal(back.text, "audio: guitar file=take-2.m4a offset=0.25 local=1");
+  assert.equal(back.text, "audio: guitar file=take-2.m4a offset=0.25 len=3.5 local=1");
   assert.equal(run(`deriveNoteTypes([{b1: 1, q1: 1, b2: null, q2: null, text: "audio: g file=a.wav"}])[0].audiodir.offset`), 0);
   // a composition with two MIDI tracks and an empty "guitar" track
   run(`
@@ -1038,9 +1038,10 @@ test("audio tracks: the audio: annotation round-trips and derives kind/clip onto
     finalizeNotes();
   `);
   assert.equal(run(`song.tracks[2].kind`), "audio");
-  assert.equal(run(`song.tracks[2].clip.file`), "take.wav");
-  assert.equal(run(`song.tracks[2].clip.at`), 2 * 4 * 480); // bar 3 (case-insensitive name match)
-  assert.equal(run(`song.tracks[2].clip.offset`), 0.5);
+  assert.equal(run(`song.tracks[2].clips.length`), 1);
+  assert.equal(run(`song.tracks[2].clips[0].file`), "take.wav");
+  assert.equal(run(`song.tracks[2].clips[0].at`), 2 * 4 * 480); // bar 3 (case-insensitive name match)
+  assert.equal(run(`song.tracks[2].clips[0].offset`), 0.5);
   assert.equal(run(`song.tracks[0].kind`), undefined);
   // guards: the audio track never becomes the "last = triangle" bass, never a kit, never a bass to follow
   assert.equal(run(`voiceType(1)`), "triangle");
@@ -1049,46 +1050,64 @@ test("audio tracks: the audio: annotation round-trips and derives kind/clip onto
   assert.equal(run(`trackIsDrums(2)`), false);
   run(`song.tracks[2].name = "guitar";`);
   assert.equal(run(`moveSelectionToTrack(2)`), 0);
-  // a decoded clip (faked) joins the schedule as one wall-second event and stretches the song end
+  // a decoded file (faked) makes the piece one wall-second event starting AT its anchor,
+  // playing the rest of the file after the offset, and stretches the song end
   run(`
-    song.tracks[2].clip.dur = 10; song.tracks[2].clip.status = "ready";
-    song.tracks[2].clip.buffer = {duration: 10, sampleRate: 48000};
+    const e = audioBufCache.get(audioCacheKey("take.wav")); e.dur = 10; e.status = "ready"; e.where = "device";
+    e.buffer = {duration: 10, sampleRate: 48000};
+    Object.assign(song.tracks[2].clips[0], {dur: 10, status: "ready", buffer: e.buffer, where: "device"});
     computeSongEnd(); buildSchedule();
   `);
   const ev = val(`schedEvents.filter(e => e.n._clip).map(e => ({sec: e.sec, dur: e.dur, ti: e.ti}))`);
   assert.equal(ev.length, 1);
   assert.equal(ev[0].ti, 2);
-  assert.ok(Math.abs(ev[0].sec - (4 - 0.5)) < 1e-9, "bar 3 at 120bpm = 4s, minus the 0.5s offset");
-  assert.equal(ev[0].dur, 10);
-  assert.ok(run(`songEndTick`) >= run(`clipEndTick(song.tracks[2].clip)`), "song end covers the clip");
+  assert.ok(Math.abs(ev[0].sec - 4) < 1e-9, "bar 3 at 120bpm = 4s: the piece starts at its anchor");
+  assert.ok(Math.abs(ev[0].dur - 9.5) < 1e-9, "plays the file from 0.5s to its end");
+  assert.ok(run(`songEndTick`) >= run(`clipEndTick(song.tracks[2].clips[0])`), "song end covers the piece");
   assert.equal(run(`songEndTick`) % (4 * 480), 0);
-  // at double speed the event halves in wall time; the offset scales too
+  // at double speed the event halves in wall time
   run(`playRate = 2; buildSchedule();`);
   const ev2 = val(`schedEvents.filter(e => e.n._clip).map(e => ({sec: e.sec, dur: e.dur}))`);
-  assert.ok(Math.abs(ev2[0].sec - (2 - 0.25)) < 1e-9);
-  assert.equal(ev2[0].dur, 5);
+  assert.ok(Math.abs(ev2[0].sec - 2) < 1e-9);
+  assert.ok(Math.abs(ev2[0].dur - 4.75) < 1e-9);
   run(`playRate = 1;`);
   // no staff for the clip (the vm has no VexFlow, so the model may be null; when it exists, track 2 is absent)
   run(`buildScoreModel();`);
   if (run(`!!scoreModel`)) assert.equal(val(`scoreModel.staves.map(s => s.ti)`).includes(2), false);
-  // moving the clip rewrites the annotation (fresh added note, one anno undo entry)
+  // moving the piece rewrites the annotation (fresh added note, one anno undo entry); it keeps knowing where its bytes are
   const before = run(`editUndo.length`);
-  run(`audioBufCache.get(audioCacheKey("take.wav")).where = "device";`); // what audioEnsure records
-  run(`setClipDir(2, {at: 4 * 480});`);
+  run(`setClipDir(2, 0, {at: 4 * 480});`);
   assert.equal(run(`editUndo.length`), before + 1);
-  assert.equal(run(`song.tracks[2].clip.at`), 4 * 480);
-  assert.equal(run(`song.tracks[2].clip.where`), "device"); // the rebuilt clip keeps knowing where its bytes are
+  assert.equal(run(`song.tracks[2].clips[0].at`), 4 * 480);
+  assert.equal(run(`song.tracks[2].clips[0].where`), "device");
   assert.equal(val(`rollnotes.filter(n => n.audiodir).map(n => n.text)`).length, 1);
   assert.equal(run(`rollnotes.find(n => n.audiodir).text`), "audio: guitar file=take.wav offset=0.5");
   assert.equal(run(`rollnotes.find(n => n.audiodir).b1`), 2);
-  // serialization keeps one audio: per track name
-  run(`rollnotes.push(resolveNote(deriveNoteTypes([{b1: 1, q1: 1, b2: null, q2: null, text: "audio: guitar file=old.wav"}])[0]));`);
-  const ser = run(`serializeRollnotes()`);
-  assert.equal((ser.match(/"type":"audio"/g) || []).length, 1);
-  // deleting the annotation returns the track to an ordinary empty lane
+  // split at bar 4 (2s into the piece): two pieces, one undo; the right one starts at the cut and picks up the file there
+  const undoBeforeSplit = run(`editUndo.length`);
+  assert.equal(run(`splitClipAt(2, 0, 3 * 4 * 480)`), true);
+  assert.equal(run(`editUndo.length`), undoBeforeSplit + 1);
+  assert.equal(run(`song.tracks[2].clips.length`), 2);
+  assert.deepEqual(val(`song.tracks[2].clips.map(c => [c.at, c.offset, c.len])`), [[4 * 480, 0.5, 4], [12 * 480, 4.5, 5.5]]);
+  assert.equal(val(`rollnotes.filter(n => n.audiodir).map(n => n.text)`).length, 2);
+  assert.equal(run(`serializeRollnotes()`).match(/"type":"audio"/g).length, 2); // both pieces serialize
+  run(`buildSchedule();`);
+  assert.deepEqual(val(`schedEvents.filter(e => e.n._clip).map(e => [e.sec, e.dur])`), [[2, 4], [6, 5.5]]);
+  // a split outside the piece is refused
+  assert.equal(run(`splitClipAt(2, 0, 100 * 480)`), false);
+  // trim: right edge shortens; left edge keeps the sound in place (anchor + offset move together)
+  run(`trimClip(2, 1, "R", -2 * 480);`); // one second at 120bpm
+  assert.deepEqual(val(`song.tracks[2].clips.map(c => [c.at, c.offset, c.len])`), [[4 * 480, 0.5, 4], [12 * 480, 4.5, 4.5]]);
+  run(`trimClip(2, 0, "L", 2 * 480);`);
+  assert.deepEqual(val(`song.tracks[2].clips.map(c => [c.at, c.offset, c.len])`), [[6 * 480, 1.5, 3], [12 * 480, 4.5, 4.5]]);
+  // remove a piece: the other stands, the track stays
+  run(`deleteClip(2, 0);`);
+  assert.deepEqual(val(`song.tracks[2].clips.map(c => [c.at, c.offset, c.len])`), [[12 * 480, 4.5, 4.5]]);
+  assert.equal(run(`song.tracks[2].kind`), "audio");
+  // deleting every annotation returns the track to an ordinary empty lane
   run(`rollnotes = rollnotes.filter(n => !n.audiodir); finalizeNotes();`);
   assert.equal(run(`song.tracks[2].kind`), undefined);
-  assert.equal(run(`song.tracks[2].clip`), undefined);
+  assert.equal(run(`song.tracks[2].clips`), undefined);
   run(`editUndo = []; song = null; songKey = null; rollnotes = [];`);
 });
 
@@ -1109,8 +1128,8 @@ test("audio tracks: an unsynced audio: note survives a reload — local notes re
   `);
   await run(`loadNotes()`);
   assert.equal(run(`song.tracks[1].kind`), "audio");
-  assert.equal(run(`song.tracks[1].clip.file`), "take.wav");
-  assert.equal(run(`song.tracks[1].clip.at`), 4 * 480);
+  assert.equal(run(`song.tracks[1].clips[0].file`), "take.wav");
+  assert.equal(run(`song.tracks[1].clips[0].at`), 4 * 480);
   assert.equal(run(`song.tracks[0].voice`), "sf-piano"); // track: directives came back too
   // the saved .mid comes back WITHOUT the note-less track (parseMidi keeps
   // only tracks with notes): the directive recreates it by name, once
