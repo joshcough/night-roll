@@ -37,7 +37,12 @@ Import), decode via OfflineAudioContext, per-pass scheduler events with
 pass-end/album clamps and cycle chase, tracks-view waveform + drag,
 ∿ strip in every view, recording sheet (nudges, align first sound,
 replace, local-only toggle), Save uploads beside the .mid. Awaiting
-Josh's decision: merge to main or deploy the branch to a preview repo.
+Josh's decision on merging to main. DEPLOYED for testing at
+https://joshcough.github.io/night-roll-preview/ (repo
+`joshcough/night-roll-preview`, Pages from its main; separate origin =
+separate browser storage). Redeploy = `git push preview
+audio-tracks:main`; rebase on main first so it carries the latest
+songs. CI runs the full suite on the branch too (tests.yml).
 Known gaps: Save As / Move to… don't carry `.audio/` bytes yet; no mic
 record; no per-clip loop.
 
