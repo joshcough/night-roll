@@ -13329,7 +13329,12 @@ function renderFolderUI() {
   const forget = document.getElementById("folderforget");
   const recon = document.getElementById("filefolder");
   if (!folderSupported() && fsRoot.mode !== "opfs") {
-    nameEl.textContent = "needs Chrome or Edge on a computer — saves go to GitHub here";
+    // Chrome hides the API on plain http (except localhost/127.0.0.1) — say
+    // which of the two it is, or a LAN-served dev copy reads as "wrong browser"
+    const insecure = typeof window !== "undefined" && window.isSecureContext === false;
+    nameEl.textContent = insecure
+      ? "needs https (or localhost) — this page is plain http, so Chrome hides the folder door; saves go to GitHub here"
+      : "needs Chrome or Edge on a computer — saves go to GitHub here";
     pick.style.display = "none";
     forget.style.display = "none";
   } else if (fsRoot.handle) {
