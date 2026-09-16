@@ -19,7 +19,7 @@ folder mode". AWAITING Josh's field test on his Mac. Open: iPad/Safari
 bundle fallback (v1.5); autosave-on-edit in folder mode (explicit Save
 kept); copying the FF1 corpus into a folder for a folder-only user.
 
-## AUDIO ("wave") TRACKS — DESIGNED 2026-09-15, after folder mode
+## AUDIO ("wave") TRACKS — BUILT 2026-09-15 on branch `audio-tracks` (not on main)
 
 Josh's son: "I wouldn't use it unless it supported waves." Design in
 `wave-tracks-design.md` (revised after an advisor review, appended
@@ -31,7 +31,15 @@ dedicated public audio repo; playback = one buffer source per pass
 through the existing scheduler; waveform in the tracks view, a span
 strip in the roll, nothing in the score. Hard rule added (doc §14):
 other people's recordings never go to GitHub — a per-clip "someone
-else's recording" toggle blocks upload. Not built; no branch yet.
+else's recording" toggle blocks upload. BUILT on `audio-tracks` per the
+post-review design (NIGHT-ROLL.md "Audio tracks"): import (＋∿ + File →
+Import), decode via OfflineAudioContext, per-pass scheduler events with
+pass-end/album clamps and cycle chase, tracks-view waveform + drag,
+∿ strip in every view, recording sheet (nudges, align first sound,
+replace, local-only toggle), Save uploads beside the .mid. Awaiting
+Josh's decision: merge to main or deploy the branch to a preview repo.
+Known gaps: Save As / Move to… don't carry `.audio/` bytes yet; no mic
+record; no per-clip loop.
 
 **Josh's rulings still needed (doc §11):** (1) does his son want a
 record button; (2) dedicated audio repo as Josh's default; (3) Save

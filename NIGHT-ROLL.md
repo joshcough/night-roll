@@ -918,3 +918,99 @@ needed. The folder's layout mirrors the repo exactly
 **Not done:** Safari/iPad fallback (a downloadable project bundle),
 autosave-on-edit in folder mode (explicit Save kept for parity and so
 Revert still means something), copying the FF1 corpus into a folder.
+
+## Audio tracks — recordings as tracks (branch `audio-tracks`, 2026-09-15)
+
+Josh's son: "I wouldn't use it unless it supported waves." Design and
+the advisor review that reshaped it: `wave-tracks-design.md`. Depends
+on local folder mode (above) for a home that is not GitHub.
+
+**Model.** An audio track is an ORDINARY empty track in the .mid (what ＋
+creates) plus one `audio:` annotation naming it:
+`audio: <track> file=<slug> offset=<sec> local=1` /
+`{"at":[5,1],"type":"audio","track":"guitar","file":"take.m4a","offset":0.25}`.
+`applyAudioDirs()` (from `finalizeNotes`, right after the `track:` pass)
+derives `tr.kind = "audio"` and `tr.clip = {file, at (tick), offset,
+local, dur, buffer, peaks, status, where, note}` onto the named track,
+last-wins per name, and clears them when the annotation is gone — the
+voice/color mechanism exactly. The text form is canonical (every type
+round-trips through text; `saveLocalNotes` persists text). Moving a clip
+changes the note's identity, so `setClipDir()` tombstones the old note
+and pushes a fresh `added` one (one `anno` undo entry). `renameTrack`
+migrates the directive. `serializeNotesList` dedupes `audio:` per track
+like `track:`. Filenames are slugified (`slugFile`) — the kv grammar is
+`\S+`.
+
+**Bytes.** `audioBytesFor(key, file)`: this device's IndexedDB
+(`ff1roll` v3, store `audio`, key `<songKey>|<file>`, written at import
+BEFORE decode — Safari detaches the buffer) → `readData("songs",
+<song>.audio/<file>)` (folder, then site). `uploadAudioClips()` runs
+inside `commitCompositionNow` after the three text files: device-only
+clips go up via `putMidAt(path, h, bytes)` (folder write or Contents
+PUT), then `clip.where` flips to folder/repo. `local=1` ("someone
+else's recording") is never uploaded — the DMCA rule, design §14.
+
+**Decode.** `decodeAudioBytes()` uses an `OfflineAudioContext(1, 1,
+48000)`: no user gesture needed (the main context can't exist at page
+load), and an AudioBuffer plays in any context. Downmixed to mono inside
+the callback; `peaksOf()` = min/max per 256 samples. `audioBufCache`
+(songKey|file) survives `finalizeNotes` re-runs; `audioEnsure(ti)` is
+idempotent per file and re-applies onto whatever track object holds
+that file now. `audioReady()` is what album play awaits (15 s cap, like
+the chip render).
+
+**Playback.** `buildSchedule` pushes one event per clip: `{ti, n: {ch:
+0, _clip}, sec: tickToSec(at) − offset/playRate, dur: clip.dur/playRate}`
+— sec/dur are WALL seconds like every event (`tickToSec` already divides
+by playRate); buffer offsets are file seconds. `scheduleNote` dispatches
+`n._clip` → `scheduleClip(ti, clip, when, durSec − (when − when0))`
+right after its now+3ms bump, so the bump advances INTO the file rather
+than delaying it. `scheduleClip`: offset = `clip.dur − durSec·playRate`,
+a gain per pass with 5 ms ramps (a pass boundary cuts and restarts
+mid-waveform), `playbackRate = playRate` (tape-style, as chip audio),
+node tracked in `audioSrcs` and pruned `onended`. The pump clamps a
+clip's duration to the pass end and to `albumEndAbs` (`clipClamp`) —
+MIDI notes never needed that. Both chase loops now run for clips even
+while cycling (`cycling && !e.n._clip → continue`): a clip is the
+track, not a tail. `stop()` calls `audioStopSrcs()`. `albumLeave`
+restarts in place when a clip is playing (its stop() can't be
+unscheduled); `computeSongEnd` includes `clipEndTick()`.
+
+**Guards (`kind === "audio"`):** `voiceType` counts MIDI tracks only for
+"last = triangle" (an added take used to demote the bass to a pulse);
+`trackIsDrums` → false ("drums-di.wav" is a take); `drBassTrack` skips;
+the tracks-view retrack guard and `moveSelectionToTrack` refuse a clip
+lane; `buildScoreModel` draws no staff; both pencil paths refuse.
+
+**Display.** Tracks view: `drawClipLane` (peaks per pixel column,
+edges, gold outline when `selClip === ti`), `hitTracksClip`, tap =
+select + `clipLabel` in the status line, second tap = play from the
+clip's start, hold-and-drag = `pendingEdit {kind: "clip"}` → ghost via
+`tracksGhost.dT` → `moveClip` on release. Every view: `drawAudioStrip`,
+an `AUDIO_STRIP_H` (18 px) band folded into `RULER_H` when the song has
+audio. Chip label and lane header carry " ∿".
+
+**UX.** `＋∿` chip (own `#audioinput`, `accept="audio/*"…` so iOS opens
+Files) and File → Import… (`audioMagic` sniff: RIFF/WAVE, FORM/AIFF,
+ID3, MPEG sync, ftyp, fLaC, OggS) → `importAudioFiles()`: locked songs
+are refused with the Save As hint; > 20 MB (`AUDIO_SIZE_GATE`) asks
+"store as 16-bit mono WAV" (`monoWavBytes`) vs as-is; lands at the
+cursor's bar as a new track named from the slug; one group undo. The
+voice menu becomes the **recording sheet** (`buildClipControls`) for an
+audio track: starts ±bar/±beat, offset ±10/±100 ms, ⇤ Align first sound
+(first peak bucket over 0.02), Replace file…, ☐ someone else's
+recording, m4a caveat; rename/fader/color/delete stay.
+
+**Tests.** vm: annotation identity, derivation, guards, schedule
+event math at two speeds, song end, move-rewrites-annotation,
+serialization dedupe, sniff/slug/WAV encoder. Playwright
+(`tests/e2e/audio.spec.mjs`, chromium, `?folder=opfs`, fixture
+`tests/e2e/fixtures/tone.wav` — 1 s, 250 ms leading silence): import →
+decode → schedule → align → Save beside the .mid → reload from the
+folder.
+
+**Not in v1:** mic recording, trim/split, per-clip looping, fades,
+time-stretch, a waveform in the roll, a dedicated audio repo (bytes go
+where the song goes: folder or songs repo — Josh's ruling pending),
+Save As / Move to… carrying `.audio/` along (they copy the annotation;
+the bytes must be re-imported until that lands), orphan cleanup.
