@@ -931,6 +931,92 @@ test("data-location config: defaults are legacy-identical; bases and repos route
   run(`localStorage.removeItem("ff1roll-cfg"); cfg.c = null;`); // restore defaults for later tests
 });
 
+// In-memory FileSystemDirectoryHandle: the subset the folder backend uses
+// (getDirectoryHandle/getFileHandle with {create}, getFile, createWritable,
+// removeEntry, entries). Cross-realm is fine — the app only calls methods.
+function fakeDir(name = "root") {
+  const dirs = new Map(), files = new Map();
+  const nf = () => Object.assign(new Error("not found"), { name: "NotFoundError" });
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  return {
+    kind: "directory", name,
+    async getDirectoryHandle(n, o) {
+      if (!dirs.has(n)) { if (!o || !o.create) throw nf(); dirs.set(n, fakeDir(n)); }
+      return dirs.get(n);
+    },
+    async getFileHandle(n, o) {
+      if (!files.has(n)) { if (!o || !o.create) throw nf(); files.set(n, { data: "" }); }
+      const f = files.get(n);
+      return {
+        kind: "file", name: n,
+        async getFile() {
+          const bytes = typeof f.data === "string" ? enc.encode(f.data) : new Uint8Array(f.data);
+          return { size: bytes.length, text: async () => dec.decode(bytes), arrayBuffer: async () => bytes.buffer };
+        },
+        async createWritable() { return { async write(d) { f.data = d; }, async close() {} }; },
+      };
+    },
+    async removeEntry(n) { if (!files.delete(n) && !dirs.delete(n)) throw nf(); },
+    async *entries() {
+      for (const [k, v] of dirs) yield [k, v];
+      for (const [k] of files) yield [k, { kind: "file", name: k }];
+    },
+  };
+}
+
+test("local folder mode: reads fall back to the site, writes need no token, catalog scans the folder", async () => {
+  // off by default: readData is a plain fetch (earlier tests may have stubbed
+  // the sandbox's fetch — own it here, restore at the end)
+  run(`globalThis.__prevFetch = fetch; fetch = () => Promise.reject(new Error("no network"));`);
+  run(`fsRoot.handle = null; fsRoot.needsGrant = false;`);
+  assert.equal(run(`folderActive()`), false);
+  await assert.rejects(() => run(`readData("analysis", "albums/x.rollnotes.json")`), /no network/);
+  assert.equal(run(`writeToken()`), null);
+  // a folder: text and bytes round-trip, directories are created on the way
+  app.context.fakeRoot = fakeDir("Night Roll");
+  run(`fsRoot.handle = fakeRoot; fsRoot.name = fakeRoot.name; fsRoot.mode = "picker"; fsRoot.needsGrant = false;`);
+  assert.equal(run(`folderActive()`), true);
+  assert.equal(run(`writeToken()`), "folder");
+  await run(`folderWrite("albums/compositions/nightroll/a.rollnotes.json", '{"version":1,"saved":5,"notes":[]}')`);
+  const r = await run(`readData("analysis", "albums/compositions/nightroll/a.rollnotes.json", true)`);
+  assert.equal(r.ok, true);
+  assert.equal(r.fromFolder, true);
+  assert.equal(JSON.parse(await r.text()).saved, 5);
+  // absent in the folder → the site (still no network here)
+  await assert.rejects(() => run(`readData("songs", "albums/final-fantasy-i/songs/overworld.mid")`), /no network/);
+  // the write helpers route to the folder and answer ok without touching GitHub
+  installSong();
+  run(`song.tracks = [{name: "v1", notes: [{t: 0, d: 480, p: 60, v: 80}]}];`);
+  const r1 = await run(`putMidAt("albums/compositions/nightroll/a.mid", ghHeaders("folder"))`);
+  const r2 = await run(`putSongsText("albums/compositions/nightroll/a.notes.txt", "hello", ghHeaders("folder"))`);
+  const r3 = await run(`putRollnotes("albums/compositions/other/b.rollnotes.json", "{}", ghHeaders("folder"))`);
+  assert.deepEqual([r1.ok, r2.ok, r3.ok], [true, true, true]);
+  const mid = await run(`folderRead("albums/compositions/nightroll/a.mid")`);
+  assert.ok(mid && mid.size > 20, "the .mid landed as bytes");
+  assert.equal(await (await run(`folderRead("albums/compositions/nightroll/a.notes.txt")`)).text(), "hello");
+  assert.equal(await run(`updateManifest(null, () => { throw new Error("must not run"); })`), undefined);
+  // the folder scan has the manifest's shape; album.json titles win; a
+  // subdirectory with its own album.json is its own album
+  await run(`folderWrite("albums/compositions/album.json", '{"title":"My Compositions","order":2,"songs":{"c":"Third Song"}}')`);
+  await run(`folderWrite("albums/compositions/c.mid", new Uint8Array([77, 84, 104, 100]))`);
+  // nightroll/ has NO album.json in a fresh folder: the app's own name applies by path
+  const scan = JSON.parse(JSON.stringify(await run(`folderScanAlbums()`)));
+  assert.deepEqual(scan.map(a => a.title), ["My Compositions", "Night Roll Sketches"]);
+  assert.deepEqual(scan[0].songs, [{ title: "Third Song", path: "albums/compositions/c.mid" }]);
+  assert.deepEqual(scan[1].songs, [{ title: "A", path: "albums/compositions/nightroll/a.mid" }]);
+  // initCatalog: the site is unreachable, the folder alone still lists
+  await run(`initCatalog()`);
+  assert.deepEqual(val(`CATALOG["Night Roll Sketches"]`), [["A", "albums/compositions/nightroll/a.mid"]]);
+  // delete: gone is true, and true again when already gone
+  assert.equal(await run(`deleteRepoFile("albums/compositions/c.mid", null)`), true);
+  assert.equal(await run(`deleteRepoFile("albums/compositions/c.mid", null)`), true);
+  assert.equal(await run(`folderRead("albums/compositions/c.mid")`), null);
+  // off again: back to the network path
+  run(`fsRoot.handle = null; fsRoot.name = ""; fsRoot.mode = null; CATALOG = {}; fetch = globalThis.__prevFetch;`);
+  assert.equal(run(`folderActive()`), false);
+  assert.equal(run(`writeToken()`), null);
+});
+
 test("local MIDI imports persist as device drafts: editable, drums intact, never synced", () => {
   installSong();
   run(`
@@ -1025,7 +1111,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Web session", "Repo ↗", "Sync", "Silent Mode", "copy chip", "Play album", "⏭ Next", "✕</b> to leave",
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
-    "Tap a note", "nothing to double",
+    "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));

@@ -4,6 +4,46 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## LOCAL FOLDER MODE — SHIPPED 2026-09-15 to main (local-folder-design.md)
+
+Josh's ruling: saving without GitHub is its own project and comes
+before audio tracks. Two reasons: his son has no GitHub (Chrome on a
+MacBook Pro), and GitHub removes content on DMCA notice, so a
+recording that is not yours needs a durable home that is not GitHub.
+Shipped on main (Josh: "that can go right into the master branch and
+get deployed immediately"): Settings → Choose folder… (Chrome/Edge
+desktop), reads folder-first with site fallback, every write to the
+folder, catalog = site ∪ folder scan, 📁 Reconnect folder in the File
+menu when Chrome wants a fresh grant. Details in NIGHT-ROLL.md "Local
+folder mode". AWAITING Josh's field test on his Mac. Open: iPad/Safari
+bundle fallback (v1.5); autosave-on-edit in folder mode (explicit Save
+kept); copying the FF1 corpus into a folder for a folder-only user.
+
+## AUDIO ("wave") TRACKS — DESIGNED 2026-09-15, after folder mode
+
+Josh's son: "I wouldn't use it unless it supported waves." Design in
+`wave-tracks-design.md` (revised after an advisor review, appended
+there verbatim; verdict: ship with changes, §2 re-anchored). Shape:
+an empty named track in the .mid + an `audio:` annotation (file,
+bar.beat anchor, offset) derived onto the track at finalizeNotes like
+voice/color; bytes on device until Save, then the folder or a
+dedicated public audio repo; playback = one buffer source per pass
+through the existing scheduler; waveform in the tracks view, a span
+strip in the roll, nothing in the score. Hard rule added (doc §14):
+other people's recordings never go to GitHub — a per-clip "someone
+else's recording" toggle blocks upload. Not built; no branch yet.
+
+**Josh's rulings still needed (doc §11):** (1) does his son want a
+record button; (2) dedicated audio repo as Josh's default; (3) Save
+migrates to one batchCommit (today three Contents-API commits per
+Save); (4) the "real state" rule reframed (doc §10); (5) mono downmix
+at decode; (6) roll strip yes/no.
+
+**Branch rule (Josh, 2026-09-15):** feature work on its own branch,
+never merged to main until proven, deployed to a second repo
+`night-roll-preview` with its own Pages site (separate origin =
+separate storage = bug isolation). Audio doc §12.
+
 ## Album play — SHIPPED 2026-09-14, redesigned the same day
 
 Round 1 (transport button behind a View toggle) confused Josh within an

@@ -859,3 +859,62 @@ dirty draft when the repo is newer and says so in the status line.
 
 Out of v1: shuffle, queue, lock-screen controls (needs a media element;
 the silent `<audio>` keep-alive stalled the iPad in August).
+
+## Local folder mode (2026-09-15) — saving without GitHub
+
+Why: Josh's son has no GitHub account (Chrome on a MacBook Pro), and
+GitHub removes content on a rights holder's notice, so a recording that
+isn't yours needs a home that isn't a repo. Design: `local-folder-
+design.md`.
+
+**Model:** a folder on this computer is a fourth data location. Reads
+try the folder first and fall back to the configured site (FF1 songs
+keep loading from here; a song present in both opens from the folder).
+Every write goes to the folder; nothing reaches GitHub and no token is
+needed. The folder's layout mirrors the repo exactly
+(`albums/<album>/<song>.mid` + `.rollnotes.json` + `.notes.txt`,
+`album.json` for titles), so the folder IS a repo without git —
+`git init` there and push if the user ever wants GitHub.
+
+**Code (index.html, "local folder backend" after `cfg()`):**
+- `fsRoot = {handle, name, mode: "picker"|"opfs", needsGrant}`;
+  `folderActive()` is the ONE predicate every seam checks.
+- Read seam: `readData(which, path, bust)` — folder first
+  (`folderRead` → File), else `fetch(songsURL/analysisURL)`. Returns a
+  Response-shaped object (`ok/status/text/json/arrayBuffer/fromFolder`).
+  All six repo reads go through it: catalog is separate (below),
+  rollnotes load (`loadNotes`, `buildRollnotesFor`), the cross-device
+  freshness check, the `.mid` fetch in `loadSongInner`, `albumMetaFor`.
+- Write seam: `putMidAt`, `putSongsText`, `putRollnotes`,
+  `deleteRepoFile`, `batchCommit`, `renameRepoTitle`,
+  `computeImportAlbumJson` each branch on `folderActive()` first.
+  `updateManifest` is a no-op in folder mode (no manifest: the catalog
+  rescans), and `commitImports` skips the NSF vault upload and the
+  manifest rewrite. `writeToken()` returns the stored token or the
+  placeholder `"folder"` so every token guard and `ghHeaders()` call
+  keeps its shape; `takeToken()` (sync sheet) does the same.
+- Catalog: `initCatalog` = site manifest ∪ `folderScanAlbums()` (same
+  shape as `tools/build_manifest.mjs`: `albums/*/`, `songs/` subdir,
+  subdirectories with their own `album.json`), union by path, folder
+  titles win. Either source alone suffices — offline folder users still
+  see their songs; the boot error fires only when both fail.
+- Persistence: the directory handle is structured-cloned into
+  IndexedDB (`ff1roll` v2, store `fs`, key `root`). Boot
+  (`restoreFolder`) reloads it and checks `queryPermission`; if Chrome
+  wants a fresh grant, `needsGrant` is set, `folderActive()` is false
+  (reads fall back to the site), and **📁 Reconnect folder** shows at
+  the top of the File menu — `requestPermission` must run in a gesture.
+  `navigator.storage.persist()` is requested on first pick.
+- UI: Settings sheet row `#folderrow` (`Choose folder…` / `Change
+  folder…` / `Reconnect` / `Forget`; on Safari/iPad the row says it
+  needs Chrome or Edge on a computer). `renderFolderUI()` also relabels
+  File → "Save (to folder)" and "Revert to saved copy…". Status lines
+  say "Saved ✓ to <folder>" instead of the Pages wait.
+- `?folder=opfs` swaps `navigator.storage.getDirectory()` in as the
+  root: same interface, no picker, not persisted. Playwright
+  (`tests/e2e/folder.spec.mjs`, chromium only) and browser checks use it.
+  The vm test drives the backend with an in-memory fake handle.
+
+**Not done:** Safari/iPad fallback (a downloadable project bundle),
+autosave-on-edit in folder mode (explicit Save kept for parity and so
+Revert still means something), copying the FF1 corpus into a folder.

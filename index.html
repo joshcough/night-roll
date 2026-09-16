@@ -1270,6 +1270,7 @@
       <dt>File</dt><dd>Everything file-shaped lives here now. Open… (the song picker — albums, drafts; the current song's title shows above the track chips), New song (name/tempo/meter dialog → blank 3-voice NES composition), Save (opens the Save &amp; Commit sheet: on your own songs its button commits the .mid AND the annotations together in one go; on analyzed songs the same door is the annotation Sync — one workflow, and what gets pushed is whatever the mode owns), Save As (forks ANY song, including a locked capture, into nightroll/ with its annotations inherited — write a counter-line over Town), Settings… (GitHub token + the Data locations that tell Night Roll where songs, analysis, and NSFs live), Revert to repo copy… (the escape hatch: discards THIS device's draft, unsynced annotations, and deletions for the open song, then loads the repo's last save — for when local edits went somewhere you can't undo your way out of), Rename… (works on everything: an uncommitted draft renames its actual file; a committed/repo song keeps its filename — analysis docs and the capture pipeline reference it — and gets a display-title override written to its album.json and the manifest, so the new name shows everywhere), Import… (multi-select capable; byte-sniffs each pick: MIDI files — .mid, .midi, .smf, .kar, even RIFF-wrapped .rmi — ask where they belong: <b>Keep local</b> (this-device draft, annotations never sync) or <b>Create album</b> — one or many MIDIs become an album folder under drafts, audition/rename/✕ like NSF captures, and ⇪ Commit publishes them to the songs repo so annotations sync everywhere (note: commit rewrites the .mid as notes+tempo+meter — foreign CCs/programs are not preserved); an NSF chip-music file opens the capture panel: every track runs through the same 6502/APU pipeline that dumped the FF1 album — loop detected and trimmed, tempo grid-fitted, hardware loop point recorded as a loop: annotation; the capture window auto-doubles (75 → 150 → 300s) when no loop fits, since the detector needs the intro plus two full passes — and lands as a LOCAL draft under an Import album; names load automatically from the rip's .m3u playlist when you pick it with the NSF (or pick the .m3u alone afterward — even already-captured drafts rename in place); otherwise audition each capture and type its real name right in the panel row — "Dr. Wily's Castle" replaces "track-15" instantly, punctuation preserved through to the song picker; Chip audio is automatic — whenever the app can reach a song's NSF (live import session, this device's cache, or the public archive), it renders the captured register log through the NES 2A03's actual sound hardware (duty sequencers, envelopes, noise LFSR — the console's own voice, not our oscillator approximation) and ▶ plays that; there's no button and nothing to enable. Mute/solo stay live per track, the speed slider acts tape-style, and picking an explicit instrument in a track's voice menu overrides the chip for that track (auto = chip); in Open → drafts each import album is its own FOLDER (tap in for its tracks: ⇪ on a track commits just that song to its album, "⇪ Commit album" pushes the whole folder, ✕ tap-twice discards a dud, and the ✕ on the folder row itself discards the entire album's drafts at once; re-capturing a track — or re-importing the whole NSF, maybe with a longer capture window — simply overwrites the old drafts; File → Commit import still pushes every import draft across all folders at once); expansion-chip audio like VRC6 is not captured), Download .mid (exports any song, works in Logic), Download audio (records the app's own sound by playing the song through once — loop off, keep quiet hands during the take; saves .m4a on Safari / .webm on Chrome, both shareable anywhere including iMessage). Compositions auto-draft to this device on every edit — find them under "Night Roll drafts" in the song picker, where a ✕ (tap twice) deletes a draft from this device; Save is what puts them in the repo, and it updates the dropdown's catalog automatically. <b>Drafts is not a folder — it's this device's working copies.</b> A song you've saved lives in its album (new songs go to Night Roll Sketches) AND keeps a drafts row here; each row says which: <b>unsaved</b> (exists only on this device), <b>saved to Night Roll Sketches</b> (committed, this row is just your local copy), or <b>edited since save</b> (local changes not yet committed). Imported MIDI files land there too (prefixed "local /") — they persist on this device and stay editable, but never sync to the repo; Save As forks one into a real composition. Move to… relocates a composition between Night Roll Sketches and My Compositions (files + catalog together; the row names the song's current album first, and the dropdown lists only where it can go — New song and Save always land in Sketches); leaving Sketches adds a "moved from" note at bar 1, which is what keeps the song editable on your other devices (as "forked from" does for Save As), so leave it in place. A ＋ track chip appears in the track bar on compositions — and a <b>＋ drums</b> chip adds a GM drum kit track: its the kit gets its own labeled LANE that starts docked under your lowest melodic note — and you can DRAG it anywhere by its labels in the left gutter; the position saves as a normal synced annotation ("lane: N"), so it follows the song to every device. The working trio — hat, snare, kick — sits at the TOP of the lane, closest to your notes; below them only pieces the song actually uses appear (no toms in the song, no tom rows), and the <b>⋯ row</b> under the lane toggles the full 15-piece kit when you want to pencil something new (sticks per device). Tap a piece's gutter label to cycle <b>normal → solo → mute</b> (S in gold / ✕ dimmed; session-only, notes untouched): one tap on snare and ONLY the snare plays; solo more pieces to add them; use mute for "everything but the kick." Third tap returns to normal. Closed hats are bright (high-passed) so they cut through regular instruments instead of fighting the pulses for the same band. Delete any track from its voice &amp; color menu (tap the selected chip again → ✕ Delete track, tap twice), penciled like any notes, played with the built-in kit, and exported on MIDI channel 10 so Logic reads them as drums.</dd>
       <dt>Share a song</dt><dd>The address bar is always a shareable link to the open song, and it is the song's path with no extension — …/night-roll/albums/compositions/nightroll/ambush. <b>Add .mid to the end and the same link is the MIDI file</b> (Logic opens it); take it off and it's the player again. Older ?song= links still open the player. The tab title and the link preview in Messages name the song first — "Threnody · Night Roll" — so a pasted link reads as the song, not the app.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
+      <dt>📁 Folder on this computer</dt><dd>Saving without GitHub. In File → Settings, tap <b>Choose folder…</b> and pick a folder on this computer: from then on every Save writes the song, its annotations, and its notes dump into that folder (laid out exactly like the repo — <code>albums/…/song.mid</code> beside its <code>.rollnotes.json</code>), nothing goes to GitHub, and no token is needed. The song picker lists the folder's albums alongside the site's; a song that exists in both opens from the folder. FF1 songs still load from the site — annotate one and the annotations save to your folder. Chrome may ask for the folder again after a restart: <b>📁 Reconnect folder</b> appears at the top of the File menu (until you tap it, reads fall back to the site). <b>Forget</b> in Settings returns saves to GitHub; the files stay where they are. Needs Chrome or Edge on a computer — Safari and the iPad have no way to write files, and the row says so there. Recordings that aren't yours belong here, not in a repo (see the design docs).</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies a bootstrap instruction — paste it into a fresh Claude Web chat and it clones the repo, reads WEB-SESSION.md from disk, and has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format). It copies the clone command rather than a URL on purpose: a session that starts by fetching keeps fetching, one file at a time, and can't grep across your notes.</dd>
@@ -1329,6 +1330,7 @@
 
 <div id="filesheet">
   <button class="fitem" id="filesettings">Settings…</button>
+  <button class="fitem" id="filefolder" style="display:none">📁 Reconnect folder</button>
   <button class="fitem" id="fileclaude" style="display:none">💬 Feature request…</button>
   <div class="fdiv"></div>
   <button class="fitem" id="fileopen">Open…</button>
@@ -1533,6 +1535,11 @@
         <input type="text" id="cfgnsfrepo" placeholder="owner/repo (writes)" style="width:200px;min-height:36px"></div>
       <div class="row"><span class="lbl">one Save (above) stores the token and all locations together</span></div>
     </div>
+    <!-- local folder: Chrome/Edge desktop only; hidden text explains elsewhere -->
+    <div class="row" id="folderrow"><span class="lbl" style="width:70px">folder</span>
+      <span id="foldername" style="flex:1;font-size:13px">not set — saves go to GitHub</span>
+      <button id="folderpick">Choose folder…</button>
+      <button id="folderforget" style="display:none">Forget</button></div>
     <div class="row" id="devchrow" style="display:none"><span class="lbl" style="width:70px">dev ch.</span>
       <input type="password" id="cfgclaudecmd" placeholder="request topic (ntfy — stays on this device)" autocomplete="off" style="flex:1;min-height:36px">
       <input type="password" id="cfgclaudenotify" placeholder="reply topic" autocomplete="off" style="width:200px;min-height:36px"></div>
@@ -1712,10 +1719,28 @@ if (PERF_FLAGS.get("dpr")) { // override the source, not the call sites — ever
 let CATALOG = {}; // built from albums/manifest.json at boot — the dropdown
 // mirrors the albums/ directory; run tools/build_manifest.mjs after adding music
 async function initCatalog() {
-  const res = await fetch(songsURL("albums/manifest.json") + "?t=" + Date.now(), {cache: "no-cache"});
-  if (!res.ok) throw new Error("manifest fetch failed");
-  CATALOG = {};
-  for (const a of await res.json()) CATALOG[a.title] = a.songs.map(x => [x.title, x.path]);
+  // site manifest + a scan of the local folder's albums/ (folder mode): the
+  // union by path, folder titles winning. Either source alone is enough —
+  // a folder user offline still gets their own songs.
+  let site = [], siteErr = null;
+  try {
+    const res = await fetch(songsURL("albums/manifest.json") + "?t=" + Date.now(), {cache: "no-cache"});
+    if (!res.ok) throw new Error("manifest fetch failed");
+    site = await res.json();
+  } catch (err) { siteErr = err; }
+  const local = await folderScanAlbums();
+  if (siteErr && !local.length) throw siteErr;
+  const next = {};
+  for (const a of site) next[a.title] = a.songs.map(x => [x.title, x.path]);
+  for (const a of local) {
+    const list = next[a.title] || (next[a.title] = []);
+    for (const s of a.songs) {
+      const hit = list.find(([, p]) => p === s.path);
+      if (hit) hit[0] = s.title; else list.push([s.title, s.path]);
+    }
+    list.sort((x, y) => x[0].localeCompare(y[0]));
+  }
+  CATALOG = next;
 }
 const DRUM_LABELS = {35: "kick2", 36: "kick", 37: "stick", 38: "snare", 40: "snar2",
   41: "tomF", 42: "hat", 43: "tomL", 44: "hatP", 45: "tom", 46: "hatO",
@@ -2455,8 +2480,8 @@ async function loadNotes() {
     try {
       // ?t= busts the Pages CDN (it caches ~10 min; a reload right after
       // Sync otherwise shows pre-sync annotations and looks like data loss)
-      let res = await fetch(analysisURL(notesBase() + ".rollnotes.json") + "?t=" + Date.now(), {cache: "no-cache"});
-      if (!res.ok) res = await fetch(analysisURL(notesBase() + ".rollnotes") + "?t=" + Date.now(), {cache: "no-cache"}); // legacy
+      let res = await readData("analysis", notesBase() + ".rollnotes.json", true);
+      if (!res.ok) res = await readData("analysis", notesBase() + ".rollnotes", true); // legacy
       let text = res.ok ? await res.text() : null;
       if (gen !== loadGen) return;
       // deploy-lag bridge: a Sync younger than 10 min beats a disagreeing CDN
@@ -2556,8 +2581,8 @@ async function buildRollnotesFor(key) {
   const base = key.replace(/\.midi?$/i, "");
   let notes = [];
   try {
-    let res = await fetch(analysisURL(base + ".rollnotes.json"), {cache: "no-cache"});
-    if (!res.ok) res = await fetch(analysisURL(base + ".rollnotes"), {cache: "no-cache"}); // legacy
+    let res = await readData("analysis", base + ".rollnotes.json");
+    if (!res.ok) res = await readData("analysis", base + ".rollnotes"); // legacy
     if (res.ok) notes = parseRollnotes(await res.text());
   } catch (err) { /* no sidecar yet */ }
   let local = [];
@@ -2811,7 +2836,7 @@ async function loadSongInner(path) {
     try { d = JSON.parse(draftRaw); } catch (err) {}
     let repoStamp = 0;
     try {
-      const r = await fetch(analysisURL(path.replace(/\.mid$/, "") + ".rollnotes.json") + "?t=" + Date.now(), {cache: "no-cache"});
+      const r = await readData("analysis", path.replace(/\.mid$/, "") + ".rollnotes.json", true);
       if (r.ok) repoStamp = (JSON.parse(await r.text()).saved || 0);
     } catch (err) { /* offline / not yet saved: draft wins */ }
     if (d && repoStamp > (d.savedStamp || 0)) {
@@ -2831,7 +2856,7 @@ async function loadSongInner(path) {
     } else if (d) { openDraftDoc(d, path); return; } // draft is the newest known state
   }
   const gen = ++loadGen;
-  const res = await fetch(songsURL(path), {cache: "no-cache"});
+  const res = await readData("songs", path);
   if (!res.ok) throw new Error("fetch failed: " + path);
   const buf = await res.arrayBuffer();
   if (gen !== loadGen) return; // a newer song load superseded this one
@@ -6274,7 +6299,7 @@ async function albumMetaFor(key) {
   const dir = m[1];
   if (!(dir in albumMetaCache)) {
     try {
-      const r = await fetch(songsURL(dir + "/album.json") + "?t=" + Date.now(), {cache: "no-cache"});
+      const r = await readData("songs", dir + "/album.json", true);
       // cache SUCCESS only: a 404 during CDN lag (album committed seconds ago)
       // must not poison the tab — it made committed songs silently play synth
       // while drafts played chip (Josh's side-by-side, 2026-08-17)
@@ -10189,6 +10214,7 @@ function titleCaseSlug(base) {
   return base.split("-").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" ");
 }
 async function updateManifest(h, mutate) { // GET manifest.json, mutate, PUT — keeps the dropdown honest
+  if (folderActive()) return; // the folder has no manifest: initCatalog rescans it
   const path = "albums/manifest.json";
   const putOnce = async () => {
     const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
@@ -10773,7 +10799,7 @@ document.getElementById("frgo").addEventListener("click", async e => {
       updateSongBtn();
       fileStatus("Renamed ✓ (local draft — the name commits with it).");
     } else { // repo song: title override, filename untouched
-      const token = localStorage.getItem("ff1roll-ghtoken");
+      const token = writeToken();
       if (!token) { fileStatus("No GitHub token stored yet — add one in File → Settings."); return; }
       fileStatus("Renaming…");
       await renameRepoTitle(songKey, raw, ghHeaders(token));
@@ -10798,8 +10824,16 @@ async function renameRepoTitle(key, title, h) { // album.json songs override + m
   if (parts[parts.length - 1] === "songs") parts.pop(); // FF1-style albums keep songs/ nested
   const path = parts.join("/") + "/album.json";
   const base = file.replace(/\.midi?$/i, "");
-  const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
   let meta = {title: titleCaseSlug(parts[parts.length - 1]), songs: {}}, sha = null;
+  if (folderActive()) { // folder: the album.json there (or the site's, copied in) gets the override
+    const r = await readData("songs", path, true);
+    if (r.ok) { try { meta = await r.json(); } catch (err) { /* rewrite */ } }
+    if (Array.isArray(meta.songs)) meta.songs = {};
+    meta.songs = {...(meta.songs || {}), [base]: title};
+    await folderWrite(path, JSON.stringify(meta, null, 1) + "\n");
+    return;
+  }
+  const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
   if (g.ok) { // preserve every existing field (FF1's album.json carries notes/order)
     const j = await g.json();
     sha = j.sha;
@@ -11189,10 +11223,15 @@ async function computeImportAlbumJson(slug, h, songTitles, nsfTracks) {
   // file + track map (pure metadata — ROM data lives in the private
   // archive). GET current, merge, return content for the batch commit.
   const path = IMP_DIR + slug + "/album.json";
-  const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
   let meta = {title: titleCaseSlug(slug), order: 50, songs: {}};
-  if (g.ok) { // second batch into the same album: merge, don't clobber earlier titles
-    try { meta = JSON.parse(decodeURIComponent(escape(atob((await g.json()).content.replace(/\n/g, ""))))); } catch (err) { /* rewrite */ }
+  if (folderActive()) {
+    const r = await readData("songs", path, true);
+    if (r.ok) { try { meta = await r.json(); } catch (err) { /* rewrite */ } }
+  } else {
+    const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
+    if (g.ok) { // second batch into the same album: merge, don't clobber earlier titles
+      try { meta = JSON.parse(decodeURIComponent(escape(atob((await g.json()).content.replace(/\n/g, ""))))); } catch (err) { /* rewrite */ }
+    }
   }
   meta.songs = {...(meta.songs || {}), ...(songTitles || {})};
   if (nsfTracks && Object.keys(nsfTracks).length) {
@@ -11205,6 +11244,19 @@ async function computeImportAlbumJson(slug, h, songTitles, nsfTracks) {
 // The per-file Contents API made a commit (and a Pages build) per song —
 // Josh's 46-file import took minutes and errored 30 Pages builds.
 async function batchCommit(which, files, message, h, status) {
+  if (folderActive()) { // the batch is just files: write each one
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      status("writing " + (i + 1) + "/" + files.length + ": " + f.path.split("/").pop() + "…");
+      if (f.b64 !== undefined) {
+        const bin = atob(f.b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+        await folderWrite(f.path, bytes);
+      } else await folderWrite(f.path, f.text);
+    }
+    return;
+  }
   const api = "https://api.github.com/repos/" + repoName(which);
   const attempt = async () => {
     const refR = await fetch(api + "/git/ref/heads/main", {headers: h, cache: "no-store"});
@@ -11243,8 +11295,12 @@ async function batchCommit(which, files, message, h, status) {
 // redistribution. Each device imports the NSF once.
 function idbOpen() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open("ff1roll", 1);
-    rq.onupgradeneeded = () => rq.result.createObjectStore("nsf");
+    const rq = indexedDB.open("ff1roll", 2); // v2: "fs" holds the local-folder handle
+    rq.onupgradeneeded = () => {
+      const db = rq.result;
+      if (!db.objectStoreNames.contains("nsf")) db.createObjectStore("nsf");
+      if (!db.objectStoreNames.contains("fs")) db.createObjectStore("fs");
+    };
     rq.onsuccess = () => res(rq.result);
     rq.onerror = () => rej(rq.error);
   });
@@ -11290,7 +11346,7 @@ async function idbNsfGet(slug) {
 async function commitImports(status, keys) { // ONE commit for the whole batch
   keys = keys || importDraftKeys();
   if (!keys.length) { status("No import drafts to commit."); return; }
-  const token = localStorage.getItem("ff1roll-ghtoken");
+  const token = writeToken();
   if (!token) { status("No GitHub token stored yet — add one in File → Settings."); return; }
   const h = ghHeaders(token);
   try {
@@ -11324,7 +11380,7 @@ async function commitImports(status, keys) { // ONE commit for the whole batch
         if (k.split("/")[2] === slug && rec.tracks[base] !== undefined) nsfTracks[base] = rec.tracks[base];
       }
       songFiles.push(await computeImportAlbumJson(slug, h, overrides, nsfTracks));
-      if (rec && rec.bytes) {
+      if (rec && rec.bytes && !folderActive()) { // folder mode: the NSF stays in this device's IndexedDB
         try { // NSF -> archive if it isn't publicly there yet
           const chk = await fetch(nsfURL(slug + ".nsf") + "?t=" + Date.now(), {cache: "no-cache"});
           if (!chk.ok) {
@@ -11339,18 +11395,20 @@ async function commitImports(status, keys) { // ONE commit for the whole batch
       }
       delete albumMetaCache[IMP_DIR + slug];
     }
-    // manifest: GET repo truth, apply the same mutation updateManifest would
-    const mg = await fetch(repoApi("songs") + "albums/manifest.json?ref=main", {headers: h, cache: "no-store"});
-    if (!mg.ok) throw apiError("songs", mg, "manifest GET");
-    const albums = JSON.parse(decodeURIComponent(escape(atob((await mg.json()).content.replace(/\n/g, "")))));
-    for (const k of keys) {
-      manifestPlace(albums, null, k);
-      const album = albums.find(a => a.title === albumTitleFor(k));
-      const entry = album && album.songs.find(x => x.path === k);
-      if (entry && titles[k]) entry.title = titles[k];
+    if (!folderActive()) { // manifest: GET repo truth, apply the same mutation updateManifest would
+      // (the folder has no manifest — initCatalog rescans it)
+      const mg = await fetch(repoApi("songs") + "albums/manifest.json?ref=main", {headers: h, cache: "no-store"});
+      if (!mg.ok) throw apiError("songs", mg, "manifest GET");
+      const albums = JSON.parse(decodeURIComponent(escape(atob((await mg.json()).content.replace(/\n/g, "")))));
+      for (const k of keys) {
+        manifestPlace(albums, null, k);
+        const album = albums.find(a => a.title === albumTitleFor(k));
+        const entry = album && album.songs.find(x => x.path === k);
+        if (entry && titles[k]) entry.title = titles[k];
+      }
+      for (const a of albums) a.songs.sort((x, y) => x.title.localeCompare(y.title));
+      songFiles.push({path: "albums/manifest.json", text: JSON.stringify(albums, null, 1) + "\n"});
     }
-    for (const a of albums) a.songs.sort((x, y) => x.title.localeCompare(y.title));
-    songFiles.push({path: "albums/manifest.json", text: JSON.stringify(albums, null, 1) + "\n"});
     const msg = "Import " + slugs.join(", ") + ": " + keys.length + " song" +
                 (keys.length === 1 ? "" : "s") + " from Night Roll";
     if (repoName("songs") === repoName("analysis")) {
@@ -11415,6 +11473,7 @@ function notesTxtFor() { // the web-session dump: claude.ai reads text, not .mid
   return L.join("\n") + "\n";
 }
 async function putSongsText(path, text, h) { // text sibling files in the songs repo
+  if (folderActive()) { await folderWrite(path, text); return {ok: true, status: 200}; }
   const putOnce = async () => {
     let sha = null;
     const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
@@ -11430,9 +11489,9 @@ async function putSongsText(path, text, h) { // text sibling files in the songs 
 }
 async function commitCompositionNow(status) { // .mid + annotations + notes.txt, one flow
   sweepStrandedClones(); // never commit invisible stacks
-  const token = localStorage.getItem("ff1roll-ghtoken");
+  const token = writeToken();
   if (!token) { status.textContent = "No GitHub token stored yet — add one in File → Settings."; return; }
-  status.textContent = "Committing " + songKey + " (.mid + annotations)…";
+  status.textContent = (folderActive() ? "Saving " : "Committing ") + songKey + " (.mid + annotations)…";
   try {
     const h = ghHeaders(token);
     const r1 = await putMidAt(songKey, h);
@@ -11448,7 +11507,8 @@ async function commitCompositionNow(status) { // .mid + annotations + notes.txt,
     await initCatalog().catch(() => {});
     updateSongBtn();
     renderSyncPending();
-    status.textContent = "Committed ✓ — song and annotations together (Pages takes ~1 min).";
+    status.textContent = folderActive() ? "Saved ✓ to " + fsRoot.name + " — song and annotations together."
+                                        : "Committed ✓ — song and annotations together (Pages takes ~1 min).";
   } catch (err) { status.textContent = "Save failed: " + err.message; }
 }
 document.getElementById("filesave").addEventListener("click", () => {
@@ -11460,6 +11520,7 @@ document.getElementById("filesave").addEventListener("click", () => {
   openSyncSheet();
 });
 async function putMidAt(path, h, bytes) { // PUT a .mid (current song unless bytes given), one stale-sha retry
+  if (folderActive()) { await folderWrite(path, bytes || writeMidi(song)); return {ok: true, status: 200}; }
   const data = midiBase64(bytes || writeMidi(song));
   const putOnce = async () => {
     let sha = null;
@@ -11479,6 +11540,7 @@ async function putMidAt(path, h, bytes) { // PUT a .mid (current song unless byt
 // a half-move and a clean move looked identical from the UI. That happened to
 // Josh on 2026-09-06 and left two copies of test-sad-progression in the repo.
 async function deleteRepoFile(path, h) { // tolerate absence: never-synced drafts have no repo file
+  if (folderActive()) return folderDelete(path);
   const g = await fetch(repoApi("songs") + path + "?ref=main", {headers: h, cache: "no-store"});
   if (!g.ok) return true; // nothing there to delete
   const sha = (await g.json()).sha;
@@ -11500,7 +11562,7 @@ async function moveComposition(destDir) {
     finalizeNotes();
     saveLocalNotes();
   }
-  const token = localStorage.getItem("ff1roll-ghtoken");
+  const token = writeToken();
   const renameLocal = () => { // every per-song localStorage key rides along
     for (const pre of ["ff1roll-draft-", "ff1roll-notes-", "ff1roll-ts-", "ff1roll-edits-"]) {
       const v = localStorage.getItem(pre + oldKey);
@@ -13139,6 +13201,194 @@ function saveCfg(patch) {
   cfg.c = null;
 }
 function baseJoin(base, path) { return base ? base.replace(/\/+$/, "") + "/" + path : path; }
+
+// ---------------------------------------------------- local folder backend
+// Saving without GitHub (Josh, 2026-09-15: his son has no account, and
+// GitHub removes content on a rights holder's notice — a recording that
+// isn't yours needs a home that isn't GitHub). A folder on this computer is
+// a fourth data location: reads try the folder first and fall back to the
+// site (FF1 songs keep coming from here), every write goes to the folder,
+// and the catalog is the site manifest plus a scan of the folder's albums/.
+// The layout mirrors the repo exactly, so the folder IS a repo without git.
+// Chrome/Edge desktop only (File System Access API); Safari and the iPad
+// have no such door. ?folder=opfs swaps in the browser's private sandbox
+// (same handle interface, no picker) — that's how tests and browser checks
+// drive the whole backend without a native dialog.
+const fsRoot = {handle: null, name: "", mode: null, needsGrant: false}; // mode: "picker" | "opfs"
+function folderActive() { return !!fsRoot.handle && !fsRoot.needsGrant; }
+function folderSupported() { return typeof window !== "undefined" && typeof window.showDirectoryPicker === "function"; }
+async function folderPermission(request) { // "granted" | "prompt" | "denied"; OPFS has no permission model
+  const h = fsRoot.handle;
+  if (!h) return "denied";
+  if (typeof h.queryPermission !== "function") return "granted";
+  let p = await h.queryPermission({mode: "readwrite"});
+  if (p === "prompt" && request && typeof h.requestPermission === "function") p = await h.requestPermission({mode: "readwrite"});
+  return p;
+}
+async function fsDirFor(path, create) { // parent directory handle for a repo-style path
+  const parts = path.split("/").filter(Boolean);
+  const name = parts.pop();
+  let dir = fsRoot.handle;
+  for (const seg of parts) dir = await dir.getDirectoryHandle(seg, {create: !!create});
+  return {dir, name};
+}
+async function folderRead(path) { // File, or null when absent (or the folder isn't usable)
+  if (!folderActive()) return null;
+  try {
+    const {dir, name} = await fsDirFor(path, false);
+    const fh = await dir.getFileHandle(name);
+    return await fh.getFile();
+  } catch (err) { return null; }
+}
+async function folderWrite(path, data) { // data: string | Uint8Array; creates directories
+  const {dir, name} = await fsDirFor(path, true);
+  const fh = await dir.getFileHandle(name, {create: true});
+  const w = await fh.createWritable();
+  await w.write(data);
+  await w.close();
+}
+async function folderDelete(path) { // true when the file is gone (deleted or never there)
+  try {
+    const {dir, name} = await fsDirFor(path, false);
+    await dir.removeEntry(name);
+    return true;
+  } catch (err) { return err && err.name === "NotFoundError"; }
+}
+async function fsReadJSON(dir, name) {
+  try { return JSON.parse(await (await (await dir.getFileHandle(name)).getFile()).text()); }
+  catch (err) { return null; }
+}
+async function folderScanAlbums() { // same shape as albums/manifest.json (tools/build_manifest.mjs)
+  const out = [];
+  if (!folderActive()) return out;
+  let albums;
+  try { albums = await fsRoot.handle.getDirectoryHandle("albums"); } catch (err) { return out; }
+  const addAlbum = async (dir, dirName, rel) => {
+    const meta = (await fsReadJSON(dir, "album.json")) || {};
+    let songDir = dir, songRel = rel;
+    try { songDir = await dir.getDirectoryHandle("songs"); songRel = rel + "/songs"; } catch (err) { /* flat album */ }
+    const songs = [];
+    for await (const [name, h] of songDir.entries()) {
+      if (h.kind !== "file" || !/\.mid$/i.test(name)) continue;
+      const base = name.replace(/\.mid$/i, "");
+      songs.push({title: (meta.songs || {})[base] || titleCaseSlug(base), path: songRel + "/" + name});
+    }
+    songs.sort((a, b) => a.title.localeCompare(b.title));
+    // a fresh folder has no album.json yet: the app's own album names
+    // (Night Roll Sketches / My Compositions / imports) still apply by path
+    const title = meta.title || (songs.length && albumTitleFor(songs[0].path)) || titleCaseSlug(dirName);
+    if (songs.length) out.push({title, order: meta.order ?? 99, songs});
+  };
+  for await (const [name, h] of albums.entries()) {
+    if (h.kind !== "directory") continue;
+    await addAlbum(h, name, "albums/" + name);
+    for await (const [sub, sh] of h.entries()) { // a subdirectory with songs (or its own album.json) is its own album
+      if (sh.kind !== "directory" || sub === "songs") continue;
+      await addAlbum(sh, sub, "albums/" + name + "/" + sub);
+    }
+  }
+  out.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
+  return out;
+}
+// One read door for songs + analysis: folder first, then the configured
+// site. Returns a Response-shaped object so the call sites don't care which.
+async function readData(which, path, bust) {
+  const f = await folderRead(path);
+  if (f) return {ok: true, status: 200, fromFolder: true,
+    text: () => f.text(), arrayBuffer: () => f.arrayBuffer(), json: async () => JSON.parse(await f.text())};
+  const url = (which === "analysis" ? analysisURL(path) : songsURL(path)) + (bust ? "?t=" + Date.now() : "");
+  return fetch(url, {cache: "no-cache"});
+}
+async function idbFsGet() {
+  try {
+    const db = await idbOpen();
+    const rec = await new Promise(res => {
+      const r = db.transaction("fs").objectStore("fs").get("root");
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => res(null);
+    });
+    db.close();
+    return rec;
+  } catch (err) { return null; }
+}
+async function idbFsPut(handle) { // null forgets the folder
+  try {
+    const db = await idbOpen();
+    await new Promise((res, rej) => {
+      const tx = db.transaction("fs", "readwrite");
+      if (handle) tx.objectStore("fs").put(handle, "root"); else tx.objectStore("fs").delete("root");
+      tx.oncomplete = res;
+      tx.onerror = () => rej(tx.error);
+    });
+    db.close();
+  } catch (err) { /* private mode: the folder lasts this session */ }
+}
+function renderFolderUI() {
+  const nameEl = document.getElementById("foldername");
+  const pick = document.getElementById("folderpick");
+  const forget = document.getElementById("folderforget");
+  const recon = document.getElementById("filefolder");
+  if (!folderSupported() && fsRoot.mode !== "opfs") {
+    nameEl.textContent = "needs Chrome or Edge on a computer — saves go to GitHub here";
+    pick.style.display = "none";
+    forget.style.display = "none";
+  } else if (fsRoot.handle) {
+    nameEl.textContent = (fsRoot.needsGrant ? "⚠ reconnect: " : "📁 ") + fsRoot.name +
+      (fsRoot.needsGrant ? " (Chrome needs a fresh OK)" : " — every Save writes here, nothing goes to GitHub");
+    pick.textContent = fsRoot.needsGrant ? "Reconnect" : "Change folder…";
+    pick.style.display = "";
+    forget.style.display = fsRoot.mode === "opfs" ? "none" : "";
+  } else {
+    nameEl.textContent = "not set — saves go to GitHub";
+    pick.textContent = "Choose folder…";
+    pick.style.display = "";
+    forget.style.display = "none";
+  }
+  recon.style.display = fsRoot.handle && fsRoot.needsGrant ? "" : "none";
+  document.getElementById("filesave").textContent = folderActive() ? "Save (to folder)" : "Save (commit)";
+  document.getElementById("filerevert").textContent = folderActive() ? "Revert to saved copy…" : "Revert to repo copy…";
+}
+async function folderAfterChange(msg) { // the catalog and the open song both depend on where data lives
+  renderFolderUI();
+  albumMetaCache && Object.keys(albumMetaCache).forEach(k => delete albumMetaCache[k]);
+  try { await initCatalog(); } catch (err) { /* offline: the folder alone still lists */ }
+  if (currentPath) { const k = currentPath; songKey = null; await loadSong(k).catch(() => {}); }
+  setInfo(msg);
+}
+async function chooseFolder() { // must run inside a user gesture
+  if (fsRoot.handle && fsRoot.needsGrant) { // reconnect: same folder, fresh permission
+    if (await folderPermission(true) === "granted") { fsRoot.needsGrant = false; await folderAfterChange("folder reconnected: " + fsRoot.name); }
+    else setInfo("Chrome didn't grant the folder — choose it again");
+    return;
+  }
+  if (!folderSupported()) return;
+  let h;
+  try { h = await window.showDirectoryPicker({mode: "readwrite", id: "nightroll"}); }
+  catch (err) { return; } // cancelled
+  fsRoot.handle = h; fsRoot.name = h.name; fsRoot.mode = "picker"; fsRoot.needsGrant = false;
+  await idbFsPut(h);
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  await folderAfterChange("saving to folder: " + h.name);
+}
+async function forgetFolder() {
+  fsRoot.handle = null; fsRoot.name = ""; fsRoot.mode = null; fsRoot.needsGrant = false;
+  await idbFsPut(null);
+  await folderAfterChange("folder forgotten — saves go to GitHub again");
+}
+async function restoreFolder() { // boot: the remembered folder, or the OPFS sandbox on request
+  try {
+    const q = typeof location !== "undefined" && /[?&]folder=opfs\b/.test(location.search);
+    if (q && navigator.storage && navigator.storage.getDirectory) {
+      fsRoot.handle = await navigator.storage.getDirectory();
+      fsRoot.name = "browser sandbox (opfs)"; fsRoot.mode = "opfs"; fsRoot.needsGrant = false;
+      return;
+    }
+    const h = await idbFsGet();
+    if (!h) return;
+    fsRoot.handle = h; fsRoot.name = h.name; fsRoot.mode = "picker";
+    fsRoot.needsGrant = (await folderPermission(false)) !== "granted"; // reads fall back to the site until reconnected
+  } catch (err) { fsRoot.handle = null; }
+}
 function songsURL(path) { return baseJoin(cfg().songsBase, path); }     // .mid, album.json, manifest.json
 function analysisURL(path) { return baseJoin(cfg().analysisBase, path); } // .rollnotes.json + docs
 function nsfURL(file) { return baseJoin(cfg().nsfBase, file); }
@@ -13376,6 +13626,9 @@ document.getElementById("settingssave").addEventListener("click", () => {
   document.getElementById("settingssheet").classList.remove("on"); // Save means done
   setInfo("settings saved — reload to apply data locations everywhere");
 });
+document.getElementById("folderpick").addEventListener("click", () => { chooseFolder(); });
+document.getElementById("folderforget").addEventListener("click", () => { forgetFolder(); });
+document.getElementById("filefolder").addEventListener("click", () => { closeFileMenus(); chooseFolder(); });
 document.getElementById("synccancel").addEventListener("click", () => syncsheet.classList.remove("on"));
 // Every sheet closes three ways (Josh, 2026-08-25: "I have a lot of problems
 // with our modals" — opening the notes list by mistake meant scrolling to the
@@ -13438,6 +13691,7 @@ function ghHeaders(token) {
   return {Authorization: "Bearer " + token, Accept: "application/vnd.github+json"};
 }
 async function putRollnotes(path, content, headers) { // PUT with one stale-sha retry
+  if (folderActive()) { await folderWrite(path, content); return {ok: true, status: 200}; }
   const putOnce = async () => {
     let sha = null;
     const g = await fetch(repoApi("analysis") + path + "?ref=main", {headers, cache: "no-store"});
@@ -13474,9 +13728,13 @@ function recordLastSync(key, text) {
   try { localStorage.setItem("ff1roll-lastsync-" + key, JSON.stringify({t: Date.now(), text})); }
   catch (err) { /* storage full: the bridge is best-effort */ }
 }
+// folder mode needs no token: the write helpers never reach GitHub. The
+// placeholder keeps every guard and ghHeaders() call shape-compatible.
+function writeToken() { return localStorage.getItem("ff1roll-ghtoken") || (folderActive() ? "folder" : null); }
 function takeToken(status) {
   const token = document.getElementById("ghtoken").value.trim() ||
                 localStorage.getItem("ff1roll-ghtoken") || "";
+  if (!token && folderActive()) return "folder";
   if (!token) { status.textContent = "No token — paste one in File → Settings first."; return null; }
   localStorage.setItem("ff1roll-ghtoken", token);
   return token;
@@ -13500,7 +13758,8 @@ document.getElementById("ghsave").addEventListener("click", async e => {
     const r = await putRollnotes(notesBase() + ".rollnotes.json", content, ghHeaders(token));
     if (!r.ok) throw new Error("HTTP " + r.status + (r.status === 401 || r.status === 403 ? " — check token scope" : ""));
     markCurrentSongSynced(content, stamp);
-    status.textContent = "Committed ✓ (GitHub Pages takes ~1 min to serve the new file.)";
+    status.textContent = folderActive() ? "Saved ✓ to " + fsRoot.name + "."
+                                        : "Committed ✓ (GitHub Pages takes ~1 min to serve the new file.)";
     setTimeout(() => { // done — close, and return to the notes list if that's where we came from
       syncsheet.classList.remove("on");
       if (syncReturnToList) { renderNoteList(); notelistSheet.classList.add("on"); }
@@ -13552,6 +13811,8 @@ try { // a capture beacon surviving into a fresh load = the tab was killed mid-c
   }
 } catch (err) { /* no beacon */ }
 (async function boot() {
+  await restoreFolder(); // where data lives decides what the catalog holds
+  renderFolderUI();
   try { await initCatalog(); }
   catch (e) {
     const b = cfg().songsBase || "(this site)";

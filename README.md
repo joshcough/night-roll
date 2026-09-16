@@ -23,6 +23,9 @@ is deployment. Built for iPad-in-bed ergonomics, works anywhere.
   lane and pattern fill, per-track volume/voice/rename, record from the
   on-screen piano, and one-button Save & Commit of .mid + annotations +
   a text dump web sessions can read.
+- **Save to a folder, no GitHub** — Settings → Choose folder… (Chrome/Edge
+  on a computer): every Save writes into a folder laid out like this repo,
+  the song picker lists what's there, and no account or token is needed.
 - **Query tools** — `tools/*.mjs` answer factual questions (what sounds at
   bar 2.4, pitch-class census, song diffs, annotation anomalies) through
   the app's own parser. Facts only; findings stay the analyst's.
