@@ -926,7 +926,13 @@ the advisor review that reshaped it: `wave-tracks-design.md`. Depends
 on local folder mode (above) for a home that is not GitHub.
 
 **Model.** An audio track is an ORDINARY empty track in the .mid (what ＋
-creates) plus one `audio:` annotation naming it:
+creates) plus one `audio:` annotation naming it. Caveat found on the
+first round trip: `parseMidi` keeps only tracks that have notes, so a
+song reloaded from its saved .mid arrives WITHOUT the clip's track;
+`applyAudioDirs` recreates it by name on editable songs (the
+`addTrackUndoable` shape, so trackState/rawNotes stay in step). In
+practice, then, the annotation is the track's identity and the .mid
+entry is a courtesy for Logic:
 `audio: <track> file=<slug> offset=<sec> local=1` /
 `{"at":[5,1],"type":"audio","track":"guitar","file":"take.m4a","offset":0.25}`.
 `applyAudioDirs()` (from `finalizeNotes`, right after the `track:` pass)

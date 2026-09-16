@@ -1110,6 +1110,14 @@ test("audio tracks: an unsynced audio: note survives a reload — local notes re
   assert.equal(run(`song.tracks[1].clip.file`), "take.wav");
   assert.equal(run(`song.tracks[1].clip.at`), 4 * 480);
   assert.equal(run(`song.tracks[0].voice`), "sf-piano"); // track: directives came back too
+  // the saved .mid comes back WITHOUT the note-less track (parseMidi keeps
+  // only tracks with notes): the directive recreates it by name, once
+  run(`song.tracks.splice(1, 1); song.rawNotes.splice(1, 1); trackState.splice(1, 1); finalizeNotes(); finalizeNotes();`);
+  assert.equal(run(`song.tracks.length`), 2);
+  assert.equal(run(`song.tracks[1].name`), "take");
+  assert.equal(run(`song.tracks[1].kind`), "audio");
+  assert.equal(run(`trackState.length`), 2);
+  assert.equal(run(`song.rawNotes.length`), 2);
   run(`localStorage.removeItem("ff1roll-notes-" + songKey); song = null; songKey = null; rollnotes = []; fetch = globalThis.__prevFetch2;`);
 });
 

@@ -6755,9 +6755,16 @@ function applyAudioDirs() { // called from finalizeNotes: last-wins per track na
   song.tracks.forEach(tr => { if (tr.kind === "audio") { delete tr.kind; delete tr.clip; } });
   for (const n of rollnotes) {
     if (!n.audiodir || !n.audiodir.file) continue;
-    const ti = song.tracks.findIndex((tr, i) =>
+    let ti = song.tracks.findIndex((tr, i) =>
       (tr.name || "tr" + (i + 1)).toLowerCase() === n.audiodir.track.toLowerCase());
-    if (ti < 0) continue; // a stray directive, like a stray track:
+    if (ti < 0) {
+      // parseMidi keeps only tracks that have notes, and a clip's track never
+      // does — so a song reloaded from its saved .mid arrives without it.
+      // Recreate it by name (the addTrackUndoable shape keeps trackState and
+      // rawNotes in step); on a locked song a stray directive stays stray.
+      if (!(isComposition() || isLocalDraft()) || !trackState) continue;
+      ti = addTrackUndoable({name: n.audiodir.track, notes: []});
+    }
     const tr = song.tracks[ti];
     const cached = audioBufCache.get(audioCacheKey(n.audiodir.file));
     tr.kind = "audio";

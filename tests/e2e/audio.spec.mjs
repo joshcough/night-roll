@@ -79,11 +79,15 @@ test.describe("audio tracks", () => {
     await page.waitForFunction(() => { try { return !!song && Object.keys(CATALOG).length > 0; } catch (e) { return false; } }, null, { timeout: 15000 });
     await page.evaluate(async k => { if (songKey !== k) await loadSong(k); if (song && song.notesReady) await song.notesReady; }, KEY);
     // the boot may still be loading the last song when we get here: wait for THIS song, with tracks, clip decoded
-    await page.waitForFunction(k => {
-      if (songKey !== k || !song || !song.tracks.length) return false;
-      const t = song.tracks[song.tracks.length - 1];
-      return t.kind === "audio" && !!t.clip && t.clip.status === "ready";
-    }, KEY, { timeout: 15000 });
+    const state = () => page.evaluate(k => ({ songKey, want: k, tracks: song ? song.tracks.map(t => ({ n: t.name, kind: t.kind, st: t.clip && t.clip.status, where: t.clip && t.clip.where })) : null,
+      notes: rollnotes.map(n => n.text), folder: folderActive() }), KEY);
+    for (let i = 0; i < 150; i++) { // ~15s, with the clip's state in the failure message
+      const s = await state();
+      const t = s.tracks && s.tracks[s.tracks.length - 1];
+      if (s.songKey === KEY && t && t.kind === "audio" && t.st === "ready") break;
+      if (i === 149) throw new Error("clip never came back from the folder: " + JSON.stringify(s));
+      await page.waitForTimeout(100);
+    }
     const again = await page.evaluate(() => { const c = song.tracks[song.tracks.length - 1].clip; return { where: c.where, at: c.at, offset: c.offset }; });
     expect(again.where).toBe("folder");
     expect(again.at).toBe(4 * 480);

@@ -44,7 +44,11 @@ separate browser storage). Redeploy = `git push preview
 audio-tracks:main`; rebase on main first so it carries the latest
 songs. CI runs the full suite on the branch too (tests.yml).
 Known gaps: Save As / Move to… don't carry `.audio/` bytes yet; no mic
-record; no per-clip loop.
+record; no per-clip loop. Pre-existing quirk surfaced by this work:
+`parseMidi` drops note-less tracks, so a composition's EMPTY voice
+tracks vanish when it reloads from its saved .mid (the local draft
+hides this on the device that saved it). Audio tracks recreate
+themselves from their annotation; plain empty voices do not.
 
 **Josh's rulings still needed (doc §11):** (1) does his son want a
 record button; (2) dedicated audio repo as Josh's default; (3) Save
