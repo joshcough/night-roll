@@ -1173,6 +1173,46 @@ test("audio import helpers: byte sniff, file slugs, mono WAV encoder", () => {
   app.context.__clip = { peaks, buffer: { sampleRate: 25600 }, dur: 1 };
   assert.equal(run(`clipOnsetSec(__clip)`), 0.08); // 8 × 256 / 25600
   assert.equal(run(`clipOnsetSec({peaks: null, buffer: null})`), null);
+  // tempo from peaks: a synthetic take with a hit every 0.5s (120 BPM), decaying, ~12s long
+  const bucketSec = 256 / 48000, nbk = Math.round(12 / bucketSec);
+  const pk = new Float32Array(nbk * 2);
+  for (let k = 0; k < nbk; k++) {
+    const t = k * bucketSec, since = t % 0.5;
+    const a = since < 0.02 ? 0.9 : 0.05 + 0.4 * Math.exp(-since * 8) * (0.9 + 0.2 * Math.sin(k)); // attack, tail, a little texture
+    pk[k * 2] = -a; pk[k * 2 + 1] = a;
+  }
+  app.context.__pk = pk;
+  const t120 = run(`tempoFromPeaks(__pk, ${bucketSec}, 0, 12)`);
+  assert.ok(Math.abs(t120.bpm - 120) < 1.5, "read " + t120.bpm);
+  assert.ok(t120.conf > 0.18, "confidence " + t120.conf);
+  assert.equal(Array.from(t120.alts).map(Math.round).join(","), "60,240"); // cross-realm array: compare by value
+  // the same take through a piece window of 6s reads the same
+  const half = run(`tempoFromPeaks(__pk, ${bucketSec}, 3, 9)`);
+  assert.ok(Math.abs(half.bpm - 120) < 1.5, "windowed read " + half.bpm);
+  // too short, and silence, both say why instead of guessing
+  assert.match(run(`tempoFromPeaks(__pk, ${bucketSec}, 0, 2).err`), /too short/);
+  app.context.__flat = new Float32Array(nbk * 2);
+  assert.match(run(`tempoFromPeaks(__flat, ${bucketSec}, 0, 12).err`), /no beats/);
+});
+
+test("setSongTempo writes the 1.1 tempo annotation on a composition, one undo, captures refused", () => {
+  run(`
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}], tracks: [{name: "lead", notes: [{t: 0, d: 480, p: 60, v: 80}]}]};
+    song.baseTempos = null; song.rawNotes = song.tracks.map(tr => tr.notes.map(n => ({...n})));
+    songKey = "albums/compositions/nightroll/tempo-from-take.mid";
+    trackState = song.tracks.map(() => ({muted: false, solo: false}));
+    keyRegions = []; previewSf = null; playCursor = 0; playRate = 1; rangeSel = null; loopSeg = null; editUndo = [];
+    rollnotes = parseRollnotes("[1.1]\\ntempo: 100\\n").map(resolveNote); finalizeNotes();
+  `);
+  assert.equal(run(`song.tempos[0].usq`), 600000);
+  assert.equal(run(`setSongTempo(92.3)`), true);
+  assert.equal(run(`song.tempos[0].usq`), Math.round(6e7 / 92.3));
+  assert.equal(val(`rollnotes.filter(n => n.tempodir !== undefined).map(n => n.text)`).length, 1); // replaced, not stacked
+  assert.equal(run(`rollnotes.find(n => n.tempodir !== undefined).text`), "tempo: 92.3");
+  assert.equal(run(`editUndo.length`), 1);
+  run(`songKey = "albums/final-fantasy-i/songs/overworld.mid";`);
+  assert.equal(run(`setSongTempo(120)`), false); // measured captures keep their tempo
+  run(`song = null; songKey = null; rollnotes = []; editUndo = [];`);
 });
 
 test("local MIDI imports persist as device drafts: editable, drums intact, never synced", () => {
@@ -1271,6 +1311,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
+    "Tempo from this take", "Split at cursor", "Remove piece",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
