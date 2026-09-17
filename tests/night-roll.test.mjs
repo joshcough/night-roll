@@ -1027,6 +1027,204 @@ test("local folder mode: reads fall back to the site, writes need no token, cata
   assert.equal(run(`writeToken()`), null);
 });
 
+test("audio tracks: the audio: annotation round-trips and derives kind/clip onto a named track", () => {
+  // text ⇄ JSON identity, like every other type
+  const j = val(`noteToJSON(parseRollnotes("[5.1]\\naudio: guitar file=take-2.m4a offset=0.25 len=3.5 local=1\\n")[0])`);
+  assert.deepEqual(j, {at: [5, 1], type: "audio", track: "guitar", file: "take-2.m4a", offset: 0.25, len: 3.5, local: true});
+  const back = val(`jsonToRawNote(${JSON.stringify(j)})`);
+  assert.equal(back.text, "audio: guitar file=take-2.m4a offset=0.25 len=3.5 local=1");
+  assert.equal(run(`deriveNoteTypes([{b1: 1, q1: 1, b2: null, q2: null, text: "audio: g file=a.wav"}])[0].audiodir.offset`), 0);
+  // a composition with two MIDI tracks and an empty "guitar" track
+  run(`
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}],
+            tracks: [{name: "lead", notes: [{t: 0, d: 480, p: 72, v: 80}]},
+                     {name: "bass", notes: [{t: 0, d: 480, p: 48, v: 80}]},
+                     {name: "guitar", notes: []}]};
+    song.baseTempos = null; song.rawNotes = song.tracks.map(tr => tr.notes.map(n => ({...n})));
+    songKey = "albums/compositions/nightroll/audio-test.mid";
+    trackState = song.tracks.map(() => ({muted: false, solo: false}));
+    keyRegions = []; previewSf = null; playCursor = 0; playRate = 1; rangeSel = null; loopSeg = null;
+    rollnotes = parseRollnotes("[3.1]\\naudio: Guitar file=take.wav offset=0.5\\n").map(resolveNote);
+    finalizeNotes();
+  `);
+  assert.equal(run(`song.tracks[2].kind`), "audio");
+  assert.equal(run(`song.tracks[2].clips.length`), 1);
+  assert.equal(run(`song.tracks[2].clips[0].file`), "take.wav");
+  assert.equal(run(`song.tracks[2].clips[0].at`), 2 * 4 * 480); // bar 3 (case-insensitive name match)
+  assert.equal(run(`song.tracks[2].clips[0].offset`), 0.5);
+  assert.equal(run(`song.tracks[0].kind`), undefined);
+  // guards: the audio track never becomes the "last = triangle" bass, never a kit, never a bass to follow
+  assert.equal(run(`voiceType(1)`), "triangle");
+  assert.equal(run(`voiceType(2)`), "sine");
+  run(`song.tracks[2].name = "drums-di";`);
+  assert.equal(run(`trackIsDrums(2)`), false);
+  run(`song.tracks[2].name = "guitar";`);
+  assert.equal(run(`moveSelectionToTrack(2)`), 0);
+  // a decoded file (faked) makes the piece one wall-second event starting AT its anchor,
+  // playing the rest of the file after the offset, and stretches the song end
+  run(`
+    const e = audioBufCache.get(audioCacheKey("take.wav")); e.dur = 10; e.status = "ready"; e.where = "device";
+    e.buffer = {duration: 10, sampleRate: 48000};
+    Object.assign(song.tracks[2].clips[0], {dur: 10, status: "ready", buffer: e.buffer, where: "device"});
+    computeSongEnd(); buildSchedule();
+  `);
+  const ev = val(`schedEvents.filter(e => e.n._clip).map(e => ({sec: e.sec, dur: e.dur, ti: e.ti}))`);
+  assert.equal(ev.length, 1);
+  assert.equal(ev[0].ti, 2);
+  assert.ok(Math.abs(ev[0].sec - 4) < 1e-9, "bar 3 at 120bpm = 4s: the piece starts at its anchor");
+  assert.ok(Math.abs(ev[0].dur - 9.5) < 1e-9, "plays the file from 0.5s to its end");
+  assert.ok(run(`songEndTick`) >= run(`clipEndTick(song.tracks[2].clips[0])`), "song end covers the piece");
+  assert.equal(run(`songEndTick`) % (4 * 480), 0);
+  // at double speed the event halves in wall time
+  run(`playRate = 2; buildSchedule();`);
+  const ev2 = val(`schedEvents.filter(e => e.n._clip).map(e => ({sec: e.sec, dur: e.dur}))`);
+  assert.ok(Math.abs(ev2[0].sec - 2) < 1e-9);
+  assert.ok(Math.abs(ev2[0].dur - 4.75) < 1e-9);
+  run(`playRate = 1;`);
+  // no staff for the clip (the vm has no VexFlow, so the model may be null; when it exists, track 2 is absent)
+  run(`buildScoreModel();`);
+  if (run(`!!scoreModel`)) assert.equal(val(`scoreModel.staves.map(s => s.ti)`).includes(2), false);
+  // moving the piece rewrites the annotation (fresh added note, one anno undo entry); it keeps knowing where its bytes are
+  const before = run(`editUndo.length`);
+  run(`setClipDir(2, 0, {at: 4 * 480});`);
+  assert.equal(run(`editUndo.length`), before + 1);
+  assert.equal(run(`song.tracks[2].clips[0].at`), 4 * 480);
+  assert.equal(run(`song.tracks[2].clips[0].where`), "device");
+  assert.equal(val(`rollnotes.filter(n => n.audiodir).map(n => n.text)`).length, 1);
+  assert.equal(run(`rollnotes.find(n => n.audiodir).text`), "audio: guitar file=take.wav offset=0.5");
+  assert.equal(run(`rollnotes.find(n => n.audiodir).b1`), 2);
+  // split at bar 4 (2s into the piece): two pieces, one undo; the right one starts at the cut and picks up the file there
+  const undoBeforeSplit = run(`editUndo.length`);
+  assert.equal(run(`splitClipAt(2, 0, 3 * 4 * 480)`), true);
+  assert.equal(run(`editUndo.length`), undoBeforeSplit + 1);
+  assert.equal(run(`song.tracks[2].clips.length`), 2);
+  assert.deepEqual(val(`song.tracks[2].clips.map(c => [c.at, c.offset, c.len])`), [[4 * 480, 0.5, 4], [12 * 480, 4.5, 5.5]]);
+  assert.equal(val(`rollnotes.filter(n => n.audiodir).map(n => n.text)`).length, 2);
+  assert.equal(run(`serializeRollnotes()`).match(/"type":"audio"/g).length, 2); // both pieces serialize
+  run(`buildSchedule();`);
+  assert.deepEqual(val(`schedEvents.filter(e => e.n._clip).map(e => [e.sec, e.dur])`), [[2, 4], [6, 5.5]]);
+  // a split outside the piece is refused
+  assert.equal(run(`splitClipAt(2, 0, 100 * 480)`), false);
+  // trim: right edge shortens; left edge keeps the sound in place (anchor + offset move together)
+  run(`trimClip(2, 1, "R", -2 * 480);`); // one second at 120bpm
+  assert.deepEqual(val(`song.tracks[2].clips.map(c => [c.at, c.offset, c.len])`), [[4 * 480, 0.5, 4], [12 * 480, 4.5, 4.5]]);
+  run(`trimClip(2, 0, "L", 2 * 480);`);
+  assert.deepEqual(val(`song.tracks[2].clips.map(c => [c.at, c.offset, c.len])`), [[6 * 480, 1.5, 3], [12 * 480, 4.5, 4.5]]);
+  // remove a piece: the other stands, the track stays
+  run(`deleteClip(2, 0);`);
+  assert.deepEqual(val(`song.tracks[2].clips.map(c => [c.at, c.offset, c.len])`), [[12 * 480, 4.5, 4.5]]);
+  assert.equal(run(`song.tracks[2].kind`), "audio");
+  // deleting every annotation returns the track to an ordinary empty lane
+  run(`rollnotes = rollnotes.filter(n => !n.audiodir); finalizeNotes();`);
+  assert.equal(run(`song.tracks[2].kind`), undefined);
+  assert.equal(run(`song.tracks[2].clips`), undefined);
+  run(`editUndo = []; song = null; songKey = null; rollnotes = [];`);
+});
+
+test("audio tracks: an unsynced audio: note survives a reload — local notes re-derive from text", async () => {
+  run(`globalThis.__prevFetch2 = fetch; fetch = () => Promise.reject(new Error("no network"));`);
+  run(`
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}],
+            tracks: [{name: "lead", notes: [{t: 0, d: 480, p: 72, v: 80}]}, {name: "take", notes: []}]};
+    song.baseTempos = null; song.rawNotes = song.tracks.map(tr => tr.notes.map(n => ({...n})));
+    songKey = "albums/compositions/nightroll/audio-reload.mid";
+    trackState = song.tracks.map(() => ({muted: false, solo: false}));
+    keyRegions = []; previewSf = null; playCursor = 0; playRate = 1; rangeSel = null; loopSeg = null;
+    rollnotes = [];
+    // what saveLocalNotes writes: text only, no derived fields
+    localStorage.setItem("ff1roll-notes-" + songKey, JSON.stringify([
+      {b1: 2, q1: 1, b2: null, q2: null, text: "audio: take file=take.wav offset=0.1"},
+      {b1: 1, q1: 1, b2: null, q2: null, text: "track: lead voice=sf-piano"}]));
+  `);
+  await run(`loadNotes()`);
+  assert.equal(run(`song.tracks[1].kind`), "audio");
+  assert.equal(run(`song.tracks[1].clips[0].file`), "take.wav");
+  assert.equal(run(`song.tracks[1].clips[0].at`), 4 * 480);
+  assert.equal(run(`song.tracks[0].voice`), "sf-piano"); // track: directives came back too
+  // the saved .mid comes back WITHOUT the note-less track (parseMidi keeps
+  // only tracks with notes): the directive recreates it by name, once
+  run(`song.tracks.splice(1, 1); song.rawNotes.splice(1, 1); trackState.splice(1, 1); finalizeNotes(); finalizeNotes();`);
+  assert.equal(run(`song.tracks.length`), 2);
+  assert.equal(run(`song.tracks[1].name`), "take");
+  assert.equal(run(`song.tracks[1].kind`), "audio");
+  assert.equal(run(`trackState.length`), 2);
+  assert.equal(run(`song.rawNotes.length`), 2);
+  run(`localStorage.removeItem("ff1roll-notes-" + songKey); song = null; songKey = null; rollnotes = []; fetch = globalThis.__prevFetch2;`);
+});
+
+test("audio import helpers: byte sniff, file slugs, mono WAV encoder", () => {
+  const wav = new Uint8Array(12); wav.set([82, 73, 70, 70], 0); wav.set([87, 65, 86, 69], 8);
+  app.context.__wav = wav;
+  assert.equal(run(`audioMagic(__wav)`), true);
+  const mid = new Uint8Array(12); mid.set([77, 84, 104, 100], 0);
+  app.context.__mid = mid;
+  assert.equal(run(`audioMagic(__mid)`), false);
+  const m4a = new Uint8Array(12); m4a.set([102, 116, 121, 112], 4);
+  app.context.__m4a = m4a;
+  assert.equal(run(`audioMagic(__m4a)`), true);
+  assert.equal(run(`slugFile("Guitar Take 2.M4A")`), "guitar-take-2.m4a");
+  assert.equal(run(`slugFile("noext")`), "noext");
+  app.context.__buf = {sampleRate: 8000, getChannelData: () => new Float32Array([0, 1, -1, 0.5])};
+  const bytes = run(`monoWavBytes(__buf)`);
+  assert.equal(bytes.length, 44 + 8);
+  assert.equal(String.fromCharCode(...bytes.slice(0, 4)), "RIFF");
+  assert.equal(String.fromCharCode(...bytes.slice(8, 12)), "WAVE");
+  const dv = new DataView(bytes.buffer, bytes.byteOffset);
+  assert.equal(dv.getUint16(22, true), 1);      // mono
+  assert.equal(dv.getUint32(24, true), 8000);   // sample rate
+  assert.equal(dv.getInt16(46, true), 32767);   // +1.0
+  assert.equal(dv.getInt16(48, true), -32768);  // −1.0
+  app.context.__wavProbe = bytes;
+  assert.equal(run(`audioMagic(__wavProbe)`), true);
+  // onset: first peak bucket over the floor → seconds (256 samples per bucket)
+  const peaks = new Float32Array(20 * 2); // 20 buckets, silence until bucket 8
+  for (let k = 8; k < 20; k++) { peaks[k * 2] = -0.5; peaks[k * 2 + 1] = 0.5; }
+  peaks[3 * 2 + 1] = 0.01; // sub-floor noise does not count
+  app.context.__clip = { peaks, buffer: { sampleRate: 25600 }, dur: 1 };
+  assert.equal(run(`clipOnsetSec(__clip)`), 0.08); // 8 × 256 / 25600
+  assert.equal(run(`clipOnsetSec({peaks: null, buffer: null})`), null);
+  // tempo from peaks: a synthetic take with a hit every 0.5s (120 BPM), decaying, ~12s long
+  const bucketSec = 256 / 48000, nbk = Math.round(12 / bucketSec);
+  const pk = new Float32Array(nbk * 2);
+  for (let k = 0; k < nbk; k++) {
+    const t = k * bucketSec, since = t % 0.5;
+    const a = since < 0.02 ? 0.9 : 0.05 + 0.4 * Math.exp(-since * 8) * (0.9 + 0.2 * Math.sin(k)); // attack, tail, a little texture
+    pk[k * 2] = -a; pk[k * 2 + 1] = a;
+  }
+  app.context.__pk = pk;
+  const t120 = run(`tempoFromPeaks(__pk, ${bucketSec}, 0, 12)`);
+  assert.ok(Math.abs(t120.bpm - 120) < 1.5, "read " + t120.bpm);
+  assert.ok(t120.conf > 0.18, "confidence " + t120.conf);
+  assert.equal(Array.from(t120.alts).map(Math.round).join(","), "60,240"); // cross-realm array: compare by value
+  // the same take through a piece window of 6s reads the same
+  const half = run(`tempoFromPeaks(__pk, ${bucketSec}, 3, 9)`);
+  assert.ok(Math.abs(half.bpm - 120) < 1.5, "windowed read " + half.bpm);
+  // too short, and silence, both say why instead of guessing
+  assert.match(run(`tempoFromPeaks(__pk, ${bucketSec}, 0, 2).err`), /too short/);
+  app.context.__flat = new Float32Array(nbk * 2);
+  assert.match(run(`tempoFromPeaks(__flat, ${bucketSec}, 0, 12).err`), /no beats/);
+});
+
+test("setSongTempo writes the 1.1 tempo annotation on a composition, one undo, captures refused", () => {
+  run(`
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}], tracks: [{name: "lead", notes: [{t: 0, d: 480, p: 60, v: 80}]}]};
+    song.baseTempos = null; song.rawNotes = song.tracks.map(tr => tr.notes.map(n => ({...n})));
+    songKey = "albums/compositions/nightroll/tempo-from-take.mid";
+    trackState = song.tracks.map(() => ({muted: false, solo: false}));
+    keyRegions = []; previewSf = null; playCursor = 0; playRate = 1; rangeSel = null; loopSeg = null; editUndo = [];
+    rollnotes = parseRollnotes("[1.1]\\ntempo: 100\\n").map(resolveNote); finalizeNotes();
+  `);
+  assert.equal(run(`song.tempos[0].usq`), 600000);
+  assert.equal(run(`setSongTempo(92.3)`), true);
+  assert.equal(run(`song.tempos[0].usq`), Math.round(6e7 / 92.3));
+  assert.equal(val(`rollnotes.filter(n => n.tempodir !== undefined).map(n => n.text)`).length, 1); // replaced, not stacked
+  assert.equal(run(`rollnotes.find(n => n.tempodir !== undefined).text`), "tempo: 92.3");
+  assert.equal(run(`editUndo.length`), 1);
+  run(`songKey = "albums/final-fantasy-i/songs/overworld.mid";`);
+  assert.equal(run(`setSongTempo(120)`), false); // measured captures keep their tempo
+  run(`song = null; songKey = null; rollnotes = []; editUndo = [];`);
+});
+
 test("local MIDI imports persist as device drafts: editable, drums intact, never synced", () => {
   installSong();
   run(`
@@ -1122,6 +1320,8 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "follow song", "trial meter", "Count-in", "LCD readout", "Tempo change", "voice &amp; color",
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
+    "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
+    "Tempo from this take", "Split at cursor", "Remove piece",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));

@@ -23,6 +23,9 @@ is deployment. Built for iPad-in-bed ergonomics, works anywhere.
   lane and pattern fill, per-track volume/voice/rename, record from the
   on-screen piano, and one-button Save & Commit of .mid + annotations +
   a text dump web sessions can read.
+- **Audio tracks** — a guitar take, a vocal, a phone memo as a track next
+  to the chip voices: waveform in the Tracks view, plays and loops with
+  the song, nudge-to-align, saved beside the .mid (branch `audio-tracks`).
 - **Save to a folder, no GitHub** — Settings → Choose folder… (Chrome/Edge
   on a computer): every Save writes into a folder laid out like this repo,
   the song picker lists what's there, and no account or token is needed.

@@ -1,7 +1,8 @@
 # Audio ("wave") tracks — design proposal
 
-Status: PROPOSED 2026-09-15, revised the same day after advisor review
-(review appended in full at the bottom). Not built. Josh's son: "I
+Status: BUILT 2026-09-15 on branch `audio-tracks` per the revised design
+below (advisor review appended in full at the bottom). Technical
+reference: NIGHT-ROLL.md "Audio tracks". Josh's son: "I
 wouldn't use it unless it supported waves." This is the design for
 that, written before code so Josh can rule on it.
 
