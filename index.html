@@ -1273,7 +1273,7 @@
       <dt>Share a song</dt><dd>The address bar is always a shareable link to the open song, and it is the song's path with no extension — …/night-roll/albums/compositions/nightroll/ambush. <b>Add .mid to the end and the same link is the MIDI file</b> (Logic opens it); take it off and it's the player again. Older ?song= links still open the player. The tab title and the link preview in Messages name the song first — "Threnody · Night Roll" — so a pasted link reads as the song, not the app.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>📁 Folder on this computer</dt><dd>Saving without GitHub. In File → Settings, tap <b>Choose folder…</b> and pick a folder on this computer: from then on every Save writes the song, its annotations, and its notes dump into that folder (laid out exactly like the repo — <code>albums/…/song.mid</code> beside its <code>.rollnotes.json</code>), nothing goes to GitHub, and no token is needed. The song picker lists the folder's albums alongside the site's; a song that exists in both opens from the folder. Tick <b>show only this folder's songs</b> under the folder row and the list becomes yours alone — the folder plus this device's drafts, none of the site's albums; with an empty folder the app opens straight into New song instead of Overworld. A device setting: it stays on that machine. FF1 songs still load from the site — annotate one and the annotations save to your folder. Chrome may ask for the folder again after a restart: <b>📁 Reconnect folder</b> appears at the top of the File menu (until you tap it, reads fall back to the site). <b>Forget</b> in Settings returns saves to GitHub; the files stay where they are. Needs Chrome or Edge on a computer — Safari and the iPad have no way to write files, and the row says so there. Brave ships the door switched off: enable <code>brave://flags/#file-system-access-api</code> and relaunch (the row tells you). Recordings that aren't yours belong here, not in a repo (see the design docs).</dd>
-      <dt>∿ Audio tracks (recordings)</dt><dd>A recording — a guitar take, a vocal, a phone memo, a DAW bounce — as a track next to your MIDI voices. Tap the <b>＋∿</b> chip in the track bar (compositions and local drafts; File → Import… also recognizes audio files) and pick wav, aiff, mp3, or m4a. The clip lands at the cursor's bar as a new track named after the file, with the usual chip: M, S, color, fader, rename, ✕ Delete track. Leading silence is trimmed on arrival, so the take's FIRST SOUND sits on that bar (the status line says how much it trimmed). It plays in time with the song, loops with it (a clip longer than the notes extends the song's end), and is in the exported audio. <b>Slow it down and the pitch stays put</b>: at any speed but 100% the take is re-rendered (time-stretched, the way a slow-downer app does it) in the background — the lane says "⏳ preparing 50% (pitch kept)…" for a moment, then it plays in tune with your notes; a device toggle in the recording sheet turns that off for tape-style, slower = lower, like chip audio. Fine for guitar and voice down to about 40%; grainier below. <b>Tracks view</b> shows the waveform; <b>tap the clip</b> to select it (the status line says file, length, where its bytes are, and where it starts), <b>tap again to play from its start</b>, and in <b>Select</b> mode <b>hold and drag</b> to slide it in time (16th snap, one ⟲ undoes; with no tool armed a drag pans, as with notes). Every other view shows a thin ∿ strip under the ruler marking where the recording plays. <b>Pieces:</b> a recording can be cut into pieces that move on their own. <b>✂ Split at cursor</b> (the edit row's ✂, Edit ▾, or the recording sheet) cuts the selected piece where the play cursor is; <b>trim</b> by dragging a selected piece's left or right edge in Select (left trim keeps the sound where it is); <b>Erase</b> tap on a piece removes just that piece (the track stays); each piece drags separately. One ⟲ undoes any of it. Tap the selected chip for the <b>recording sheet</b> (‹ prev / next › step between pieces): nudge <b>starts</b> by a bar, a beat, or a 16th, <b>offset</b> by 10 ms or 100 ms (how far into the file the piece starts — the last hair of alignment), <b>⇤ Align first sound</b> (re-trims leading silence to the current anchor), <b>♩ Tempo from this take</b> (reads the beat spacing of the piece — its waveform's onsets, autocorrelated over 40–240 BPM — and offers the tempo it hears plus half and double, with how strong the read is; tap one and it becomes the song's tempo at bar 1, one ⟲ undoes; your notes keep their bar positions, so the grid moves to meet the take, which is the point; needs about four seconds of steady playing, and your own songs only — captures keep their measured tempo), <b>✂ Split at cursor</b>, <b>🗑 Remove piece</b>, <b>Replace file…</b>, and <b>☐ someone else's recording</b>: tick it for a band's track you play along with and it is never uploaded — GitHub removes such files on a rights holder's notice, and a public site is distribution. Storage: until you Save, the bytes live on this device only (the sheet says so; Safari can evict browser storage after a week away, so Save soon); Save writes them beside the song as <code>&lt;song&gt;.audio/&lt;file&gt;</code> — into your folder in folder mode, into the songs repo otherwise. Files over 20 MB get one question: <b>store as 16-bit mono WAV</b> (lossless for a mono source, half a stereo bounce) or import as-is. m4a/mp3 note: Safari and Chrome trim the encoder's lead-in differently, so millisecond alignment is honest only for WAV/AIFF. Not yet: recording from the mic, trimming or splitting a clip, looping a clip by itself, keeping pitch when slowing down, iPad/Safari playback of webm.</dd>
+      <dt>∿ Audio tracks (recordings)</dt><dd>A recording — a guitar take, a vocal, a phone memo, a DAW bounce — as a track next to your MIDI voices. Tap the <b>＋∿</b> chip in the track bar (compositions and local drafts; File → Import… also recognizes audio files) and pick wav, aiff, mp3, or m4a. The clip lands at the cursor's bar as a new track named after the file, with the usual chip: M, S, color, fader, rename, ✕ Delete track. Leading silence is trimmed on arrival, so the take's FIRST SOUND sits on that bar (the status line says how much it trimmed). It plays in time with the song, loops with it (a clip longer than the notes extends the song's end), and is in the exported audio. <b>Slow it down and the pitch stays put</b>: at any speed but 100% the take is re-rendered (time-stretched, the way a slow-downer app does it) in the background — the lane says "⏳ preparing 50% (pitch kept)…" for a moment, then it plays in tune with your notes; a device toggle in the recording sheet turns that off for tape-style, slower = lower, like chip audio. Fine for guitar and voice down to about 40%; grainier below. <b>Tracks view</b> shows the waveform; <b>tap the clip</b> to select it (the status line says file, length, where its bytes are, and where it starts), <b>tap again to play from its start</b>, and in <b>Select</b> mode <b>hold and drag</b> to slide it in time (16th snap, one ⟲ undoes; with no tool armed a drag pans, as with notes). Every other view shows a thin ∿ strip under the ruler marking where the recording plays. <b>Pieces:</b> a recording can be cut into pieces that move on their own. <b>✂ Split at cursor</b> (the edit row's ✂, Edit ▾, or the recording sheet) cuts the selected piece where the play cursor is; <b>trim</b> by dragging a selected piece's left or right edge in Select (left trim keeps the sound where it is); <b>Erase</b> tap on a piece removes just that piece (the track stays); each piece drags separately. One ⟲ undoes any of it. Tap the selected chip for the <b>recording sheet</b> (‹ prev / next › step between pieces): nudge <b>starts</b> by a bar, a beat, or a 16th, <b>offset</b> by 10 ms or 100 ms (how far into the file the piece starts — the last hair of alignment), <b>⇤ Align first sound</b> (re-trims leading silence to the current anchor), <b>♩ Tempo from this take</b> (reads the beat spacing of the piece — its waveform's onsets, autocorrelated over 40–240 BPM — and offers the tempo it hears plus half and double, with how strong the read is; tap one and it becomes the song's tempo at bar 1, one ⟲ undoes; your notes keep their bar positions, so the grid moves to meet the take, which is the point; needs about four seconds of steady playing, and your own songs only — captures keep their measured tempo), <b>♩♩ Map the bars to this take</b> (the other direction: the GRID bends to the recording — it finds the beats through the whole piece, groups them into bars by the meter, and shows what it found: how many bars, the tempo range, and where the first downbeat sits; <b>Apply</b> writes one tempo change per bar from the piece's bar onward so every bar line lands on a downbeat it heard, wobble and all; <b>◀ downbeat / downbeat ▶</b> shift which beat counts as bar 1 when it guessed wrong — the correction Logic's Smart Tempo asks for too; the piece must start on a bar line, and a first downbeat that isn't at the piece's start means a pickup: shift, or trim the piece to the downbeat first; one ⟲ removes the whole map), <b>✂ Split at cursor</b>, <b>🗑 Remove piece</b>, <b>Replace file…</b>, and <b>☐ someone else's recording</b>: tick it for a band's track you play along with and it is never uploaded — GitHub removes such files on a rights holder's notice, and a public site is distribution. Storage: until you Save, the bytes live on this device only (the sheet says so; Safari can evict browser storage after a week away, so Save soon); Save writes them beside the song as <code>&lt;song&gt;.audio/&lt;file&gt;</code> — into your folder in folder mode, into the songs repo otherwise. Files over 20 MB get one question: <b>store as 16-bit mono WAV</b> (lossless for a mono source, half a stereo bounce) or import as-is. m4a/mp3 note: Safari and Chrome trim the encoder's lead-in differently, so millisecond alignment is honest only for WAV/AIFF. Not yet: recording from the mic, trimming or splitting a clip, looping a clip by itself, keeping pitch when slowing down, iPad/Safari playback of webm.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies a bootstrap instruction — paste it into a fresh Claude Web chat and it clones the repo, reads WEB-SESSION.md from disk, and has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format). It copies the clone command rather than a URL on purpose: a session that starts by fetching keeps fetching, one file at a time, and can't grep across your notes.</dd>
@@ -6436,6 +6436,48 @@ function buildClipControls(ti, menu, tr) { // the audio track's sheet: what, whe
     });
     menu.appendChild(tb);
   }
+  { // ♩♩ beat map: the grid follows the take, bar by bar; shown first, applied on request
+    const bm = document.createElement("button");
+    bm.className = "fitem";
+    bm.textContent = "♩♩ Map the bars to this take";
+    bm.title = "finds the beats in this piece and writes one tempo per bar so every bar line lands on a downbeat it heard (one ⟲ undoes)";
+    bm.disabled = !c.peaks || !(isComposition() || isLocalDraft());
+    let shift = 0;
+    const show = () => {
+      const m = clipBeatMap(c, shift);
+      const box = document.createElement("div");
+      box.style.cssText = "padding:2px 10px 6px";
+      if (m.err) { box.style.cssText += ";font-size:11px;color:var(--dim)"; box.textContent = "♩♩ " + m.err; bm.replaceWith(box); return; }
+      const lbl = document.createElement("div");
+      lbl.style.cssText = "font-size:11px;color:var(--dim);padding-bottom:4px;white-space:normal";
+      lbl.textContent = "found " + m.bars.length + " bar" + (m.bars.length === 1 ? "" : "s") + " · " + m.bpmRange[0] + "–" + m.bpmRange[1] +
+        " BPM (median " + m.median + ", " + m.conf + " read)" + (m.offBars ? " · ⚠ " + m.offBars + " bar" + (m.offBars === 1 ? " looks" : "s look") + " off — try a downbeat shift" : "") +
+        " · first downbeat " + m.firstBeatSec.toFixed(2) + "s into the piece" + (m.firstBeatSec > 0.12 ? " (⚠ not at its start — a pickup? shift, or trim the piece to the downbeat)" : "");
+      const btns = document.createElement("div");
+      btns.style.cssText = "display:flex;gap:4px";
+      for (const [txt, fn, bold] of [
+        ["◀ downbeat", () => { shift--; redo(); }],
+        ["Apply " + m.bars.length + " bars", () => {
+          const err = applyBeatMap(ti, ci, m);
+          setInfo(err ? err : "bars mapped to " + c.file + ": " + m.bars.length + " tempo changes from bar " + (c.at / barTicks() + 1) + " — one ⟲ undoes them");
+          buildVoiceMenu(ti);
+        }, true],
+        ["downbeat ▶", () => { shift++; redo(); }]]) {
+        const b = document.createElement("button");
+        b.textContent = txt;
+        b.style.cssText = "flex:1;min-height:36px;font-size:12px" + (bold ? ";font-weight:bold" : "");
+        b.addEventListener("click", fn);
+        btns.appendChild(b);
+      }
+      box.append(lbl, btns);
+      const cur = document.getElementById("beatmapbox");
+      if (cur) cur.replaceWith(box); else bm.replaceWith(box);
+      box.id = "beatmapbox";
+    };
+    const redo = () => show();
+    bm.addEventListener("click", show);
+    menu.appendChild(bm);
+  }
   const cutRow = document.createElement("div");
   cutRow.style.cssText = "display:flex;gap:4px;padding:2px 10px";
   for (const [txt, title, fn] of [
@@ -7141,6 +7183,110 @@ function tempoFromPeaks(peaks, bucketSec, fromSec, toSec) {
   const bpm = 60 / (L * bucketSec), conf = ac[best];
   return {bpm: Math.round(bpm * 10) / 10, conf, level: conf >= 0.35 ? "strong" : conf >= 0.18 ? "fair" : "weak",
           alts: [Math.round(bpm * 5) / 10, Math.round(bpm * 20) / 10]};
+}
+// Level 2 — beat mapping (Josh, 2026-09-17: "Logic just figures out where the
+// beats are"). The grid bends to the take: a dynamic-programming beat tracker
+// (Ellis 2007) walks the onset curve choosing beat times that balance "an
+// onset is here" against "this spacing matches the period"; downbeats come
+// from the meter and accent; then ONE tempo: per bar makes every bar line
+// land on a found downbeat. Nothing is written until Apply; the downbeat
+// shift is the correction Logic also asks for now and then.
+function onsetCurve(peaks, bucketSec, fromSec, toSec) { // unit-variance onset strength for a window of a file
+  const nb = peaks.length / 2;
+  const k0 = Math.max(0, Math.floor(fromSec / bucketSec)), k1 = Math.min(nb, Math.ceil(toSec / bucketSec));
+  const n = k1 - k0;
+  const env = new Float32Array(n), on = new Float32Array(n);
+  for (let k = 0; k < n; k++) env[k] = Math.max(-peaks[(k0 + k) * 2], peaks[(k0 + k) * 2 + 1]);
+  // the first frame's rise counts too: a piece usually STARTS on a sound (auto-trim
+  // put the first onset at the anchor), so compare it with the bucket before the
+  // window, or with silence at the file's head — else beat one lands late
+  const prev = k0 > 0 ? Math.max(-peaks[(k0 - 1) * 2], peaks[(k0 - 1) * 2 + 1]) : 0;
+  on[0] = Math.max(0, env[0] - prev);
+  for (let k = 1; k < n; k++) on[k] = Math.max(0, env[k] - env[k - 1]);
+  for (let k = 1; k < n - 1; k++) on[k] = (on[k - 1] + on[k] + on[k + 1]) / 3;
+  let mean = 0; for (let k = 0; k < n; k++) mean += on[k]; mean /= n;
+  let v = 0; for (let k = 0; k < n; k++) v += (on[k] - mean) * (on[k] - mean); v = Math.sqrt(v / Math.max(1, n));
+  if (v > 1e-9) for (let k = 0; k < n; k++) on[k] = (on[k] - mean) / v;
+  return {on, n, k0};
+}
+function beatTrack(on, period, tightness = 100) { // Ellis DP: beat frame indexes given a period in frames
+  const n = on.length;
+  if (n < period * 2) return [];
+  const score = new Float32Array(n), back = new Int32Array(n).fill(-1);
+  const pMin = Math.max(1, Math.round(period / 2)), pMax = Math.round(period * 2);
+  const tx = new Float32Array(pMax + 1); // transition cost by gap: -tightness·(log(gap/period))²
+  for (let g = pMin; g <= pMax; g++) tx[g] = -tightness * Math.pow(Math.log(g / period), 2);
+  for (let t = 0; t < n; t++) {
+    let best = -Infinity, bi = -1; // negative running scores are fine: the chain must reach the first beat
+    for (let g = pMin; g <= pMax && g <= t; g++) {
+      const s = score[t - g] + tx[g];
+      if (s > best) { best = s; bi = t - g; }
+    }
+    score[t] = on[t] + (bi < 0 ? 0 : best);
+    back[t] = bi;
+  }
+  let end = n - 1; // start the backtrace at the strongest recent beat
+  for (let t = Math.max(0, n - pMax); t < n; t++) if (score[t] > score[end]) end = t;
+  const beats = [];
+  for (let t = end; t >= 0; t = back[t]) { beats.push(t); if (back[t] < 0) break; }
+  return beats.reverse();
+}
+function clipBeatMap(c, phaseShift = 0) { // {bars: [{bpm, sec}], beats, bpmRange, offBars, firstBeatSec, B} or {err}
+  if (!c.peaks || !c.buffer || !c.dur) return {err: "not decoded yet"};
+  const bucketSec = PEAK_BUCKET / c.buffer.sampleRate, from = c.offset, to = c.offset + clipLen(c);
+  const t = tempoFromPeaks(c.peaks, bucketSec, from, to);
+  if (t.err) return t;
+  const period = 60 / t.bpm / bucketSec;
+  const {on} = onsetCurve(c.peaks, bucketSec, from, to);
+  const beats = beatTrack(on, period);
+  const B = beatsPerBarDisp();
+  if (beats.length < 2 * B + 1) return {err: "too few beats found for a bar map (need a few bars of steady playing)"};
+  // downbeat phase: the beat class with the most accent; the first beat wins a tie
+  const acc = [];
+  for (let p = 0; p < B; p++) {
+    let s = 0, k = 0;
+    for (let i = p; i < beats.length; i += B) { s += on[beats[i]]; k++; }
+    acc.push(k ? s / k : -Infinity);
+  }
+  let phase = 0; // the first beat is the downbeat unless another class is clearly more accented
+  for (let p = 1; p < B; p++) if (acc[p] > Math.max(acc[0], 0) + 0.35 && acc[p] > acc[phase]) phase = p;
+  phase = ((phase + phaseShift) % B + B) % B;
+  const quartersPerBar = effTs()[0] * 4 / effTs()[1];
+  const bars = [];
+  const secAt = i => beats[i] * bucketSec; // seconds from the piece's start
+  for (let i = phase; i + B < beats.length; i += B) {
+    const D = secAt(i + B) - secAt(i);
+    bars.push({sec: secAt(i), dur: D, bpm: Math.round(quartersPerBar * 60 / D * 100) / 100});
+  }
+  if (!bars.length) return {err: "not even one full bar found"};
+  const bpms = bars.map(b => b.bpm).sort((a, b) => a - b);
+  const median = bpms[bpms.length >> 1];
+  const offBars = bars.filter(b => Math.abs(b.bpm - median) / median > 0.35).length; // a slipped beat shows as a wild bar
+  return {bars, beats: beats.map(secAt), B, phase, firstBeatSec: bars[0].sec, bpmRange: [bpms[0], bpms[bpms.length - 1]], median, offBars, conf: t.level};
+}
+function applyBeatMap(ti, ci, map) { // one tempo: per bar from the piece's anchor bar; one undo
+  const tr = song.tracks[ti], c = tr && tr.clips[ci];
+  if (!c) return "no piece";
+  if (!(isComposition() || isLocalDraft())) return "captures keep their measured tempo — this works on your own songs";
+  const bt = barTicks();
+  if (c.at % bt !== 0) return "move the piece so it starts on a bar line first (its first downbeat = that bar)";
+  const b0 = c.at / bt + 1;
+  // the first found downbeat should sit at the piece's start; a late one (a pickup) shifts the map's origin
+  // by whole beats only when it is small; otherwise the user shifts the downbeat
+  const N = map.bars.length;
+  pushUndo({kind: "anno", json: annoSnapshot()});
+  rollnotes.forEach(n => { if (n.tempodir !== undefined && n.b1 >= b0 && n.b1 < b0 + N) tombstone(n); });
+  rollnotes = rollnotes.filter(n => !(n.tempodir !== undefined && n.b1 >= b0 && n.b1 < b0 + N));
+  map.bars.forEach((b, i) => {
+    rollnotes.push(resolveNote({b1: b0 + i, q1: 1, b2: null, q2: null, text: "tempo: " + b.bpm, tempodir: b.bpm, added: true}));
+  });
+  finalizeNotes();
+  saveLocalNotes();
+  computeSongEnd();
+  if (playing) { const at = playSec(); stop(); play(at, {noCountIn: true}).catch(() => {}); }
+  updateSubtitle();
+  draw();
+  return null;
 }
 function clipTempo(c) { // the estimate for one piece's window of its file
   if (!c.peaks || !c.buffer || !c.dur) return {err: "not decoded yet"};

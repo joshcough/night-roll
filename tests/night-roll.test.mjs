@@ -1224,6 +1224,57 @@ test("wsolaStretch: half speed doubles the length and keeps the pitch; double sp
   assert.equal(run(`keepPitch()`), true); // default: pitch kept
 });
 
+test("beat map: a take that speeds up 100→112 BPM over 16 bars gets a rising tempo per bar", () => {
+  // synthetic 4/4 take: beats whose spacing shrinks steadily; downbeats accented; ~4 ms peak buckets
+  const sr = 48000, bucketSec = 256 / sr;
+  const beats = []; let t = 0.0, bpm = 100;
+  for (let i = 0; i < 16 * 4 + 1; i++) { beats.push(t); t += 60 / bpm; bpm += 12 / 64; }
+  const total = t + 0.5, nbk = Math.ceil(total / bucketSec);
+  const pk = new Float32Array(nbk * 2);
+  for (let k = 0; k < nbk; k++) {
+    const tt = k * bucketSec;
+    let a = 0.04;
+    for (let i = 0; i < beats.length; i++) { const d = tt - beats[i]; if (d >= 0 && d < 0.25) a = Math.max(a, (i % 4 === 0 ? 0.95 : 0.6) * Math.exp(-d * 10)); }
+    pk[k * 2] = -a; pk[k * 2 + 1] = a;
+  }
+  app.context.__bpk = pk;
+  run(`
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}], tracks: [{name: "lead", notes: [{t: 0, d: 480, p: 60, v: 80}]}, {name: "take", notes: []}]};
+    song.baseTempos = null; song.rawNotes = song.tracks.map(tr => tr.notes.map(n => ({...n})));
+    songKey = "albums/compositions/nightroll/beatmap-test.mid";
+    trackState = song.tracks.map(() => ({muted: false, solo: false}));
+    keyRegions = []; previewSf = null; playCursor = 0; playRate = 1; rangeSel = null; loopSeg = null; editUndo = [];
+    rollnotes = parseRollnotes("[1.1]\\naudio: take file=t.wav\\n").map(resolveNote); finalizeNotes();
+    { // block: top-level const would persist in the vm's global lexical scope and collide with other tests
+      const bme = audioBufCache.get(audioCacheKey("t.wav")); bme.dur = ${total}; bme.status = "ready"; bme.peaks = __bpk; bme.buffer = {duration: ${total}, sampleRate: ${sr}};
+      Object.assign(song.tracks[1].clips[0], {dur: ${total}, status: "ready", peaks: __bpk, buffer: bme.buffer});
+    }
+  `);
+  const m = run(`clipBeatMap(song.tracks[1].clips[0])`);
+  assert.ok(!m.err, "map error: " + m.err);
+  assert.ok(m.bars.length >= 14 && m.bars.length <= 16, "bars found: " + m.bars.length);
+  assert.ok(m.firstBeatSec < 0.05, "first downbeat at the start: " + m.firstBeatSec);
+  const bpms = Array.from(m.bars).map(b => b.bpm);
+  assert.ok(Math.abs(bpms[0] - 100.7) < 2.5, "first bar ≈ 100–101: " + bpms[0]);
+  assert.ok(Math.abs(bpms[bpms.length - 1] - 111) < 3, "last bar ≈ 111: " + bpms[bpms.length - 1]);
+  assert.ok(bpms[bpms.length - 1] > bpms[0] + 6, "it rises");
+  assert.equal(m.offBars, 0);
+  // apply: one tempo: per bar from the piece's bar, one undo; the map has that many segments
+  assert.equal(run(`applyBeatMap(1, 0, clipBeatMap(song.tracks[1].clips[0]))`), null);
+  assert.equal(val(`rollnotes.filter(n => n.tempodir !== undefined).length`), m.bars.length);
+  assert.equal(run(`song.tempos.length`), m.bars.length);
+  assert.equal(run(`editUndo.length`), 1);
+  // bar 2's line lands where the take's second downbeat is (within a peak bucket or two)
+  const bar2sec = run(`tickToSec(song, 4 * 480)`);
+  assert.ok(Math.abs(bar2sec - beats[4]) < 0.015, "bar 2 at " + bar2sec + " vs downbeat " + beats[4]);
+  const bar9sec = run(`tickToSec(song, 8 * 4 * 480)`);
+  assert.ok(Math.abs(bar9sec - beats[32]) < 0.04, "bar 9 at " + bar9sec + " vs downbeat " + beats[32]);
+  // a piece off the bar line is refused with a reason
+  run(`song.tracks[1].clips[0].at = 480;`);
+  assert.match(run(`applyBeatMap(1, 0, clipBeatMap(song.tracks[1].clips[0]))`), /bar line/);
+  run(`song = null; songKey = null; rollnotes = []; editUndo = []; audioBufCache.clear();`);
+});
+
 test("setSongTempo writes the 1.1 tempo annotation on a composition, one undo, captures refused", () => {
   run(`
     song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}], tracks: [{name: "lead", notes: [{t: 0, d: 480, p: 60, v: 80}]}]};
@@ -1340,7 +1391,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Import…", "NSF", "Commit import", "color picker", "sampled", "Rename…", "Chip audio", "Data locations", "Settings…", "Create album", "⚠", ".m3u", "real copy", "grayed", "moving TOGETHER pan", "hold to grab", "Revert to repo copy", "8va", "Divide", "magnetic", "never clears your note selection", "note value × modifier", "CELL you touch", "normal → solo → mute", "working trio", "⋯ row", "busy", "hard", "follow", "feel", "share their groove", "metal tier", "▸ chevron", "reroll just the kick", "parts</b> chips", "de-fill", "in key ▲", "folds the rest behind", "View ▾ menu", "STAYS OPEN", "Bassist", "✂</b> cuts", "Download audio", "Listener mode", "lines per bar", "Play / stop, Logic-style", "Insert bars", "Tracks view", "another lane", "master volume", "SOUNDING notes get the same treatment", "extensions row STACKS", "🎲 Drummer", "Pencil drag", "cycles", "Attached notes", "RENAMES the track", "＋ drums", "?song=", "Drum fill", "Delete track", "● Record", "Drum chart", "Edit ▾", "⟳ Redo", "parks", "re-arm", "entire annotation layer", "triangle handle", "left edge", "band by its", "all move-handle", "Insert chord", "organized by emotion", "splits at that exact spot", "merge into one note", "helptabs", 'data-hsec="editor"', "HELP.md", "Closing a sheet", "pinned to its top-right", "No accidental duplicates",
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
-    "Tempo from this take", "Split at cursor", "Remove piece",
+    "Tempo from this take", "Split at cursor", "Remove piece", "Map the bars to this take", "downbeat ▶",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));

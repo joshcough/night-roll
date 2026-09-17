@@ -1051,6 +1051,24 @@ from the current position at once instead of waiting for the wrap. Cost:
 ~1 s per 3-minute take on a Mac (worker warm ≈ 160 ms for 6 s); RAM = one
 stretched copy per file at the current rate. Quality: fine to ~40%.
 
+**Beat mapping (tempo level 2, 2026-09-17; Josh: Logic's Smart Tempo
+is automatic).** `onsetCurve()` (unit-variance rises of the peak
+envelope; the first frame compares against the bucket before the window
+or silence, else beat one lands late), `beatTrack(on, period)` — the
+Ellis 2007 DP: `score[t] = on[t] + max_g(score[t−g] − 100·ln²(g/P))` over
+gaps P/2..2P, backtrace from the strongest recent frame (negative running
+scores allowed so the chain reaches the first beat). `clipBeatMap(c,
+shift)`: period from `tempoFromPeaks`, downbeat phase = beat 0 unless
+another class is clearly more accented (+0.35σ), `± shift` for the
+user's correction, then per bar `bpm = quartersPerBar·60/D` to two
+decimals (one decimal drifted ~0.1 s over 100 bars), plus `offBars`
+(bars > 35% off the median: a slipped beat). `applyBeatMap(ti, ci, map)`
+requires the piece's anchor on a bar line, replaces `tempo:` notes over
+bars b0..b0+N−1 and writes one per bar; one anno undo; the map is
+rebuilt by `finalizeNotes` (compositions author tempo through
+annotations, captures refuse). Test: a synthetic 100→112 BPM take maps
+to rising per-bar tempos with bar 2 within 15 ms of its downbeat.
+
 **Not in v1:** mic recording, per-piece looping, fades,
 a waveform in the roll, a dedicated audio repo (bytes go
 where the song goes: folder or songs repo — Josh's ruling pending),

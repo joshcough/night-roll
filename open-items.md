@@ -41,10 +41,11 @@ replace, local-only toggle), Save uploads beside the .mid. Merged to main
 import auto-trim; 16th nudges; ♩ Tempo from this take, level 1). Also
 shipped 2026-09-17: pitch-preserving slowdown (plan B: WSOLA in a
 worker, cached per speed; tape-style is a device toggle in the sheet).
-Still open: beat mapping (tempo level 2 — Josh: Logic's Smart Tempo is
-automatic; plan = onset detection + DP beat tracker + downbeats from
-the meter → a tempo: per bar, tapping only to correct), Save As / Move
-carrying `.audio/`, mic record.
+Beat mapping (tempo level 2) shipped the same day: automatic —
+onset curve → DP beat tracker → downbeats by meter/accent → one tempo:
+per bar; the sheet shows the map first, ◀/▶ downbeat corrects, Apply
+writes. Still open: Save As / Move carrying `.audio/`, mic record,
+per-piece loop, fades, transposing a take.
 Also on main the same day: "show only this folder's songs" (his son's own
 list). The preview repo stays as the branch-preview mechanism; it was
 DEPLOYED for testing at
