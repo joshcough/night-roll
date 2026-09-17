@@ -38,10 +38,13 @@ pass-end/album clamps and cycle chase, tracks-view waveform + drag,
 ∿ strip in every view, recording sheet (nudges, align first sound,
 replace, local-only toggle), Save uploads beside the .mid. Merged to main
 2026-09-17 after two days on the preview (pieces: trim/split/remove/move;
-import auto-trim; 16th nudges; ♩ Tempo from this take, level 1). Still
-open: time-stretch that keeps pitch (Josh chose plan B — WSOLA in a
-worker, cached per speed — then said Pause; not started), beat mapping
-(tempo level 2), Save As / Move carrying `.audio/`, mic record.
+import auto-trim; 16th nudges; ♩ Tempo from this take, level 1). Also
+shipped 2026-09-17: pitch-preserving slowdown (plan B: WSOLA in a
+worker, cached per speed; tape-style is a device toggle in the sheet).
+Still open: beat mapping (tempo level 2 — Josh: Logic's Smart Tempo is
+automatic; plan = onset detection + DP beat tracker + downbeats from
+the meter → a tempo: per bar, tapping only to correct), Save As / Move
+carrying `.audio/`, mic record.
 Also on main the same day: "show only this folder's songs" (his son's own
 list). The preview repo stays as the branch-preview mechanism; it was
 DEPLOYED for testing at

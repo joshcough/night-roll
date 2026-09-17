@@ -1205,6 +1205,25 @@ test("audio import helpers: byte sniff, file slugs, mono WAV encoder", () => {
   assert.match(run(`tempoFromPeaks(__flat, ${bucketSec}, 0, 12).err`), /no beats/);
 });
 
+test("wsolaStretch: half speed doubles the length and keeps the pitch; double speed halves it", () => {
+  const sr = 8000, n = sr * 1, sine = new Float32Array(n);
+  for (let i = 0; i < n; i++) sine[i] = Math.sin(2 * Math.PI * 440 * i / sr);
+  const crossings = a => { let c = 0; for (let i = 1; i < a.length; i++) if ((a[i - 1] < 0) !== (a[i] < 0)) c++; return c; };
+  const rms = a => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * a[i]; return Math.sqrt(s / a.length); };
+  app.context.__sine = sine;
+  const half = run(`wsolaStretch(__sine, 0.5)`);
+  assert.ok(Math.abs(half.length - 2 * n) <= 2, "length " + half.length);
+  const zc = crossings(half); // 440 Hz over 2 s = 1760 zero crossings; tape-style would give 880
+  assert.ok(zc > 1650 && zc < 1850, "zero crossings at half speed: " + zc);
+  assert.ok(Math.abs(rms(half) - rms(sine)) < 0.08, "level kept: " + rms(half));
+  const dbl = run(`wsolaStretch(__sine, 2)`);
+  assert.ok(Math.abs(dbl.length - n / 2) <= 2, "length " + dbl.length);
+  const zc2 = crossings(dbl); // 0.5 s of 440 Hz = 440 crossings
+  assert.ok(zc2 > 400 && zc2 < 480, "zero crossings at double speed: " + zc2);
+  assert.equal(run(`wsolaStretch(__sine, 1).length`), n); // rate 1 = a copy
+  assert.equal(run(`keepPitch()`), true); // default: pitch kept
+});
+
 test("setSongTempo writes the 1.1 tempo annotation on a composition, one undo, captures refused", () => {
   run(`
     song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}], tracks: [{name: "lead", notes: [{t: 0, d: 480, p: 60, v: 80}]}]};

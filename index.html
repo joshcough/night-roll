@@ -1273,7 +1273,7 @@
       <dt>Share a song</dt><dd>The address bar is always a shareable link to the open song, and it is the song's path with no extension — …/night-roll/albums/compositions/nightroll/ambush. <b>Add .mid to the end and the same link is the MIDI file</b> (Logic opens it); take it off and it's the player again. Older ?song= links still open the player. The tab title and the link preview in Messages name the song first — "Threnody · Night Roll" — so a pasted link reads as the song, not the app.</dd>
       <dt>Data locations</dt><dd>Night Roll is configured with WHERE its data lives (Sync → "Data locations ▾"): three rows — songs (.mid, album.json, catalog), analysis (.rollnotes + docs), and NSF (chip-audio source) — each with a read base URL (blank = this site; or any raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt; or local server) and an owner/repo write target. One fine-grained token, granted to every repo you write to, covers all commits; write errors name the repo they hit, and a 404 usually means the token hasn't been granted that repo. This is what lets another analyst point their own analysis repo at a shared songs corpus. Defaults: everything in this site's repo, NSFs from the public nsf-archive.</dd>
       <dt>📁 Folder on this computer</dt><dd>Saving without GitHub. In File → Settings, tap <b>Choose folder…</b> and pick a folder on this computer: from then on every Save writes the song, its annotations, and its notes dump into that folder (laid out exactly like the repo — <code>albums/…/song.mid</code> beside its <code>.rollnotes.json</code>), nothing goes to GitHub, and no token is needed. The song picker lists the folder's albums alongside the site's; a song that exists in both opens from the folder. Tick <b>show only this folder's songs</b> under the folder row and the list becomes yours alone — the folder plus this device's drafts, none of the site's albums; with an empty folder the app opens straight into New song instead of Overworld. A device setting: it stays on that machine. FF1 songs still load from the site — annotate one and the annotations save to your folder. Chrome may ask for the folder again after a restart: <b>📁 Reconnect folder</b> appears at the top of the File menu (until you tap it, reads fall back to the site). <b>Forget</b> in Settings returns saves to GitHub; the files stay where they are. Needs Chrome or Edge on a computer — Safari and the iPad have no way to write files, and the row says so there. Brave ships the door switched off: enable <code>brave://flags/#file-system-access-api</code> and relaunch (the row tells you). Recordings that aren't yours belong here, not in a repo (see the design docs).</dd>
-      <dt>∿ Audio tracks (recordings)</dt><dd>A recording — a guitar take, a vocal, a phone memo, a DAW bounce — as a track next to your MIDI voices. Tap the <b>＋∿</b> chip in the track bar (compositions and local drafts; File → Import… also recognizes audio files) and pick wav, aiff, mp3, or m4a. The clip lands at the cursor's bar as a new track named after the file, with the usual chip: M, S, color, fader, rename, ✕ Delete track. Leading silence is trimmed on arrival, so the take's FIRST SOUND sits on that bar (the status line says how much it trimmed). It plays in time with the song, loops with it (a clip longer than the notes extends the song's end), rides the speed slider tape-style (slower = lower pitch, like chip audio), and is in the exported audio. <b>Tracks view</b> shows the waveform; <b>tap the clip</b> to select it (the status line says file, length, where its bytes are, and where it starts), <b>tap again to play from its start</b>, and in <b>Select</b> mode <b>hold and drag</b> to slide it in time (16th snap, one ⟲ undoes; with no tool armed a drag pans, as with notes). Every other view shows a thin ∿ strip under the ruler marking where the recording plays. <b>Pieces:</b> a recording can be cut into pieces that move on their own. <b>✂ Split at cursor</b> (the edit row's ✂, Edit ▾, or the recording sheet) cuts the selected piece where the play cursor is; <b>trim</b> by dragging a selected piece's left or right edge in Select (left trim keeps the sound where it is); <b>Erase</b> tap on a piece removes just that piece (the track stays); each piece drags separately. One ⟲ undoes any of it. Tap the selected chip for the <b>recording sheet</b> (‹ prev / next › step between pieces): nudge <b>starts</b> by a bar, a beat, or a 16th, <b>offset</b> by 10 ms or 100 ms (how far into the file the piece starts — the last hair of alignment), <b>⇤ Align first sound</b> (re-trims leading silence to the current anchor), <b>♩ Tempo from this take</b> (reads the beat spacing of the piece — its waveform's onsets, autocorrelated over 40–240 BPM — and offers the tempo it hears plus half and double, with how strong the read is; tap one and it becomes the song's tempo at bar 1, one ⟲ undoes; your notes keep their bar positions, so the grid moves to meet the take, which is the point; needs about four seconds of steady playing, and your own songs only — captures keep their measured tempo), <b>✂ Split at cursor</b>, <b>🗑 Remove piece</b>, <b>Replace file…</b>, and <b>☐ someone else's recording</b>: tick it for a band's track you play along with and it is never uploaded — GitHub removes such files on a rights holder's notice, and a public site is distribution. Storage: until you Save, the bytes live on this device only (the sheet says so; Safari can evict browser storage after a week away, so Save soon); Save writes them beside the song as <code>&lt;song&gt;.audio/&lt;file&gt;</code> — into your folder in folder mode, into the songs repo otherwise. Files over 20 MB get one question: <b>store as 16-bit mono WAV</b> (lossless for a mono source, half a stereo bounce) or import as-is. m4a/mp3 note: Safari and Chrome trim the encoder's lead-in differently, so millisecond alignment is honest only for WAV/AIFF. Not yet: recording from the mic, trimming or splitting a clip, looping a clip by itself, keeping pitch when slowing down, iPad/Safari playback of webm.</dd>
+      <dt>∿ Audio tracks (recordings)</dt><dd>A recording — a guitar take, a vocal, a phone memo, a DAW bounce — as a track next to your MIDI voices. Tap the <b>＋∿</b> chip in the track bar (compositions and local drafts; File → Import… also recognizes audio files) and pick wav, aiff, mp3, or m4a. The clip lands at the cursor's bar as a new track named after the file, with the usual chip: M, S, color, fader, rename, ✕ Delete track. Leading silence is trimmed on arrival, so the take's FIRST SOUND sits on that bar (the status line says how much it trimmed). It plays in time with the song, loops with it (a clip longer than the notes extends the song's end), and is in the exported audio. <b>Slow it down and the pitch stays put</b>: at any speed but 100% the take is re-rendered (time-stretched, the way a slow-downer app does it) in the background — the lane says "⏳ preparing 50% (pitch kept)…" for a moment, then it plays in tune with your notes; a device toggle in the recording sheet turns that off for tape-style, slower = lower, like chip audio. Fine for guitar and voice down to about 40%; grainier below. <b>Tracks view</b> shows the waveform; <b>tap the clip</b> to select it (the status line says file, length, where its bytes are, and where it starts), <b>tap again to play from its start</b>, and in <b>Select</b> mode <b>hold and drag</b> to slide it in time (16th snap, one ⟲ undoes; with no tool armed a drag pans, as with notes). Every other view shows a thin ∿ strip under the ruler marking where the recording plays. <b>Pieces:</b> a recording can be cut into pieces that move on their own. <b>✂ Split at cursor</b> (the edit row's ✂, Edit ▾, or the recording sheet) cuts the selected piece where the play cursor is; <b>trim</b> by dragging a selected piece's left or right edge in Select (left trim keeps the sound where it is); <b>Erase</b> tap on a piece removes just that piece (the track stays); each piece drags separately. One ⟲ undoes any of it. Tap the selected chip for the <b>recording sheet</b> (‹ prev / next › step between pieces): nudge <b>starts</b> by a bar, a beat, or a 16th, <b>offset</b> by 10 ms or 100 ms (how far into the file the piece starts — the last hair of alignment), <b>⇤ Align first sound</b> (re-trims leading silence to the current anchor), <b>♩ Tempo from this take</b> (reads the beat spacing of the piece — its waveform's onsets, autocorrelated over 40–240 BPM — and offers the tempo it hears plus half and double, with how strong the read is; tap one and it becomes the song's tempo at bar 1, one ⟲ undoes; your notes keep their bar positions, so the grid moves to meet the take, which is the point; needs about four seconds of steady playing, and your own songs only — captures keep their measured tempo), <b>✂ Split at cursor</b>, <b>🗑 Remove piece</b>, <b>Replace file…</b>, and <b>☐ someone else's recording</b>: tick it for a band's track you play along with and it is never uploaded — GitHub removes such files on a rights holder's notice, and a public site is distribution. Storage: until you Save, the bytes live on this device only (the sheet says so; Safari can evict browser storage after a week away, so Save soon); Save writes them beside the song as <code>&lt;song&gt;.audio/&lt;file&gt;</code> — into your folder in folder mode, into the songs repo otherwise. Files over 20 MB get one question: <b>store as 16-bit mono WAV</b> (lossless for a mono source, half a stereo bounce) or import as-is. m4a/mp3 note: Safari and Chrome trim the encoder's lead-in differently, so millisecond alignment is honest only for WAV/AIFF. Not yet: recording from the mic, trimming or splitting a clip, looping a clip by itself, keeping pitch when slowing down, iPad/Safari playback of webm.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
       <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies a bootstrap instruction — paste it into a fresh Claude Web chat and it clones the repo, reads WEB-SESSION.md from disk, and has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format). It copies the clone command rather than a URL on purpose: a session that starts by fetching keeps fetching, one file at a time, and can't grep across your notes.</dd>
@@ -2934,6 +2934,7 @@ function setSong(parsed, key) {
   declaredTs = null; // meter resets to neutral until this song's notes declare one
   selNote = null;
   selClip = null;
+  stretchCache.clear(); // stretched takes belong to one song
   editUndo = []; // undo history belongs to ONE song — stale entries would mutate the wrong notes
   trackState = song.tracks.map(() => ({muted: false, solo: false}));
   selTrack = 0;
@@ -3727,6 +3728,12 @@ function drawClipLane(ti, ci, g, W) { // tracks view: one piece's waveform (peak
   ctx.globalAlpha = 1;
   ctx.fillRect(l, g.y0 + 4, 1, g.lh - 8); // piece edges — also the trim handles in Select
   ctx.fillRect(r - 1, g.y0 + 4, 1, g.lh - 8);
+  if (stretchPending(c)) { // the slowed copy is rendering: this piece is silent until it lands
+    ctx.fillStyle = css("--dim");
+    ctx.font = "11px " + css("--mono");
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("⏳ preparing " + Math.round(playRate * 100) + "% (pitch kept)…", l + 6, g.y0 + 12);
+  }
   if (selClipIs(ti, ci)) {
     ctx.strokeStyle = css("--gold");
     ctx.strokeRect(l + 0.5, g.y0 + 3.5, r - l - 1, g.lh - 7);
@@ -6458,7 +6465,17 @@ function buildClipControls(ti, menu, tr) { // the audio track's sheet: what, whe
   rep.textContent = "Replace file…";
   rep.addEventListener("click", () => { audioReplaceTi = ti; document.getElementById("audioinput").click(); });
   menu.appendChild(rep);
-  line("Speed slider is tape-style: slower = lower pitch, as with chip audio.", true);
+  const kp = document.createElement("button"); // device pref: pitch kept (default) vs tape-style
+  kp.className = "fitem";
+  kp.textContent = (keepPitch() ? "☑" : "☐") + " keep pitch when the speed changes (off = tape-style, slower = lower)";
+  kp.title = "the slowed take is re-rendered so its pitch stays put — a moment to prepare per take; tape-style follows the slider like chip audio";
+  kp.addEventListener("click", () => {
+    if (keepPitch()) localStorage.setItem("ff1roll-tapestyle", "1"); else localStorage.removeItem("ff1roll-tapestyle");
+    stretchCache.clear();
+    if (playing) { const at = playSec(); stop(); play(at, {noCountIn: true}).catch(() => {}); } else stretchEnsureAll();
+    buildVoiceMenu(ti);
+  });
+  menu.appendChild(kp);
 }
 document.addEventListener("pointerdown", e => { // tap-away closes the Edit menu
   const es = document.getElementById("editsheet");
@@ -7049,7 +7066,9 @@ async function audioEnsureFile(file) { // resolve + decode one file; every piece
     forEachClip(c => { if (c.file === file)
       Object.assign(c, {buffer: entry.buffer, peaks: entry.peaks, dur: entry.dur, status: entry.status, where: entry.where}); });
     computeSongEnd();
-    if (playing) buildSchedule(); // a clip decoded mid-play joins the next pass
+    if (playing) buildSchedule();
+    if (entry.status === "ready" && playRate !== 1) stretchEnsureAll(); // decoded while slowed: stretch it too
+    else if (entry.status === "ready" && playing) audioChaseNow(file); // decoded mid-play: in from here, not the next pass
     draw();
     if (autoAlignFiles.has(file) && entry.status === "ready") { // a take almost always has a lead-in:
       // on import the first sound lands on the bar it was dropped at (Josh's export
@@ -7150,10 +7169,121 @@ function audioReady() { // resolves when every file in the song has settled (rea
     const t = setInterval(() => { if (settled(audioBufCache.get(audioCacheKey(f)))) { clearInterval(t); res(); } }, 100);
   })));
 }
+// ---- pitch-preserving slowdown (Josh, 2026-09-17: "Amazing Slow Downer keeps
+// the pitches"). Plan B from the design talk: the take is re-rendered at the
+// slider's rate with WSOLA (overlap-add of ~21 ms grains, each placed where it
+// best continues the last one), in a worker so nothing freezes, cached per
+// file × rate; playback then uses that buffer at rate 1 through the same
+// per-pass scheduler, so loops, pieces, and the iPad behave unchanged.
+// Tape-style (pitch follows) stays as a device toggle in the recording sheet.
+function wsolaStretch(input, rate) { // Float32Array mono → Float32Array, length ≈ input.length / rate, pitch kept
+  const N = input.length;
+  if (Math.abs(rate - 1) < 1e-6 || N < 4096) return input.slice();
+  const frame = 1024, hop = frame >> 1, tol = 128;
+  const outLen = Math.round(N / rate);
+  const out = new Float32Array(outLen + frame), norm = new Float32Array(outLen + frame);
+  const win = new Float32Array(frame);
+  for (let i = 0; i < frame; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / frame);
+  let prevIn = 0;
+  for (let outPos = 0, k = 0; outPos < outLen; outPos += hop, k++) {
+    const target = Math.min(N - frame, Math.round(outPos * rate)); // nominal analysis position
+    let best = target;
+    if (k > 0) { // choose, near the target, the grain that best continues the previous one
+      const natural = Math.min(N - frame, prevIn + hop);
+      const lo = Math.max(0, target - tol), hi = Math.min(N - frame, target + tol);
+      let bestScore = -Infinity;
+      for (let cand = lo; cand <= hi; cand += 2) {
+        let s = 0;
+        for (let i = 0; i < frame; i += 4) s += input[cand + i] * input[natural + i];
+        if (s > bestScore) { bestScore = s; best = cand; }
+      }
+    }
+    best = Math.max(0, Math.min(N - frame, best));
+    for (let i = 0; i < frame; i++) { out[outPos + i] += input[best + i] * win[i]; norm[outPos + i] += win[i]; }
+    prevIn = best;
+  }
+  for (let i = 0; i < outLen; i++) if (norm[i] > 1e-6) out[i] /= norm[i];
+  return out.slice(0, outLen);
+}
+let stretchWorker = null, stretchJobId = 0;
+const stretchJobs = new Map();
+function stretchInWorker(data, rate) { // resolves with the stretched Float32Array; inline (no worker) where there is none
+  if (typeof Worker === "undefined" || typeof Blob === "undefined" || typeof URL === "undefined" || typeof URL.createObjectURL !== "function")
+    return Promise.resolve(wsolaStretch(data, rate));
+  if (!stretchWorker) {
+    const src = wsolaStretch.toString() +
+      ";onmessage=function(e){var d=e.data;var out=wsolaStretch(d.data,d.rate);postMessage({id:d.id,out:out},[out.buffer]);};";
+    stretchWorker = new Worker(URL.createObjectURL(new Blob([src], {type: "text/javascript"})));
+    stretchWorker.onmessage = e => { const res = stretchJobs.get(e.data.id); if (res) { stretchJobs.delete(e.data.id); res(e.data.out); } };
+  }
+  return new Promise(res => {
+    const id = ++stretchJobId, copy = data.slice();
+    stretchJobs.set(id, res);
+    stretchWorker.postMessage({id, data: copy, rate}, [copy.buffer]);
+  });
+}
+const stretchCache = new Map(); // songKey|file|rate -> {status: "pending"|"ready", buffer}
+function keepPitch() { return localStorage.getItem("ff1roll-tapestyle") !== "1"; } // default: keep pitch
+function stretchKey(file, rate) { return audioCacheKey(file) + "|" + rate; }
+function stretchEnsure(file) { // the current rate's stretched buffer for a file: cached, pending, or kicked off now
+  const rate = playRate;
+  const k = stretchKey(file, rate);
+  let e = stretchCache.get(k);
+  if (e) return e;
+  const src = audioBufCache.get(audioCacheKey(file));
+  if (!src || src.status !== "ready" || !src.buffer) return null; // not decoded yet: nothing to stretch from
+  e = {status: "pending", buffer: null};
+  stretchCache.set(k, e);
+  const key = songKey;
+  stretchInWorker(src.buffer.getChannelData(0), rate).then(out => {
+    if (!stretchCache.has(k)) return; // rate moved on: this render was evicted
+    const sr = src.buffer.sampleRate;
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const ctxb = audio || (OAC ? new OAC(1, 1, sr) : null);
+    if (!ctxb) { stretchCache.delete(k); return; }
+    const b = ctxb.createBuffer(1, out.length, sr);
+    b.getChannelData(0).set(out);
+    e.buffer = b; e.status = "ready";
+    if (songKey === key) { if (playing) { buildSchedule(); audioChaseNow(file); } draw(); }
+  }).catch(() => { stretchCache.delete(k); });
+  return e;
+}
+// a take whose buffer arrives MID-PASS (decode or stretch finished while
+// playing) must not wait for the next wrap: schedule its remainder from now,
+// the way a note the cursor lands inside gets its tail
+function audioChaseNow(file) {
+  if (!playing || !song || !audio || !loopSeg) return;
+  const now = playSec();
+  forEachClip((c, ti) => {
+    if (c.file !== file || !c.buffer) return;
+    const start = tickToSec(song, c.at), end = Math.min(start + clipLen(c) / playRate, loopSeg.end);
+    if (now < start - 0.05 || now >= end) return; // the pump will start it, or it is already over
+    const lead = 0.06;
+    scheduleClip(ti, c, audio.currentTime + lead, end - now - lead);
+  });
+}
+function stretchEnsureAll() { // every file in the song, for the current rate; other rates are dropped (RAM)
+  if (!song || playRate === 1 || !keepPitch()) return;
+  for (const k of [...stretchCache.keys()]) if (!k.endsWith("|" + playRate)) stretchCache.delete(k);
+  const files = new Set();
+  forEachClip(c => files.add(c.file));
+  for (const f of files) stretchEnsure(f);
+}
+function stretchPending(c) { // true while this piece's file is being re-rendered for the current rate
+  if (playRate === 1 || !keepPitch() || !c.buffer) return false;
+  const e = stretchCache.get(stretchKey(c.file, playRate));
+  return !e || e.status !== "ready";
+}
 function scheduleClip(ti, clip, when, durSec) { // durSec = WALL seconds left to play from `when`
   if (!clip.buffer || durSec <= 0.01) return;
   const off = clip.offset + clipLen(clip) - durSec * playRate; // buffer seconds: piece start + what has elapsed
   if (off >= clip.buffer.duration) return;
+  let buffer = clip.buffer, startAt = Math.max(0, off), srcRate = playRate; // tape-style: pitch follows, like chip audio
+  if (playRate !== 1 && keepPitch()) {
+    const e = stretchEnsure(clip.file);
+    if (!e || e.status !== "ready") return; // still stretching: silent this pass, it joins the next
+    buffer = e.buffer; startAt = Math.max(0, off) / playRate; srcRate = 1; // the stretched copy runs at 1: pitch kept
+  }
   const g = audio.createGain();
   g.connect(trackGain(ti));
   const R = 0.005, end = when + durSec; // 5ms ramps: a pass boundary cuts and restarts mid-waveform
@@ -7162,10 +7292,10 @@ function scheduleClip(ti, clip, when, durSec) { // durSec = WALL seconds left to
   g.gain.setValueAtTime(1, Math.max(when + R, end - R));
   g.gain.linearRampToValueAtTime(0, end);
   const src = audio.createBufferSource();
-  src.buffer = clip.buffer;
-  src.playbackRate.value = playRate; // tape-style, like chip audio: pitch follows the speed slider
+  src.buffer = buffer;
+  src.playbackRate.value = srcRate;
   src.connect(g);
-  src.start(when, Math.max(0, off));
+  src.start(when, startAt);
   src.stop(end + 0.01);
   audioSrcs.push(src);
   src.onended = () => { // prune, or the list grows one node per pass forever
@@ -7188,6 +7318,7 @@ async function play(fromSec = 0, opts = {}) {
   await resumeAudio(); // await: scheduling against a frozen clock builds a stale time base
   openMaster();
   buildSchedule();
+  stretchEnsureAll(); // takes at a non-native rate need their stretched copies (no-op at 100% / tape-style)
   playing = true;
   playOffset = fromSec;
   playT0 = audio.currentTime + 0.08; // small lead so the first notes are never in the past
@@ -8268,6 +8399,8 @@ function applySpeed(pct) {
   const wasPlaying = playing;
   if (wasPlaying) stop();
   playRate = pct / 100;
+  stretchCache.clear(); // a new rate: re-render the takes (pitch-preserving), old renders go
+  stretchEnsureAll();
   updateSongMeta();
   if (wasPlaying) play(tickToSec(song, tk));
   else { playCursor = tk; updateSubtitle(); draw(); }

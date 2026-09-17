@@ -1032,8 +1032,27 @@ serialization dedupe, sniff/slug/WAV encoder. Playwright
 decode → schedule → align → Save beside the .mid → reload from the
 folder.
 
+**Pitch-preserving slowdown (2026-09-17, Josh: "Amazing Slow Downer keeps
+the pitches"; plan B of two).** `wsolaStretch(input, rate)` — WSOLA:
+1024-sample Hann grains at a 512 synthesis hop, each analysis grain
+chosen within ±128 samples of its nominal spot by best correlation with
+the previous grain's natural continuation (decimated ×4), overlap-added
+and normalized. Runs in an inline Blob worker (`stretchInWorker`; falls
+back to inline where there is no Worker, e.g. the vm). `stretchCache`
+(songKey|file|rate → {status, buffer}); `stretchEnsureAll()` on
+`applySpeed`, at `play()`, and when a decode lands at a non-native rate;
+other rates are evicted, `setSong` clears. `scheduleClip` uses the
+stretched buffer at playbackRate 1 (offset ÷ rate) when `keepPitch()`
+(device pref `ff1roll-tapestyle` absent = keep pitch), else tape-style
+as before; a piece whose stretch is still rendering is silent for that
+pass and the lane says "⏳ preparing 50% (pitch kept)…". `audioChaseNow
+(file)`: a buffer that lands MID-PASS (decode or stretch) is scheduled
+from the current position at once instead of waiting for the wrap. Cost:
+~1 s per 3-minute take on a Mac (worker warm ≈ 160 ms for 6 s); RAM = one
+stretched copy per file at the current rate. Quality: fine to ~40%.
+
 **Not in v1:** mic recording, per-piece looping, fades,
-time-stretch, a waveform in the roll, a dedicated audio repo (bytes go
+a waveform in the roll, a dedicated audio repo (bytes go
 where the song goes: folder or songs repo — Josh's ruling pending),
 Save As / Move to… carrying `.audio/` along (they copy the annotation;
 the bytes must be re-imported until that lands), orphan cleanup.
