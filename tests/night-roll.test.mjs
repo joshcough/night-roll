@@ -1007,6 +1007,16 @@ test("local folder mode: reads fall back to the site, writes need no token, cata
   // initCatalog: the site is unreachable, the folder alone still lists
   await run(`initCatalog()`);
   assert.deepEqual(val(`CATALOG["Night Roll Sketches"]`), [["A", "albums/compositions/nightroll/a.mid"]]);
+  // "my folder only": with the site reachable, its albums are merged in — unless the pref is on
+  run(`fetch = () => Promise.resolve({ok: true, json: async () => [{title: "Final Fantasy I", songs: [{title: "Overworld", path: "albums/final-fantasy-i/songs/overworld.mid"}]}]});`);
+  await run(`initCatalog()`);
+  assert.ok(val(`Object.keys(CATALOG)`).includes("Final Fantasy I"));
+  run(`localStorage.setItem("ff1roll-folderonly", "1");`);
+  assert.equal(run(`folderOnly()`), true);
+  await run(`initCatalog()`);
+  assert.deepEqual(val(`Object.keys(CATALOG)`).sort(), ["My Compositions", "Night Roll Sketches"]);
+  run(`localStorage.removeItem("ff1roll-folderonly"); fetch = () => Promise.reject(new Error("no network"));`);
+  assert.equal(run(`folderOnly()`), false);
   // delete: gone is true, and true again when already gone
   assert.equal(await run(`deleteRepoFile("albums/compositions/c.mid", null)`), true);
   assert.equal(await run(`deleteRepoFile("albums/compositions/c.mid", null)`), true);
