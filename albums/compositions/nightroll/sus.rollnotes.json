@@ -1,0 +1,8 @@
+{ "version": 1, "song": "sus", "saved": 1789613175139, "notes": [
+  {"at":[1,1],"type":"timesig","timesig":"4/4"},
+  {"at":[1,1],"type":"tempo","bpm":60},
+  {"at":[1,1],"type":"track","track":"pulse1","vol":0.25},
+  {"at":[1,1],"type":"track","track":"triangle","vol":1.25},
+  {"at":[1,1],"type":"tempo","bpm":60},
+  {"at":[1,1],"type":"track","track":"pulse1","vol":0.5}
+] }
