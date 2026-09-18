@@ -1,3 +1,6 @@
-{ "version": 1, "song": "bubble-man", "saved": 1786911803436, "notes": [
+{ "version": 1, "song": "bubble-man", "saved": 1789699090350, "notes": [
+  {"at":[27,1],"to":[27,4],"type":"chord","chord":"G#"},
+  {"at":[28,1],"to":[28,4],"type":"chord","chord":"G/B"},
+  {"at":[29,1],"to":[29,1],"type":"chord","chord":"Cm"},
   {"at":[33,1],"type":"loop","loop":"9.1"}
 ] }
