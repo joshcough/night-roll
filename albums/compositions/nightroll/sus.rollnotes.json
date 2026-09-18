@@ -1,9 +1,15 @@
-{ "version": 1, "song": "sus", "saved": 1789613903094, "notes": [
+{ "version": 1, "song": "sus", "saved": 1789772154142, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"type":"tempo","bpm":60},
-  {"at":[1,1],"type":"track","track":"pulse1","vol":0.25},
-  {"at":[1,1],"type":"track","track":"triangle","vol":1.25},
   {"at":[1,1],"type":"tempo","bpm":60},
-  {"at":[1,1],"type":"track","track":"pulse1","voice":"sf-musicbox"},
-  {"at":[1,1],"type":"track","track":"triangle","voice":"sf-ebass","vol":1.5}
+  {"at":[1,1],"type":"track","track":"triangle","voice":"triangle","vol":1.5},
+  {"at":[1,1],"to":[1,1],"type":"chord","chord":"Csus2","note":"Sus4"},
+  {"at":[1,1],"type":"track","track":"pulse2","vol":0.85},
+  {"at":[1,2],"to":[1,2],"type":"chord","chord":"Asus2","note":"Sus4"},
+  {"at":[1,3],"to":[1,3],"type":"chord","chord":"Dsus2"},
+  {"at":[1,4],"to":[1,4],"type":"chord","chord":"Asus2"},
+  {"at":[2,1],"to":[2,1],"type":"chord","chord":"Csus2"},
+  {"at":[2,2],"to":[2,2],"type":"chord","chord":"Dsus2"},
+  {"at":[2,3],"to":[2,3],"type":"chord","chord":"Esus2"},
+  {"at":[2,4],"to":[2,4],"type":"chord","chord":"F#sus2"}
 ] }
