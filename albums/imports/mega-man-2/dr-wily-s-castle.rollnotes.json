@@ -1,4 +1,4 @@
-{ "version": 1, "song": "dr-wily-s-castle", "saved": 1789266730802, "notes": [
+{ "version": 1, "song": "dr-wily-s-castle", "saved": 1789696777276, "notes": [
   {"at":[1,1],"to":[2,4],"type":"chord","chord":"C#m"},
   {"at":[1,1],"to":[16,4],"type":"section","label":"A"},
   {"at":[1,1],"to":[8,4],"type":"section","label":"A1"},
@@ -19,10 +19,22 @@
   {"at":[23,4.5],"to":[24,4],"type":"chord","chord":"Csus2","note":"This is mostly just a C note and eventually we have a D sharp and then a G sharp which is finally bringing us back into our C sharp minor court we were using a C as a way to get back into C sharp from B"},
   {"at":[25,1],"to":[26,4],"type":"chord","chord":"C#m"},
   {"at":[25,1],"to":[30,4],"type":"section","label":"C","note":"The melody goes down below the base here which is super interesting and cool"},
-  {"at":[27,1],"to":[28,4],"type":"chord","chord":"Amaj7"},
+  {"at":[27,1],"to":[28,4],"type":"chord","chord":"A"},
+  {"at":[29,1],"to":[30,4],"type":"chord","chord":"B"},
   {"at":[31,1],"to":[32,4],"type":"section","label":"Transition"},
+  {"at":[31,1],"to":[32,4],"type":"chord","chord":"C#m"},
   {"at":[33,1],"to":[40,4],"type":"section","label":"D"},
+  {"at":[33,1],"to":[34,4],"type":"chord","chord":"C#m"},
+  {"at":[35,1],"to":[36,4],"type":"chord","chord":"A"},
+  {"at":[37,1],"to":[38,4],"type":"chord","chord":"B"},
   {"at":[39,1],"to":[40,4],"type":"section","label":"Transition"},
+  {"at":[39,1],"to":[40,4],"type":"chord","chord":"C#m"},
   {"at":[41,1],"to":[48,4],"type":"section","label":"B"},
-  {"at":[49,1],"to":[56,4],"type":"section","label":"E/Outro"}
+  {"at":[48,4.5],"to":[49,3.5],"type":"chord","chord":"A"},
+  {"at":[49,1],"to":[56,4],"type":"section","label":"E/Outro"},
+  {"at":[49,4.5],"to":[50,4],"type":"chord","chord":"B"},
+  {"at":[51,1],"to":[52,3.5],"type":"chord","chord":"C#m"},
+  {"at":[52,4.5],"to":[53,3.5],"type":"chord","chord":"A"},
+  {"at":[53,4.5],"to":[54,3],"type":"chord","chord":"B"},
+  {"at":[54,4],"to":[56,4],"type":"chord","chord":"C#5","note":"This might be a G#sus4"}
 ] }
