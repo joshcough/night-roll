@@ -1,3 +1,5 @@
-{ "version": 1, "song": "CM6-G7b9", "notes": [
-  {"at":[1,1],"type":"key","key":"C"}
+{ "version": 1, "song": "CM6-G7b9", "saved": 1789700302497, "notes": [
+  {"at":[1,1],"type":"key","key":"C"},
+  {"at":[1,1],"type":"track","track":"Melody","voice":"sf-guitar"},
+  {"at":[1,1],"type":"track","track":"Inst 2","vol":1.1}
 ] }
