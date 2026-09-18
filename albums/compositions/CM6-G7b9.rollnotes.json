@@ -1,5 +1,9 @@
-{ "version": 1, "song": "CM6-G7b9", "saved": 1789700397745, "notes": [
+{ "version": 1, "song": "CM6-G7b9", "saved": 1789772354706, "notes": [
   {"at":[1,1],"type":"key","key":"C"},
   {"at":[1,1],"type":"track","track":"Inst 2","vol":0.75},
-  {"at":[1,1],"type":"track","track":"Melody","voice":"square"}
+  {"at":[1,1],"type":"track","track":"Melody","voice":"square"},
+  {"at":[1,1],"to":[4,4],"type":"chord","chord":"C6"},
+  {"at":[5,1],"to":[8,4],"type":"chord","chord":"G#dim7"},
+  {"at":[9,1],"to":[12,4],"type":"chord","chord":"C6"},
+  {"at":[13,1],"to":[16,4],"type":"chord","chord":"G#dim7"}
 ] }
