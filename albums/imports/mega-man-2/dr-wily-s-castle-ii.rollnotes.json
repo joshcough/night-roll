@@ -1,0 +1,9 @@
+{ "version": 1, "song": "dr-wily-s-castle-ii", "saved": 1789699084664, "notes": [
+  {"at":[1,1],"text":"This song does the same exact thing 12 times but rising one note at a time so it goes through every note there is until it falls all the way back down to the starting note"},
+  {"at":[1,1],"to":[1,4],"type":"chord","chord":"D#m7"},
+  {"at":[2,1],"to":[2,4],"type":"chord","chord":"F","note":"We have a bit of an F sharp major feel here in the melody and pulse one impulse two but it's still in the D sharp minor seven Under the base, they arpeggio. So I really think this is still D sharp minor seven"},
+  {"at":[3,1],"to":[3,4],"type":"chord","chord":"C#","note":"Same as the last cord we sort of have a C sharp major feel here but really we're still in D sharp minor seven because the base arPeggio"},
+  {"at":[4,1],"to":[4,4],"type":"chord","chord":"D#m7","note":"And here we fully return to D Sharp minor seven"},
+  {"at":[4,4.5],"text":"I don't think putting in the rest of the chords here will be useful but maybe I can just have Claude do it because it's so mechanical"},
+  {"at":[48,3],"to":[48,4],"type":"section","label":"Turn","note":"The mechanism of this turnaround is a falling"}
+] }
