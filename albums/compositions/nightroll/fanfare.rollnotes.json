@@ -1,4 +1,6 @@
-{ "version": 1, "song": "fanfare", "saved": 1789777124308, "notes": [
+{ "version": 1, "song": "fanfare", "saved": 1789779173845, "notes": [
   {"at":[1,1],"type":"key","key":"Eb"},
-  {"at":[11,3],"type":"loop","loop":"3.3"}
+  {"at":[1,1],"to":[2,4],"type":"section","label":"Fanfare"},
+  {"at":[1,1],"type":"lane","lane":37},
+  {"at":[3,3],"type":"loop","loop":"1.1"}
 ] }
