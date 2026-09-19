@@ -1,9 +1,4 @@
-{ "version": 1, "song": "fanfare", "saved": 1789776008030, "notes": [
-  {"at":[1,1],"type":"track","track":"pulse1","voice":"sf-trumpet"},
-  {"at":[1,1],"type":"track","track":"triangle","voice":"sf-tuba"},
-  {"at":[1,1],"type":"track","track":"pulse2","voice":"sf-trombone"},
-  {"at":[1,1],"type":"key","key":"F"},
-  {"at":[1,3.25],"to":[1,3.25],"type":"chord","chord":"Am"},
-  {"at":[1,4],"to":[1,4],"type":"chord","chord":"Bb"},
-  {"at":[1,4.75],"to":[1,4.75],"type":"chord","chord":"C"}
+{ "version": 1, "song": "fanfare", "saved": 1789776867388, "notes": [
+  {"at":[1,1],"type":"key","key":"Eb"},
+  {"at":[11,3],"type":"loop","loop":"3.3"}
 ] }
