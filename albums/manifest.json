@@ -113,10 +113,6 @@
     "path": "albums/compositions/nightroll/ambush-2-saving-b-part-for-another-song.mid"
    },
    {
-    "title": "Carnival",
-    "path": "albums/compositions/nightroll/town-theme.mid"
-   },
-   {
     "title": "Cool Bmaj Progression",
     "path": "albums/compositions/nightroll/cool-bmaj-progression.mid"
    },
@@ -155,6 +151,10 @@
    {
     "title": "Threnody 2",
     "path": "albums/compositions/nightroll/threnody-2.mid"
+   },
+   {
+    "title": "Town Theme",
+    "path": "albums/compositions/nightroll/town-theme.mid"
    }
   ]
  },
