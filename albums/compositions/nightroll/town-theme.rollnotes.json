@@ -1,4 +1,4 @@
-{ "version": 1, "song": "town-theme", "saved": 1789872052030, "notes": [
+{ "version": 1, "song": "town-theme", "saved": 1789874886605, "notes": [
   {"at":[1,1],"to":[1,2],"type":"chord","chord":"B♭"},
   {"at":[1,1],"type":"key","key":"F"},
   {"at":[1,1],"type":"tempo","bpm":90},
@@ -12,5 +12,9 @@
   {"at":[5,1],"to":[5,2],"type":"chord","chord":"B♭"},
   {"at":[5,3],"to":[5,4],"type":"chord","chord":"C"},
   {"at":[6,1],"to":[6,2],"type":"chord","chord":"Am"},
-  {"at":[6,3],"to":[6,4],"type":"chord","chord":"Dm"}
+  {"at":[6,3],"to":[6,4],"type":"chord","chord":"Dm"},
+  {"at":[7,1],"to":[7,2],"type":"chord","chord":"C"},
+  {"at":[7,3],"to":[7,4],"type":"chord","chord":"D"},
+  {"at":[8,1],"to":[8,2],"type":"chord","chord":"Bbdim/Db"},
+  {"at":[10,1],"type":"loop","loop":"3.1"}
 ] }
