@@ -1,5 +1,5 @@
-{ "version": 1, "song": "town-theme", "saved": 1789879068087, "notes": [
+{ "version": 1, "song": "town-theme", "saved": 1789879546616, "notes": [
   {"at":[1,1],"type":"key","key":"F"},
   {"at":[1,1],"type":"tempo","bpm":90},
-  {"at":[5,1],"type":"loop","loop":"1.1"}
+  {"at":[7,1],"type":"loop","loop":"1.1"}
 ] }
