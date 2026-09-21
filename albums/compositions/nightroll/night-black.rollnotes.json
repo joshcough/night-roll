@@ -1,0 +1,13 @@
+{ "version": 1, "song": "night-black", "saved": 1789954047586, "notes": [
+  {"at":[1,1],"type":"timesig","timesig":"4/4"},
+  {"at":[1,1],"to":[2,4],"type":"chord","chord":"E"},
+  {"at":[1,1],"to":[2,4],"type":"section","label":"E"},
+  {"at":[1,1],"type":"lane","lane":34},
+  {"at":[1,1],"type":"track","track":"pulse2","vol":0.35},
+  {"at":[3,1],"to":[4,4],"type":"chord","chord":"C"},
+  {"at":[3,1],"to":[4,4],"type":"section","label":"Em"},
+  {"at":[5,1],"to":[6,4],"type":"chord","chord":"E"},
+  {"at":[5,1],"to":[6,4],"type":"section","label":"E"},
+  {"at":[7,1],"to":[8,4],"type":"chord","chord":"C"},
+  {"at":[7,1],"to":[8,4],"type":"section","label":"Em"}
+] }
