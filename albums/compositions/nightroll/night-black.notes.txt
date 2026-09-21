@@ -1,4 +1,4 @@
-# night-black.mid — 4/4, 110bpm, 16 bars
+# night-black.mid — 4/4, 110bpm, 24 bars
 # Format: bar N: beat pitch duration-in-quarter-notes
 # duration is GATE TIME (how long the chip held the note), NOT a notated value.
 # RHYTHM comes from ONSET SPACING (the beat column), never from duration:
@@ -24,6 +24,12 @@ bar 9: 1 E3 8, 1 G#3 8, 1 B3 8
 bar 11: 1 E4 8, 1 C4 8, 1 G4 8
 bar 13: 1 E3 8, 1 G#3 8, 1 B3 8
 bar 15: 1 E4 8, 1 C4 8, 1 G4 8
+bar 17: 1 C#4 8, 1 G#3 8, 1 E4 8
+bar 19: 1 C4 4, 1 G#3 8, 1 D#4 8
+bar 20: 1 B3 4
+bar 21: 1 C#4 4, 1 A3 8, 1 E4 8
+bar 22: 1 C4 4
+bar 23: 1 E3 8, 1 G#3 8, 1 B3 8
 
 ## track 3 (triangle)
 bar 1: 1 E2 0.5, 2 G#2 0.5, 2.5 E2 0.5, 3.5 E2 0.5, 4.5 G#2 0.5
@@ -42,6 +48,8 @@ bar 13: 1 E2 0.5, 2 G#2 0.5, 2.5 E2 0.5, 3.5 E2 0.5, 4.5 G#2 0.5
 bar 14: 1 E2 0.5, 2 B2 0.5, 2.5 E2 0.5, 3.5 E2 0.5, 4 G#2 0.5, 4.5 G2 0.5
 bar 15: 1 C3 0.5, 2 E2 0.5, 2.5 G2 0.5, 3.5 C3 0.5, 4.5 E2 0.5
 bar 16: 1 C3 0.5, 2 E2 0.5, 2.5 G2 0.5, 3.5 E2 0.5, 4 D2 0.5, 4.5 D#2 0.5
+bar 17: 1 C3 0.5, 2 E2 0.5, 2.5 G2 0.5, 3.5 C3 0.5, 4.5 E2 0.5
+bar 18: 1 C3 0.5, 2 E2 0.5, 2.5 G2 0.5, 3.5 E2 0.5, 4 D2 0.5, 4.5 D#2 0.5
 
 ## track 4 (drums)
 bar 1: 1 C2 0.15, 1 F#2 0.08, 1 C#3 0.25, 1.5 F#2 0.08, 2.5 C2 0.13, 2 D2 0.13, 2 F#2 0.08, 3.5 C2 0.13, 2.5 F#2 0.08, 3 F#2 0.08, 3.5 F#2 0.08, 4.5 C2 0.13, 4 F#2 0.08, 4.5 F#2 0.08, 4 D2 0.13
