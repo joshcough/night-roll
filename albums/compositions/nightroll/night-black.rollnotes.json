@@ -1,4 +1,4 @@
-{ "version": 1, "song": "night-black", "saved": 1790038102912, "notes": [
+{ "version": 1, "song": "night-black", "saved": 1790038442965, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"to":[2,4],"type":"chord","chord":"E"},
   {"at":[1,1],"to":[2,4],"type":"section","label":"E"},
@@ -13,9 +13,5 @@
   {"at":[9,1],"to":[10,4],"type":"chord","chord":"E"},
   {"at":[9,1],"to":[10,4],"type":"section","label":"E"},
   {"at":[11,1],"to":[12,4],"type":"chord","chord":"C"},
-  {"at":[11,1],"to":[12,4],"type":"section","label":"Em"},
-  {"at":[12,4.75],"to":[14,3.75],"type":"chord","chord":"E"},
-  {"at":[12,4.75],"to":[14,3.75],"type":"section","label":"E"},
-  {"at":[14,4.75],"to":[16,3.75],"type":"chord","chord":"C"},
-  {"at":[14,4.75],"to":[16,3.75],"type":"section","label":"Em"}
+  {"at":[11,1],"to":[12,4],"type":"section","label":"Em"}
 ] }
