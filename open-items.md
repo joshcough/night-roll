@@ -29,19 +29,15 @@ resolves a path without `.mid` and says what it looked for.
 3. `albums/compositions/nightroll/night-black.md` **written** in his
    words (he confirmed every fact and that all of it was intentional).
 
-**Open — glossary status ladder (Josh, 2026-09-23: "remind me what we
-have").** Today: `encountered` (named in conversation) and
-`demonstrated` (used deliberately, with evidence). Plus the parked
-2026-08-23 two-axis proposal (R1 heard / R2 recognized / R3 derived /
-R4 fluent × P0 none / P1 found / P2 demonstrated / P3 mastery, in the
-PARKED BACKLOG section below). His instinct today: a third rung,
-"owned". Cheapest honest version: **`owned` = retired from the quiz**
-(named correctly five sessions running under the 2026-09-07 streak
-rule) — the ladder becomes encountered → demonstrated → owned, and the
-streak is the evidence. His call whether that or the two-axis scale.
-
-His own polish list (not requests): lighter drums for bars 13–16 to
-mark the B; probably fewer fills.
+**Glossary status ladder — RULED 2026-09-23, written into glossary.md:**
+encountered → demonstrated (did it on purpose, word or no word) → owned
+(chose it BY NAME before writing, then it worked — "the intentionality
+of it"). Quiz streaks and repeat use do not promote; the streak rule
+stays as a retention measure. The 2026-08-23 two-axis scale (PARKED
+BACKLOG below) is superseded by this. Practical: when he says what he
+is going for before writing a section, note it in the song's journal —
+that note is the owned-evidence if the passage lands. No `owned` terms
+yet. (He tabled further thought on this the same day.)
 
 ## LOCAL FOLDER MODE — SHIPPED 2026-09-15 to main (local-folder-design.md)
 

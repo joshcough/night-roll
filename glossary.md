@@ -2,13 +2,21 @@
 
 Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
 
-- **Status:** `encountered` = named in conversation, not yet owned.
-  `demonstrated` = Josh used it deliberately AND can name it — promotion
-  requires evidence (a song edit, a quiz answer, an analysis call), noted
-  inline. Quizzes draw from ALL terms — `demonstrated` ones are asked for
-  the name only — until a term is answered five sessions in a row, then
-  it retires; a miss resets it (rule + ledger in quizzes.md, 2026-09-07).
-  Passing an `encountered` term with evidence promotes it.
+- **Status — three rungs (Josh's ladder, 2026-09-23):**
+  `encountered` = the term came up in conversation.
+  `demonstrated` = it happened in his music ON PURPOSE — he meant the
+  effect, whether or not he had the word yet (hocket, 2026-09-22);
+  evidence is the passage, noted inline. Also: he named it in analysis.
+  `owned` = he reached for it BY NAME before writing ("I want a chromatic
+  mediant here"), then wrote one that works; evidence is the stated
+  intention on record (session or journal) plus the passage. Once is
+  enough — "it's the intentionality of it." What does NOT promote:
+  answering it in a quiz ("just being able to answer it doesn't mean I
+  own it"), or using it in several songs without having chosen it by
+  name. Quizzes draw from ALL terms — `demonstrated`/`owned` are asked
+  for the name only — until a term is answered five sessions in a row,
+  then it retires from rotation; a miss resets it (rule + ledger in
+  quizzes.md, 2026-09-07). Retiring is a retention fact, not a rung.
 - **Anchors:** song + bar/beat where the idea audibly happens. Josh's own
   songs give exact anchors. FF anchors marked *(find one)* are left blank
   on purpose — locating them IS the analysis exercise.
