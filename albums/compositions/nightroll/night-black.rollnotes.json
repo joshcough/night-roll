@@ -1,9 +1,8 @@
-{ "version": 1, "song": "night-black", "saved": 1790038442965, "notes": [
+{ "version": 1, "song": "night-black", "saved": 1790125084512, "notes": [
   {"at":[1,1],"type":"timesig","timesig":"4/4"},
   {"at":[1,1],"to":[2,4],"type":"chord","chord":"E"},
   {"at":[1,1],"to":[2,4],"type":"section","label":"E"},
   {"at":[1,1],"type":"lane","lane":34},
-  {"at":[1,1],"type":"track","track":"pulse2","vol":0.35},
   {"at":[3,1],"to":[4,4],"type":"chord","chord":"C"},
   {"at":[3,1],"to":[4,4],"type":"section","label":"Em"},
   {"at":[5,1],"to":[6,4],"type":"chord","chord":"E"},
@@ -13,5 +12,17 @@
   {"at":[9,1],"to":[10,4],"type":"chord","chord":"E"},
   {"at":[9,1],"to":[10,4],"type":"section","label":"E"},
   {"at":[11,1],"to":[12,4],"type":"chord","chord":"C"},
-  {"at":[11,1],"to":[12,4],"type":"section","label":"Em"}
+  {"at":[11,1],"to":[12,4],"type":"section","label":"Em"},
+  {"at":[13,1],"to":[13,4],"type":"chord","chord":"C#m/G#"},
+  {"at":[14,1],"to":[14,4],"type":"chord","chord":"G#"},
+  {"at":[15,1],"to":[15,4],"type":"chord","chord":"A"},
+  {"at":[16,1],"to":[16,2],"type":"chord","chord":"F#m"},
+  {"at":[16,3],"to":[16,3],"type":"chord","chord":"D#dim"},
+  {"at":[16,4],"to":[16,4],"type":"chord","chord":"E"},
+  {"at":[17,1],"to":[17,4],"type":"chord","chord":"C#m/G#"},
+  {"at":[18,1],"to":[18,4],"type":"chord","chord":"G#"},
+  {"at":[19,1],"to":[19,4],"type":"chord","chord":"A"},
+  {"at":[20,1],"to":[20,2],"type":"chord","chord":"C"},
+  {"at":[20,3],"to":[20,4],"type":"chord","chord":"C#5"},
+  {"at":[21,1],"type":"loop","loop":"5.1"}
 ] }
