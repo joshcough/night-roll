@@ -98,7 +98,7 @@ augmented sixth, line cliché, tritone substitution, neighbor tone
 (distinct from passing tone; Josh has been calling neighbors "passing").
 
 Demonstrated (Josh's own anchors): chromatic mediant (Night Black vamp,
-E��C), hocket (Night Black bars 13–19, pulse2 vs bass), Lydian ♯4 / C(♯11)
+E ↔ C), hocket (Night Black bars 13–19, pulse2 vs bass), Lydian ♯4 / C(♯11)
 (Night Black 7 and 20.2; also Graveyard B section per Josh), 13th chord
 (Night Black 20.3, B13), accented passing tone (Night Black 20.2).
 ## Tooling friction observed
