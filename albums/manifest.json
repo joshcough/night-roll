@@ -92,10 +92,6 @@
     "path": "albums/compositions/cool-b-maj-with-b-part.mid"
    },
    {
-    "title": "Key Change Test (07-26)",
-    "path": "albums/compositions/KeyChangeTest-07-26.mid"
-   },
-   {
     "title": "Threnody",
     "path": "albums/compositions/threnody.mid"
    }
@@ -113,16 +109,16 @@
     "path": "albums/compositions/nightroll/ambush-2-saving-b-part-for-another-song.mid"
    },
    {
+    "title": "Carnival",
+    "path": "albums/compositions/nightroll/carnival.mid"
+   },
+   {
     "title": "Cool Bmaj Progression",
     "path": "albums/compositions/nightroll/cool-bmaj-progression.mid"
    },
    {
     "title": "Fanfare",
     "path": "albums/compositions/nightroll/fanfare.mid"
-   },
-   {
-    "title": "Ff1 Battle",
-    "path": "albums/compositions/nightroll/ff1-battle.mid"
    },
    {
     "title": "Graveyard",
@@ -135,6 +131,10 @@
    {
     "title": "Graveyard 3",
     "path": "albums/compositions/nightroll/graveyard-3.mid"
+   },
+   {
+    "title": "Key Change Test (07-26)",
+    "path": "albums/compositions/nightroll/KeyChangeTest-07-26.mid"
    },
    {
     "title": "Majorly Dim",
@@ -155,10 +155,6 @@
    {
     "title": "Threnody 2",
     "path": "albums/compositions/nightroll/threnody-2.mid"
-   },
-   {
-    "title": "Town Theme",
-    "path": "albums/compositions/nightroll/town-theme.mid"
    }
   ]
  },

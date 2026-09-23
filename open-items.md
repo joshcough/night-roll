@@ -11,29 +11,34 @@ Web-session record of Josh's 2026-09-19→22 composing. Applied
 concepts logged (supplemental-learning.md), `tools/query-lib.mjs` now
 resolves a path without `.mid` and says what it looked for.
 
-**Awaiting Josh's sign-off:**
-1. **Rename `town-theme.*` → `carnival.*`.** RECOMMEND NO. The app's own
-   rule is that a committed song keeps its filename and gets a display
-   title (album.json already says "town-theme": "Carnival" — that IS the
-   in-app rename he did). A file rename would orphan every device's
-   drafts/notes keyed by the old path, need a remap like the 2026-08 one,
-   and break any doc anchor. If he wants it anyway: git mv the three
-   files, drop the album.json override, rebuild the manifest, add a
-   path remap at boot.
-2. **Glossary additions** (his call; he holds that `demonstrated`
-   implies intent): encountered — mordent, Phrygian cadence (♭II→i;
-   ♭II→I major = Phrygian dominant; textbook "Phrygian half cadence" =
-   iv6→V), augmented sixth, line cliché, tritone substitution; neighbor
-   tone already exists (add the "he calls neighbors passing" note?).
-   Demonstrated with his anchors — chromatic mediant (Night Black vamp
-   E↔C), hocket (Night Black 13–19), Lydian ♯4 / C(♯11) (Night Black 7,
-   20.2; Graveyard B per Josh), 13th chord (Night Black 20.3), accented
-   passing tone (Night Black 20.2).
-3. **A Night Black analysis doc** transcribing the design facts he
-   stated (half-step sags everywhere; B keeps A's rhythms and changes
-   pitch/texture; bar-12 pulse2 cell as the seam fix; the hocket cell;
-   the bars 17–19 drum dropout; the deliberately polyphonic pulse2 —
-   "do not fix"). His words, his sign-off.
+**Josh's rulings, 2026-09-23 — all applied:**
+1. Rename **done** (he ruled "definitely"): `town-theme.*` → `carnival.*`
+   (git mv, the album.json title override dropped, manifest rebuilt, a
+   third boot-time path remap carries every device's per-song keys —
+   draft, notes, edits, ts, tombs, lastsync, lastsong). Two more
+   cleanups the same breath: `KeyChangeTest-07-26.*` moved from My
+   Compositions to Night Roll Sketches (override moved with it); the
+   Sketches copy of the FF1 battle theme (`ff1-battle.*`) removed.
+2. Glossary **added**: encountered — mordent, Phrygian cadence, augmented
+   sixth, line cliché, tritone substitution; demonstrated with his Night
+   Black anchors — chromatic mediant, hocket, Lydian ♯4 / C(♯11), 13th
+   chord, accented passing tone; neighbor tone gained the bar-20 anchor.
+   His caveat stands: demonstrated ≠ retained ("sometimes I demonstrate
+   them and don't know until after"); retention is what the quiz streak
+   measures.
+3. `albums/compositions/nightroll/night-black.md` **written** in his
+   words (he confirmed every fact and that all of it was intentional).
+
+**Open — glossary status ladder (Josh, 2026-09-23: "remind me what we
+have").** Today: `encountered` (named in conversation) and
+`demonstrated` (used deliberately, with evidence). Plus the parked
+2026-08-23 two-axis proposal (R1 heard / R2 recognized / R3 derived /
+R4 fluent × P0 none / P1 found / P2 demonstrated / P3 mastery, in the
+PARKED BACKLOG section below). His instinct today: a third rung,
+"owned". Cheapest honest version: **`owned` = retired from the quiz**
+(named correctly five sessions running under the 2026-09-07 streak
+rule) — the ladder becomes encountered → demonstrated → owned, and the
+streak is the evidence. His call whether that or the two-axis scale.
 
 His own polish list (not requests): lighter drums for bars 13–16 to
 mark the B; probably fewer fills.

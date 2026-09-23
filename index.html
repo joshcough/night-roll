@@ -2753,6 +2753,19 @@ let lastSubtitle = null;
   const last2 = localStorage.getItem("ff1roll-lastsong");
   if (last2 && last2.includes(SONGS + "ff1"))
     localStorage.setItem("ff1roll-lastsong", remap2(last2));
+  // third wave (2026-09-23, Josh's cleanup): two of his songs moved — every
+  // per-song key rides along so no device shows an orphan draft
+  const MOVED = {"albums/compositions/nightroll/town-theme.mid": "albums/compositions/nightroll/carnival.mid",
+                 "albums/compositions/KeyChangeTest-07-26.mid": "albums/compositions/nightroll/KeyChangeTest-07-26.mid"};
+  for (const k of Object.keys(localStorage)) {
+    const m = k.match(/^(ff1roll-(?:notes|edits|ts|draft|tombs|lastsync)-)(.+)$/);
+    if (!m || !MOVED[m[2]]) continue;
+    const nk = m[1] + MOVED[m[2]];
+    if (!localStorage.getItem(nk)) localStorage.setItem(nk, localStorage.getItem(k));
+    localStorage.removeItem(k);
+  }
+  const last3 = localStorage.getItem("ff1roll-lastsong");
+  if (last3 && MOVED[last3]) localStorage.setItem("ff1roll-lastsong", MOVED[last3]);
 })();
 function appConfirm(title, body, okLabel, cancelLabel) { // non-blocking confirm:
   // window.confirm freezes the main thread AND every automation/CDP command

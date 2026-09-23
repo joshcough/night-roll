@@ -91,6 +91,15 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   graveyard bar 13's rejected unison version — WHY the harmony version
   won. FF: *(find one)*.
 
+- **Hocket** — one line split between voices that take turns: each rests
+  where the other sounds, and the ear hears the composite. —
+  **`demonstrated`** 2026-09-22 (the name was new to Josh that day; the
+  device was deliberate). Anchor: Night Black bars 13–19, pulse2's
+  eighth-note cell (top note on 1 and 3, lower chord tone on the "and"
+  of 1, 2, 3, 4, rests on 2 and 4) interlocking with the bass, which
+  rests on the "and" of 1 and on beat 3; all three voices converge on
+  the "and" of 3. FF: *(find one)*.
+
 ## Rhythm
 
 - **Cross-rhythm** — two simultaneous layers dividing time differently
@@ -160,8 +169,10 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
 - **Neighbor tone** — a step above or below a held pitch, returning;
   the smallest ornament. — `encountered` 2026-08-21. Anchor: graveyard
   bar 13, BOTH voices at once, offset a beat (pulse1 C♯–D–C–C♯, pulse2
-  A–G♯–F♯–G♯); pulse1's lower neighbor is C natural, out of key. FF:
-  *(find one)*.
+  A–G♯–F♯–G♯); pulse1's lower neighbor is C natural, out of key. Also
+  Night Black bar 20, the melody's G♯ (quiz correction 2026-09-22: a
+  neighbor, not a passing tone — Josh has been calling neighbors
+  "passing"; the difference is the return). FF: *(find one)*.
 - **Tonic avoidance** — a melody using every degree but the tonic, so
   it floats over home. — `encountered` 2026-08-21 as the tutor's
   observation; RESOLVED 2026-08-22 by Josh's own realization: "the
@@ -177,6 +188,16 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   over a loop; he reaches for it repeatedly (bars 7 and 11, and the
   bar-13 brake is the same principle). Bar 11's revision widens the
   arrival: A, B B, C♯ C♯, D D D. FF: *(find one)*.
+
+- **Accented passing tone** — a passing tone that lands ON the beat (the
+  strong position) and resolves by step after it, instead of slipping
+  between beats. — **`demonstrated`** 2026-09-22. Anchor: Night Black
+  20.2, the F♯ over C — Josh argued it is an accented passing tone, not a
+  chord tone (the alternative reading, C(♯11), is the Lydian entry below).
+  FF: *(find one)*.
+- **Mordent** — a quick ornament: the main note, its upper or lower
+  neighbor, and back, all in the time of the main note. — `encountered`
+  2026-09-22. Anchor: *(none yet — came up in conversation)*.
 
 ## Harmony
 
@@ -315,6 +336,43 @@ Terms Josh has ENCOUNTERED, with where they live in real music. Rules:
   the held B) is the same thing by hand. Name not recalled unprompted
   on 2026-09-07 ("compound harmony?") — quiz the NAME once. FF: every
   song in the corpus.
+
+- **Chromatic mediant** — two chords a third apart sharing one tone, with
+  the other tones moving by half step; same quality (E and C, both
+  major) is the classic case; the move sounds like a color shift rather
+  than a progression. — **`demonstrated`** 2026-09-22. Anchor: Night
+  Black's vamp, E ↔ C (bars 1–12), with the G♯→G sag Josh names as the
+  song's signature move. Quiz 2026-09-22: needed the nudge "mediant" —
+  re-ask cold. FF: *(find one)*.
+- **13th chord** — a dominant seventh with the 13th (the 6th above the
+  root) stacked on: B13 = B–D♯–F♯–A–G♯. B6 has the same G♯ but NO 7th —
+  the 7th is what makes it a 13th. — **`demonstrated`** 2026-09-22.
+  Anchor: Night Black 20.3–4, B13 into the loop back to E (strict
+  reading B7 with neighbor G♯; B13 defensible — the quiz correction,
+  said once). FF: *(find one)*.
+- **Lydian ♯4 / C(♯11)** — the raised fourth over a major chord; as a
+  chord tone it is the ♯11, as a label "C(♯11)" or "Cadd♯4", said "C
+  with a sharp eleven" ("augmented" means ♯5, never this). —
+  **`demonstrated`** 2026-09-22. Anchors: Night Black bar 7 and 20.2
+  (where Josh reads the F♯ as an accented passing tone instead — both
+  readings stand); Graveyard's B section per Josh. FF: *(find one)*.
+- **Phrygian cadence** — ♭II → i in minor (F major → E minor): the
+  ♭2 is borrowed from Phrygian. ♭II → I MAJOR is the Phrygian-dominant
+  sound; the textbook "Phrygian half cadence" is iv6 → V, a different
+  thing sharing the name. — `encountered` 2026-09-22 (quiz: answered
+  right while doubting). Anchor: *(none of Josh's yet)*. FF: *(find one)*.
+- **Augmented sixth** — a chord with an augmented-sixth interval that
+  opens outward by half steps onto the dominant (A♭ up to F♯ → both to
+  G); Italian/French/German by the inner notes. — `encountered`
+  2026-09-22. Anchor: *(none yet)*. FF: *(find one)*.
+- **Line cliché** — a chromatic line moving inside an otherwise held
+  chord (the descending inner voice under a minor chord: E–D♯–D–C♯). —
+  `encountered` 2026-09-22. Anchor: *(none yet — Night Black's half-step
+  sags are the neighborhood)*. FF: *(find one)*.
+- **Tritone substitution** — swapping a dominant for the dominant a
+  tritone away (D♭7 for G7): they share the 3rd and 7th, so the
+  resolution survives and the bass moves by half step. — `encountered`
+  2026-09-22. Anchor: *(none yet)*. FF: *(find one)*.
 
 ## Form
 

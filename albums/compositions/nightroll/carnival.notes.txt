@@ -1,4 +1,4 @@
-# town-theme.mid — 4/4, 90bpm, 6 bars
+# carnival.mid — 4/4, 90bpm, 6 bars
 # Format: bar N: beat pitch duration-in-quarter-notes
 # duration is GATE TIME (how long the chip held the note), NOT a notated value.
 # RHYTHM comes from ONSET SPACING (the beat column), never from duration:

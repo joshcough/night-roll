@@ -1,9 +1,8 @@
 {
-  "note": "'songs' lists display-name OVERRIDES only — the full song list comes from scanning *.mid here (see albums/manifest.json, built by tools/build_manifest.mjs). A song absent below is titled from its filename automatically.",
-  "title": "My Compositions",
-  "order": 2,
-  "songs": {
-    "CM6-G7b9": "Baseball / Beach Song",
-    "KeyChangeTest-07-26": "Key Change Test (07-26)"
-  }
+ "note": "'songs' lists display-name OVERRIDES only — the full song list comes from scanning *.mid here (see albums/manifest.json, built by tools/build_manifest.mjs). A song absent below is titled from its filename automatically.",
+ "title": "My Compositions",
+ "order": 2,
+ "songs": {
+  "CM6-G7b9": "Baseball / Beach Song"
+ }
 }
