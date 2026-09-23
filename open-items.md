@@ -4,6 +4,19 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## Pages builds are Jekyll: a bad byte in ANY .md kills the whole deploy (found 2026-09-23)
+
+Three deploys failed today on `handoffs/handoff-2026-09-22-night-black.md`
+("invalid byte sequence in UTF-8") — the site silently stayed on last
+night's build while tests were green and I read the first failure as a
+deploy collision. Fixed by re-encoding the file. Standing rule from now
+on: after moving a handoff in, run `iconv -f UTF-8 -t UTF-8 file >
+/dev/null` before committing. Recommendation for Josh's call: add a
+`.nojekyll` file at the repo root — Pages then serves files as-is (no
+Jekyll pass, faster builds, no Markdown parsing failures). Cost: none
+found — the app never links to Jekyll-rendered pages; the path-form URLs
+rely on 404.html, which Pages serves either way. Not done unasked.
+
 ## HANDOFF 2026-09-22 — Night Black / Carnival composition session (handoffs/handoff-2026-09-22-night-black.md)
 
 Web-session record of Josh's 2026-09-19→22 composing. Applied
