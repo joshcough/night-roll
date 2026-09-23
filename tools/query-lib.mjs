@@ -10,8 +10,15 @@ import { fileURLToPath } from "node:url";
 
 export const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
-export function resolveSong(arg) { // "cool-bmaj-progression" | "overworld" | a path
+export function resolveSong(arg) { // "cool-bmaj-progression" | "overworld" | a path, with or without .mid
   if (arg.endsWith(".mid")) return path.isAbsolute(arg) ? arg : path.join(ROOT, arg);
+  // a path without the extension (web-handoff 2026-09-22: the error said "no
+  // song named … under albums/" for a file that was right there)
+  if (arg.includes("/")) {
+    const p = path.isAbsolute(arg) ? arg + ".mid" : path.join(ROOT, arg + ".mid");
+    if (existsSync(p)) return p;
+    throw new Error("no file at " + arg + ".mid — pass a bare song name (e.g. " + path.basename(arg) + ") or a path that exists");
+  }
   const hits = [];
   const walk = dir => {
     for (const f of readdirSync(path.join(ROOT, dir), {withFileTypes: true})) {
@@ -20,7 +27,7 @@ export function resolveSong(arg) { // "cool-bmaj-progression" | "overworld" | a 
     }
   };
   walk("albums");
-  if (hits.length === 0) throw new Error("no song named " + arg + " under albums/");
+  if (hits.length === 0) throw new Error("no song named " + arg + ".mid anywhere under albums/ (names are the file's base name, e.g. night-black)");
   if (hits.length > 1) throw new Error("ambiguous: " + hits.join(", "));
   return hits[0];
 }

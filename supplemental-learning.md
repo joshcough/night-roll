@@ -92,6 +92,24 @@ the NES (2 pulses + triangle + noise) could never play — spotting them
 is itself ear training. Also: unit tests exist now (`make test`),
 fit-to-screen on load, vertical pinch zoom, note chasing on play.
 
+**2026-09-19→22 (composition session — Night Black, Carnival; web
+handoff, filed 2026-09-23):** Josh's work, feedback-only session. Night
+Black is structurally done: intro vamp E ↔ C, A section melody from
+bar 5, B section C♯m/G♯ | G♯ | A | F♯m–D♯°–E ×2, bar-20 cadence
+C → B13 → loop to E. Concepts he named or used: **chromatic mediant**
+(the vamp), **hocket** (B-section pulse2 vs bass interlock), **Lydian
+♯4 / C(♯11)**, **13th chord** (B13 vs B6 = the 7th), **accented passing
+tone** vs **neighbor tone** (bar 20 G♯ is a neighbor), **Phrygian
+cadence** (♭II→i). His own rules from the session: every important
+move is a half-step sag; a seam that works on guitar but not in Night
+Roll is missing what the guitar was doing (usually rhythm — bar 12's
+pulse2 cell one bar early fixed the A→B seam); guitar accents become
+pitch, length, or the noise/triangle channel; B-section checklist —
+change harmonic rhythm, start off-tonic, change texture/register, carry
+one A element across, real cadence in the last bar. Carnival (files
+still town-theme.*) rebuilt as a six-bar loop F–F–Gm–Am–B♭–C7 with a
+new melodic arc; drums to be penciled by hand.
+
 ## Current composition exercise (in progress)
 
 Two 8-bar loops: chords from G-land → C7 → F **major** + melody; then the same but resolving to F **minor**. Guidelines agreed: introduce C as plain IV before it returns as C7 (furniture, then door); melody crosses the seam on common tones (C, F, G); chord tone on every chord-arrival downbeat; in the minor version let one prominent note (Ab on the Fm downbeat) carry the darkness; sing before playing; save both versions (MIDI or recording) and bring them back for analysis with the same tools used on Uematsu.

@@ -153,3 +153,27 @@ compound melody | 0 | — | encountered 08-23, never named by him
   the fix already sitting in his own intro?
 - Quarter-note triplets: where do the three onsets land, and why can
   no binary grid contain them?
+
+## Bank additions — 2026-09-19→22 composition session (Night Black, Carnival; web handoff)
+
+Asked at session END by the web session (not start). Marks as reported:
+
+- [~] Chromatic mediant (E ↔ C vamp, Night Black bars 1–12): needed the
+      nudge "mediant" — RE-ASK cold. Streak 0.
+- [x] 13th chord — which note is the 13th, and B6 vs B13 = presence of
+      the 7th (Night Black 20.3). Streak 1.
+- [x] Hocket (Night Black 13–19, pulse2 vs bass) — same-session gimme;
+      RE-ASK cold before it counts. Streak 0 until then.
+- [x] Phrygian cadence (♭II → i in E minor) — answered right while
+      doubting; knows ♭II is borrowed from Phrygian. Streak 1.
+- [x] Lydian ♯4 / C(♯11) (Night Black 7 and 20.2) — and argued the F♯ in
+      20.2 is an accented passing tone, not a chord tone. Streak 1.
+- Corrections given once in that quiz (do not repeat unless it recurs):
+  bar 20 melody G♯ is a NEIGHBOR tone, not a passing tone; the A on
+  beat 4 is metrically stronger, so strict reading is B7 with neighbor
+  G♯, B13 still defensible; "C augmented four" is not a label —
+  C(♯11) or Cadd♯4, said "C with a sharp eleven."
+- Candidates from the same session (unasked): neighbor vs passing tone
+  (he has been calling neighbors "passing"); mordent; augmented sixth;
+  line cliché; tritone substitution — all PROPOSED for the glossary,
+  awaiting Josh (open-items.md, 2026-09-22 handoff).

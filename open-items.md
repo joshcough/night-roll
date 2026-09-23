@@ -4,6 +4,40 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## HANDOFF 2026-09-22 — Night Black / Carnival composition session (handoffs/handoff-2026-09-22-night-black.md)
+
+Web-session record of Josh's 2026-09-19→22 composing. Applied
+2026-09-23 without needing him: quiz marks logged (quizzes.md), session
+concepts logged (supplemental-learning.md), `tools/query-lib.mjs` now
+resolves a path without `.mid` and says what it looked for.
+
+**Awaiting Josh's sign-off:**
+1. **Rename `town-theme.*` → `carnival.*`.** RECOMMEND NO. The app's own
+   rule is that a committed song keeps its filename and gets a display
+   title (album.json already says "town-theme": "Carnival" — that IS the
+   in-app rename he did). A file rename would orphan every device's
+   drafts/notes keyed by the old path, need a remap like the 2026-08 one,
+   and break any doc anchor. If he wants it anyway: git mv the three
+   files, drop the album.json override, rebuild the manifest, add a
+   path remap at boot.
+2. **Glossary additions** (his call; he holds that `demonstrated`
+   implies intent): encountered — mordent, Phrygian cadence (♭II→i;
+   ♭II→I major = Phrygian dominant; textbook "Phrygian half cadence" =
+   iv6→V), augmented sixth, line cliché, tritone substitution; neighbor
+   tone already exists (add the "he calls neighbors passing" note?).
+   Demonstrated with his anchors — chromatic mediant (Night Black vamp
+   E↔C), hocket (Night Black 13–19), Lydian ♯4 / C(♯11) (Night Black 7,
+   20.2; Graveyard B per Josh), 13th chord (Night Black 20.3), accented
+   passing tone (Night Black 20.2).
+3. **A Night Black analysis doc** transcribing the design facts he
+   stated (half-step sags everywhere; B keeps A's rhythms and changes
+   pitch/texture; bar-12 pulse2 cell as the seam fix; the hocket cell;
+   the bars 17–19 drum dropout; the deliberately polyphonic pulse2 —
+   "do not fix"). His words, his sign-off.
+
+His own polish list (not requests): lighter drums for bars 13–16 to
+mark the B; probably fewer fills.
+
 ## LOCAL FOLDER MODE — SHIPPED 2026-09-15 to main (local-folder-design.md)
 
 Josh's ruling: saving without GitHub is its own project and comes
