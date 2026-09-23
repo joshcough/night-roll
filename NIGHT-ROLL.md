@@ -60,12 +60,17 @@ mallets, Guitar & bass, Strings, Winds, Brass, Organ & choir, as
 per-note MP3s in vendor/soundfonts/*.json (MIT, see LICENSE.md there;
 ~2MB per instrument, ~85MB total in the repo — web sessions should
 clone with `--filter=blob:limit=1m` to skip them). The menu opens in
-the current voice's family; ‹ backs out to the family list. Lazy at every level: nothing
+the current voice's family; ‹ backs out to the family list. Lazy per song: nothing
 fetches at page load; a track using voice=sf-* fetches its instrument
 once (browser-cached) and decodes ONLY the pitches the song actually
 plays (a full 88-key decode would cost ~60MB RAM per instrument on the
-iPad). finalizeNotes warms the pitch set; an undecoded note falls back
-to a quiet triangle for that pass and is sampled by the next loop. The
+iPad). finalizeNotes warms the pitch set AT SONG LOAD through an
+OfflineAudioContext (`sfDecodeCtx`: no device, no gesture needed — the
+AudioContext itself still waits for first touch), and `play()` waits up
+to 1.5 s (`sfWaitForSong`, "loading violin…") for anything still
+pending; only past that does an undecoded note fall back to a quiet
+triangle for the pass (Josh, 2026-09-23: Threnody's violin used to
+"kick in" a beat after Play, because the fetch began at that tap). The
 2026-08-15 synth patches (voice=piano/pluck/strings/organ/bell) still
 play for annotations that saved them but left the menu. Color via one
 full-width `<input type=color>` picker

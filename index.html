@@ -6045,8 +6045,10 @@ function sfDecode(file, p) { // idempotent: one async decode per (instrument, pi
     const bin = atob(b64);
     const arr = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const dctx = sfDecodeCtx();
+    if (!dctx) return; // no decoder here (the vm harness): the triangle fallback carries it
     return new Promise((res, rej) =>
-      audio.decodeAudioData(arr.buffer, b => {
+      dctx.decodeAudioData(arr.buffer, b => {
         // loudness-match to the chip voices (Josh 2026-08-18: "pulse 50% is way
         // louder than a violin — almost impossible to hear at the same
         // velocity"): RMS of the sample's first half-second vs the square
@@ -6073,15 +6075,26 @@ function sfDecode(file, p) { // idempotent: one async decode per (instrument, pi
   }).catch(() => { /* missing note or bad fetch: the triangle fallback carries it */ });
   return bank.pending[p];
 }
-let sfPreloadPending = false;
+// Decoding needs a context but NOT the AudioContext: that one must never be
+// built at page load (no gesture → the constructor can block the main thread
+// for seconds on machines with external audio interfaces — the page-freeze
+// class, and the 20s Playwright hang). An OfflineAudioContext opens no
+// device, so instruments decode at SONG LOAD; the buffers play in any
+// context. Before this (Josh, 2026-09-23, Threnody): the violin was only
+// fetched at his first tap — the Play tap — so the first notes came out as
+// the triangle fallback and the violin "kicked in" a beat later.
+let sfOfflineCtx = null;
+function sfDecodeCtx() {
+  if (audio) return audio;
+  if (sfOfflineCtx) return sfOfflineCtx;
+  const OAC = typeof window !== "undefined" && (window.OfflineAudioContext || window.webkitOfflineAudioContext);
+  if (!OAC) return null;
+  try { sfOfflineCtx = new OAC(1, 1, 48000); } catch (err) { return null; }
+  return sfOfflineCtx;
+}
+let sfPreloadPending = false; // kept for the first-touch hook; the preload no longer waits for it
 function sfPreloadForSong() { // warm every pitch a sampled track actually plays
   if (!song) return;
-  // NEVER construct the AudioContext at page load: with no user gesture, the
-  // constructor can block the main thread for many seconds on machines with
-  // external audio interfaces (the intermittent page-freeze class, and the
-  // 20s hang Playwright measured in headless). First touch warms the context
-  // (the pointerdown handler below) and re-runs this preload.
-  if (!audio) { sfPreloadPending = true; return; }
   sfPreloadPending = false;
   song.tracks.forEach((tr, ti) => {
     const file = sfFileFor(trackVoice(ti));
@@ -6091,6 +6104,25 @@ function sfPreloadForSong() { // warm every pitch a sampled track actually plays
     ps.add(69); // the preview pitch
     ps.forEach(p => sfDecode(file, p));
   });
+}
+async function sfWaitForSong(capMs) { // resolve when this song's sampled pitches are decoded, or at the cap
+  if (!song) return;
+  sfPreloadForSong(); // make sure every request exists
+  const waits = [];
+  let name = null;
+  song.tracks.forEach((tr, ti) => {
+    const v = trackVoice(ti), file = sfFileFor(v);
+    if (!file) return;
+    const bank = sfBank[file];
+    for (const n of tr.notes) {
+      if (n.gone || bank.buffers[n.p] || !bank.pending[n.p]) continue;
+      waits.push(bank.pending[n.p]);
+      if (!name) name = (VOICES.find(([id]) => id === v) || [, v])[1];
+    }
+  });
+  if (!waits.length) return;
+  setInfo("loading " + name + "…");
+  await Promise.race([Promise.all(waits), new Promise(r => setTimeout(r, capMs))]);
 }
 function autoVoiceLabel(ti) { // what "auto" actually resolves to for THIS track
   if (chipActive() && chip.buffers && song.tracks[ti] && chip.buffers[song.tracks[ti].name])
@@ -7478,6 +7510,7 @@ async function play(fromSec = 0, opts = {}) {
   openMaster();
   buildSchedule();
   stretchEnsureAll(); // takes at a non-native rate need their stretched copies (no-op at 100% / tape-style)
+  await sfWaitForSong(1500); // sampled voices still decoding: a short wait beats a triangle on beat 1
   playing = true;
   playOffset = fromSec;
   playT0 = audio.currentTime + 0.08; // small lead so the first notes are never in the past
