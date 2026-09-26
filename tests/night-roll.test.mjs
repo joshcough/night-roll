@@ -2694,13 +2694,22 @@ test("dictation: micJoin spaces Safari's pause-split segments and closes sentenc
   assert.equal(val(`micJoin(["typed already ", "Dictated next"])`), "typed already. Dictated next");
 });
 
-test("dictation: micStop detaches the recognizer before stop — Safari's late result can't refill a box Send just cleared; Ask box grows on input", () => {
-  run(`var _rec = {stopped: false, stop() { this.stopped = true; }, onresult: () => { throw new Error("late result landed"); }, onend: () => {}, onerror: () => {}};
+test("dictation: a tapped Stop keeps onresult for Safari's late transcript; Send/close discard it; Ask box grows on input", () => {
+  // iPad Safari delivers most of the words AFTER stop(): a plain stop must let them land
+  run(`var _rec = {stopped: false, stop() { this.stopped = true; }, onresult: () => {}, onend: () => {}, onerror: () => {}};
        micRec = _rec; micBtn = null; micStop();`);
   assert.equal(val(`_rec.stopped`), true, "recognizer stopped");
-  assert.equal(val(`_rec.onresult`), null, "result handler detached");
+  assert.equal(val(`typeof _rec.onresult`), "function", "result handler stays for the late transcript");
   assert.equal(val(`_rec.onend`), null, "end handler detached");
   assert.equal(val(`micRec`), null);
+  assert.equal(val(`micPrev === _rec`), true, "remembered so a new session can silence it");
+  // Send clears the box: its late result must NOT land
+  run(`var _rec2 = {stopped: false, stop() { this.stopped = true; }, onresult: () => {}, onend: () => {}, onerror: () => {}};
+       micRec = _rec2; micBtn = document.getElementById("askmic"); askMicOff();`);
+  assert.equal(val(`_rec2.stopped`), true);
+  assert.equal(val(`_rec2.onresult`), null, "Send discards the late result");
+  assert.equal(val(`micPrev === _rec`), true, "a discarded stop does not replace the remembered one");
+  run(`micPrev = null;`);
   run(`askinput.scrollHeight = 90; askinput.value = "a b c";`);
   app.dispatch("askinput", { type: "input" });
   assert.equal(val(`askinput.style.height`), "90px", "box sized to its text");

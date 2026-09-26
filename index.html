@@ -11111,12 +11111,17 @@ function setChordWidget(sym) {
 const SPEECH = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let micRec = null;
 const nmic = document.getElementById("nmic");
-function micStop() {
+let micPrev = null; // the last recognizer stopped, until its late result lands or a new one starts
+function micStop(discard) {
   if (micRec) {
-    // Safari delivers one more result AFTER stop(); with the handler still
-    // attached it wrote the transcript back into a box Send had just cleared
-    // (Josh, 2026-09-26). Detach first so a late result has nowhere to land.
-    micRec.onresult = micRec.onend = micRec.onerror = null;
+    // Safari delivers the final transcript AFTER stop() — on iPad that is
+    // where most of the words arrive, so a tapped ■ Stop (or Safari's own
+    // silence end) must leave onresult attached or the last sentence is
+    // lost (Josh, 2026-09-26: "the speaker button doesn't work"). Only a
+    // caller that clears or closes the box discards it: Send once had a
+    // late result refill the box it had just emptied.
+    micRec.onend = micRec.onerror = null;
+    if (discard) micRec.onresult = null; else micPrev = micRec;
     try { micRec.stop(); } catch (err) { /* already stopped */ }
   }
   micRec = null;
@@ -11142,7 +11147,8 @@ function micJoin(parts) {
   return out;
 }
 function micToggle(btn, textarea, statusFn) { // shared dictation: append into any box
-  if (micRec) { const same = micBtn === btn; micStop(); if (same) return; }
+  if (micRec) { const same = micBtn === btn; micStop(!same); if (same) return; } // same button = a tapped Stop: its words still land
+  if (micPrev) { micPrev.onresult = null; micPrev = null; } // a stale late result must not overwrite this session's base
   const base = textarea.value ? textarea.value.replace(/\s+$/, "") + " " : "";
   let finals = "";
   micRec = new SPEECH();
@@ -11180,7 +11186,7 @@ function getBeatPair(qid, sid) {
   return (+document.getElementById(qid).value || 1) + (+document.getElementById(sid).value || 0);
 }
 function openEditor(note, presetType) {
-  micStop();
+  micStop(true);
   editingNote = note || null;
   fillBarBeatSelects();
   const bt = barTicks();
@@ -11267,7 +11273,7 @@ document.getElementById("notebtn").addEventListener("click", () => {
   // overwrite. + Note adds; editing an existing one is a tap in ☰ Notes.
   openEditor(null);
 });
-document.getElementById("ncancel").addEventListener("click", () => { micStop(); editor.classList.remove("on"); });
+document.getElementById("ncancel").addEventListener("click", () => { micStop(true); editor.classList.remove("on"); });
 let rebarArmed = false; // two-tap confirmation for meter changes that move annotations
 // re-express every annotation's anchors under a new meter so they stay glued
 // to the MUSIC (bar.beat is a coordinate system; changing the meter re-bars)
@@ -11314,7 +11320,7 @@ document.getElementById("ntext").addEventListener("keydown", e => {
   }
 });
 document.getElementById("nsave").addEventListener("click", () => {
-  micStop();
+  micStop(true); // the text is read now; a late result would land in a closed editor
   const type = editorType();
   const text = document.getElementById("ntext").value.trim();
   if (type === "note" && !text) { document.getElementById("nstatus").textContent = "Note text is empty."; return; }
@@ -15314,7 +15320,7 @@ document.getElementById("askclear").addEventListener("click", async () => { // C
 });
 document.getElementById("asksend").addEventListener("click", askSend);
 document.getElementById("askstop").addEventListener("click", () => { if (askBusy) askBusy.abort(); });
-function askMicOff() { if (micBtn === document.getElementById("askmic")) micStop(); }
+function askMicOff() { if (micBtn === document.getElementById("askmic")) micStop(true); } // Send clears the box: a late result must not refill it
 function askGrow() { // size the box to its text (CSS caps it) and keep the end in view
   askinput.style.height = "auto";
   askinput.style.height = askinput.scrollHeight + "px";
@@ -16133,7 +16139,7 @@ if (typeof document.querySelectorAll === "function") { // vm harness stubs docum
 const SHEET_TOP = new MutationObserver(ms => {
   for (const m of ms) {
     if (!m.target.classList.contains("on")) { // closing: a live 🎤 inside must not keep transcribing
-      if (micBtn && m.target.contains(micBtn)) micStop();
+      if (micBtn && m.target.contains(micBtn)) micStop(true);
       continue;
     }
     const sh = m.target.querySelector(".sheet");
