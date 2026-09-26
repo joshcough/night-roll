@@ -1392,7 +1392,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
     "Tempo from this take", "Split at cursor", "Remove piece", "Map the bars to this take", "downbeat ▶",
-    "✦ Ask",
+    "✦ Ask", "✦ Fill",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -2625,4 +2625,97 @@ test("Ask: host consent — localhost never prompts, other hosts once", () => {
   assert.equal(val(`aiHostKind("http://127.0.0.1:1234")`), "local");
   assert.equal(val(`aiHostKind("https://mac.tail.ts.net")`), "other");
   assert.equal(val(`aiHostKind("not a url")`), "bad");
+});
+
+test("Bassist golden fixture: applyTake extraction is byte-stable (notes, velocities, order, rawNotes mirror, undo shape)", () => {
+  const golden = JSON.parse(readFileSync(new URL("./fixtures/bassist-golden.json", import.meta.url), "utf8"));
+  run(`
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000, sec: 0}], tracks: [
+      {name: "pulse1", notes: [{t: 0, d: 1920, p: 69, v: 80}, {t: 1920, d: 1920, p: 64, v: 80}, {t: 3840, d: 960, p: 67, v: 80}]},
+      {name: "bass", notes: [{t: 480, d: 240, p: 45, v: 70}, {t: 4000, d: 200, p: 40, v: 70}]}]};
+    songKey = "albums/compositions/nightroll/golden.mid"; keyRegions = []; previewSf = null; playCursor = 0;
+    song.rawNotes = [[{t: 0, d: 1920, p: 69, v: 80}, {t: 1920, d: 1920, p: 64, v: 80}, {t: 3840, d: 960, p: 67, v: 80}], [{t: 480, d: 240, p: 45, v: 70, ri: 0}, {t: 4000, d: 200, p: 40, v: 70, ri: 1}]];
+    song.tracks[1].notes[0].ri = 0; song.tracks[1].notes[1].ri = 1;
+    chopS = 0; selTrack = 0; editUndo = []; editRedo = []; dupPending = null;
+    rollnotes = deriveNoteTypes([
+      {b1: 1, q1: 1, b2: 1, q2: 4, text: "chord: A", added: true},
+      {b1: 2, q1: 1, b2: 2, q2: 4, text: "chord: E/G#", added: true},
+    ]).map(resolveNote);
+    finalizeNotes(); computeSongEnd();
+  `);
+  const cases = [
+    `{style: "chug", busy: 3, oct: 2, follow: "chords", targetTi: 1, fromBar: 1, toBar: 2}`,
+    `{style: "walk", busy: 4, oct: 1, follow: "t0", targetTi: 1, fromBar: 1, toBar: 3}`,
+    `{style: "riff", busy: 2, oct: 3, follow: "chords", targetTi: 1, fromBar: 2, toBar: 2}`,
+  ];
+  cases.forEach((c, i) => {
+    const r = val(`(() => { const k = bsGenerate(${1000 + i}, ${c});
+      const u = editUndo[editUndo.length - 1];
+      return {k, notes: song.tracks[1].notes.map(n => [n.t, n.d, n.p, n.v, !!n.gone, !!n.added, n.ri]), raw: song.rawNotes[1].map(n => [n.t, n.d, n.p, n.v, !!n.gone, !!n.added]),
+        undo: {kind: u.kind, kinds: u.entries.map(e => e.kind), counts: u.entries.map(e => e.items.length)}, undoLen: editUndo.length}; })()`);
+    assert.deepEqual(r, golden[i], "case " + i);
+    run(`editUndoPop()`);
+  });
+  run(`songKey = null; rollnotes = []; song.rawNotes = null;`);
+});
+
+test("Fill: parsePitch pins pitchName's octave (C4 = 60), double accidentals, MIDI numbers", () => {
+  assert.equal(val(`parsePitch("C4")`), 60);
+  assert.equal(val(`parsePitch("C3")`), 48);
+  assert.equal(val(`parsePitch("F#3")`), 54);
+  assert.equal(val(`parsePitch("Bb2")`), 46);
+  assert.equal(val(`parsePitch("F##3")`), 55);
+  assert.equal(val(`parsePitch("Cbb4")`), 58);
+  assert.equal(val(`parsePitch("60")`), 60);
+  assert.equal(val(`parsePitch("H4")`), null);
+  assert.equal(val(`parsePitch("C")`), null);
+  // round-trip through the app's own speller
+  for (const p of [36, 47, 61, 70, 84]) assert.equal(val(`parsePitch(pitchName(${p}, null))`), p);
+  assert.equal(val(`parsePitch(pitchName(70, -3))`), 70); // Bb spelled flat under Eb
+});
+
+test("Fill: validator — one failing fixture per rule; 6/8 beats and a chop map to the right ticks", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/fill-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 80}]}, {name: "pulse2", notes: []}]};
+    song.rawNotes = [[{t: 100, d: 480, p: 60, v: 80}], []]; song.tracks[0].notes[0].ri = 0;
+    chopS = 100; rollnotes = []; keyRegions = []; previewSf = null; declaredTs = [6, 8]; editUndo = []; editRedo = []; dupPending = null;
+    trackState = [{muted: false, solo: false}, {muted: false, solo: false}];
+    computeSongEnd();
+  `);
+  const sp = val(`(() => { const bt = barTicks(); return {t0: bt, t1: 3 * bt, from: 2, to: 3}; })()`);
+  const v = take => val(`askValidateTake(${JSON.stringify(take)}, ${JSON.stringify(sp)})`);
+  const good = {span: {fromBar: 2, toBar: 3}, notes: [{bar: 2, beat: 1, dur: 3, pitch: "C4"}, {bar: 3, beat: 4.5, dur: 1, pitch: "G3"}], why: "", question: ""};
+  const ok = v(good);
+  assert.ok(ok.hits, ok.error);
+  // 6/8: beat = eighth (240 ticks); bar 2 starts at 6*240 = 1440; beat 4.5 = 3.5 eighths in
+  assert.deepEqual(ok.hits.map(h => [h.t, h.d, h.p]), [[1440, 720, 60], [2880 + 840, 240, 55]]);
+  assert.deepEqual(ok.hits.map(h => h.v), [96, 78]); // downbeat 96; off-beat 78
+  assert.match(v({...good, notes: [{bar: 1, beat: 1, dur: 1, pitch: "C4"}]}).error, /bar must be within 2–3/);
+  assert.match(v({...good, notes: [{bar: 2, beat: 7, dur: 1, pitch: "C4"}]}).error, /beat must be ≥ 1 and < 7/);
+  assert.match(v({...good, notes: [{bar: 2, beat: 1, dur: 0, pitch: "C4"}]}).error, /dur must be > 0/);
+  assert.match(v({...good, notes: [{bar: 2, beat: 1, dur: 1, pitch: "Q4"}]}).error, /pitch must be like/);
+  assert.match(v({...good, notes: [{bar: 2, beat: 1, dur: 1, pitch: "C0"}]}).error, /out of range/);
+  assert.match(v({...good, notes: new Array(257).fill({bar: 2, beat: 1, dur: 1, pitch: "C4"})}).error, /256/);
+  assert.match(v({...good, notes: "nope"}).error, /array/);
+  assert.equal(v({...good, notes: [], question: "Stacked chords or one note at a time?"}).question, "Stacked chords or one note at a time?");
+  assert.match(val(`askValidateTake(askParseTake('<think>hmm</think> Sure! {"span":{"fromBar":2,"toBar":3},"notes":[],"why":"","question":""} done'), ${JSON.stringify(sp)})`).error || "", /^$/);
+  // applyTake with a chop: rawNotes mirror lands at + chopS; one group undo; the pulse1 note before the range survives
+  const r = val(`(() => { const k = applyTake(1, ${sp.t0}, ${sp.t1}, ${JSON.stringify(ok.hits)});
+    return {k, raw: song.rawNotes[1].map(n => n.t), undo: editUndo.length, kind: editUndo[0].kind, p1: song.tracks[0].notes.filter(n => !n.gone).length}; })()`);
+  assert.equal(r.k, 2);
+  assert.deepEqual(r.raw, [1540, 3820]);
+  assert.equal(r.undo, 1); assert.equal(r.kind, "group"); assert.equal(r.p1, 1);
+  run(`editUndoPop()`);
+  assert.equal(val(`song.tracks[1].notes.filter(n => !n.gone).length`), 0);
+  // target rule: pulse2 is empty in the span → default onto it; pulse1 has a note at 0 only → also empty in bars 2–3, and it comes first
+  assert.equal(val(`askDefaultTarget(${JSON.stringify(sp)})`), "0");
+  run(`song.tracks[0].notes.push({t: ${sp.t0}, d: 100, p: 60, v: 80});`);
+  assert.equal(val(`askDefaultTarget(${JSON.stringify(sp)})`), "1");
+  assert.match(val(`askTargetStatus(${JSON.stringify(sp)}, "0")`), /replaces 1 note on pulse1 in bars 2–3/);
+  run(`song.tracks[1].notes.push({t: ${sp.t0}, d: 100, p: 60, v: 80});`);
+  assert.equal(val(`askDefaultTarget(${JSON.stringify(sp)})`), "new");
+  run(`songKey = null; rollnotes = []; declaredTs = null; chopS = 0; song.rawNotes = null;`);
 });

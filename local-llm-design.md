@@ -1,6 +1,7 @@
 # In-app AI (local models) — design proposal
 
-Status: v4 2026-09-25, RULED by Josh (§10), not built. Advisor rounds
+Status: v4 2026-09-25, RULED by Josh (§10). P1a (chat) and P2a (Fill)
+SHIPPED the same day — see NIGHT-ROLL.md "✦ Ask / ✦ Fill". P0 probes, P3, P4 open. Advisor rounds
 1–4 applied (§11); round 4 verdict CONVERGED. Written before code so Josh can rule on it. Supersedes the
 parked `claude-chat` branch's Anthropic-only transport; that branch's
 sheet CSS/HTML, streaming renderer and tutor prompt are reused, its

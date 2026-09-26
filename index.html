@@ -774,6 +774,7 @@
   <button id="drumfillbtn" aria-label="Fill a drum pattern">🥁</button>
   <button id="drummerbtn" aria-label="Generate drums (Drummer)">🎲</button>
   <button id="bassistbtn" aria-label="Generate a bassline (Bassist)">🎸</button>
+  <button id="fillbtn" aria-label="Fill the range with the AI (✦ Fill)">✦</button>
   <button id="divbtn" aria-label="Divide selected notes into equal parts">➗</button>
   <button id="joinbtn" aria-label="Join selected notes">⁀</button>
   </span>
@@ -1226,7 +1227,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
-      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at. Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply, and the conversation is kept per song on this device (Clear chat wipes it). The model runs wherever you point it: File → Settings… → <b>AI model</b> takes the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional model id and API key; <b>Test</b> lists the server's models and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server). The first time you point it at a machine other than this one, it asks once before sending your notes there. What it never does: reveal a key you haven't set, write an annotation, or answer a question you didn't ask.</dd>
+      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply, and the conversation is kept per song on this device (Clear chat wipes it). The model runs wherever you point it: File → Settings… → <b>AI model</b> takes the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional model id and API key; <b>Test</b> lists the server's models and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server). The first time you point it at a machine other than this one, it asks once before sending your notes there. What it never does: reveal a key you haven't set, write an annotation, or answer a question you didn't ask.</dd>
       <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); a lasso'd note gets a white ring for exactly as long as it sounds — so your selection visibly fires as the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows — and SOUNDING notes get the same treatment during playback, so hitting ▶ lights the whole neck's worth of what's playing, not just the sounding octave. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
@@ -1273,6 +1274,7 @@
       <dt>Join</dt><dd>Select two or more notes on the same pitch and tap <b>⁀</b> — they merge into one note spanning first start to last end (each pitch merges separately, so a lassoed pair of chords joins into one longer chord).</dd>
       <dt>Unsaved dot</dt><dd>A gold <b>●</b> after the title means the song has edits that haven't been committed — it appears the moment you change anything and clears when Save &amp; Commit succeeds (the Save sheet's title says which state you're in, too).</dd>
       <dt>🎲 Drummer</dt><dd>The 🎲 beside 🥁 in the edit row (also Edit ▾ → Drummer…) generates a kit part for a bar range (prefilled from the ruler selection if one is armed, else the section under the cursor). It reads the structure YOU declared: a fixed backbeat skeleton (kick on 1, meter-aware snares) that seeds never move, hats whose loudness always stays under the snare, kicks that follow the bass track's offbeats, accents on chord-change downbeats, a snare on the bass's LONG notes (the agogic accent), fills from a small vocabulary before section boundaries and the loop target (crash on the arrival), and SILENCE in breaks — a bar where only the bass plays, or a section labeled "break", gets no drums at all. Each take REPLACES the range's kit notes and is exactly one ⟲ step, so your hand-placed drums come back with one undo. 🎲 again rerolls; the take chips replay any earlier take exactly (seed, energy, and range all remembered). Five knobs, Logic's split: <b>busy</b> (1–5) is density — hat subdivisions, ghosts, how eagerly kicks chase the bass; <b>hard</b> (1–5) is loudness — one uniform velocity shift across the whole kit, hats never dropping back below audible; <b>fills</b> (off–5) alone decides how often fills fire and how big (1–2 the quiet vocabulary, 4–5 runs/tom-drops/the full-bar buildup); <b>follow</b> picks what the kick listens to — <b>any track, by name</b> (its offbeat onsets and long notes, probabilistic; defaults to the detected bass) · <b>chords</b> (a kick exactly on every DECLARED chord change, deterministic, capped 4/bar) · <b>off</b> (skeleton and fills only); <b>feel</b> sets the backbeat rate — <b>half</b> (one big snare mid-bar, thinner hats: the slow-heavy read) · <b>double</b> (kick every beat, snare every offbeat 8th: the skank/D-beat read — bass-follow stands down, every slot is owned). The <b>parts</b> chips scope a reroll — kick, snare, hats, and <b>fills</b> (a role, not a pitch: the whole fill-and-crash layer at your section boundaries, snare runs and tom drops included). Toggle any combination: all four = the normal full roll; "I love these snares, reroll just the kick" = tap snare and hats and fills off; <b>fills alone</b> rerolls just the boundary bars (with fills set to off, that STRIPS the fills and lays plain groove — a de-fill). With the fills chip off the fills knob dims (nothing to control) and kept pieces stay byte-identical, hats capping under your real snares. Take chips now show their recipe (busy/hard/fills, ½ or 2× for feel, part initials when scoped) and still replay exactly. Layout: busy and hard are 1–5 segment rows (how much / how loud), fills off–5 and feel sit below, follow and parts under those — the long explanation you used to scroll past lives here in Help now. Two more rules: <b>sections sharing an EXACT label share their groove</b> — label two spans "A1" and the drums restate bar-for-bar (fills and crashes still vary: a fill is commentary on what comes next), so the same-label-same-color convention now also means same-drums; and at fills 4–5 the vocabulary opens its <b>metal tier</b> — a 16th-rate tom run down the kit, a full-bar crash-in kit fall, and a double-kick burst — weighted so big fills dominate the top of the knob.</dd>
+      <dt>✦ Fill</dt><dd>Stuck on a few bars? The ✦ beside 🎸 (behind ⋯, or Edit ▾ → Fill with AI…) opens the Ask sheet with a <b>fill onto</b> row: the range is the ruler selection if one is armed, else the bars in view, and the target defaults to a NEW track unless an existing track is empty there — it never silently overwrites your notes; the status line says exactly what a take replaces (by onset; a note sustaining in from before the range survives). Type what you want ("chords under the melody", "a walking line into the V", or nothing — it will fit something), then tap <b>✦ Fill</b> instead of Send. The model answers in the ruler's own bars and beats, the app checks every note (inside the range, a real pitch, in a playable register) and sends bad takes back for a fix up to three times, then the notes land IMMEDIATELY on the target track as one ⟲ step — exactly the Drummer's and Bassist's contract: play it, and one undo brings back what was there. Take chips (up to 8, this session) re-apply any earlier try; Fill again for another. If your ask leaves it unsure — stacked chords or one note at a time? — it asks instead of guessing; answer with Send, then Fill again. Its one-line reasoning stays behind a <b>why?</b> tap (naming what it did is your job first). Only on your own songs; never drums (that's the Drummer's); nothing it writes becomes an annotation.</dd>
       <dt>Edit menu</dt><dd>An <b>Edit ▾</b> menu appears beside File on songs you can edit: ⟲ Undo, ⟳ Redo, ⧉ Copy, ✂ Cut, 📋 Paste at cursor, 📋 Paste to… (another track, another octave), 🗑 Delete, 🔪 Split, ⇅ Transpose (chromatic, octave, and in-key moves live in its sheet), ♫ Insert chord, ⇄ Move to track, 🥁 Drum pattern, 🎲 Drummer, ➗ Divide, ⁀ Join — the same actions as the edit-row icons, labeled. The row itself keeps the heavy-use tools up front and folds the rest behind <b>⋯</b> (tap to expand; the choice sticks per device) — so pencil mode's duration picker fits on one iPad row again. Redo replays what Undo took back; making any new edit clears the Redo history (standard editor behavior).</dd>
       <dt>Velocity</dt><dd>The <b>vol slider</b> in the edit row (1–127, the number beside it shows the value) sets the pencil's loudness — and with notes selected in Select mode, dragging it adjusts ALL of them live, brightness tracking the drag, committing one ⟲ step when you let go. Tap a selection (or a single note) and the slider jumps to its current velocity — and when every selected note shares one velocity, the selection readout says so ("… 6 notes · vel 80").</dd>
       <dt>Delete</dt><dd>Tap <b>🗑</b> in the edit row — every selected note goes at once. Delete key does the same.</dd>
@@ -1342,6 +1344,7 @@
   <button class="fitem" id="emFill">🥁  Drum pattern…</button>
   <button class="fitem" id="emDrummer">🎲  Drummer…</button>
   <button class="fitem" id="emBassist">🎸  Bassist…</button>
+  <button class="fitem" id="emAskFill">✦  Fill with AI…</button>
 </div>
 
 <div id="filesheet">
@@ -1535,15 +1538,22 @@
   <div class="sheet ask">
     <h2>ASK</h2>
     <div id="asklog"></div>
+    <div class="chiprow" id="asktakes"></div>
     <div class="row" id="askspanrow">
       <span class="lbl" id="askspan">bars in view</span>
       <span class="status" id="askmodel" style="margin-left:auto"></span>
       <button id="askgear" aria-label="AI settings" style="min-height:32px;padding:4px 10px">⚙</button>
     </div>
+    <div class="row" id="asktargetrow" style="display:none">
+      <span class="lbl">fill onto</span>
+      <select id="asktarget" aria-label="Target track for Fill"></select>
+      <span class="status" id="asktargetstatus" style="flex:1"></span>
+    </div>
     <div class="row">
       <textarea id="askinput" placeholder="Ask about what you're looking at…" aria-label="Your question"></textarea>
       <button id="askmic">🎤 Speak</button>
       <button class="primary" id="asksend">Send</button>
+      <button id="askfill" style="display:none" aria-label="Ask the AI to write notes into the range">✦ Fill</button>
     </div>
     <div class="row">
       <span class="status" id="askstatus" style="flex:1"></span>
@@ -11768,6 +11778,7 @@ document.getElementById("editsheetbtn").addEventListener("click", e => {
   proxy("emFill", () => document.getElementById("drumfillbtn").click());
   proxy("emDrummer", () => openDrummer());
   proxy("emBassist", () => openBassist());
+  proxy("emAskFill", () => openFill());
 }
 document.getElementById("filesheetbtn").addEventListener("click", e => {
   if (filesheet.classList.contains("on")) { closeFileMenus(); return; }
@@ -13620,17 +13631,6 @@ function bsGenerate(seed, opts) { // the Bassist: strictly monophonic, chord-dri
   srcOnsets.sort((a, b) => a - b);
   const srcSet = new Set(srcOnsets.map(t => Math.round(t / (qt / 4)) * (qt / 4)));
   const place = (pc, o) => Math.max(24, Math.min(60, 12 * (o + 1) + pc));
-  const tr = song.tracks[targetTi], isAdd = !isComposition();
-  // idempotent replace: erase the target's notes in range (ONE group undo below)
-  const erased = [];
-  tr.notes.forEach((n, ni) => {
-    if (!n.gone && n.t >= t0 && n.t < t1) {
-      n.gone = true;
-      const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[targetTi][n.ri];
-      if (rn) rn.gone = true;
-      erased.push({ti: targetTi, ni});
-    }
-  });
   const hits = [];
   const put = (t, p, v, d) => {
     if (t < t0 || t >= t1) return;
@@ -13730,11 +13730,33 @@ function bsGenerate(seed, opts) { // the Bassist: strictly monophonic, chord-dri
   }
   hits.sort((a, b) => a.t - b.t);
   for (let i = 0; i < hits.length - 1; i++) hits[i].d = Math.min(hits[i].d, hits[i + 1].t - hits[i].t); // strict mono
+  const n = applyTake(targetTi, t0, t1, hits);
+  if (inferred) setInfo("no chords declared — harmony sketched from your melody (internal only; different seeds read it differently)");
+  return n;
+}
+// The generators' shared apply: replace-in-range as ONE group undo. Erase is
+// by ONSET (a note sustaining in from before the range survives), via the
+// `gone` flag — never a splice, so `ni` indices stay stable for undo — with
+// the rawNotes mirror through `ri`; adds mirror into rawNotes at + chopS.
+// hits: [{t, d, p, v}] in display ticks. Extracted from the Bassist
+// 2026-09-25 for ✦ Fill; tests/fixtures/bassist-golden.json pins its output.
+function applyTake(targetTi, t0, t1, hits) {
+  const tr = song.tracks[targetTi], isAdd = !isComposition();
+  const erased = [];
+  tr.notes.forEach((n, ni) => {
+    if (!n.gone && n.t >= t0 && n.t < t1) {
+      n.gone = true;
+      const rn = song.rawNotes && n.ri !== undefined && song.rawNotes[targetTi][n.ri];
+      if (rn) rn.gone = true;
+      erased.push({ti: targetTi, ni});
+    }
+  });
   const added = [];
   for (const h of hits) {
     if (h.d <= 0) continue;
-    tr.notes.push({t: h.t, d: h.d, p: h.p, v: h.v, added: isAdd});
-    if (song.rawNotes) song.rawNotes[targetTi].push({t: h.t + chopS, d: h.d, p: h.p, v: h.v, added: isAdd});
+    const v = Math.max(1, Math.min(127, Math.round(h.v))), d = Math.max(20, Math.round(h.d)), t = Math.round(h.t);
+    tr.notes.push({t, d, p: h.p, v, added: isAdd});
+    if (song.rawNotes) song.rawNotes[targetTi].push({t: t + chopS, d, p: h.p, v, added: isAdd});
     added.push({ti: targetTi, ni: tr.notes.length - 1});
   }
   pushUndo({kind: "group", entries: [{kind: "eraseBatch", items: erased}, {kind: "addBatch", items: added}]});
@@ -13742,7 +13764,6 @@ function bsGenerate(seed, opts) { // the Bassist: strictly monophonic, chord-dri
   computeSongEnd();
   if (viewMode === "score") buildScoreModel();
   draw();
-  if (inferred) setInfo("no chords declared — harmony sketched from your melody (internal only; different seeds read it differently)");
   return added.length;
 }
 let bsTakes = [], bsActive = -1;
@@ -14600,7 +14621,8 @@ function askSpan() {
     t1 = Math.ceil(Math.min(end, (view.x + w - RULER_W) / ppt) / bt) * bt;
     src = "in view";
   }
-  t0 = Math.max(0, Math.min(t0, end - bt)); t1 = Math.max(t0 + bt, Math.min(t1, end));
+  if (src === "in view") { t0 = Math.max(0, Math.min(t0, end - bt)); t1 = Math.min(t1, end); } // a ruler selection may reach past the song's end (a fill can extend it)
+  t1 = Math.max(t0 + bt, t1);
   return {t0, t1, from: Math.floor(t0 / bt) + 1, to: Math.ceil(t1 / bt), src};
 }
 function askSpanLabel(sp) { return "bars " + sp.from + "–" + sp.to + " (" + sp.src + ")"; }
@@ -14780,6 +14802,8 @@ function openAsk() {
   if (!song) return;
   askRender();
   askRefresh();
+  askRefreshTarget();
+  askinput.placeholder = "Ask about what you're looking at…";
   asksheet.classList.add("on");
   askinput.focus();
 }
@@ -14796,6 +14820,234 @@ document.getElementById("askmic").addEventListener("click", () => {
 askinput.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askSend(); }
 });
+
+// ---- ✦ Fill: the generator half, under the Bassist's shipped contract.
+// The model writes notes as JSON in the ruler's frame; the TARGET is chosen
+// here (picker, resolved at Send — the model has no track field); a valid
+// take applies at once through applyTake (one ⟲ restores what was there);
+// take chips re-apply earlier tries. Only where the Bassist runs:
+// editable songs, no meter change in range, never drums.
+const ASK_TAKE_SCHEMA = {
+  type: "object", additionalProperties: false,
+  properties: {
+    span: {type: "object", additionalProperties: false, properties: {fromBar: {type: "integer"}, toBar: {type: "integer"}}, required: ["fromBar", "toBar"]},
+    notes: {type: "array", items: {type: "object", additionalProperties: false,
+      properties: {bar: {type: "integer"}, beat: {type: "number"}, dur: {type: "number"}, pitch: {type: "string"}},
+      required: ["bar", "beat", "dur", "pitch"]}},
+    why: {type: "string"},
+    question: {type: "string"},
+  },
+  required: ["span", "notes", "why", "question"],
+};
+let askTakes = [], askTakeActive = -1; // session-ephemeral: the validated take JSON is the replay, there is no seed
+let askSchemaMode = {};                // per URL: "json_schema" → "json_object" → "none" as the server allows
+function parsePitch(s) { // letter, up to two ASCII accidentals, octave — pitchName's convention (C4 = 60); or a MIDI number
+  if (typeof s === "number") return Number.isInteger(s) ? s : null;
+  const t = String(s).trim();
+  if (/^\d{1,3}$/.test(t)) return parseInt(t, 10);
+  const m = t.match(/^([A-Ga-g])(##|bb|#|b|♯|♭|x)?(-?\d)$/);
+  if (!m) return null;
+  const acc = {"": 0, "#": 1, "♯": 1, "##": 2, x: 2, b: -1, "♭": -1, bb: -2}[m[2] || ""];
+  return LETTER_PC[m[1].toUpperCase()] + acc + (parseInt(m[3], 10) + 1) * 12;
+}
+function askTakeVel(t, bs) { return Math.abs(((t - bs) / beatTicks()) % 1) < 0.01 ? (Math.abs(t - bs) < 5 ? 96 : 88) : 78; } // the Bassist's metric rule, no jitter
+function askValidateTake(take, sp) { // → {hits} in display ticks, or {error}
+  if (!take || typeof take !== "object") return {error: "not a JSON object"};
+  if (typeof take.question === "string" && take.question.trim() && !(take.notes || []).length) return {question: take.question.trim()};
+  if (!Array.isArray(take.notes)) return {error: "notes must be an array"};
+  if (take.notes.length > 256) return {error: "more than 256 notes"};
+  const bt = barTicks(), qt = beatTicks(), beats = beatsPerBarDisp();
+  const hits = [];
+  for (const [i, n] of take.notes.entries()) {
+    const where = "note " + (i + 1) + " (" + JSON.stringify(n) + ")";
+    if (!n || typeof n !== "object") return {error: where + ": not an object"};
+    if (!Number.isInteger(n.bar) || n.bar < sp.from || n.bar > sp.to) return {error: where + ": bar must be within " + sp.from + "–" + sp.to};
+    if (typeof n.beat !== "number" || !(n.beat >= 1 && n.beat < beats + 1)) return {error: where + ": beat must be ≥ 1 and < " + (beats + 1) + " (" + beats + " beats per bar)"};
+    if (typeof n.dur !== "number" || !(n.dur > 0)) return {error: where + ": dur must be > 0 (in beats)"};
+    const p = parsePitch(n.pitch);
+    if (p === null) return {error: where + ": pitch must be like C4, F#3, Bb2 (C4 = middle C)"};
+    if (p < 24 || p > 108) return {error: where + ": pitch out of range (C1–C8)"};
+    const bs = (n.bar - 1) * bt, t = bs + (n.beat - 1) * qt;
+    if (t < sp.t0 || t >= sp.t1) return {error: where + ": starts outside the range"};
+    hits.push({t: Math.round(t), d: Math.max(20, Math.round(n.dur * qt)), p, v: askTakeVel(t, bs)});
+  }
+  hits.sort((a, b) => a.t - b.t || a.p - b.p);
+  return {hits};
+}
+function askParseTake(text) { // JSON only, but small models decorate: take the outermost {...}
+  const raw = text.replace(/<think>[\s\S]*?<\/think>/g, "");
+  const a = raw.indexOf("{"), b = raw.lastIndexOf("}");
+  if (a < 0 || b <= a) return null;
+  try { return JSON.parse(raw.slice(a, b + 1)); } catch (err) { return null; }
+}
+function askTargetOptions() { return song.tracks.map((tr, ti) => ({ti, name: tr.name || "track " + (ti + 1)})).filter(o => !trackIsDrums(o.ti)); }
+function askDefaultTarget(sp) { // the Bassist's rule: a NEW track unless an existing one is empty in the span
+  for (const o of askTargetOptions())
+    if (!song.tracks[o.ti].notes.some(n => !n.gone && n.t < sp.t1 && n.t + n.d > sp.t0)) return String(o.ti);
+  return "new";
+}
+function askTargetStatus(sp, tgt) { // exactly what a take replaces, by onset; sustaining notes named
+  if (tgt === "new") return "onto a new track — replaces nothing";
+  const ti = parseInt(tgt, 10), tr = song.tracks[ti];
+  if (!tr) return "";
+  let rep = 0, sus = 0;
+  tr.notes.forEach(n => { if (n.gone) return; if (n.t >= sp.t0 && n.t < sp.t1) rep++; else if (n.t < sp.t0 && n.t + n.d > sp.t0) sus++; });
+  return "replaces " + rep + " note" + (rep === 1 ? "" : "s") + " on " + (tr.name || "track " + (ti + 1)) + " in bars " + sp.from + "–" + sp.to +
+         (sus ? "; " + sus + " note" + (sus === 1 ? "" : "s") + " from before bar " + sp.from + " sustain" + (sus === 1 ? "s" : "") + " into it" : "");
+}
+function askFillable() { // the Bassist's gates, with the reason
+  if (!song) return "no song";
+  if (!editableSong()) return "Fill works on your own songs — captures are locked (asking is fine)";
+  return null;
+}
+function askRefreshTarget() {
+  const row = document.getElementById("asktargetrow");
+  const gate = askFillable();
+  row.style.display = gate ? "none" : "";
+  document.getElementById("askfill").style.display = gate ? "none" : "";
+  if (gate) return;
+  const sp = askSpan();
+  const sel = document.getElementById("asktarget");
+  const prev = sel.value;
+  sel.innerHTML = "";
+  for (const o of askTargetOptions()) { const e = document.createElement("option"); e.value = String(o.ti); e.textContent = o.name; sel.appendChild(e); }
+  const nw = document.createElement("option"); nw.value = "new"; nw.textContent = "＋ new track"; sel.appendChild(nw);
+  sel.value = [...sel.options].some(o => o.value === prev) && prev ? prev : askDefaultTarget(sp);
+  document.getElementById("asktargetstatus").textContent = askTargetStatus(sp, sel.value);
+  askRenderTakes();
+}
+function askRenderTakes() {
+  const row = document.getElementById("asktakes");
+  row.innerHTML = "";
+  askTakes.forEach((tk, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = "take " + (i + 1) + " · " + tk.hits.length + " notes";
+    b.classList.toggle("active", i === askTakeActive);
+    b.addEventListener("click", () => {
+      if (!song.tracks[tk.ti]) { askstatus.textContent = "that take's track is gone"; return; }
+      applyTake(tk.ti, tk.sp.t0, tk.sp.t1, tk.hits);
+      askTakeActive = i;
+      askRenderTakes();
+      setInfo("take " + (i + 1) + " — " + tk.hits.length + " notes (one ⟲ brings the previous back)");
+    });
+    row.appendChild(b);
+  });
+}
+function askTakePrompt(sp, tgtLabel, existing) {
+  const ts = effTs();
+  return ASK_SYS + `
+
+TAKE MODE — the user wants you to WRITE notes into bars ${sp.from}–${sp.to} on the track "${tgtLabel}" (${existing}). Reply with JSON only, no prose, exactly this shape:
+{"span":{"fromBar":${sp.from},"toBar":${sp.to}},"notes":[{"bar":${sp.from},"beat":1,"dur":2,"pitch":"C3"}],"why":"one sentence","question":""}
+bar = the ruler's bar number (${sp.from}..${sp.to}). beat = the counted beat of the declared meter ${ts[0]}/${ts[1]} (1 = the downbeat, ${ts[0]} beats per bar; decimals subdivide: 2.5 is halfway between beats 2 and 3). dur = length in the same beat unit. pitch = letter, optional # or b, octave — C4 is middle C (MIDI 60), exactly as the notes in the context are written. Stay in a sensible register for the surrounding tracks and read the existing notes in the context so your notes fit them. NES channels play one note at a time; the user sometimes wants stacked chords on one track anyway. If it is not clear from the ask and the existing material whether to stack notes or write one at a time — or anything else essential is unclear — return "notes": [] and put ONE short question in "question". Otherwise leave "question" empty. "why" is one sentence on what you tried; the user sees it only on request.`;
+}
+async function askFill() {
+  const gate = askFillable();
+  if (gate) { askstatus.textContent = gate; return; }
+  if (askBusy) return;
+  if (!(await aiHostOk(aiUrl()))) { askstatus.textContent = "not sent"; return; }
+  const sp = askSpan();
+  if (rollnotes.some(n => n.tsdir && n.start > sp.t0 && n.start < sp.t1)) { askstatus.textContent = "the range crosses a meter change — fill each meter's bars separately"; return; }
+  askSpanFrozen = sp;
+  document.getElementById("askspan").textContent = askSpanLabel(sp);
+  const tgt = document.getElementById("asktarget").value;
+  const tgtLabel = tgt === "new" ? "new track" : (song.tracks[parseInt(tgt, 10)].name || "track " + (parseInt(tgt, 10) + 1));
+  const existing = tgt === "new" ? "empty" : askTargetStatus(sp, tgt);
+  const text = askinput.value.trim() || "Fill these bars with something that fits.";
+  askinput.value = "";
+  askBubble("user", "✦ " + text + "  [" + askSpanLabel(sp) + " → " + tgtLabel + "]");
+  const live = askBubble("ai", "…");
+  const budget = askBudget();
+  const msgs = askLoad();
+  const ctx = askContext(sp, budget);
+  const system = askTakePrompt(sp, tgtLabel, existing);
+  const ctl = typeof AbortController === "function" ? new AbortController() : {abort() {}, signal: undefined};
+  askBusy = ctl;
+  document.getElementById("askstop").style.display = "";
+  document.getElementById("asksend").disabled = document.getElementById("askfill").disabled = true;
+  const url = aiUrl();
+  const turns = askBuildMessages(msgs, text, ctx, budget);
+  let result = null, lastErr = "";
+  try {
+    for (let attempt = 1; attempt <= 3 && !result; attempt++) {
+      askstatus.textContent = (attempt === 1 ? "writing… " : "fixing the take (" + attempt + "/3)… ") + "(~" + Math.round(askEstimate(system, turns) / 100) / 10 + "k of " + Math.round(budget.win / 1000) + "k)";
+      const mode = askSchemaMode[url] || "json_schema";
+      let raw;
+      try {
+        raw = await aiRemote().chat({system, messages: turns, signal: ctl.signal, onDelta: r => askShowThinking(live, r.length > 400 ? r.slice(0, 400) + "…" : r),
+                                     schema: mode === "json_schema" ? ASK_TAKE_SCHEMA : mode === "json_object" ? {} : null});
+      } catch (err) {
+        if (err && err.name === "AbortError") throw err;
+        if (/HTTP 4\d\d/.test(err.message) && mode !== "none") { // the server rejects structured output: degrade and retry the same attempt
+          askSchemaMode[url] = mode === "json_schema" ? "json_object" : "none";
+          attempt--; continue;
+        }
+        throw err;
+      }
+      const take = askParseTake(raw);
+      const v = take ? askValidateTake(take, sp) : {error: "the reply was not JSON"};
+      if (v.question) { result = {question: v.question}; break; }
+      if (v.hits) { result = {hits: v.hits, why: (take.why || "").trim()}; break; }
+      lastErr = v.error;
+      turns.push({role: "assistant", content: raw.slice(0, 2000)}, {role: "user", content: "That take was rejected: " + v.error + ". Reply again with corrected JSON only."});
+    }
+    if (!result) throw new Error("three takes in a row were unusable — last problem: " + lastErr);
+    if (result.question) {
+      live.textContent = result.question;
+      msgs.push({role: "user", content: text}, {role: "assistant", content: result.question});
+      askSave(msgs);
+      askstatus.textContent = "it needs an answer — reply, then Fill again";
+      return;
+    }
+    // apply: the Bassist's exact sequence, a created track folded into the same ⟲ step
+    let ti = tgt;
+    const madeTrack = ti === "new", undoLen = editUndo.length;
+    if (madeTrack) { ti = addTrackUndoable({name: "fill", notes: []}); saveDraft(); renderTrackbar(); }
+    else ti = parseInt(ti, 10);
+    const k = applyTake(ti, sp.t0, sp.t1, result.hits);
+    if (madeTrack) undoTrackAdd(ti, undoLen);
+    askTakes.push({sp, ti, hits: result.hits, why: result.why});
+    if (askTakes.length > 8) askTakes.shift();
+    askTakeActive = askTakes.length - 1;
+    const summary = "✓ " + k + " note" + (k === 1 ? "" : "s") + " onto " + (song.tracks[ti].name || "track " + (ti + 1)) + ", bars " + sp.from + "–" + sp.to + " — one ⟲ restores what was there";
+    live.textContent = summary;
+    if (result.why) { // his ruling: the reasoning stays behind a tap
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = "why?"; b.style.cssText = "margin-left:8px;min-height:28px;padding:2px 8px;font-size:12px";
+      b.addEventListener("click", () => { b.replaceWith(document.createTextNode("\n" + result.why)); });
+      live.appendChild(b);
+    }
+    msgs.push({role: "user", content: text + " [fill bars " + sp.from + "–" + sp.to + "]"}, {role: "assistant", content: "(wrote " + k + " notes into bars " + sp.from + "–" + sp.to + " on " + (song.tracks[ti].name || "track " + (ti + 1)) + ")"});
+    askSave(msgs);
+    askstatus.textContent = "";
+    setInfo("✦ take " + askTakes.length + ": " + k + " notes in bars " + sp.from + "–" + sp.to + " (one ⟲ restores what was there)");
+    askRefreshTarget();
+    document.getElementById("asktarget").value = String(ti);
+    document.getElementById("asktargetstatus").textContent = askTargetStatus(sp, String(ti));
+  } catch (err) {
+    const aborted = err && err.name === "AbortError";
+    live.classList.add("err");
+    live.textContent = "⚠ " + (aborted ? "stopped" : err.message);
+    askstatus.textContent = "";
+  } finally {
+    askBusy = null;
+    document.getElementById("askstop").style.display = "none";
+    document.getElementById("asksend").disabled = document.getElementById("askfill").disabled = false;
+  }
+}
+document.getElementById("askfill").addEventListener("click", askFill);
+document.getElementById("asktarget").addEventListener("change", () => {
+  document.getElementById("asktargetstatus").textContent = askTargetStatus(askSpan(), document.getElementById("asktarget").value);
+});
+function openFill() { // the edit-row / Edit ▾ entry: the same sheet, target row in focus
+  const gate = askFillable();
+  if (gate) { setInfo(gate); return; }
+  openAsk();
+  askinput.placeholder = "What should go here? (e.g. chords under the melody, a walking line to the V…)";
+  askinput.focus();
+}
+document.getElementById("fillbtn").addEventListener("click", openFill);
 
 // ---------------------------------------------------- data-location config
 // Josh's design (2026-08-17, advisor-reviewed): the app is CONFIGURED with

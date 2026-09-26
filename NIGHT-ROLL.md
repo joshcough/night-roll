@@ -924,7 +924,7 @@ needed. The folder's layout mirrors the repo exactly
 autosave-on-edit in folder mode (explicit Save kept for parity and so
 Revert still means something), copying the FF1 corpus into a folder.
 
-## ✦ Ask — in-app AI (P1a shipped 2026-09-25; design: local-llm-design.md)
+## ✦ Ask / ✦ Fill — in-app AI (P1a + P2a shipped 2026-09-25; design: local-llm-design.md)
 
 The tutor half of the AI plan. `✦ Ask` in the top bar (hidden in listener
 mode) opens `#asksheet`: a per-song conversation with any
@@ -986,11 +986,46 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
 - **Measured (2026-09-25, Mac, Qwen 3.6 35B-A3B via LM Studio):** 17 bars
   of Overworld = 3.8k prompt tokens; reply 39 s of which ~34 s hidden
   thinking at 60 tok/s. Slow but usable; a no-think switch is a candidate.
-- **Not yet:** generation (P2a — the Bassist contract via a shared
-  `applyTake`), in-browser WebLLM (P3), the iPad route (P4; needs
-  Tailscale), the P0 probes on Safari/iPad. Tests: SSE parser, 6/8 frame +
-  speller + key line, storage caps + quota, host classing, FEATURES
-  keyword `✦ Ask`.
+- **✦ Fill (P2a) — the generator half, under the Bassist's contract.**
+  Entries: `#fillbtn` (✦ beside 🎸, behind ⋯) and Edit ▾ → Fill with
+  AI… (`emAskFill`) open the same sheet via `openFill()`; on editable
+  songs the sheet shows a **target row** (`#asktarget` picker + status)
+  and a `✦ Fill` button beside Send. Gates = the Bassist's:
+  `editableSong()`, meter change in range, never drums (drum tracks are
+  not offered). **The target is chosen in the UI at Send** — the model
+  has no track field; `askDefaultTarget` = the first melodic track empty
+  in the span, else new; `askTargetStatus` names what a take replaces by
+  onset and how many notes sustain in from before the span. The span is
+  `askSpan()` (a ruler selection may reach past the song's end so a fill
+  can extend an empty song). `askTakePrompt` appends TAKE MODE to the
+  system prompt: JSON only, the ruler's bars/beats, pitch as
+  letter+accidental+octave (C4 = 60), and the ruling on stacked vs
+  one-at-a-time — if unclear, `notes: []` + `question`. Structured
+  output: `ASK_TAKE_SCHEMA` via `response_format: json_schema` (LM Studio
+  accepted it first try); on an HTTP 4xx the adapter degrades per URL to
+  `json_object`, then none (`askSchemaMode`). `askParseTake` takes the
+  outermost `{…}` (thinking stripped); `askValidateTake` returns hits in
+  display ticks or the first error (bar in span, 1 ≤ beat < beats+1,
+  dur > 0, `parsePitch` — pinned to `pitchName`'s octave, double
+  accidentals accepted — window 24–108, ≤ 256 notes, onset inside the
+  span); velocity = the Bassist's metric rule without bonus/jitter
+  (`askTakeVel`: 96/88/78). A rejected take goes back to the model as the
+  next user turn, up to three attempts. A valid take applies at once
+  through `applyTake(ti, t0, t1, hits)` — extracted from `bsGenerate`
+  and pinned by `tests/fixtures/bassist-golden.json` (three seeds → full
+  note lists incl. velocities, rawNotes mirror, undo shape) — with a new
+  track folded into the same ⟲ via `addTrackUndoable` + `undoTrackAdd`.
+  Take chips (`askTakes`, cap 8, session-ephemeral) store the validated
+  hits and re-apply on tap. The `why` line is shown only behind a "why?"
+  button (Josh's ruling). History records a one-line summary, never the
+  JSON. Measured: a 4-bar ask on an empty scratch song → 4 notes in ~65 s
+  (all thinking; the JSON itself is ~100 tokens).
+- **Not yet:** in-browser WebLLM (P3), the iPad route (P4; needs
+  Tailscale), the P0 probes on Safari/iPad, a no-think switch. Tests: SSE
+  parser, 6/8 frame + speller + key line, storage caps + quota, host
+  classing, `parsePitch`, validator fixtures (one per rule, 6/8 + chop),
+  `applyTake` undo/mirror, target default rule, Bassist golden fixture,
+  FEATURES keywords `✦ Ask` / `✦ Fill`.
 
 ## Audio tracks — recordings as tracks (branch `audio-tracks`, 2026-09-15)
 

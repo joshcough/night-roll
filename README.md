@@ -21,8 +21,9 @@ is deployment. Built for iPad-in-bed ergonomics, works anywhere.
   annotations, and the bars in view, talking to any OpenAI-compatible model
   server you point it at (LM Studio or Ollama on your own machine, so
   nothing leaves your house). House rules: hints before answers, never
-  names a key you haven't set. Generation ("fill in a few chords here")
-  is next; design in `local-llm-design.md`.
+  names a key you haven't set. On your own songs, **✦ Fill** asks it to
+  write notes into a range — validated, applied as one undo step exactly
+  like the Bassist. Design in `local-llm-design.md`.
 - **Composing** — it grew into a small DAW (2026-08): pencil/drag note entry
   on a 16th/triplet grid, multi-note selection editing (move, resize, split,
   join, velocity), chord & progression insertion, a drum kit with its own
