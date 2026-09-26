@@ -309,10 +309,11 @@ open one): a ♪ music line, a ✎ count then one row per annotation with
 its ✕ (`discardPending`: drops that never-synced note from this device),
 a ✦ chat count. 12px in `--text`; the whole sheet scrolls (the old 38vh
 inner scroller is gone). The primary reads "⇪ Commit song" ("⇪ Save
-song" in folder mode) in both modes; the line under the buttons names
-the files and the destination (`<base>.mid + .rollnotes.json +
-.notes.txt + .ask.md → owner/repo`; annotations + chat for analyzed
-songs) and the token how-to appears only with no token. "Commit all (N)"
+song" in folder mode) in both modes; the status line under the buttons
+is EMPTY until it has progress, a result, or a missing prerequisite to
+report (no song / local file / no token) — Josh dropped the
+what-ships include-line the same day ("the buttons are clear").
+"Commit all (N)"
 shows only when N > 1 and still ships ANNOTATIONS only (one PUT per
 file; per-song ✓/✗ status; meter for foreign songs comes from a
 localStorage stash written on load) — music and chat commit from the
