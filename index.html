@@ -11676,7 +11676,7 @@ function renderViewMenu() { // ✓ = visible; labels never shift (fixed 2-char s
   };
   const base = {vwScore: "𝄞  Score view", vwListener: "📻  Listener mode", vwTracksView: "▤  Tracks view", vwTracks: "◂  Tracks", vwEdit: "🛠  Edit toolbar",
                 vwFooter: "▦  Bottom bar", vwInst: "🎹  Instrument panel", vwSub: "💬  Notes strip",
-                vwCompare: "⇄  Compare with " + (folderActive() ? "saved copy" : "repo")};
+                vwCompare: "⇄  Compare with repo"}; // static: folderActive() reads a const declared after the boot-time menu render (TDZ)
   for (const [id, label] of Object.entries(base)) document.getElementById(id).textContent = label;
   set("vwScore", viewMode === "score");
   set("vwTracksView", viewMode === "tracks");
