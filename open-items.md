@@ -22,6 +22,24 @@ What happened, mapped to code (index.html):
   model field cut off, key/context/Test on a third line.
 Advisor review requested; proposal → Josh rules → build. Not started.
 
+## SYNC SHEET — beef-up queued (Josh, 2026-09-25)
+
+His rulings: the button says "⇪ Commit song" (done); the pending list
+must show, per song, unsaved annotations (already), unsaved ✦ Ask chat
+(done, one line), AND which songs' MUSIC is edited (not shown today —
+`renderSyncPending` reads only `ff1roll-notes-*`, never the draft's
+`dirty`). Advisor review requested; proposal → Josh rules → build.
+
+## ✦ ASK LOG — SHIPPED 2026-09-25 (NIGHT-ROLL.md "✦ Ask / ✦ Fill" → History / The log file)
+
+Josh's rulings, all applied: no message cap, chat kept whole until he
+saves; Save appends to one `<song>.ask.md` per song (no button, no nag);
+Save doesn't clear; Clear chat = new session (asks only if unsaved);
+the ● lights for unsaved chat; when local storage runs long, only
+messages already in the file are shed and the window shows them from
+the file. Deferred by him: explicit sessions ("not yet"). Open: browser
+check of the earlier-messages bubble on a real trimmed log.
+
 ## P4 iPad → Mac AI route — DONE 2026-09-25 (recipe in NIGHT-ROLL.md "✦ Ask / ✦ Fill")
 
 Works end to end from his iPad. Still open from the same list: the

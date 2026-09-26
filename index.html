@@ -600,6 +600,7 @@
   .askmsg.user { background: var(--panel2); border: 1px solid var(--grid); align-self: flex-end; }
   .askmsg.ai { background: var(--bg); border: 1px solid var(--grid); align-self: flex-start; }
   .askmsg.err { color: #e66767; }
+  .askmsg.earlier { font-family: var(--mono); font-size: 12px; color: var(--dim); white-space: pre-wrap; max-height: 40vh; overflow: auto; align-self: stretch; }
   #askinput { font-family: var(--sans); font-size: 15px; flex: 1; min-height: 44px; max-height: 120px;
               resize: none; width: auto; }
   .chiprow button {
@@ -1227,7 +1228,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
-      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply, and the conversation is kept per song on this device (Clear chat wipes it). The model runs wherever you point it: File → Settings… → <b>AI model</b> is either <b>in this browser</b> — pick a small model (0.4–4 GB), the first Ask downloads it once and it runs on this device's GPU, nothing leaves the device; Test checks WebGPU and whether it's downloaded — or <b>on a server</b>: the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional model id and API key; <b>Test</b> lists the server's models and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server). The first time you point it at a machine other than this one, it asks once before sending your notes there. What it never does: reveal a key you haven't set, write an annotation, or answer a question you didn't ask.</dd>
+      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply. The conversation is kept per song, whole, and it is part of the song's save: File → Save appends everything since the last save to <code>&lt;song&gt;.ask.md</code> beside the song (your session log — hand it to a code session later), the ● after the song title lights while chat is unsaved, and the Save &amp; Commit sheet lists it. <b>Clear chat</b> starts a fresh session on this device (it asks first if anything is unsaved; the .ask.md keeps what was saved). The model runs wherever you point it: File → Settings… → <b>AI model</b> is either <b>in this browser</b> — pick a small model (0.4–4 GB), the first Ask downloads it once and it runs on this device's GPU, nothing leaves the device; Test checks WebGPU and whether it's downloaded — or <b>on a server</b>: the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional model id and API key; <b>Test</b> lists the server's models and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server). The first time you point it at a machine other than this one, it asks once before sending your notes there. What it never does: reveal a key you haven't set, write an annotation, or answer a question you didn't ask.</dd>
       <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); a lasso'd note gets a white ring for exactly as long as it sounds — so your selection visibly fires as the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows — and SOUNDING notes get the same treatment during playback, so hitting ▶ lights the whole neck's worth of what's playing, not just the sounding octave. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
@@ -8535,11 +8536,12 @@ function updateSongBtn() { // breadcrumb: Album › Title, with the real path di
   const title = document.createElement("span");
   title.textContent = songTitleOf(currentPath);
   songtitleEl.append(crumb, title);
-  if (songDirtyFlag()) { // unsaved edits: the gold dot every editor uses
+  const chat = askUnsavedCount();
+  if (songDirtyFlag() || chat) { // unsaved edits or chat: the gold dot every editor uses
     const dot = document.createElement("span");
     dot.textContent = " ●";
     dot.style.color = "var(--gold)";
-    dot.setAttribute("aria-label", "Unsaved changes");
+    dot.setAttribute("aria-label", songDirtyFlag() ? "Unsaved changes" : chat + " chat messages not saved");
     songtitleEl.appendChild(dot);
   }
 }
@@ -12793,6 +12795,7 @@ async function commitCompositionNow(status) { // .mid + annotations + notes.txt,
     if (!r2.ok) throw new Error(".rollnotes.json HTTP " + r2.status);
     const r3 = await putSongsText(songKey.replace(/\.mid$/, "") + ".notes.txt", notesTxtFor(), h);
     if (!r3.ok) throw new Error(".notes.txt HTTP " + r3.status);
+    await askCommitLog(h); // the ✦ Ask chat since the last save, appended to <song>.ask.md
     await uploadAudioClips(h, status); // recordings ride along, next to the .mid; "local" ones never
     await updateManifest(h, albums => manifestPlace(albums, null, songKey));
     markCurrentSongSynced(content, stamp);
@@ -14777,30 +14780,97 @@ function askBudget() { // profiles keyed to the window (tokens); LM Studio loads
 function askStripContext(text) { return text.replace(/^<context>[\s\S]*?<\/context>\s*/, ""); }
 // ---- history: per song, context stripped at SAVE time, capped so it can
 // never crowd out saveDraft (drafts are the only copy of unsynced music)
-const ASK_SONG_CAP = 64 * 1024, ASK_TOTAL_CAP = 512 * 1024;
+const ASK_LOCAL_SOFT = 256 * 1024, ASK_TOTAL_CAP = 512 * 1024;
 function askStoreKey() { return "ff1roll-ask-" + (songKey || "local"); }
-function askLoad() {
-  try { const j = JSON.parse(localStorage.getItem(askStoreKey()) || "null"); return j && Array.isArray(j.msgs) ? j.msgs : []; }
-  catch (err) { return []; }
+// The chat is his session record (Josh, 2026-09-25): it lives here whole
+// until the song's Save appends it to <song>.ask.md, and only messages the
+// repo file already holds ever leave this device. `saved` counts those from
+// the front; `trimmed` says some were let go, so askRender shows the file.
+function askStore(key) {
+  try {
+    const j = JSON.parse(localStorage.getItem(key || askStoreKey()) || "null");
+    if (j && Array.isArray(j.msgs)) return {msgs: j.msgs, saved: Math.min(j.saved || 0, j.msgs.length), trimmed: !!j.trimmed, lastUsed: j.lastUsed || 0};
+  } catch (err) { /* corrupt: start empty */ }
+  return {msgs: [], saved: 0, trimmed: false, lastUsed: 0};
 }
-function askSave(msgs) {
-  let keep = msgs.slice(-30).map(m => ({role: m.role, content: askStripContext(m.content)}));
-  const pack = () => JSON.stringify({lastUsed: Date.now(), msgs: keep});
+function askLoad() { return askStore().msgs; }
+function askUnsavedCount(key) { const st = askStore(key); return st.msgs.length - st.saved; }
+function askSave(msgs, meta) {
+  const prev = askStore();
+  let saved = meta && meta.saved !== undefined ? Math.min(meta.saved, msgs.length) : Math.min(prev.saved, msgs.length);
+  let trimmed = prev.trimmed;
+  let keep = msgs.map(m => Object.assign({}, m, {content: askStripContext(m.content)}));
+  const pack = () => JSON.stringify({lastUsed: Date.now(), msgs: keep, saved, trimmed});
+  const dropSaved = () => { if (saved < 2) return false; keep = keep.slice(2); saved -= 2; trimmed = true; return true; };
   let str = pack();
-  while (keep.length > 1 && str.length > ASK_SONG_CAP) { keep = keep.slice(2); str = pack(); }
-  // total cap across songs: evict the least recently used logs first
+  while (str.length > ASK_LOCAL_SOFT && dropSaved()) str = pack();
+  askEvictOthers(str.length);
+  const tryPut = () => { try { localStorage.setItem(askStoreKey(), pack()); return true; } catch (err) { return false; } };
+  let ok = tryPut();
+  while (!ok && dropSaved()) ok = tryPut(); // quota: shed what the repo already has
+  while (!ok && keep.length > 2) { // nothing saved left to shed — the oldest unsaved go, and it says so
+    keep = keep.slice(2); saved = 0;
+    ok = tryPut();
+    if (ok && typeof askstatus !== "undefined" && askstatus) askstatus.textContent = "chat storage is full — the oldest messages were dropped; Save the song to keep the rest";
+  }
+  if (typeof updateSongBtn === "function") updateSongBtn(); // the ● follows unsaved chat too
+}
+function askEvictOthers(mine) { // other songs' logs go LRU-first when the total runs long — never one with unsaved messages
   try {
     const others = Object.keys(localStorage).filter(k => k.startsWith("ff1roll-ask-") && k !== askStoreKey())
-      .map(k => { let lu = 0; try { lu = JSON.parse(localStorage.getItem(k)).lastUsed || 0; } catch (err) { /* corrupt: oldest */ } return {k, lu, n: (localStorage.getItem(k) || "").length}; })
+      .map(k => { const st = askStore(k); return {k, lu: st.lastUsed, n: (localStorage.getItem(k) || "").length, clean: st.msgs.length === st.saved}; })
       .sort((a, b) => a.lu - b.lu);
-    let total = str.length + others.reduce((a, o) => a + o.n, 0);
-    for (const o of others) { if (total <= ASK_TOTAL_CAP) break; localStorage.removeItem(o.k); total -= o.n; }
+    let total = mine + others.reduce((a, o) => a + o.n, 0);
+    for (const o of others) { if (total <= ASK_TOTAL_CAP) break; if (!o.clean) continue; localStorage.removeItem(o.k); total -= o.n; }
   } catch (err) { /* enumeration failed: skip eviction */ }
-  try { localStorage.setItem(askStoreKey(), str); }
-  catch (err) { // quota: drop turns and try once more, then give up — chat never competes with drafts
-    keep = keep.slice(-6);
-    try { localStorage.setItem(askStoreKey(), pack()); } catch (err2) { /* give up silently */ }
+}
+function askModelName() { const c = cfg(); return c.aiBackend === "browser" ? c.aiBrowserModel : (c.aiModel || (askModelCache && askModelCache.ids[0]) || "model"); }
+function askLogPath() { return notesBase() ? notesBase() + ".ask.md" : null; } // beside the .mid (compositions) or the .rollnotes.json (analyzed)
+function askLogHeader() {
+  return "# ✦ Ask log — " + songTitleOf(songKey) + "\n\nOne file per song. Night Roll appends the chat since the last Save each time the song is saved; Clear chat starts a new session on the device without touching this file.\n";
+}
+function askLogMarkdown(msgs) { // what Save appends: one heading per question (when, which bars), the reply under it
+  const two = n => String(n).padStart(2, "0");
+  const when = t => { const d = new Date(t); return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + " " + two(d.getHours()) + ":" + two(d.getMinutes()); };
+  let out = "";
+  for (const m of msgs) {
+    const c = askStripContext(m.content).trim();
+    if (m.role === "user") out += "\n### " + (m.t ? when(m.t) : "—") + (m.at ? " · " + m.at : "") + "\n\n**Josh:** " + c + "\n";
+    else out += "\n**AI" + (m.m ? " (" + m.m + ")" : "") + ":** " + c + "\n";
   }
+  return out;
+}
+async function askCommitLog(h) { // Save's chat leg: append the unsaved messages to <song>.ask.md
+  const path = askLogPath();
+  const st = askStore();
+  const fresh = st.msgs.slice(st.saved);
+  if (!path || !fresh.length) return;
+  const add = askLogMarkdown(fresh);
+  if (folderActive()) {
+    const f = await folderRead(path);
+    await folderWrite(path, (f ? await f.text() : askLogHeader()) + add);
+  } else {
+    const repo = isComposition() ? "songs" : "analysis";
+    const putOnce = async () => {
+      let sha = null, old = askLogHeader();
+      const g = await fetch(repoApi(repo) + path + "?ref=main", {headers: h, cache: "no-store"});
+      if (g.ok) {
+        const j = await g.json();
+        sha = j.sha;
+        if (j.content) old = decodeURIComponent(escape(atob(j.content.replace(/\n/g, ""))));
+        else if (j.size) old = await (await fetch(j.download_url, {headers: h, cache: "no-store"})).text(); // >1 MB: contents API omits the body
+      }
+      const body = {message: "Ask log " + path + " from Night Roll", branch: "main",
+                    content: btoa(unescape(encodeURIComponent(old + add)))};
+      if (sha) body.sha = sha;
+      return fetch(repoApi(repo) + path, {method: "PUT", headers: h, body: JSON.stringify(body)});
+    };
+    let r = await putOnce();
+    if (r.status === 409) r = await putOnce();
+    if (!r.ok) throw new Error(".ask.md HTTP " + r.status);
+  }
+  const now = askStore(); // messages may have arrived meanwhile; only the snapshot is in the file
+  askSave(now.msgs, {saved: now.saved + fresh.length});
 }
 function askBuildMessages(msgs, text, ctx, budget) { // stripped history newest-first until the history budget is spent
   const out = [];
@@ -14831,9 +14901,26 @@ function askBubble(role, text) {
 }
 function askRender() {
   asklog.innerHTML = "";
-  const msgs = askLoad();
-  if (!msgs.length) askBubble("ai", "Ask me about what you're looking at — I can see the song, your cursor, your notes, and the bars in view. I'll point you toward things before I name them; say you give up and I'll just tell you.");
+  const st = askStore();
+  const msgs = st.msgs;
+  if (st.trimmed) askRenderEarlier();
+  if (!msgs.length && !st.trimmed) askBubble("ai", "Ask me about what you're looking at — I can see the song, your cursor, your notes, and the bars in view. I'll point you toward things before I name them; say you give up and I'll just tell you.");
   for (const m of msgs) askBubble(m.role === "user" ? "user" : "ai", askStripContext(m.content));
+}
+async function askRenderEarlier() { // what this device let go of after it reached the repo file
+  const div = askBubble("ai", "loading the earlier messages from the repo file…");
+  div.classList.add("earlier");
+  const path = askLogPath();
+  try {
+    let text;
+    if (folderActive()) { const f = await folderRead(path); text = f ? await f.text() : ""; }
+    else {
+      const r = await fetch((isComposition() ? songsURL : analysisURL)(path) + "?t=" + Date.now(), {cache: "no-cache"});
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      text = await r.text();
+    }
+    div.textContent = text.trim() || "(the repo file is empty)";
+  } catch (err) { div.textContent = "earlier messages are in " + path + " — couldn't load it (" + err.message + ")"; }
 }
 function askRefresh() { // span label + model line; called on open and after Settings
   if (!song) return;
@@ -14878,13 +14965,13 @@ async function askSend() {
     out = out.replace(/<think>[\s\S]*?<\/think>\s*/g, "").trim();
     if (!out) out = "(no reply — try rephrasing)";
     live.textContent = out;
-    msgs.push({role: "user", content: text}, {role: "assistant", content: out});
+    msgs.push({role: "user", content: text, t: Date.now(), at: askSpanLabel(sp)}, {role: "assistant", content: out, m: askModelName()});
     askSave(msgs);
     askstatus.textContent = "";
   } catch (err) {
     const aborted = err && err.name === "AbortError";
     const partial = live.textContent && live.textContent !== "…" ? live.textContent : "";
-    if (aborted && partial) { msgs.push({role: "user", content: text}, {role: "assistant", content: partial}); askSave(msgs); askstatus.textContent = "stopped"; }
+    if (aborted && partial) { msgs.push({role: "user", content: text, t: Date.now(), at: askSpanLabel(sp)}, {role: "assistant", content: partial, m: askModelName()}); askSave(msgs); askstatus.textContent = "stopped"; }
     else { live.classList.add("err"); live.textContent = "⚠ " + (aborted ? "stopped" : err.message) + (aborted ? "" : " — check File → Settings… → AI model, and Test"); askstatus.textContent = ""; }
   } finally {
     askBusy = null;
@@ -14904,7 +14991,11 @@ function openAsk() {
 document.getElementById("askbtn").addEventListener("click", openAsk);
 document.getElementById("askclose").addEventListener("click", () => asksheet.classList.remove("on"));
 document.getElementById("askgear").addEventListener("click", () => { asksheet.classList.remove("on"); openSettingsSheet(); });
-document.getElementById("askclear").addEventListener("click", () => { localStorage.removeItem(askStoreKey()); askRender(); });
+document.getElementById("askclear").addEventListener("click", async () => { // Clear = new session; unsaved messages are the one thing it can destroy
+  const n = askUnsavedCount();
+  if (n && !(await appConfirm("Clear chat", n + " message" + (n === 1 ? " is" : "s are") + " not in the repo yet — Save the song first to keep " + (n === 1 ? "it" : "them") + ". Clear anyway?", "Clear", "Keep"))) return;
+  localStorage.removeItem(askStoreKey()); askRender(); updateSongBtn();
+});
 document.getElementById("asksend").addEventListener("click", askSend);
 document.getElementById("askstop").addEventListener("click", () => { if (askBusy) askBusy.abort(); });
 function askMicOff() { if (micBtn === document.getElementById("askmic")) micStop(); }
@@ -15092,7 +15183,7 @@ async function askFill() {
     if (!result) throw new Error("three takes in a row were unusable — last problem: " + lastErr);
     if (result.question) {
       live.textContent = result.question;
-      msgs.push({role: "user", content: text}, {role: "assistant", content: result.question});
+      msgs.push({role: "user", content: text, t: Date.now(), at: askSpanLabel(sp)}, {role: "assistant", content: result.question, m: askModelName()});
       askSave(msgs);
       askstatus.textContent = "it needs an answer — reply, then Fill again";
       return;
@@ -15115,7 +15206,7 @@ async function askFill() {
       b.addEventListener("click", () => { b.replaceWith(document.createTextNode("\n" + result.why)); });
       live.appendChild(b);
     }
-    msgs.push({role: "user", content: text + " [fill bars " + sp.from + "–" + sp.to + "]"}, {role: "assistant", content: "(wrote " + k + " notes into bars " + sp.from + "–" + sp.to + " on " + (song.tracks[ti].name || "track " + (ti + 1)) + ")"});
+    msgs.push({role: "user", content: text + " [fill bars " + sp.from + "–" + sp.to + "]", t: Date.now(), at: askSpanLabel(sp)}, {role: "assistant", content: "(wrote " + k + " notes into bars " + sp.from + "–" + sp.to + " on " + (song.tracks[ti].name || "track " + (ti + 1)) + ")", m: askModelName()});
     askSave(msgs);
     askstatus.textContent = "";
     setInfo("✦ take " + askTakes.length + ": " + k + " notes in bars " + sp.from + "–" + sp.to + " (one ⟲ restores what was there)");
@@ -15428,6 +15519,16 @@ function renderSyncPending() {
       box.appendChild(row);
     });
   }
+  try { // ✦ Ask chat that no Save has appended to <song>.ask.md yet
+    for (const k of Object.keys(localStorage).filter(k => k.startsWith("ff1roll-ask-") && k !== "ff1roll-ask-local")) {
+      const n = askUnsavedCount(k);
+      if (!n) continue;
+      any = true;
+      const h = document.createElement("div");
+      h.textContent = songTitleOf(k.slice("ff1roll-ask-".length)) + " — " + n + " chat message" + (n === 1 ? "" : "s") + " not in the repo yet (Save appends them to the song's .ask.md)";
+      box.appendChild(h);
+    }
+  } catch (err) { /* enumeration failed: annotations still listed */ }
   if (!any) box.textContent = "Nothing unsynced on this device.";
 }
 function discardPending(key, idx) { // drop one never-synced note from the stash
@@ -15451,7 +15552,7 @@ function openSyncSheet() { // callable even with no song loaded (bad-config reco
   const comp = !!song && isComposition();
   document.querySelector("#syncsheet h2").textContent =
     comp ? (songDirtyFlag() ? "SAVE & COMMIT — unsaved changes" : "SAVE & COMMIT — saved") : "SYNC .ROLLNOTES";
-  document.getElementById("ghsave").textContent = comp ? "⇪ Commit song + annotations" : "Commit this song";
+  document.getElementById("ghsave").textContent = comp ? "⇪ Commit song" : "Commit this song"; // one word: it ships music, annotations, chat (Josh, 2026-09-25)
   document.getElementById("repolink").href = "https://github.com/" + cfg().songsRepo;
   document.getElementById("syncstatus").textContent = !song
     ? "No song loaded — if the catalog failed, check File → Settings, then reload."
@@ -15769,6 +15870,7 @@ document.getElementById("ghsave").addEventListener("click", async e => {
     const content = serializeRollnotesStamped(stamp);
     const r = await putRollnotes(notesBase() + ".rollnotes.json", content, ghHeaders(token));
     if (!r.ok) throw new Error("HTTP " + r.status + (r.status === 401 || r.status === 403 ? " — check token scope" : ""));
+    await askCommitLog(ghHeaders(token)); // chat rides with the annotations
     markCurrentSongSynced(content, stamp);
     status.textContent = folderActive() ? "Saved ✓ to " + fsRoot.name + "."
                                         : "Committed ✓ (GitHub Pages takes ~1 min to serve the new file.)";

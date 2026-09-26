@@ -92,6 +92,10 @@ chrome each.)
 - `albums/final-fantasy-i/songs/<song>.notes.txt` — the note data Josh reads
   (bar/beat/pitch/duration + `vN` chip volume on pulses; triangle has no
   volume control — absence there is N/A, not silence).
+- `albums/**/<song>.ask.md` — his in-app ✦ Ask chat about that song,
+  appended on every Save (headings say when and which bars). Read it
+  like a handoff: questions he asked, what the local model told him,
+  anything he said the tool should do differently.
 - `albums/final-fantasy-i/songs/<song>.rollnotes.json` — his annotations: keys
   (partial `"key": "Bb?"` = tonic stored/mode pending), meters, sections,
   chords, loops, chops, tempo, track voice/color. JSON since 2026-08-15,

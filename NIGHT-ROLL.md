@@ -972,10 +972,32 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   6000 / 8000 / 3000. Trim order: history (newest-first fill), annotations,
   span last. The status line shows the estimate and flags the small
   profile.
-- **History** (`askSave`): per song under `ff1roll-ask-<songKey>`,
-  context stripped AT SAVE, last 30 turns, 64 KB per song, 512 KB across
-  songs (LRU by `lastUsed`), every write try/caught — chat storage never
-  competes with `saveDraft`.
+- **History** (`askSave`, rewritten 2026-09-25 — Josh: "I want it to just
+  be forever until I save the session"): per song under
+  `ff1roll-ask-<songKey>` as `{msgs, saved, trimmed, lastUsed}`, context
+  stripped AT SAVE. No turn cap. `saved` counts, from the front, the
+  messages the repo file already holds; only those are ever shed — past a
+  256 KB soft cap per song, on quota, or (other songs' logs, LRU, 512 KB
+  total) when the log has nothing unsaved. `trimmed` makes `askRender`
+  show the shed part from the repo file (`askRenderEarlier`, one dim
+  `.earlier` bubble). When even the unsaved ones don't fit, the oldest go
+  and the status line says so. Every write try/caught.
+- **The log file** (`askCommitLog`): the chat is part of the song's Save.
+  Both commit doors (`commitCompositionNow`, the analyzed-song `ghsave`
+  branch) append `askLogMarkdown(unsaved)` to `<song>.ask.md` — beside
+  the .mid in the songs repo for compositions, beside the .rollnotes.json
+  in the analysis repo for analyzed songs, in the folder in folder mode —
+  then bump `saved`. Format: `### <when> · <bars>` per question,
+  `**Josh:**` / `**AI (model):**` lines; messages carry `t`, `at`, `m`
+  for this. Commit message "Ask log <path> from Night Roll". The
+  contents API omits bodies over 1 MB, so the read falls back to
+  `download_url`. The breadcrumb ● lights for unsaved chat
+  (`askUnsavedCount`), the Save & Commit sheet lists it per song, the
+  commit button reads "⇪ Commit song", and Clear chat asks first only
+  when something is unsaved (Clear = new session; the file keeps what was
+  saved). `ghsaveall` (annotation sweep) does not carry chat — Save the
+  song for that. Purpose: session logs for code sessions — read
+  `<song>.ask.md` the way you read a handoff.
 - **Prompt** (`ASK_SYS`): the web-session rules — hints and direction
   first, confirm/refine a guess, one strong hint when asked, tell plainly
   when the user insists or gives up; concepts answered directly; the

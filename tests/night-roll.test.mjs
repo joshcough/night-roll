@@ -1392,7 +1392,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
     "Tempo from this take", "Split at cursor", "Remove piece", "Map the bars to this take", "downbeat ▶",
-    "✦ Ask", "✦ Fill",
+    "✦ Ask", "✦ Fill", ".ask.md",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -2599,19 +2599,39 @@ test("Ask: span notes use the DECLARED meter's counted beat, one speller, key li
   run(`songKey = null; rollnotes = []; declaredTs = null; keyRegions = [];`);
 });
 
-test("Ask: history strips context at save, caps per song, never throws on quota; budget trims history first", () => {
+test("Ask: history is whole until saved; only repo-held messages are shed; never throws on quota; budget trims history first", () => {
   installSong();
   run(`songKey = "albums/compositions/nightroll/ask-cap.mid";`);
-  const big = "x".repeat(4000);
-  run(`(() => {
-    const msgs = [];
-    for (let i = 0; i < 60; i++) msgs.push({role: i % 2 ? "assistant" : "user", content: "<context>\\nsecret\\n</context>\\n\\n" + ${JSON.stringify(big)} + i});
-    askSave(msgs);
-  })()`);
-  const stored = app.store.get("ff1roll-ask-albums/compositions/nightroll/ask-cap.mid");
-  assert.ok(stored.length <= 64 * 1024, "per-song cap holds: " + stored.length);
-  assert.ok(!stored.includes("secret"), "context stripped at save");
-  assert.ok(JSON.parse(stored).lastUsed > 0);
+  const KEY = "ff1roll-ask-albums/compositions/nightroll/ask-cap.mid";
+  const big = "x".repeat(5000); // 60 × 5 KB = 300 KB: over the 256 KB soft cap, under nothing else
+  const sixty = `(() => { const msgs = [];
+    for (let i = 0; i < 60; i++) msgs.push({role: i % 2 ? "assistant" : "user", content: "<context>\\nsecret\\n</context>\\n\\n" + ${JSON.stringify(big)} + i, t: 1758000000000 + i, at: "bars 1–4 (view)"});
+    return msgs; })()`;
+  // nothing saved yet: all 60 stay, no matter the size (300 KB > the old 64 KB cap)
+  run(`askSave(${sixty});`);
+  let st = JSON.parse(app.store.get(KEY));
+  assert.equal(st.msgs.length, 60, "unsaved messages are never dropped");
+  assert.equal(st.saved, 0);
+  assert.ok(!JSON.stringify(st).includes("secret"), "context stripped at save");
+  assert.equal(val(`askUnsavedCount()`), 60);
+  // 40 already in the repo file: the soft cap sheds from the saved front only, and says so
+  run(`askSave(${sixty}, {saved: 40});`);
+  st = JSON.parse(app.store.get(KEY));
+  assert.ok(st.trimmed, "trimmed flag set");
+  assert.ok(st.msgs.length < 60 && st.msgs.length >= 20, "some saved messages shed: " + st.msgs.length);
+  assert.equal(st.msgs.length - st.saved, 20, "the 20 unsaved survive intact");
+  assert.match(st.msgs[st.msgs.length - 1].content, /59$/);
+  // the file text Save appends: one heading per question, the reply under it
+  const md = val(`askLogMarkdown([{role: "user", content: "<context>\\nctx\\n</context>\\n\\nwhat key?", t: 1758000000000, at: "bars 5–8 (ruler)"}, {role: "assistant", content: "listen to bar 6", m: "qwen/test"}])`);
+  assert.match(md, /^\n### \d{4}-\d{2}-\d{2} \d{2}:\d{2} · bars 5–8 \(ruler\)\n\n\*\*Josh:\*\* what key\?\n\n\*\*AI \(qwen\/test\):\*\* listen to bar 6\n$/);
+  assert.ok(!md.includes("ctx"), "log strips context too");
+  assert.equal(val(`askLogPath()`), "albums/compositions/nightroll/ask-cap.ask.md");
+  // other songs' logs: a clean one is evicted for space, one with unsaved messages never
+  run(`localStorage.setItem("ff1roll-ask-a/clean.mid", JSON.stringify({lastUsed: 1, saved: 2, msgs: [{role: "user", content: "q".repeat(300000)}, {role: "assistant", content: "a"}]}));
+       localStorage.setItem("ff1roll-ask-a/dirty.mid", JSON.stringify({lastUsed: 2, saved: 0, msgs: [{role: "user", content: "q".repeat(300000)}, {role: "assistant", content: "a"}]}));
+       askSave([{role: "user", content: "hi"}, {role: "assistant", content: "yo"}]);`);
+  assert.equal(app.store.get("ff1roll-ask-a/clean.mid"), undefined, "clean log evicted");
+  assert.ok(app.store.get("ff1roll-ask-a/dirty.mid"), "log with unsaved messages kept");
   // quota: a throwing setItem must not propagate
   run(`(() => { const real = localStorage.setItem; localStorage.setItem = () => { throw new Error("QuotaExceededError"); };
     try { askSave([{role: "user", content: "hi"}]); } finally { localStorage.setItem = real; } })()`);
@@ -2620,7 +2640,7 @@ test("Ask: history strips context at save, caps per song, never throws on quota;
   assert.equal(built.length, 2);
   assert.equal(built[0].content, "b".repeat(100));
   assert.match(built[1].content, /^<context>\nCTX\n<\/context>\n\nnow$/);
-  run(`localStorage.removeItem("ff1roll-ask-albums/compositions/nightroll/ask-cap.mid"); songKey = null;`);
+  run(`for (const k of ["${KEY}", "ff1roll-ask-a/clean.mid", "ff1roll-ask-a/dirty.mid"]) localStorage.removeItem(k); songKey = null;`);
 });
 
 test("Ask: host consent — localhost never prompts, other hosts once", () => {
