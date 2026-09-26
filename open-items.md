@@ -4,6 +4,43 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## FROM THE FIRST .ask.md (graveyard-2, 2026-09-26) — two rulings for Josh, two fixes done
+
+The chat log round-trip works: his iPad chat landed in the repo with his
+song save, exactly as ruled. Read it like a handoff. What it asked for:
+
+**Done (same day):** dictation glued segments ("nowAnd") — fixed with
+`micJoin`; the model misdescribed the app ("paste the context", "I read
+loop annotations as structural markers", kept steering to the music
+after "stop") — the prompt now says what it is and isn't.
+
+**Ruling 1 — should the AI write annotations?** He asked it to
+"annotate the chord for bar 21" and was surprised it couldn't. His own
+standing rule says keys/analyses are his discoveries and no feature
+names chords for him; ✦ Ask was designed to talk only, ✦ Fill to write
+notes under the Bassist's contract. Options: (a) keep as is; (b) let the
+model DRAFT an annotation he confirms with one tap (the text is the
+model's reading, marked as such, and the tap is his call); (c) only
+non-analytic annotations (section labels, loop points, tempo) — no chord
+or key names. Not built; his call.
+
+**Ruling 2 — more capable backing model.** He wants the assistant to
+read other songs in the repo ("look up ambush / a Mega Man song"), make
+web calls, and generally do what Claude Code does; he said he would
+rather use Claude Code / Claude as the backing LLM. Options, cheapest
+first: (a) tool-calling for the local model — the app itself serves
+tools (`list_songs`, `read_song(path)`, `read_notes(path)`) by fetching
+repo files it already knows how to fetch; works with LM Studio's
+OpenAI-compatible tools API on Qwen; no server, no key, keeps the
+"any OpenAI-compatible server" promise; (b) the parked `claude-chat`
+branch: Claude via the API as a second backend (needs a key = the
+funding decision in memory); same tool set would then work there too;
+(c) a small local agent (Claude Code itself, or a script) exposed on the
+Tailscale URL as an OpenAI-compatible endpoint — most capable, most
+moving parts. Recommendation: (a) first (it makes any backend, local or
+Claude, able to see the whole repo), (b) when he wants Claude's quality.
+Not built; his call.
+
 ## COMPARE WITH REPO — SHIPPED 2026-09-25 (NIGHT-ROLL.md "Compare with repo")
 
 Josh picked the roll overlay ("by far the best one") over a what-changed

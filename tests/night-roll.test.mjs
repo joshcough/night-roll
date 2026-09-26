@@ -2686,6 +2686,14 @@ test("Compare with repo: cmpDiff — by track name, tick+pitch identity, tombsto
   run(`cmp = null; songKey = null;`);
 });
 
+test("dictation: micJoin spaces Safari's pause-split segments and closes sentences before a capitalized one", () => {
+  assert.equal(val(`micJoin(["I'm gonna pause right now", "And then I'm gonna continue"])`), "I'm gonna pause right now. And then I'm gonna continue");
+  assert.equal(val(`micJoin(["so it needs, ", "some modifications"])`), "so it needs, some modifications");
+  assert.equal(val(`micJoin(["Is that right?", "Yes"])`), "Is that right? Yes");
+  assert.equal(val(`micJoin(["", "hello", "", "world"])`), "hello world");
+  assert.equal(val(`micJoin(["typed already ", "Dictated next"])`), "typed already. Dictated next");
+});
+
 test("Ask: host consent — localhost never prompts, other hosts once", () => {
   assert.equal(val(`aiHostKind("http://localhost:1234")`), "local");
   assert.equal(val(`aiHostKind("http://127.0.0.1:1234")`), "local");

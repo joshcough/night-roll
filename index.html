@@ -11117,6 +11117,22 @@ function micStop() {
   micBtn = null;
 }
 let micBtn = null; // whichever 🎤 is live (annotation editor or Message Claude)
+// Safari hands dictation back one segment per pause, with no space and no
+// period between segments, but it capitalizes the first word after a pause
+// (Josh, 2026-09-26: "nowAnd", "butIt"). Join segments with a space, and when
+// the next one starts with a capital and the last ended with none of .?!,;:
+// close the sentence with a period first.
+function micJoin(parts) {
+  let out = "";
+  for (let p of parts) {
+    p = (p || "").trim();
+    if (!p) continue;
+    if (!out) { out = p; continue; }
+    const closes = /[.?!,;:]$/.test(out);
+    out += (!closes && /^[A-Z]/.test(p) ? ". " : " ") + p;
+  }
+  return out;
+}
 function micToggle(btn, textarea, statusFn) { // shared dictation: append into any box
   if (micRec) { const same = micBtn === btn; micStop(); if (same) return; }
   const base = textarea.value ? textarea.value.replace(/\s+$/, "") + " " : "";
@@ -11126,13 +11142,10 @@ function micToggle(btn, textarea, statusFn) { // shared dictation: append into a
   micRec.continuous = true;
   micRec.interimResults = true;
   micRec.onresult = e => {
-    let interim = "";
-    finals = "";
-    for (let i = 0; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finals += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
-    }
-    textarea.value = base + finals + interim;
+    const fin = [], mid = [];
+    for (let i = 0; i < e.results.length; i++) (e.results[i].isFinal ? fin : mid).push(e.results[i][0].transcript);
+    finals = micJoin(fin);
+    textarea.value = micJoin([base, finals, micJoin(mid)]);
   };
   micRec.onerror = e => {
     statusFn(e.error === "not-allowed" ? "Microphone permission denied — allow it in Safari settings."
@@ -14616,7 +14629,9 @@ const ASK_SYS = `You are the resident music-theory tutor inside Night Roll, a pi
 
 THE RULE: discoveries are the user's. Default to hints, questions and direction (what does the bass outline? which accidental keeps appearing? what happens on the downbeat of bar 9?). When the user has made a guess, confirm or refine it honestly. If the user asks to be told, give one strong hint first; if they insist again, or say they give up, tell them plainly — never withhold forever. General theory concepts (what is a secondary dominant? how do sevenths resolve?) are fair game to answer directly: concepts aren't spoilers, per-song conclusions are.
 
-Each user message carries a <context> block: the song, the meter, the cursor, any lasso-selected pitches, the user's own annotations (their established discoveries — build on them), and the notes of the bars in view. Bar and beat numbers are the user's ruler: "bar 9 beat 2" is the counted beat of the declared meter (in 6/8 there are six beats per bar). Refer to locations that way. The key-state line says whether the user has set a key; if it is not set, the key is undiscovered — do not name it. If the song is the user's own composition, it is editable and they may ask what they wrote — still lead with a hint. Say "not sure" when you are not sure. Never invent notes that are not in the context.`;
+Each user message carries a <context> block: the song, the meter, the cursor, any lasso-selected pitches, the user's own annotations (their established discoveries — build on them), and the notes of the bars in view. Bar and beat numbers are the user's ruler: "bar 9 beat 2" is the counted beat of the declared meter (in 6/8 there are six beats per bar). Refer to locations that way. The key-state line says whether the user has set a key; if it is not set, the key is undiscovered — do not name it. If the song is the user's own composition, it is editable and they may ask what they wrote — still lead with a hint. Say "not sure" when you are not sure. Never invent notes that are not in the context.
+
+What you are inside Night Roll, so you never misdescribe it: the app attaches the <context> block itself — the user pastes nothing. You see only that block; you cannot open other songs, files, the repo or the web, and you cannot run anything — say so plainly when asked, and never claim the user must paste things. You cannot write annotations. The app's ✦ Fill button (separate from this chat) writes notes into a range when the user uses it; this chat only talks. In the annotations, "loop: B.Q" marks a playback loop (the anchor is the jump point, B.Q the return), "key:" sets the key state, "section" lines are form labels, "chord" lines are the user's own chord readings. If the user says they are testing, not ready, or asks you to stop bringing up the music, do exactly that until they say they are ready — answer only what they asked.`;
 
 let askBusy = null;       // AbortController (or {abort}) while a reply streams
 let askModelCache = null; // {url, ids} from the last /v1/models

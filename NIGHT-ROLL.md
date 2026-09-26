@@ -1031,12 +1031,21 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   saved). `ghsaveall` (annotation sweep) does not carry chat — Save the
   song for that. Purpose: session logs for code sessions — read
   `<song>.ask.md` the way you read a handoff.
-- **Prompt** (`ASK_SYS`): the web-session rules — hints and direction
+- **Prompt** (`ASK_SYS`): a closing paragraph (2026-09-26, from the first
+  real .ask.md) tells the model what it is inside the app — the context
+  is attached by the app, it sees nothing else, it cannot write
+  annotations, ✦ Fill is a separate button, what loop:/key:/section/chord
+  lines mean, and to drop the music when the user says they are testing
+  or not ready (Qwen kept steering back). Before that: the web-session rules — hints and direction
   first, confirm/refine a guess, one strong hint when asked, tell plainly
   when the user insists or gives up; concepts answered directly; the
   key-state line governs; never invent notes. Same rules on his own
   compositions (his ruling: no flip).
-- **Dictation:** the shared `micToggle` (🎤 Speak), as the annotation
+- **Dictation:** segments are joined by `micJoin` (2026-09-26): Safari
+  returns one final segment per pause with no space or period and a
+  capitalized first word; the join adds a space, and a period first when
+  the next segment starts with a capital and the last ended without
+  punctuation. vm-tested. Also the shared `micToggle` (🎤 Speak), as the annotation
   editor and dev channel use.
 - **Measured (2026-09-25, Mac, Qwen 3.6 35B-A3B via LM Studio):** 17 bars
   of Overworld = 3.8k prompt tokens; reply 39 s of which ~34 s hidden
