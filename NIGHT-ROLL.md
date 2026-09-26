@@ -924,6 +924,74 @@ needed. The folder's layout mirrors the repo exactly
 autosave-on-edit in folder mode (explicit Save kept for parity and so
 Revert still means something), copying the FF1 corpus into a folder.
 
+## ✦ Ask — in-app AI (P1a shipped 2026-09-25; design: local-llm-design.md)
+
+The tutor half of the AI plan. `✦ Ask` in the top bar (hidden in listener
+mode) opens `#asksheet`: a per-song conversation with any
+OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
+
+- **Adapter:** `aiRemote()` — `listModels()` (GET `/v1/models`) and
+  `chat({system, messages, signal, onDelta, schema})` (POST
+  `/v1/chat/completions`, `stream:true`). `aiSSE(state, chunk)` is the
+  SSE parser as a named global over STRING chunks so the vm suite can feed
+  it; it ignores everything but `choices[0].delta.content`. Qwen-style
+  `<think>…</think>` blocks are hidden while streaming and stripped from
+  the saved reply. `schema` → `response_format: json_schema` (P2a).
+- **Prefs:** flat `cfg()` fields `aiUrl` (default `http://localhost:1234`),
+  `aiModel` (blank = the server's first), `aiWindow` (tokens, default 8192
+  — LM Studio's usual loaded context; his 35B loaded at 8192). The key
+  lives apart under `ff1roll-aikey`, like the GitHub token. One Save.
+- **Test connection** (`aiTest`): five outcomes with the fix in the line —
+  not a URL · mixed content (https page + http non-local URL, checked
+  before any fetch) · HTTP status (401/403 → key) · reachable but CORS off
+  (a `no-cors` opaque fetch succeeds where the real one failed) ·
+  unreachable · OK + model list into the `<datalist>`.
+- **Consent per host** (`aiHostOk`): `localhost`/`127.0.0.1` never prompt;
+  any other host gets one `appConfirm` naming what leaves the device
+  (annotations + notes), remembered in `ff1roll-ai-hosts`.
+- **ONE frame:** every bar/beat in the protocol is the RULER's — display
+  (chop-relative) bars, the declared meter's counted beat (`effTs()`,
+  `beatTicks()`), durations in the same unit. `askSpanNotes(t0, t1,
+  maxChars)` is `notesTxtFor()`'s shape with three deltas: declared meter,
+  display beats, one speller — `pitchName(p, sfDeclaredAtRaw(t))` (null →
+  sharps; a key-dial preview never leaks: `sfDeclaredAtRaw` is the
+  keyRegions scan without `previewSf`, `sfDeclaredAt` wraps it). The key
+  header line is conditioned on a key DECLARED over the span, not on the
+  album. Committed `.notes.txt` files keep their quarter-based shape.
+- **Span** (`askSpan`): the ruler selection (`rangeSel`) if armed, else the
+  bars in view (`view.x`, `wrap.clientWidth`, `pxPerTick()`), bar-aligned.
+  Frozen at Send (`askSpanFrozen`).
+- **Context block** (`askContext`): sent ONCE per request on the current
+  user turn, never stored. Song + composition flag (`isComposition() ||
+  isLocalDraft() || songKey === null`), meter/tempo/bars, tracks with
+  drums/muted flags, view + cursor, the key-state line, lasso pitches,
+  annotations (capped), span notes (capped, "cut at bar N").
+- **Budget:** `ASK_CPT = 2` chars per token — measured 7.3k chars → 3839
+  tokens on Qwen 3.6 (note dumps are digits, not prose). Two profiles by
+  `aiWindow`: ≤8k → anno 1000 / span 2000 / history 1000 tokens; larger →
+  6000 / 8000 / 3000. Trim order: history (newest-first fill), annotations,
+  span last. The status line shows the estimate and flags the small
+  profile.
+- **History** (`askSave`): per song under `ff1roll-ask-<songKey>`,
+  context stripped AT SAVE, last 30 turns, 64 KB per song, 512 KB across
+  songs (LRU by `lastUsed`), every write try/caught — chat storage never
+  competes with `saveDraft`.
+- **Prompt** (`ASK_SYS`): the web-session rules — hints and direction
+  first, confirm/refine a guess, one strong hint when asked, tell plainly
+  when the user insists or gives up; concepts answered directly; the
+  key-state line governs; never invent notes. Same rules on his own
+  compositions (his ruling: no flip).
+- **Dictation:** the shared `micToggle` (🎤 Speak), as the annotation
+  editor and dev channel use.
+- **Measured (2026-09-25, Mac, Qwen 3.6 35B-A3B via LM Studio):** 17 bars
+  of Overworld = 3.8k prompt tokens; reply 39 s of which ~34 s hidden
+  thinking at 60 tok/s. Slow but usable; a no-think switch is a candidate.
+- **Not yet:** generation (P2a — the Bassist contract via a shared
+  `applyTake`), in-browser WebLLM (P3), the iPad route (P4; needs
+  Tailscale), the P0 probes on Safari/iPad. Tests: SSE parser, 6/8 frame +
+  speller + key line, storage caps + quota, host classing, FEATURES
+  keyword `✦ Ask`.
+
 ## Audio tracks — recordings as tracks (branch `audio-tracks`, 2026-09-15)
 
 Josh's son: "I wouldn't use it unless it supported waves." Design and

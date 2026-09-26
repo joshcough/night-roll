@@ -348,7 +348,7 @@
   body.listener #filesheetbtn, body.listener #editsheetbtn, body.listener #viewsheetbtn,
   body.listener #trackzone, body.listener #editrow, body.listener footer,
   body.listener #panelshow, body.listener #metbtn, body.listener #recbtn,
-  body.listener #instpanel, body.listener #subtitle { display: none !important; }
+  body.listener #instpanel, body.listener #subtitle, body.listener #askbtn { display: none !important; }
   #fullappbtn { display: none; }
   body.listener #fullappbtn { display: inline-block; }
   #filesheet {
@@ -591,6 +591,17 @@
   }
 
   .chiprow { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+  /* ✦ Ask: the in-app AI sheet. The log is the tall part; rows stay fixed. */
+  .sheet.ask { height: 88dvh; width: min(680px, 100%); }
+  #asklog { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+            -webkit-user-select: text; user-select: text; min-height: 80px; }
+  .askmsg { font-size: 14px; line-height: 1.5; padding: 9px 12px; border-radius: 10px;
+            white-space: pre-wrap; max-width: 92%; }
+  .askmsg.user { background: var(--panel2); border: 1px solid var(--grid); align-self: flex-end; }
+  .askmsg.ai { background: var(--bg); border: 1px solid var(--grid); align-self: flex-start; }
+  .askmsg.err { color: #e66767; }
+  #askinput { font-family: var(--sans); font-size: 15px; flex: 1; min-height: 44px; max-height: 120px;
+              resize: none; width: auto; }
   .chiprow button {
     font-family: var(--mono);
     font-size: 12px;
@@ -660,6 +671,7 @@
   <button id="filesheetbtn">File ▾</button>
   <button id="editsheetbtn" style="display:none">Edit ▾</button>
   <button id="viewsheetbtn">View ▾</button>
+  <button id="askbtn" aria-label="Ask the AI tutor">✦ Ask</button>
   <button id="fullappbtn" style="padding:6px 10px">Full app</button>
   <span id="songcrumb"></span>
   <!-- accept threads two iOS quirks: listing only extensions grays out .nsf (no
@@ -1214,6 +1226,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
+      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at. Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply, and the conversation is kept per song on this device (Clear chat wipes it). The model runs wherever you point it: File → Settings… → <b>AI model</b> takes the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional model id and API key; <b>Test</b> lists the server's models and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server). The first time you point it at a machine other than this one, it asks once before sending your notes there. What it never does: reveal a key you haven't set, write an annotation, or answer a question you didn't ask.</dd>
       <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); a lasso'd note gets a white ring for exactly as long as it sounds — so your selection visibly fires as the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows — and SOUNDING notes get the same treatment during playback, so hitting ▶ lights the whole neck's worth of what's playing, not just the sounding octave. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
@@ -1518,6 +1531,29 @@
   </div>
 </div>
 
+<div class="overlay" id="asksheet">
+  <div class="sheet ask">
+    <h2>ASK</h2>
+    <div id="asklog"></div>
+    <div class="row" id="askspanrow">
+      <span class="lbl" id="askspan">bars in view</span>
+      <span class="status" id="askmodel" style="margin-left:auto"></span>
+      <button id="askgear" aria-label="AI settings" style="min-height:32px;padding:4px 10px">⚙</button>
+    </div>
+    <div class="row">
+      <textarea id="askinput" placeholder="Ask about what you're looking at…" aria-label="Your question"></textarea>
+      <button id="askmic">🎤 Speak</button>
+      <button class="primary" id="asksend">Send</button>
+    </div>
+    <div class="row">
+      <span class="status" id="askstatus" style="flex:1"></span>
+      <button id="askstop" style="display:none">■ Stop</button>
+      <button id="askclear">Clear chat</button>
+      <button id="askclose">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="settingssheet">
   <div class="sheet">
     <h2>SETTINGS</h2>
@@ -1536,7 +1572,16 @@
       <div class="row"><span class="lbl" style="width:70px">nsf</span>
         <input type="text" id="cfgnsfbase" placeholder="read base URL" style="flex:1;min-height:36px">
         <input type="text" id="cfgnsfrepo" placeholder="owner/repo (writes)" style="width:200px;min-height:36px"></div>
-      <div class="row"><span class="lbl">one Save (above) stores the token and all locations together</span></div>
+      <div class="row"><span class="lbl" style="width:70px">AI model</span>
+        <input type="text" id="cfgaiurl" placeholder="server URL — LM Studio: http://localhost:1234" style="flex:1;min-height:36px" aria-label="AI server URL">
+        <input type="text" id="cfgaimodel" list="cfgaimodels" placeholder="model (blank = server's first)" style="width:200px;min-height:36px" aria-label="AI model id">
+        <datalist id="cfgaimodels"></datalist></div>
+      <div class="row"><span class="lbl" style="width:70px"></span>
+        <input type="password" id="cfgaikey" placeholder="API key — only if the server needs one (stays on this device)" autocomplete="off" style="flex:1;min-height:36px" aria-label="AI API key">
+        <input type="number" id="cfgaiwindow" placeholder="context (tokens)" min="1024" step="1024" style="width:120px;min-height:36px" aria-label="Context window in tokens — match what the server loaded the model with">
+        <button id="cfgaitest" style="min-height:36px">Test</button></div>
+      <div class="status" id="cfgaistatus">AI: any OpenAI-compatible server — LM Studio (turn on <b>Enable CORS</b> and <b>Serve on local network</b> in its server settings) or Ollama. Test lists its models. Context = the token window the server loaded the model with (LM Studio shows it on the model; 8192 is its usual default) — Ask trims what it sends to fit. On an iPad the server must be reachable over https (Tailscale Serve) — see Help → Explore → ✦ Ask.</div>
+      <div class="row"><span class="lbl">one Save (above) stores the token, all locations, and the AI settings together</span></div>
     </div>
     <!-- local folder: Chrome/Edge desktop only; hidden text explains elsewhere -->
     <div class="row" id="folderrow"><span class="lbl" style="width:70px">folder</span>
@@ -2350,6 +2395,9 @@ const spellMemo = {};
 function spellFor(sf) { return spellMemo[sf] || (spellMemo[sf] = keySpelling(sf)); }
 function sfDeclaredAt(tick) { // sf if the user has declared a key governing this tick, else null
   if (previewSf !== null) return previewSf;
+  return sfDeclaredAtRaw(tick);
+}
+function sfDeclaredAtRaw(tick) { // committed declarations only — no key-dial preview (the AI context spells by these)
   let ranged = null, open = null;
   for (const r of keyRegions) {
     if (r.start > tick) continue;
@@ -14403,6 +14451,352 @@ document.addEventListener("keydown", e => {
   }
 }
 
+// ---------------------------------------------------------------- ✦ Ask (in-app AI)
+// Design: local-llm-design.md (advisor-converged, Josh's rulings 2026-09-25).
+// A tutor and, later, a generator, over ONE adapter: any OpenAI-compatible
+// server (LM Studio / Ollama, this machine or another on the network). The
+// house rules ride in the system prompt: hints first, answers when he insists.
+// Every request carries ONE context block (never stored) under a budget keyed
+// to the model's window; bars and beats in the protocol are the RULER's —
+// display bars, the declared meter's counted beat — never quarters.
+const ASK_SYS = `You are the resident music-theory tutor inside Night Roll, a piano-roll + engraved-score web app for studying NES soundtracks and learning composition. The user often chats from an iPad — keep replies short and warm, a few sentences unless asked for depth. Plain text only: no markdown, no headers, no bullet lists.
+
+THE RULE: discoveries are the user's. Default to hints, questions and direction (what does the bass outline? which accidental keeps appearing? what happens on the downbeat of bar 9?). When the user has made a guess, confirm or refine it honestly. If the user asks to be told, give one strong hint first; if they insist again, or say they give up, tell them plainly — never withhold forever. General theory concepts (what is a secondary dominant? how do sevenths resolve?) are fair game to answer directly: concepts aren't spoilers, per-song conclusions are.
+
+Each user message carries a <context> block: the song, the meter, the cursor, any lasso-selected pitches, the user's own annotations (their established discoveries — build on them), and the notes of the bars in view. Bar and beat numbers are the user's ruler: "bar 9 beat 2" is the counted beat of the declared meter (in 6/8 there are six beats per bar). Refer to locations that way. The key-state line says whether the user has set a key; if it is not set, the key is undiscovered — do not name it. If the song is the user's own composition, it is editable and they may ask what they wrote — still lead with a hint. Say "not sure" when you are not sure. Never invent notes that are not in the context.`;
+
+let askBusy = null;       // AbortController (or {abort}) while a reply streams
+let askModelCache = null; // {url, ids} from the last /v1/models
+let askSpanFrozen = null; // the span the current turn was sent against
+// chars per token for THIS content: note dumps are digits and short names —
+// measured 7.3k chars → 3839 tokens on Qwen 3.6 (2026-09-25), not prose's 4
+const ASK_CPT = 2;
+function aiUrl() { return (cfg().aiUrl || "").replace(/\/+$/, ""); }
+function aiHeaders() {
+  const h = {"content-type": "application/json"};
+  const k = localStorage.getItem("ff1roll-aikey");
+  if (k) h.authorization = "Bearer " + k;
+  return h;
+}
+function aiSSE(state, chunk) { // OpenAI-style SSE → text deltas; state = {buf: ""}; vm-testable on strings
+  state.buf += chunk;
+  const out = [];
+  const lines = state.buf.split("\n");
+  state.buf = lines.pop();
+  for (const l of lines) {
+    const t = l.trim();
+    if (!t.startsWith("data:")) continue;
+    const d = t.slice(5).trim();
+    if (d === "[DONE]") { state.done = true; continue; }
+    let j;
+    try { j = JSON.parse(d); } catch (err) { continue; }
+    const c = j.choices && j.choices[0];
+    const txt = c && c.delta && c.delta.content;
+    if (typeof txt === "string" && txt) out.push(txt);
+    if (j.error && j.error.message) state.error = j.error.message;
+  }
+  return out;
+}
+function aiHostKind(url) { // "local" never prompts; everything else asks once per host
+  let host = "";
+  try { host = new URL(url).hostname; } catch (err) { return "bad"; }
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]" ? "local" : "other";
+}
+async function aiHostOk(url) { // per-host consent: the payload is his annotations + notes
+  const kind = aiHostKind(url);
+  if (kind === "bad") return false;
+  if (kind === "local") return true;
+  const host = new URL(url).host;
+  let ok = [];
+  try { ok = JSON.parse(localStorage.getItem("ff1roll-ai-hosts") || "[]"); } catch (err) { ok = []; }
+  if (ok.includes(host)) return true;
+  const yes = await appConfirm("Send your notes to " + host + "?",
+    "Every message sends this song's notes and your annotations to " + host + ". Only do this for a machine you trust. Asked once per machine.",
+    "Send", "Cancel");
+  if (yes) { ok.push(host); localStorage.setItem("ff1roll-ai-hosts", JSON.stringify(ok)); }
+  return yes;
+}
+function aiRemote() { // the one adapter shape; a browser (WebLLM) backend slots in beside it later
+  const url = aiUrl();
+  return {
+    async listModels() {
+      const r = await fetch(url + "/v1/models", {headers: aiHeaders()});
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      return (j.data || []).map(m => m.id).filter(Boolean);
+    },
+    async chat({system, messages, signal, onDelta, schema}) {
+      let model = cfg().aiModel;
+      if (!model) {
+        if (!askModelCache || askModelCache.url !== url) askModelCache = {url, ids: await this.listModels()};
+        model = askModelCache.ids[0];
+        if (!model) throw new Error("the server lists no models — load one in LM Studio");
+      }
+      const body = {model, stream: true, messages: [{role: "system", content: system}, ...messages]};
+      if (schema) body.response_format = {type: "json_schema", json_schema: {name: "take", strict: true, schema}};
+      const r = await fetch(url + "/v1/chat/completions", {method: "POST", headers: aiHeaders(), body: JSON.stringify(body), signal});
+      if (!r.ok) {
+        let msg = "HTTP " + r.status;
+        try { const j = await r.json(); if (j.error) msg += " — " + (j.error.message || j.error); } catch (err) { /* no body */ }
+        throw new Error(msg);
+      }
+      const reader = r.body.getReader(), dec = new TextDecoder(), st = {buf: ""};
+      let out = "";
+      for (;;) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        for (const t of aiSSE(st, dec.decode(value, {stream: true}))) { out += t; onDelta(out); }
+        if (st.error) throw new Error(st.error);
+      }
+      return out;
+    },
+  };
+}
+// Test connection: five outcomes, each with its fix in the same line. The
+// guesswork lives here, not in his head.
+async function aiTest(url, statusEl, listEl) {
+  const say = t => { statusEl.textContent = t; };
+  url = (url || "").replace(/\/+$/, "");
+  if (aiHostKind(url) === "bad") { say("⚠ that is not a URL — try http://localhost:1234"); return null; }
+  if (location.protocol === "https:" && url.startsWith("http:") && aiHostKind(url) !== "local") {
+    say("⚠ mixed content: this page is https but the server is http — the browser blocks that. Reach the server over https (Tailscale Serve) or open Night Roll over http from that machine. See Help → ✦ Ask.");
+    return null;
+  }
+  say("testing " + url + "…");
+  try {
+    const r = await fetch(url + "/v1/models", {headers: aiHeaders()});
+    if (!r.ok) { say("⚠ the server answered HTTP " + r.status + (r.status === 401 || r.status === 403 ? " — it wants an API key" : "")); return null; }
+    const ids = ((await r.json()).data || []).map(m => m.id).filter(Boolean);
+    if (listEl) { listEl.innerHTML = ""; for (const id of ids) { const o = document.createElement("option"); o.value = id; listEl.appendChild(o); } }
+    say(ids.length ? "✓ " + ids.length + " model" + (ids.length === 1 ? "" : "s") + ": " + ids.join(", ") : "✓ reachable, but it lists no models — load one in LM Studio");
+    askModelCache = {url, ids};
+    return ids;
+  } catch (err) {
+    // reachable-but-CORS-blocked vs unreachable: an opaque no-cors fetch succeeds in the first case only
+    let reachable = false;
+    try { await fetch(url + "/v1/models", {mode: "no-cors"}); reachable = true; } catch (err2) { reachable = false; }
+    if (reachable) say("⚠ reachable, but CORS is off: in LM Studio → Developer → Server settings turn on Enable CORS (Ollama: set OLLAMA_ORIGINS=*)");
+    else say("⚠ unreachable: is the server running at " + url + "? Same network? (If the browser asked to allow local-network access, say yes.)");
+    return null;
+  }
+}
+document.getElementById("cfgaitest").addEventListener("click", () => {
+  aiTest(document.getElementById("cfgaiurl").value.trim(), document.getElementById("cfgaistatus"), document.getElementById("cfgaimodels"));
+});
+
+// ---- the span: the ruler selection if armed, else the bars in view. ONE
+// frame everywhere — display bars/beats (chop-relative, the declared meter's
+// counted beat). The turn is sent against the span as frozen at Send.
+function askSpan() {
+  const bt = barTicks();
+  const end = Math.max(bt, songEndTick);
+  let t0, t1, src;
+  if (rangeSel && rangeSel.b > rangeSel.a) {
+    t0 = Math.floor(rangeSel.a / bt) * bt; t1 = Math.ceil(rangeSel.b / bt) * bt; src = "selected";
+  } else {
+    const w = (wrap && wrap.clientWidth) || 800;
+    const ppt = pxPerTick();
+    t0 = Math.floor(Math.max(0, view.x / ppt) / bt) * bt;
+    t1 = Math.ceil(Math.min(end, (view.x + w - RULER_W) / ppt) / bt) * bt;
+    src = "in view";
+  }
+  t0 = Math.max(0, Math.min(t0, end - bt)); t1 = Math.max(t0 + bt, Math.min(t1, end));
+  return {t0, t1, from: Math.floor(t0 / bt) + 1, to: Math.ceil(t1 / bt), src};
+}
+function askSpanLabel(sp) { return "bars " + sp.from + "–" + sp.to + " (" + sp.src + ")"; }
+function askKeyDeclared(t0, t1) { return sfDeclaredAtRaw(t0) !== null || keyRegions.some(r => r.start >= t0 && r.start < t1); }
+function askSpanNotes(t0, t1, maxChars) { // notesTxtFor's shape, three deltas: declared meter, display beats, one speller
+  const bt = barTicks(), qt = beatTicks(), ts = effTs();
+  const fmt = x => String(Math.round(x * 100) / 100);
+  const L = [];
+  L.push("# Format: bar N: beat pitch duration, … — beat = the counted beat of the declared meter (" + ts[0] + "/" + ts[1] + ": " + ts[0] + " beats per bar, 1 = the downbeat); duration in the same unit.");
+  L.push("# duration is GATE TIME (how long the note was held), NOT a notated value; RHYTHM comes from ONSET SPACING (the beat column): staccato notes gating at 0.33 are still eighths, not triplets.");
+  L.push(askKeyDeclared(t0, t1) ? "# Pitches are spelled by the user's declared key (" + (keyNameAt(t0) || "declared") + ")."
+                                 : "# Pitches use sharp spelling; the true key is the user's to discover — this block states no key.");
+  const b0 = Math.floor(t0 / bt), b1 = Math.ceil(t1 / bt);
+  let cut = null, size = L.join("\n").length;
+  song.tracks.forEach((tr, ti) => {
+    const head = "\n## track " + (ti + 1) + (tr.name ? " (" + tr.name + ")" : "") + (trackIsDrums(ti) ? " [drums]" : "") + (trackAudible(ti) ? "" : " [muted]");
+    const rows = [];
+    for (let b = b0; b < b1; b++) {
+      if (cut !== null && b + 1 > cut) break;
+      const ns = tr.notes.filter(n => !n.gone && n.t >= Math.max(b * bt, t0) && n.t < Math.min((b + 1) * bt, t1)).sort((a, c) => a.t - c.t || a.p - c.p);
+      if (!ns.length) continue;
+      const row = "bar " + (b + 1) + ": " + ns.map(n =>
+        fmt((n.t - b * bt) / qt + 1) + " " + (trackIsDrums(ti) ? String(n.p) : pitchName(n.p, sfDeclaredAtRaw(n.t))) + " " + fmt(n.d / qt)).join(", ");
+      if (maxChars && size + head.length + row.length + 2 > maxChars) { cut = b + 1; break; }
+      rows.push(row); size += row.length + 1;
+    }
+    if (rows.length) { L.push(head); L.push(...rows); size += head.length; }
+  });
+  if (cut !== null) L.push("# (cut at bar " + cut + " to fit the model's window — ask about a narrower range for the rest)");
+  return L.join("\n");
+}
+function askContext(sp, budget) { // the ONE block per request; never stored
+  const bt = barTicks(), qt = beatTicks(), ts = effTs();
+  const tick = curTick();
+  const own = isComposition() || isLocalDraft() || songKey === null;
+  const tempo = song.tempos.reduce((acc, t) => (t.tick <= sp.t0 ? t : acc), song.tempos[0]);
+  const L = [];
+  L.push("song: " + baseName() + (songKey && songKey.startsWith("albums/") ? " (album: " + songKey.split("/")[1] + ")" : "") +
+         (own ? " — the user's own composition (editable)" : " — a locked capture the user is studying"));
+  L.push("meter: " + ts[0] + "/" + ts[1] + " (beat = " + (ts[1] === 8 ? "eighth" : ts[1] === 16 ? "sixteenth" : ts[1] === 2 ? "half note" : "quarter") + "), tempo: " +
+         Math.round(6e7 / tempo.usq) + " bpm, " + Math.max(1, Math.ceil(songEndTick / bt)) + " bars");
+  L.push("tracks: " + song.tracks.map((t, i) => (t.name || "track " + (i + 1)) + (trackIsDrums(i) ? " (drums)" : "") + (trackAudible(i) ? "" : " (muted)")).join(", "));
+  L.push("view: " + viewMode + (playing ? ", playing" : ", paused") + (playRate !== 1 ? " at " + Math.round(playRate * 100) + "% speed" : "") +
+         "; cursor: bar " + (Math.floor(tick / bt) + 1) + " beat " + (Math.round(((tick % bt) / qt + 1) * 100) / 100));
+  L.push("key state: " + document.getElementById("keyunset").textContent + " — 'not set' means the user has NOT discovered the key; do not reveal it");
+  if (multiSel.length) {
+    const pitches = [...new Set(multiSel.map(m => song.tracks[m.ti].notes[m.ni].p))].sort((a, b) => a - b);
+    L.push("lasso-selected notes: " + pitches.map(p => pitchName(p, multiSelSf)).join(" ") + " — do not name this chord unless the user has guessed or insists");
+  }
+  const anno = serializeRollnotes();
+  const annoCap = budget.anno * ASK_CPT;
+  L.push("the user's annotations (.rollnotes):\n" + (anno.length > annoCap ? anno.slice(0, annoCap) + "\n# (annotations cut here to fit the window)" : anno));
+  L.push("notes in bars " + sp.from + "–" + sp.to + ":\n" + askSpanNotes(sp.t0, sp.t1, budget.span * ASK_CPT));
+  return L.join("\n");
+}
+function askBudget() { // two profiles keyed to the window (tokens); LM Studio loads models at 4–8k by default
+  const win = +cfg().aiWindow || 8192;
+  return win <= 8192 ? {win, small: true, anno: 1000, span: 2000, hist: 1000}
+                     : {win, small: false, anno: 6000, span: 8000, hist: 3000};
+}
+function askStripContext(text) { return text.replace(/^<context>[\s\S]*?<\/context>\s*/, ""); }
+// ---- history: per song, context stripped at SAVE time, capped so it can
+// never crowd out saveDraft (drafts are the only copy of unsynced music)
+const ASK_SONG_CAP = 64 * 1024, ASK_TOTAL_CAP = 512 * 1024;
+function askStoreKey() { return "ff1roll-ask-" + (songKey || "local"); }
+function askLoad() {
+  try { const j = JSON.parse(localStorage.getItem(askStoreKey()) || "null"); return j && Array.isArray(j.msgs) ? j.msgs : []; }
+  catch (err) { return []; }
+}
+function askSave(msgs) {
+  let keep = msgs.slice(-30).map(m => ({role: m.role, content: askStripContext(m.content)}));
+  const pack = () => JSON.stringify({lastUsed: Date.now(), msgs: keep});
+  let str = pack();
+  while (keep.length > 1 && str.length > ASK_SONG_CAP) { keep = keep.slice(2); str = pack(); }
+  // total cap across songs: evict the least recently used logs first
+  try {
+    const others = Object.keys(localStorage).filter(k => k.startsWith("ff1roll-ask-") && k !== askStoreKey())
+      .map(k => { let lu = 0; try { lu = JSON.parse(localStorage.getItem(k)).lastUsed || 0; } catch (err) { /* corrupt: oldest */ } return {k, lu, n: (localStorage.getItem(k) || "").length}; })
+      .sort((a, b) => a.lu - b.lu);
+    let total = str.length + others.reduce((a, o) => a + o.n, 0);
+    for (const o of others) { if (total <= ASK_TOTAL_CAP) break; localStorage.removeItem(o.k); total -= o.n; }
+  } catch (err) { /* enumeration failed: skip eviction */ }
+  try { localStorage.setItem(askStoreKey(), str); }
+  catch (err) { // quota: drop turns and try once more, then give up — chat never competes with drafts
+    keep = keep.slice(-6);
+    try { localStorage.setItem(askStoreKey(), pack()); } catch (err2) { /* give up silently */ }
+  }
+}
+function askBuildMessages(msgs, text, ctx, budget) { // stripped history newest-first until the history budget is spent
+  const out = [];
+  let left = budget.hist * ASK_CPT;
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    const c = askStripContext(msgs[i].content);
+    if (c.length > left) break;
+    left -= c.length;
+    out.unshift({role: msgs[i].role, content: c});
+  }
+  out.push({role: "user", content: "<context>\n" + ctx + "\n</context>\n\n" + text});
+  return out;
+}
+function askEstimate(system, messages) { return Math.round((system.length + messages.reduce((a, m) => a + m.content.length, 0)) / ASK_CPT); }
+
+// ---- the sheet
+const asksheet = document.getElementById("asksheet");
+const asklog = document.getElementById("asklog");
+const askinput = document.getElementById("askinput");
+const askstatus = document.getElementById("askstatus");
+function askBubble(role, text) {
+  const div = document.createElement("div");
+  div.className = "askmsg " + role;
+  div.textContent = text;
+  asklog.appendChild(div);
+  asklog.scrollTop = asklog.scrollHeight;
+  return div;
+}
+function askRender() {
+  asklog.innerHTML = "";
+  const msgs = askLoad();
+  if (!msgs.length) askBubble("ai", "Ask me about what you're looking at — I can see the song, your cursor, your notes, and the bars in view. I'll point you toward things before I name them; say you give up and I'll just tell you.");
+  for (const m of msgs) askBubble(m.role === "user" ? "user" : "ai", askStripContext(m.content));
+}
+function askRefresh() { // span label + model line; called on open and after Settings
+  if (!song) return;
+  const sp = askSpan();
+  document.getElementById("askspan").textContent = askSpanLabel(sp);
+  const c = cfg();
+  let host = c.aiUrl; try { host = new URL(c.aiUrl).host; } catch (err) { /* shown raw */ }
+  document.getElementById("askmodel").textContent = (c.aiModel || (askModelCache && askModelCache.ids[0]) || "model") + " · " + host;
+}
+function askShowThinking(live, raw) { // Qwen-style <think> blocks stay out of the bubble
+  const vis = raw.replace(/<think>[\s\S]*?(<\/think>|$)/g, "").replace(/^\s+/, "");
+  live.textContent = vis || "…";
+  askstatus.textContent = vis ? "" : "thinking…";
+  asklog.scrollTop = asklog.scrollHeight;
+}
+async function askSend() {
+  const text = askinput.value.trim();
+  if (!text || askBusy || !song) return;
+  if (!(await aiHostOk(aiUrl()))) { askstatus.textContent = "not sent"; return; }
+  const sp = askSpan();
+  askSpanFrozen = sp;
+  document.getElementById("askspan").textContent = askSpanLabel(sp);
+  const budget = askBudget();
+  const msgs = askLoad();
+  const ctx = askContext(sp, budget);
+  const messages = askBuildMessages(msgs, text, ctx, budget);
+  const est = askEstimate(ASK_SYS, messages);
+  askinput.value = "";
+  askBubble("user", text);
+  const live = askBubble("ai", "…");
+  askstatus.textContent = "thinking… (~" + (est >= 1000 ? (est / 1000).toFixed(1) + "k" : est) + " of " + Math.round(budget.win / 1000) + "k" + (budget.small ? ", small window — raise it in Settings if the server allows" : "") + ")";
+  const ctl = typeof AbortController === "function" ? new AbortController() : {abort() {}, signal: undefined};
+  askBusy = ctl;
+  document.getElementById("askstop").style.display = "";
+  document.getElementById("asksend").disabled = true;
+  let out = "";
+  try {
+    out = await aiRemote().chat({system: ASK_SYS, messages, signal: ctl.signal, onDelta: raw => askShowThinking(live, raw)});
+    out = out.replace(/<think>[\s\S]*?<\/think>\s*/g, "").trim();
+    if (!out) out = "(no reply — try rephrasing)";
+    live.textContent = out;
+    msgs.push({role: "user", content: text}, {role: "assistant", content: out});
+    askSave(msgs);
+    askstatus.textContent = "";
+  } catch (err) {
+    const aborted = err && err.name === "AbortError";
+    const partial = live.textContent && live.textContent !== "…" ? live.textContent : "";
+    if (aborted && partial) { msgs.push({role: "user", content: text}, {role: "assistant", content: partial}); askSave(msgs); askstatus.textContent = "stopped"; }
+    else { live.classList.add("err"); live.textContent = "⚠ " + (aborted ? "stopped" : err.message) + (aborted ? "" : " — check File → Settings… → AI model, and Test"); askstatus.textContent = ""; }
+  } finally {
+    askBusy = null;
+    document.getElementById("askstop").style.display = "none";
+    document.getElementById("asksend").disabled = false;
+  }
+}
+function openAsk() {
+  if (!song) return;
+  askRender();
+  askRefresh();
+  asksheet.classList.add("on");
+  askinput.focus();
+}
+document.getElementById("askbtn").addEventListener("click", openAsk);
+document.getElementById("askclose").addEventListener("click", () => asksheet.classList.remove("on"));
+document.getElementById("askgear").addEventListener("click", () => { asksheet.classList.remove("on"); openSettingsSheet(); });
+document.getElementById("askclear").addEventListener("click", () => { localStorage.removeItem(askStoreKey()); askRender(); });
+document.getElementById("asksend").addEventListener("click", askSend);
+document.getElementById("askstop").addEventListener("click", () => { if (askBusy) askBusy.abort(); });
+document.getElementById("askmic").addEventListener("click", () => {
+  if (!SPEECH) { askstatus.textContent = "no speech recognition in this browser — the keyboard mic still works"; return; }
+  micToggle(document.getElementById("askmic"), askinput, s2 => { askstatus.textContent = s2; });
+});
+askinput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askSend(); }
+});
+
 // ---------------------------------------------------- data-location config
 // Josh's design (2026-08-17, advisor-reviewed): the app is CONFIGURED with
 // where songs, analysis (rollnotes + docs), and NSFs live, so another analyst
@@ -14422,6 +14816,10 @@ function cfg() {
       songsRepo: c.songsRepo || "joshcough/night-roll",
       analysisRepo: c.analysisRepo || "joshcough/night-roll",
       nsfRepo: c.nsfRepo || "joshcough/nsf-archive",
+      // ✦ Ask: flat fields (saveCfg is a shallow merge); the key lives apart, like the token
+      aiUrl: c.aiUrl || "http://localhost:1234",
+      aiModel: c.aiModel || "",
+      aiWindow: +c.aiWindow || 8192,
     };
   }
   return cfg.c;
@@ -14721,6 +15119,10 @@ function openSettingsSheet() {
   document.getElementById("cfganalysisrepo").value = c.analysisRepo;
   document.getElementById("cfgnsfbase").value = c.nsfBase;
   document.getElementById("cfgnsfrepo").value = c.nsfRepo;
+  document.getElementById("cfgaiurl").value = c.aiUrl;
+  document.getElementById("cfgaimodel").value = c.aiModel;
+  document.getElementById("cfgaikey").value = localStorage.getItem("ff1roll-aikey") || "";
+  document.getElementById("cfgaiwindow").value = c.aiWindow;
   document.getElementById("settingssheet").classList.add("on");
 }
 document.getElementById("filesettings").addEventListener("click", () => {
@@ -14861,7 +15263,13 @@ document.getElementById("settingssave").addEventListener("click", () => {
     analysisRepo: document.getElementById("cfganalysisrepo").value.trim() || "joshcough/night-roll",
     nsfBase: document.getElementById("cfgnsfbase").value.trim(),
     nsfRepo: document.getElementById("cfgnsfrepo").value.trim() || "joshcough/nsf-archive",
+    aiUrl: document.getElementById("cfgaiurl").value.trim() || "http://localhost:1234",
+    aiModel: document.getElementById("cfgaimodel").value.trim(),
+    aiWindow: parseInt(document.getElementById("cfgaiwindow").value, 10) || 8192,
   });
+  const ak = document.getElementById("cfgaikey").value.trim();
+  if (ak) localStorage.setItem("ff1roll-aikey", ak); else localStorage.removeItem("ff1roll-aikey");
+  askModelCache = null;
   const cc = document.getElementById("cfgclaudecmd").value.trim();
   const cn = document.getElementById("cfgclaudenotify").value.trim();
   if (cc) localStorage.setItem("ff1roll-claude-cmd", cc); else localStorage.removeItem("ff1roll-claude-cmd");

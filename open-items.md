@@ -1509,8 +1509,13 @@ his downloads: `review-handoff-2026-08-07.md` (code/tool review) and
   are numbers until listened to; expansion chips (VRC6/FDS) don't
   capture. First cold-NSF field test planned: Mega Man 2 on the iPad.
 
-- **In-app AI (local models) — PLANNED 2026-09-25, RULED, not built:
-  `local-llm-design.md`** (advisor-reviewed to convergence, 4 rounds).
+- **In-app AI (local models) — P1a SHIPPED 2026-09-25 (tutor chat, ✦ Ask);
+  P2a generation next.** `local-llm-design.md` (advisor-reviewed to
+  convergence, 4 rounds); technical reference NIGHT-ROLL.md "✦ Ask".
+  Verified on the Mac against LM Studio (Qwen 3.6 35B-A3B): 39 s replies,
+  34 s of it thinking — a no-think option is queued. P0 probes still owed:
+  Safari→localhost, Chrome local-network prompt on Pages, iPad WebGPU
+  (`probe.html`), Tailscale flags.
   Josh's brief: tutor + generator ("fill in a few chords here"),
   anyone can run a model on their own, iPad points at his MacBook.
   Backends: another computer (LM Studio/Ollama URL), this browser

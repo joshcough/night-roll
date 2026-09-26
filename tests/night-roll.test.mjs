@@ -1392,6 +1392,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
     "Tempo from this take", "Split at cursor", "Remove piece", "Map the bars to this take", "downbeat ▶",
+    "✦ Ask",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -2546,4 +2547,82 @@ test("no looping keepalive media element (the 2.0s seek beat stays gone)", () =>
   // thing is an HTMLMediaElement, whose loop wraps are seeks on WebKit
   const src = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.ok(!/new Audio\s*\(/.test(src), "no HTMLAudioElement is constructed");
+});
+
+// ---- ✦ Ask (in-app AI): local-llm-design.md. The parser takes strings, the
+// context builder reports the RULER's frame, storage never crowds drafts.
+test("Ask: SSE parser takes string chunks split anywhere, skips [DONE] and junk", () => {
+  const out = val(`(() => {
+    const st = {buf: ""};
+    const a = aiSSE(st, 'data: {"choices":[{"delta":{"content":"Hel"}}]}\\n\\ndata: {"choices":[{"del');
+    const b = aiSSE(st, 'ta":{"content":"lo"}}]}\\n\\n: keepalive\\ndata: {"choices":[{"delta":{"role":"assistant"}}]}\\ndata: [DONE]\\n');
+    return {a, b, done: !!st.done};
+  })()`);
+  assert.deepEqual(out.a, ["Hel"]);
+  assert.deepEqual(out.b, ["lo"]);
+  assert.equal(out.done, true);
+});
+
+test("Ask: span notes use the DECLARED meter's counted beat, one speller, key line by declaration", () => {
+  installSong();
+  run(`
+    songKey = "albums/compositions/nightroll/ask-test.mid";
+    song = {ppq: 480, timesig: [4, 4], tempos: [{tick: 0, usq: 500000}],
+      tracks: [{name: "pulse1", notes: [{t: 480, d: 240, p: 61, v: 80}, {t: 0, d: 480, p: 60, v: 80}]}]};
+    song.rawNotes = null; chopS = 0; rollnotes = []; keyRegions = []; previewSf = null; multiSel = [];
+    declaredTs = [6, 8]; computeSongEnd();
+    trackState = [{muted: false, solo: false}];
+  `);
+  const txt = val(`askSpanNotes(0, barTicks())`);
+  assert.match(txt, /6\/8: 6 beats per bar/);
+  // 480 ticks = one quarter = beat 3 in 6/8 (eighths); 240 ticks = 1 beat
+  assert.match(txt, /bar 1: 1 C4 2, 3 C#4 1/);
+  assert.match(txt, /the true key is the user's to discover/);
+  // declared flat key → flat spelling and the declared-key line
+  run(`keyRegions = [{start: 0, end: null, sf: -3, name: "Eb"}]; previewSf = 4;`); // preview must NOT leak
+  const txt2 = val(`askSpanNotes(0, barTicks())`);
+  assert.match(txt2, /spelled by the user's declared key \(Eb\)/);
+  assert.match(txt2, /3 Db4 1/);
+  // ONE frame: a 4/4 song reports quarters as beats
+  run(`declaredTs = null; keyRegions = []; previewSf = null; computeSongEnd();`);
+  assert.match(val(`askSpanNotes(0, barTicks())`), /bar 1: 1 C4 1, 2 C#4 0\.5/);
+  // context: composition flag, declared meter, cursor in the ruler's frame
+  run(`playCursor = 720;`);
+  const ctx = val(`askContext(askSpan(), askBudget())`);
+  assert.match(ctx, /the user's own composition \(editable\)/);
+  assert.match(ctx, /meter: 4\/4 \(beat = quarter\)/);
+  assert.match(ctx, /cursor: bar 1 beat 2\.5/);
+  assert.match(ctx, /notes in bars 1–1:/);
+  run(`songKey = null; rollnotes = []; declaredTs = null; keyRegions = [];`);
+});
+
+test("Ask: history strips context at save, caps per song, never throws on quota; budget trims history first", () => {
+  installSong();
+  run(`songKey = "albums/compositions/nightroll/ask-cap.mid";`);
+  const big = "x".repeat(4000);
+  run(`(() => {
+    const msgs = [];
+    for (let i = 0; i < 60; i++) msgs.push({role: i % 2 ? "assistant" : "user", content: "<context>\\nsecret\\n</context>\\n\\n" + ${JSON.stringify(big)} + i});
+    askSave(msgs);
+  })()`);
+  const stored = app.store.get("ff1roll-ask-albums/compositions/nightroll/ask-cap.mid");
+  assert.ok(stored.length <= 64 * 1024, "per-song cap holds: " + stored.length);
+  assert.ok(!stored.includes("secret"), "context stripped at save");
+  assert.ok(JSON.parse(stored).lastUsed > 0);
+  // quota: a throwing setItem must not propagate
+  run(`(() => { const real = localStorage.setItem; localStorage.setItem = () => { throw new Error("QuotaExceededError"); };
+    try { askSave([{role: "user", content: "hi"}]); } finally { localStorage.setItem = real; } })()`);
+  // budget: with a tiny history budget, the newest turn survives and the context rides only on the last message
+  const built = val(`askBuildMessages([{role: "user", content: "a".repeat(3000)}, {role: "assistant", content: "b".repeat(100)}], "now", "CTX", {hist: 100})`);
+  assert.equal(built.length, 2);
+  assert.equal(built[0].content, "b".repeat(100));
+  assert.match(built[1].content, /^<context>\nCTX\n<\/context>\n\nnow$/);
+  run(`localStorage.removeItem("ff1roll-ask-albums/compositions/nightroll/ask-cap.mid"); songKey = null;`);
+});
+
+test("Ask: host consent — localhost never prompts, other hosts once", () => {
+  assert.equal(val(`aiHostKind("http://localhost:1234")`), "local");
+  assert.equal(val(`aiHostKind("http://127.0.0.1:1234")`), "local");
+  assert.equal(val(`aiHostKind("https://mac.tail.ts.net")`), "other");
+  assert.equal(val(`aiHostKind("not a url")`), "bad");
 });
