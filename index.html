@@ -2097,6 +2097,7 @@ let instOpen = false;    // instrument panel (set from localStorage once its sec
 let fallOn = false;      // Synthesia fall view: main canvas drops notes into the panel's keys
 let subOn = localStorage.getItem("ff1roll-sub") !== "0"; // 💬 subtitle strip visible (default on)
 let lassoRect = null;    // live drag rect {x0,y0,x1,y1} in canvas coords
+let cmp = null;          // Compare with repo: {repo, diff, showing, mine} while on — see its chapter
 let multiSel = [];       // [{ti,ni}] lasso-selected notes
 let multiSelKey = new Set();
 let multiSelSf = 0;      // key context captured at lasso time
@@ -14493,7 +14494,8 @@ document.addEventListener("keydown", e => {
 // against its last save: the roll outlines every difference and one tap swaps
 // which version plays. Nothing is written — the draft stays the draft — and
 // hearing the saved copy makes the song read-only until you swap back.
-let cmp = null; // {repo: [{name, notes}], diff, showing: "mine" | "repo", mine: [notes arrays while the saved copy is swapped in]}
+// `cmp` itself is declared with the other editor state near the top (setSong and
+// editableSong read it, and a draft can open synchronously at boot — TDZ).
 function cmpTrackKey(t, i) { return t.name || "#" + i; } // match tracks by name, unnamed ones by position
 function cmpDiff(repoTracks, curTracks) { // tick+pitch is a note's identity (tools/song-diff.mjs's rule); tombstones don't count
   const key = n => n.t + ":" + n.p;
