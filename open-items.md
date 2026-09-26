@@ -4,42 +4,31 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
-## FROM THE FIRST .ask.md (graveyard-2, 2026-09-26) — two rulings for Josh, two fixes done
+## ASK TOOLS + CLAUDE CODE BRIDGE — SHIPPED 2026-09-26 (NIGHT-ROLL.md "✦ Ask / ✦ Fill" → Tools, Claude Code as a backend)
 
-The chat log round-trip works: his iPad chat landed in the repo with his
-song save, exactly as ruled. Read it like a handoff. What it asked for:
+From the first .ask.md (graveyard-2). Josh's rulings, applied: the AI
+writes any annotation he dictates (chord, section, key, tempo, loop,
+note) — never on its own initiative; it can read other songs in the
+repo; and Claude Code is his backing LLM. Built: OpenAI tool calling in
+✦ Ask with app-run tools; `tools/claude-bridge.mjs` (OpenAI protocol →
+`claude -p`, read-only repo tools + web) mounted at
+`https://<mac>.<tailnet>.ts.net/claude`. Both verified in the browser:
+Qwen and Claude each wrote the asked-for annotation; Claude also read
+tools/song-diff.mjs and described it. The ntfy dev channel stays as is
+(async requests to a live session — a different job).
 
-**Done (same day):** dictation glued segments ("nowAnd") — fixed with
-`micJoin`; the model misdescribed the app ("paste the context", "I read
-loop annotations as structural markers", kept steering to the music
-after "stop") — the prompt now says what it is and isn't.
+For Josh's iPad: File → Settings → server URL
+`https://joshuas-macbook-pro.tail136602.ts.net/claude`, Test, model
+`claude-code`, context 100000. The bridge must be running on the Mac
+(`node tools/claude-bridge.mjs &`; not persistent across reboots — a
+launchd plist is the obvious next step if he wants it always on).
 
-**Ruling 1 — should the AI write annotations?** He asked it to
-"annotate the chord for bar 21" and was surprised it couldn't. His own
-standing rule says keys/analyses are his discoveries and no feature
-names chords for him; ✦ Ask was designed to talk only, ✦ Fill to write
-notes under the Bassist's contract. Options: (a) keep as is; (b) let the
-model DRAFT an annotation he confirms with one tap (the text is the
-model's reading, marked as such, and the tap is his call); (c) only
-non-analytic annotations (section labels, loop points, tempo) — no chord
-or key names. Not built; his call.
-
-**Ruling 2 — more capable backing model.** He wants the assistant to
-read other songs in the repo ("look up ambush / a Mega Man song"), make
-web calls, and generally do what Claude Code does; he said he would
-rather use Claude Code / Claude as the backing LLM. Options, cheapest
-first: (a) tool-calling for the local model — the app itself serves
-tools (`list_songs`, `read_song(path)`, `read_notes(path)`) by fetching
-repo files it already knows how to fetch; works with LM Studio's
-OpenAI-compatible tools API on Qwen; no server, no key, keeps the
-"any OpenAI-compatible server" promise; (b) the parked `claude-chat`
-branch: Claude via the API as a second backend (needs a key = the
-funding decision in memory); same tool set would then work there too;
-(c) a small local agent (Claude Code itself, or a script) exposed on the
-Tailscale URL as an OpenAI-compatible endpoint — most capable, most
-moving parts. Recommendation: (a) first (it makes any backend, local or
-Claude, able to see the whole repo), (b) when he wants Claude's quality.
-Not built; his call.
+Open: replies through the bridge take 10–30 s (a Claude Code run per
+turn); a persistent session per song (`--resume`) would cut that and
+the cost; Claude's own tool use shows only as the thinking counter;
+LM Studio's Qwen sometimes answers a first request with thinking only
+(one silent retry is in). Dictation and prompt fixes from the same log
+shipped earlier (3c280b5).
 
 ## COMPARE WITH REPO — SHIPPED 2026-09-25 (NIGHT-ROLL.md "Compare with repo")
 

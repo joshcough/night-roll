@@ -1392,7 +1392,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
     "Tempo from this take", "Split at cursor", "Remove piece", "Map the bars to this take", "downbeat ▶",
-    "✦ Ask", "✦ Fill", ".ask.md", "Commit song", "Commit all", "data locations (advanced)", "saves itself", "Compare with repo",
+    "✦ Ask", "✦ Fill", ".ask.md", "Commit song", "Commit all", "data locations (advanced)", "saves itself", "Compare with repo", "chord annotation on 21.1",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -2692,6 +2692,41 @@ test("dictation: micJoin spaces Safari's pause-split segments and closes sentenc
   assert.equal(val(`micJoin(["Is that right?", "Yes"])`), "Is that right? Yes");
   assert.equal(val(`micJoin(["", "hello", "", "world"])`), "hello world");
   assert.equal(val(`micJoin(["typed already ", "Dictated next"])`), "typed already. Dictated next");
+});
+
+test("Ask tools: SSE tool_calls accumulate per index; add_annotation writes through the text grammar as unsynced; read helpers", () => {
+  // streamed tool call: name in one chunk, arguments split across chunks, finish_reason at the end
+  const chunks = [
+    'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","function":{"name":"add_annotation","arguments":"{\\"kind\\":\\"chord\\","}}]}}]}\n',
+    'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"text\\":\\"F#m\\",\\"bar\\":21,\\"beat\\":1}"}}]}}]}\n',
+    'data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}\n', 'data: [DONE]\n'];
+  const st = JSON.parse(val(`(() => { const st = {buf: ""}; for (const c of ${JSON.stringify(chunks)}) aiSSE(st, c); return JSON.stringify(st); })()`));
+  assert.equal(st.tools[0].id, "call_1"); assert.equal(st.tools[0].name, "add_annotation");
+  assert.deepEqual(JSON.parse(st.tools[0].args), {kind: "chord", text: "F#m", bar: 21, beat: 1});
+  assert.equal(st.finish, "tool_calls");
+  // add_annotation: chord with a range and a comment; section; loop replaces a local loop
+  installSong();
+  run(`rollnotes = []; songKey = "albums/compositions/nightroll/tool-test.mid";`);
+  const r1 = JSON.parse(val(`JSON.stringify(askAddAnnotation({kind: "chord", text: "F#m", bar: 21, beat: 1, end_bar: 21, end_beat: 4, comment: "his call"}))`));
+  assert.equal(r1.ok, true); assert.equal(r1.at, "[21.1 - 21.4]");
+  const n1 = JSON.parse(val(`JSON.stringify(rollnotes.map(n => ({b1: n.b1, q1: n.q1, b2: n.b2, q2: n.q2, text: n.text, chord: !!n.chord, section: !!n.section, added: !!n.added, cnote: n.cnote})))`));
+  assert.equal(n1.length, 1);
+  assert.equal(n1[0].chord, true); assert.equal(n1[0].text, "F#m"); assert.equal(n1[0].added, true); assert.equal(n1[0].b2, 21); assert.equal(n1[0].q2, 4); assert.equal(n1[0].cnote, "his call");
+  run(`askAddAnnotation({kind: "section", text: "A", bar: 6, beat: 1, end_bar: 12}); askAddAnnotation({kind: "loop", text: "5.1", bar: 25, beat: 1}); askAddAnnotation({kind: "loop", text: "6.1", bar: 25, beat: 1}); askAddAnnotation({kind: "note", text: "plain prose", bar: 3, beat: 2.5});`);
+  const n2 = JSON.parse(val(`JSON.stringify(rollnotes.map(n => ({text: n.text, section: !!n.section, loop: n.loopTo !== undefined, q1: n.q1})))`));
+  assert.equal(n2.filter(n => n.section).length, 1, "one section");
+  assert.equal(n2.filter(n => n.loop).length, 1, "the second loop replaced the first");
+  assert.ok(n2.some(n => n.text === "plain prose" && n.q1 === 2.5));
+  assert.throws(() => run(`askAddAnnotation({kind: "chord", text: "", bar: 1, beat: 1})`), /empty text/);
+  // read helpers
+  const txt = val(`notesTxtForDoc({ppq: 480, timesig: [4, 4], tempos: [{usq: 500000}], tracks: [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 100}, {t: 1920, d: 240, p: 64, v: 100}]}]}, "Probe", 2, 2)`);
+  assert.match(txt, /^# Probe — 4\/4, 120bpm, 2 bars \(bars 2–2 shown\)/);
+  assert.match(txt, /bar 2: 1 E4 0\.5/); assert.ok(!txt.includes("bar 1:"));
+  run(`CATALOG["Probe Album"] = [["Ambush", "albums/x/ambush.mid"]];`);
+  assert.equal(val(`askSongPath("ambush")`), "albums/x/ambush.mid");
+  assert.equal(val(`askSongPath("Ambush")`), "albums/x/ambush.mid");
+  assert.throws(() => val(`askSongPath("nothing-here")`), /list_songs/);
+  run(`delete CATALOG["Probe Album"]; rollnotes = []; localStorage.removeItem("ff1roll-notes-albums/compositions/nightroll/tool-test.mid"); songKey = null;`);
 });
 
 test("Ask: host consent — localhost never prompts, other hosts once", () => {

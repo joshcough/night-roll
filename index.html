@@ -1256,7 +1256,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
-      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply. The conversation is kept per song, whole, and it is part of the song's save: File → Save appends everything since the last save to <code>&lt;song&gt;.ask.md</code> beside the song (your session log — hand it to a code session later), the ● after the song title lights while chat is unsaved, and the Save &amp; Commit sheet lists it. <b>Clear chat</b> starts a fresh session on this device (it asks first if anything is unsaved; the .ask.md keeps what was saved). The model runs wherever you point it: File → Settings… → <b>AI model</b> is either <b>in this browser</b> — pick a small model (0.4–4 GB), the first Ask downloads it once and it runs on this device's GPU, nothing leaves the device; Test checks WebGPU and whether it's downloaded — or <b>on a server</b>: the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional API key; <b>Test</b> lists the server's models, picks one (your last pick if the server still has it), saves, and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server, no answer in 8 s). Every Settings field saves itself the moment you leave it — there is no Save button and closing never loses anything. The first time you point it at a machine other than this one, it asks once before sending your notes there. What it never does: reveal a key you haven't set, write an annotation, or answer a question you didn't ask.</dd>
+      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply. The conversation is kept per song, whole, and it is part of the song's save: File → Save appends everything since the last save to <code>&lt;song&gt;.ask.md</code> beside the song (your session log — hand it to a code session later), the ● after the song title lights while chat is unsaved, and the Save &amp; Commit sheet lists it. <b>Clear chat</b> starts a fresh session on this device (it asks first if anything is unsaved; the .ask.md keeps what was saved). The model runs wherever you point it: File → Settings… → <b>AI model</b> is either <b>in this browser</b> — pick a small model (0.4–4 GB), the first Ask downloads it once and it runs on this device's GPU, nothing leaves the device; Test checks WebGPU and whether it's downloaded — or <b>on a server</b>: the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional API key; <b>Test</b> lists the server's models, picks one (your last pick if the server still has it), saves, and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server, no answer in 8 s). Every Settings field saves itself the moment you leave it — there is no Save button and closing never loses anything. The first time you point it at a machine other than this one, it asks once before sending your notes there. On request it acts: "put an F#m chord annotation on 21.1", "mark bars 6–12 as section A", "set a tempo of 192 at bar 6" — it writes exactly that annotation (unsynced, with a ✕ in Save &amp; Commit like your own), and "compare this to ambush" makes it read that song's notes and annotations from the repo. What it never does: reveal a key you haven't set, annotate on its own initiative, or answer a question you didn't ask.</dd>
       <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); a lasso'd note gets a white ring for exactly as long as it sounds — so your selection visibly fires as the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows — and SOUNDING notes get the same treatment during playback, so hitting ▶ lights the whole neck's worth of what's playing, not just the sounding octave. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
@@ -14631,7 +14631,7 @@ THE RULE: discoveries are the user's. Default to hints, questions and direction 
 
 Each user message carries a <context> block: the song, the meter, the cursor, any lasso-selected pitches, the user's own annotations (their established discoveries — build on them), and the notes of the bars in view. Bar and beat numbers are the user's ruler: "bar 9 beat 2" is the counted beat of the declared meter (in 6/8 there are six beats per bar). Refer to locations that way. The key-state line says whether the user has set a key; if it is not set, the key is undiscovered — do not name it. If the song is the user's own composition, it is editable and they may ask what they wrote — still lead with a hint. Say "not sure" when you are not sure. Never invent notes that are not in the context.
 
-What you are inside Night Roll, so you never misdescribe it: the app attaches the <context> block itself — the user pastes nothing. You see only that block; you cannot open other songs, files, the repo or the web, and you cannot run anything — say so plainly when asked, and never claim the user must paste things. You cannot write annotations. The app's ✦ Fill button (separate from this chat) writes notes into a range when the user uses it; this chat only talks. In the annotations, "loop: B.Q" marks a playback loop (the anchor is the jump point, B.Q the return), "key:" sets the key state, "section" lines are form labels, "chord" lines are the user's own chord readings. If the user says they are testing, not ready, or asks you to stop bringing up the music, do exactly that until they say they are ready — answer only what they asked.`;
+What you are inside Night Roll, so you never misdescribe it: the app attaches the <context> block itself — the user pastes nothing. You see only that block; you cannot open other songs, files, the repo or the web, and you cannot run anything — say so plainly when asked, and never claim the user must paste things. You have four app tools: add_annotation writes ONE annotation the user asked for, in their words, at the bar and beat they said (chord, section, key, tempo, loop, or a plain note) — use it only when they explicitly ask you to annotate or mark something, never to volunteer your own reading, and say what you wrote in one short line; list_songs, read_song and read_notes let you look at another song in this Night Roll when the user refers to one ("compare this to ambush") — read, then answer under THE RULE as usual. The app's ✦ Fill button (separate from this chat) writes notes into a range when the user uses it; this chat writes no notes. In the annotations, "loop: B.Q" marks a playback loop (the anchor is the jump point, B.Q the return), "key:" sets the key state, "section" lines are form labels, "chord" lines are the user's own chord readings. If the user says they are testing, not ready, or asks you to stop bringing up the music, do exactly that until they say they are ready — answer only what they asked.`;
 
 let askBusy = null;       // AbortController (or {abort}) while a reply streams
 let askModelCache = null; // {url, ids} from the last /v1/models
@@ -14663,6 +14663,18 @@ function aiSSE(state, chunk) { // OpenAI-style SSE → text deltas; state = {buf
     if (typeof txt === "string" && txt) out.push(txt);
     const think = c && c.delta && (c.delta.reasoning_content || c.delta.reasoning); // LM Studio streams Qwen's thinking apart; count it so the wait is visible
     if (typeof think === "string") state.think = (state.think || 0) + think.length;
+    const tc = c && c.delta && c.delta.tool_calls; // OpenAI tools: name once, arguments in pieces, one slot per index
+    if (Array.isArray(tc)) {
+      state.tools = state.tools || [];
+      for (const t of tc) {
+        const i = t.index || 0;
+        const slot = state.tools[i] || (state.tools[i] = {id: "", name: "", args: ""});
+        if (t.id) slot.id = t.id;
+        if (t.function && t.function.name) slot.name += t.function.name;
+        if (t.function && typeof t.function.arguments === "string") slot.args += t.function.arguments;
+      }
+    }
+    if (c && c.finish_reason) state.finish = c.finish_reason;
     if (j.error && j.error.message) state.error = j.error.message;
   }
   return out;
@@ -14695,31 +14707,52 @@ function aiRemote() { // the one adapter shape; a browser (WebLLM) backend slots
       const j = await r.json();
       return (j.data || []).map(m => m.id).filter(Boolean);
     },
-    async chat({system, messages, signal, onDelta, schema, onStatus}) {
+    async chat({system, messages, signal, onDelta, schema, onStatus, tools, onTool}) {
       let model = cfg().aiModel;
       if (!model) {
         if (!askModelCache || askModelCache.url !== url) askModelCache = {url, ids: await this.listModels()};
         model = askModelCache.ids[0];
         if (!model) throw new Error("the server lists no models — load one in LM Studio");
       }
-      const body = {model, stream: true, messages: [{role: "system", content: system}, ...messages]};
-      if (schema) body.response_format = {type: "json_schema", json_schema: {name: "take", strict: true, schema}};
-      const r = await fetch(url + "/v1/chat/completions", {method: "POST", headers: aiHeaders(), body: JSON.stringify(body), signal});
-      if (!r.ok) {
-        let msg = "HTTP " + r.status;
-        try { const j = await r.json(); if (j.error) msg += " — " + (j.error.message || j.error); } catch (err) { /* no body */ }
-        throw new Error(msg);
+      // Tool rounds (2026-09-26): the model may call app tools (annotate, read
+      // another song); the app runs them and sends the results back, at most
+      // a few times, then the model answers in words.
+      const convo = [{role: "system", content: system}, ...messages];
+      let retried = false;
+      for (let round = 0; round < 5; round++) {
+        const body = {model, stream: true, messages: convo};
+        if (schema) body.response_format = {type: "json_schema", json_schema: {name: "take", strict: true, schema}};
+        if (tools && tools.length && onTool) body.tools = tools;
+        const r = await fetch(url + "/v1/chat/completions", {method: "POST", headers: aiHeaders(), body: JSON.stringify(body), signal});
+        if (!r.ok) {
+          let msg = "HTTP " + r.status;
+          try { const j = await r.json(); if (j.error) msg += " — " + (j.error.message || j.error); } catch (err) { /* no body */ }
+          throw new Error(msg);
+        }
+        const reader = r.body.getReader(), dec = new TextDecoder(), st = {buf: "", think: 0};
+        let out = "", shown = 0;
+        for (;;) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          for (const t of aiSSE(st, dec.decode(value, {stream: true}))) { out += t; onDelta(out); }
+          if (!out && st.think - shown > 400 && onStatus) { shown = st.think; onStatus("thinking… (" + Math.round(st.think / 5) + " words so far — thinking is a model setting in LM Studio, not here)"); }
+          if (st.error) throw new Error(st.error);
+        }
+        const calls = (st.tools || []).filter(t => t && t.name);
+        if (!calls.length && !out.trim() && round === 0 && !retried) { retried = true; round--; continue; } // a thinking-only turn (Qwen, first request after a load): one silent retry
+        if (!calls.length || !onTool) return out;
+        convo.push({role: "assistant", content: out || "", tool_calls: calls.map((t, i) => ({id: t.id || "call_" + round + "_" + i, type: "function", function: {name: t.name, arguments: t.args || "{}"}}))});
+        for (const [i, t] of calls.entries()) {
+          let args = {};
+          try { args = JSON.parse(t.args || "{}"); } catch (err) { args = {_parse_error: String(err.message)}; }
+          if (onStatus) onStatus("⚙ " + t.name + "…");
+          let result;
+          try { result = await onTool(t.name, args); } catch (err) { result = {error: String(err && err.message || err)}; }
+          convo.push({role: "tool", tool_call_id: t.id || "call_" + round + "_" + i, content: typeof result === "string" ? result : JSON.stringify(result)});
+        }
+        onDelta(out ? out + "\n\n…" : "…"); // the words so far stay; the next round continues them
       }
-      const reader = r.body.getReader(), dec = new TextDecoder(), st = {buf: "", think: 0};
-      let out = "", shown = 0;
-      for (;;) {
-        const {done, value} = await reader.read();
-        if (done) break;
-        for (const t of aiSSE(st, dec.decode(value, {stream: true}))) { out += t; onDelta(out); }
-        if (!out && st.think - shown > 400 && onStatus) { shown = st.think; onStatus("thinking… (" + Math.round(st.think / 5) + " words so far — thinking is a model setting in LM Studio, not here)"); }
-        if (st.error) throw new Error(st.error);
-      }
-      return out;
+      throw new Error("the model kept calling tools without answering — try again");
     },
   };
 }
@@ -14869,6 +14902,107 @@ function aiBrowser() {
   };
 }
 function aiProvider() { return cfg().aiBackend === "browser" ? aiBrowser() : Object.assign(aiRemote(), {id: "remote"}); }
+
+// ---- ✦ Ask tools (Josh, 2026-09-26): "if I propose putting an F sharp minor
+// chord annotation on 21.1, then it should just be able to do it" — and read
+// other songs in the repo. The APP runs the tools (the model only asks), so
+// they work the same against LM Studio, the Claude bridge, or anything else
+// that speaks OpenAI tool calls. Annotations land as "added" (unsynced), like
+// his own, with the ✕ in Save & Commit; the prompt limits writing to what he
+// asked for in words.
+const ASK_TOOLS = [
+  {type: "function", function: {name: "add_annotation", description: "Write ONE annotation into the open song at a bar and beat, exactly as the user asked. Only when the user explicitly asks you to annotate, mark, label or write something — never on your own initiative.",
+    parameters: {type: "object", properties: {
+      kind: {type: "string", enum: ["chord", "section", "key", "tempo", "loop", "note"], description: "chord = a chord symbol (e.g. F#m, G7/B, Cmaj7#11); section = a form label (Intro, A, B'); key = a key (F#m, Bb, A#/Bb? for tonic-only); tempo = bpm; loop = the return point as bar.beat, placed at the jump point; note = plain prose"},
+      text: {type: "string", description: "the symbol, label, key, bpm, bar.beat, or prose — in the user's words"},
+      bar: {type: "integer", minimum: 1}, beat: {type: "number", minimum: 1, description: "counted beat, 1 = downbeat; fractions allowed (2.5)"},
+      end_bar: {type: "integer", minimum: 1, description: "optional: the last bar the annotation spans"}, end_beat: {type: "number", minimum: 1, description: "optional: the last beat it spans (omit = end of that bar)"},
+      comment: {type: "string", description: "optional: a note attached to the annotation, in the user's words"}},
+      required: ["kind", "text", "bar", "beat"]}}},
+  {type: "function", function: {name: "list_songs", description: "List the songs available in this Night Roll (albums, titles, paths) — use when the user refers to another song.", parameters: {type: "object", properties: {}}}},
+  {type: "function", function: {name: "read_song", description: "Read another song's notes (or a bar range of it) in the same text format as the context block. Use only when the user asks about another song.",
+    parameters: {type: "object", properties: {path: {type: "string", description: "the song path from list_songs"}, from_bar: {type: "integer", minimum: 1}, to_bar: {type: "integer", minimum: 1}}, required: ["path"]}}},
+  {type: "function", function: {name: "read_notes", description: "Read another song's annotations (the user's own analysis of it). Use only when the user asks about another song.",
+    parameters: {type: "object", properties: {path: {type: "string", description: "the song path from list_songs"}}, required: ["path"]}}},
+];
+function askAddAnnotation(a) { // the same text grammar the editor and the files use: one line, parsed by parseRollnotes
+  if (!song || !songKey) throw new Error("no song open");
+  const bar = Math.max(1, Math.round(+a.bar || 1)), beat = Math.max(1, +a.beat || 1);
+  const eb = a.end_bar ? Math.max(bar, Math.round(+a.end_bar)) : null;
+  const eq = eb && a.end_beat ? Math.max(1, +a.end_beat) : null;
+  const kind = String(a.kind || "note"), text = String(a.text || "").trim();
+  if (!text) throw new Error("empty text");
+  const line = (kind === "note" ? text : kind + ": " + text) + (a.comment ? "\n" + String(a.comment).trim() : "");
+  const head = "[" + bar + "." + beat + (eb ? " - " + eb + (eq ? "." + eq : "") : "") + "]";
+  const parsed = parseRollnotes(head + "\n" + line);
+  if (!parsed.length) throw new Error("could not parse that annotation");
+  const fresh = parsed[0];
+  fresh.added = true;
+  const isLoop = n => n.loopTo !== undefined || /^loop:/i.test(n.text || "");
+  if (isLoop(fresh)) rollnotes = rollnotes.filter(n => !(n.added && isLoop(n))); // one loop point per song, as the editor does (loopTo is derived later, in finalizeNotes)
+  dropSupersededBy(fresh);
+  rollnotes.push(resolveNote(fresh));
+  finalizeNotes();
+  saveLocalNotes();
+  if (typeof draw === "function") draw();
+  if (typeof updateSongBtn === "function") updateSongBtn();
+  if (typeof updateSyncBtn === "function") updateSyncBtn();
+  return {ok: true, at: head, text: fresh.text, unsynced: true, note: "written on this device; Save commits it — the user can discard it in Save & Commit"};
+}
+function notesTxtForDoc(doc, name, fromBar, toBar, maxChars) { // notesTxtFor's shape for ANOTHER song (no key stated, sharp spelling)
+  const NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const pn = p => NAMES[p % 12] + (Math.floor(p / 12) - 1);
+  const ts = doc.timesig || [4, 4];
+  const bt = ts[0] * 4 / ts[1] * doc.ppq;
+  let end = 0;
+  doc.tracks.forEach(t => t.notes.forEach(n => { if (!n.gone) end = Math.max(end, n.t + n.d); }));
+  const nBars = Math.ceil(end / bt - 0.05);
+  const b0 = Math.max(0, (fromBar || 1) - 1), b1 = Math.min(nBars, toBar || nBars);
+  const fmt = x => x.toFixed(2).replace(/\.?0+$/, "");
+  const L = ["# " + name + " — " + ts[0] + "/" + ts[1] + ", " + Math.round(6e7 / doc.tempos[0].usq) + "bpm, " + nBars + " bars" + (b0 || b1 < nBars ? " (bars " + (b0 + 1) + "–" + b1 + " shown)" : ""),
+             "# Format: bar N: beat pitch duration-in-quarter-notes; duration is GATE TIME, rhythm comes from onset spacing; sharp spelling, no key stated"];
+  let size = L.join("\n").length, cut = null;
+  doc.tracks.forEach((tr, ti) => {
+    const rows = [];
+    for (let b = b0; b < b1; b++) {
+      if (cut !== null && b + 1 > cut) break;
+      const ns = tr.notes.filter(n => !n.gone && n.t >= b * bt && n.t < (b + 1) * bt);
+      if (!ns.length) continue;
+      const row = "bar " + (b + 1) + ": " + ns.map(n => fmt((n.t - b * bt) / doc.ppq + 1) + " " + pn(n.p) + " " + fmt(n.d / doc.ppq)).join(", ");
+      if (maxChars && size + row.length + 40 > maxChars) { cut = b + 1; break; }
+      rows.push(row); size += row.length + 1;
+    }
+    if (rows.length) { L.push("", "## track " + (ti + 1) + (tr.name ? " (" + tr.name + ")" : "")); L.push(...rows); }
+  });
+  if (cut !== null) L.push("# (cut at bar " + cut + " to fit — ask for a narrower range)");
+  return L.join("\n");
+}
+function askSongPath(p) { // accept a path, a title, or a bare name
+  p = String(p || "").trim();
+  if (!p) throw new Error("which song?");
+  for (const songs of Object.values(CATALOG)) for (const [title, path] of songs) if (path === p || path === p + ".mid" || title.toLowerCase() === p.toLowerCase() || path.split("/").pop().replace(/\.midi?$/i, "") === p.toLowerCase()) return path;
+  throw new Error("no song at " + p + " — use list_songs");
+}
+async function askRunTool(name, a) {
+  if (name === "add_annotation") return askAddAnnotation(a || {});
+  if (name === "list_songs") return Object.entries(CATALOG).map(([album, songs]) => ({album, songs: songs.map(([title, path]) => ({title, path}))}));
+  if (name === "read_song") {
+    const path = askSongPath(a && a.path);
+    const res = await readData("songs", path);
+    if (!res.ok) throw new Error("could not read " + path);
+    const doc = parseMidi(await res.arrayBuffer());
+    return notesTxtForDoc(doc, songTitleOf(path), a.from_bar, a.to_bar, 6000);
+  }
+  if (name === "read_notes") {
+    const path = askSongPath(a && a.path);
+    const res = await readData("analysis", path.replace(/\.midi?$/i, "") + ".rollnotes.json");
+    if (!res.ok) return "(no annotations saved for " + path + ")";
+    let j; try { j = JSON.parse(await res.text()); } catch (err) { return "(annotations unreadable)"; }
+    const at = e => "[" + (e.at || [1, 1]).join(".") + (e.to ? " - " + e.to.join(".") : "") + "]";
+    return (j.notes || []).map(e => at(e) + " " + (e.type ? e.type + ": " + (e.chord || e.label || e.key || e.bpm || e.loop || e.timesig || e.track || e.chop || e.lane || "") : e.text || "") + (e.note ? " — " + e.note : "")).join("\n") || "(no annotations)";
+  }
+  throw new Error("unknown tool " + name);
+}
 
 // ---- the span: the ruler selection if armed, else the bars in view. ONE
 // frame everywhere — display bars/beats (chop-relative, the declared meter's
@@ -15133,7 +15267,7 @@ async function askSend() {
   document.getElementById("asksend").disabled = true;
   let out = "";
   try {
-    out = await aiProvider().chat({system: ASK_SYS, messages, signal: ctl.signal, onDelta: raw => askShowThinking(live, raw), onStatus: t => { askstatus.textContent = t; }});
+    out = await aiProvider().chat({system: ASK_SYS, messages, signal: ctl.signal, onDelta: raw => askShowThinking(live, raw), onStatus: t => { askstatus.textContent = t; }, tools: ASK_TOOLS, onTool: askRunTool});
     out = out.replace(/<think>[\s\S]*?<\/think>\s*/g, "").trim();
     if (!out) out = "(no reply — try rephrasing)";
     live.textContent = out;

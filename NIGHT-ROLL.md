@@ -1130,6 +1130,54 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   runs Test. The adapter's blank-model fallback survives as a safety net
   but the UI never advertises it. Tests: none reference the sheet's ids
   (2026-09-25); browser-verified on the Mac.
+- **Tools (2026-09-26 — Josh: "if I propose putting an F sharp minor
+  chord annotation on 21.1, then it should just be able to do it").**
+  `ASK_TOOLS` (OpenAI function schemas) ride every ✦ Ask request to the
+  remote backend; `aiRemote().chat` runs up to five tool rounds: it
+  accumulates streamed `delta.tool_calls` (`aiSSE` slots them by index),
+  appends the assistant tool_calls message plus one `tool` result per
+  call (`askRunTool`), shows "⚙ name…" in the status line, and continues.
+  The APP runs every tool, so they behave identically on LM Studio, the
+  Claude bridge, or any OpenAI-compatible server. Tools: `add_annotation`
+  (kind chord/section/key/tempo/loop/note, text, bar, beat, optional
+  end_bar/end_beat/comment — `askAddAnnotation` builds ONE line in the
+  .rollnotes TEXT grammar and runs it through `parseRollnotes` +
+  `dropSupersededBy` + `resolveNote`, exactly the editor's path; lands
+  `added` = unsynced, with the ✕ in Save & Commit; a loop replaces a
+  local loop as the editor does), `list_songs` (CATALOG), `read_song`
+  (path/title → `readData("songs")` → `parseMidi` → `notesTxtForDoc`,
+  6000 chars, optional bar range), `read_notes` (the .rollnotes.json as
+  "[b.q - b.q] type: value — note" lines). `askSongPath` accepts a path,
+  a title, or a bare file name. The prompt's closing paragraph limits
+  add_annotation to what the user asked for in words — his rule: the
+  model never volunteers a reading, it writes what he dictates. Fill's
+  schema path sends no tools. The browser (WebLLM) backend ignores them.
+- **Claude Code as a backend (`tools/claude-bridge.mjs`, 2026-09-26 —
+  Josh: "I just want to use Claude Code as my backing LLM").** A
+  dependency-free Node server on 127.0.0.1:8787 speaking the OpenAI
+  protocol: `GET /v1/models` lists one model, `claude-code`; `POST
+  /v1/chat/completions` (stream or not) flattens the messages into one
+  prompt and runs `claude -p --output-format stream-json
+  --include-partial-messages --append-system-prompt … --allowedTools
+  Read Glob Grep WebFetch WebSearch` with cwd = this repo, so Claude
+  Code reads any song's .notes.txt / .rollnotes.json / docs and the web,
+  and writes nothing. Text deltas stream as OpenAI chunks; Claude's own
+  tool uses (Read …) stream as `reasoning_content` notes so the app's
+  thinking counter moves. App tools: the bridge appends the tool list to
+  the system prompt and asks for a one-line `{"tool_call":{…}}` reply
+  when Claude wants one; it holds back the first characters of a reply
+  until it can tell prose from JSON, then emits proper OpenAI
+  `tool_calls` + `finish_reason: "tool_calls"`; `tool` messages come
+  back as "TOOL RESULT" lines in the next prompt. Every turn is a fresh
+  process (5-minute cap, killed on client abort). The appended prompt
+  tells Claude to ignore hook style rules (the caveman hook fires in
+  `-p` too) and to obey CLAUDE.md. Exposed on the tailnet next to LM
+  Studio: `tailscale serve --bg --set-path /claude 8787` → Settings URL
+  `https://<mac>.<tailnet>.ts.net/claude`, model `claude-code`, context
+  100000 (the app trims history to `aiWindow`; 8192 starves Claude).
+  Not persistent across reboots: `node tools/claude-bridge.mjs &` (the
+  serve mount persists). Cost: each turn is a Claude Code run on his
+  account (~25k cached input tokens for the repo context).
 - **iPad route (P4) — done 2026-09-25.** Josh's iPad asks the Mac's LM
   Studio over Tailscale, verified end to end (Test listed the models,
   ✦ Ask answered). Exact recipe on the Mac: `lms server start --cors`
