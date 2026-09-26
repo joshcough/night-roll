@@ -1046,7 +1046,11 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   capitalized first word; the join adds a space, and a period first when
   the next segment starts with a capital and the last ended without
   punctuation. vm-tested. Also the shared `micToggle` (🎤 Speak), as the annotation
-  editor and dev channel use.
+  editor and dev channel use. `micStop` detaches the recognizer's handlers
+  BEFORE `stop()`: Safari delivers one more result after stop, which used to
+  refill the Ask box Send had just cleared (2026-09-26). Dictation fires
+  `input` on the box, so `askGrow` sizes `#askinput` to its text (CSS cap
+  33dvh, the log gives way) and keeps the end in view.
 - **Measured (2026-09-25, Mac, Qwen 3.6 35B-A3B via LM Studio):** 17 bars
   of Overworld = 3.8k prompt tokens; reply 39 s of which ~34 s hidden
   thinking at 60 tok/s. Slow but usable; a no-think switch is a candidate.

@@ -633,8 +633,10 @@
   .askmsg.ai { background: var(--bg); border: 1px solid var(--grid); align-self: flex-start; }
   .askmsg.err { color: #e66767; }
   .askmsg.earlier { font-family: var(--mono); font-size: 12px; color: var(--dim); white-space: pre-wrap; max-height: 40vh; overflow: auto; align-self: stretch; }
-  #askinput { font-family: var(--sans); font-size: 15px; flex: 1; min-height: 44px; max-height: 120px;
-              resize: none; width: auto; }
+  /* The box grows with its text (askGrow) up to a third of the screen — a
+     fixed 120px hid dictation past the second line (Josh, 2026-09-26). */
+  #askinput { font-family: var(--sans); font-size: 15px; flex: 1; min-height: 44px; max-height: 33dvh;
+              resize: none; width: auto; overflow-y: auto; }
   .chiprow button {
     font-family: var(--mono);
     font-size: 12px;
@@ -11110,7 +11112,13 @@ const SPEECH = window.SpeechRecognition || window.webkitSpeechRecognition || nul
 let micRec = null;
 const nmic = document.getElementById("nmic");
 function micStop() {
-  if (micRec) { try { micRec.stop(); } catch (err) { /* already stopped */ } }
+  if (micRec) {
+    // Safari delivers one more result AFTER stop(); with the handler still
+    // attached it wrote the transcript back into a box Send had just cleared
+    // (Josh, 2026-09-26). Detach first so a late result has nowhere to land.
+    micRec.onresult = micRec.onend = micRec.onerror = null;
+    try { micRec.stop(); } catch (err) { /* already stopped */ }
+  }
   micRec = null;
   if (micBtn) { micBtn.classList.remove("active"); micBtn.textContent = "🎤 Speak"; }
   else { nmic.classList.remove("active"); nmic.textContent = "🎤 Speak"; }
@@ -11146,6 +11154,7 @@ function micToggle(btn, textarea, statusFn) { // shared dictation: append into a
     for (let i = 0; i < e.results.length; i++) (e.results[i].isFinal ? fin : mid).push(e.results[i][0].transcript);
     finals = micJoin(fin);
     textarea.value = micJoin([base, finals, micJoin(mid)]);
+    textarea.dispatchEvent(new Event("input")); // so the box grows/scrolls as it would when typed into
   };
   micRec.onerror = e => {
     statusFn(e.error === "not-allowed" ? "Microphone permission denied — allow it in Safari settings."
@@ -15258,6 +15267,7 @@ async function askSend() {
   const est = askEstimate(ASK_SYS, messages);
   askMicOff(); // a live 🎤 would write its transcript back into the box after we clear it
   askinput.value = "";
+  askGrow();
   askBubble("user", text);
   const live = askBubble("ai", "…");
   askstatus.textContent = "thinking… (~" + (est >= 1000 ? (est / 1000).toFixed(1) + "k" : est) + " of " + Math.round(budget.win / 1000) + "k" + (budget.small ? ", small window — raise it in Settings if the server allows" : "") + ")";
@@ -15292,6 +15302,7 @@ function openAsk() {
   askRefreshTarget();
   askinput.placeholder = "Ask about what you're looking at…";
   asksheet.classList.add("on");
+  askGrow();
   askinput.focus();
 }
 document.getElementById("askbtn").addEventListener("click", openAsk);
@@ -15304,6 +15315,12 @@ document.getElementById("askclear").addEventListener("click", async () => { // C
 document.getElementById("asksend").addEventListener("click", askSend);
 document.getElementById("askstop").addEventListener("click", () => { if (askBusy) askBusy.abort(); });
 function askMicOff() { if (micBtn === document.getElementById("askmic")) micStop(); }
+function askGrow() { // size the box to its text (CSS caps it) and keep the end in view
+  askinput.style.height = "auto";
+  askinput.style.height = askinput.scrollHeight + "px";
+  askinput.scrollTop = askinput.scrollHeight;
+}
+askinput.addEventListener("input", askGrow);
 document.getElementById("askmic").addEventListener("click", () => {
   if (!SPEECH) { askstatus.textContent = "no speech recognition in this browser — the keyboard mic still works"; return; }
   micToggle(document.getElementById("askmic"), askinput, s2 => { askstatus.textContent = s2; });
@@ -15447,7 +15464,7 @@ async function askFill() {
   const existing = tgt === "new" ? "empty" : askTargetStatus(sp, tgt);
   const text = askinput.value.trim() || "Fill these bars with something that fits.";
   askMicOff();
-  askinput.value = "";
+  askinput.value = ""; askGrow();
   askBubble("user", "✦ " + text + "  [" + askSpanLabel(sp) + " → " + tgtLabel + "]");
   const live = askBubble("ai", "…");
   const budget = askBudget();

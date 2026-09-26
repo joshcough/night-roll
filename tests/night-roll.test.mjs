@@ -2694,6 +2694,19 @@ test("dictation: micJoin spaces Safari's pause-split segments and closes sentenc
   assert.equal(val(`micJoin(["typed already ", "Dictated next"])`), "typed already. Dictated next");
 });
 
+test("dictation: micStop detaches the recognizer before stop — Safari's late result can't refill a box Send just cleared; Ask box grows on input", () => {
+  run(`var _rec = {stopped: false, stop() { this.stopped = true; }, onresult: () => { throw new Error("late result landed"); }, onend: () => {}, onerror: () => {}};
+       micRec = _rec; micBtn = null; micStop();`);
+  assert.equal(val(`_rec.stopped`), true, "recognizer stopped");
+  assert.equal(val(`_rec.onresult`), null, "result handler detached");
+  assert.equal(val(`_rec.onend`), null, "end handler detached");
+  assert.equal(val(`micRec`), null);
+  run(`askinput.scrollHeight = 90; askinput.value = "a b c";`);
+  app.dispatch("askinput", { type: "input" });
+  assert.equal(val(`askinput.style.height`), "90px", "box sized to its text");
+  assert.equal(val(`askinput.scrollTop`), 90, "end kept in view");
+});
+
 test("Ask tools: SSE tool_calls accumulate per index; add_annotation writes through the text grammar as unsynced; read helpers", () => {
   // streamed tool call: name in one chunk, arguments split across chunks, finish_reason at the end
   const chunks = [
