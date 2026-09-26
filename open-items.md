@@ -23,12 +23,28 @@ For Josh's iPad: File → Settings → server URL
 (`node tools/claude-bridge.mjs &`; not persistent across reboots — a
 launchd plist is the obvious next step if he wants it always on).
 
+**What happened next (2026-09-26, from threnody-2.ask.md):** through
+the bridge, Claude Code edited and pushed twice on Josh's "go"
+(c2f0bcf: dictation refill + growing Ask box; 9cc232a: a tapped Stop
+keeps the last sentence — fixing its own regression), because his
+global permission mode is "auto". In other turns it told him it was
+read-only, which is what confused him ("I was able to get you to
+implement some things … but not everything"). The bridge prompt now
+tells the truth about capabilities and binds CLAUDE.md. His other three
+reports — the question vanishing when the sheet closes, answers lost
+when he switches to YouTube, "very old messages" after coming back —
+were one design gap: the reply was only stored when it finished and
+the run died with the connection. Shipped: the job model (bridge keeps
+the run; the app saves the question at send and fetches the reply on
+return). Not yet seen on his iPad.
+
 Open: replies through the bridge take 10–30 s (a Claude Code run per
 turn); a persistent session per song (`--resume`) would cut that and
 the cost; Claude's own tool use shows only as the thinking counter;
 LM Studio's Qwen sometimes answers a first request with thinking only
-(one silent retry is in). Dictation and prompt fixes from the same log
-shipped earlier (3c280b5).
+(one silent retry is in); a launchd plist so the bridge survives
+reboots. Dictation and prompt fixes from the same log shipped earlier
+(3c280b5).
 
 ## COMPARE WITH REPO — SHIPPED 2026-09-25 (NIGHT-ROLL.md "Compare with repo")
 

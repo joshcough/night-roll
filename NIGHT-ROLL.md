@@ -1182,6 +1182,36 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   Not persistent across reboots: `node tools/claude-bridge.mjs &` (the
   serve mount persists). Cost: each turn is a Claude Code run on his
   account (~25k cached input tokens for the repo context).
+  **Capabilities are the machine's** (found 2026-09-26): Josh's global
+  Claude Code permission mode is "auto", so `claude -p` has Edit, Write
+  and Bash, and the first bridge session edited index.html, ran the
+  tests, and pushed twice (c2f0bcf, 9cc232a) when he said "go" — while
+  telling him in other turns it was read-only. The `--allowedTools`
+  list is gone (it only ever added), and the appended prompt now says:
+  you have what a terminal session has, check rather than assume, and
+  CLAUDE.md binds you (announce first; vm tests under an alarm; never
+  Playwright; commit, push, report the hash; never touch
+  albums/compositions/ unasked).
+  **Jobs** (same day — the iPad problem): Safari suspends a backgrounded
+  tab and drops the connection; a run tied to it died and the answer
+  never existed, and the sheet redrew from storage without the question.
+  Now every turn is a JOB keyed by the app's `x-nr-job` header: the
+  bridge runs it to the end with or without a listener, keeps text,
+  notes and result for two hours, re-attaches a second POST with the
+  same id (replaying the text so far), answers `GET /v1/jobs/:id`
+  (status running/done/error, text, notes, result) and `DELETE` (the
+  app's ■ Stop → status error "stopped"); `GET /v1/jobs` is the
+  capability probe. App side: `askSend` saves the question at once with
+  `pending: <jobId>` (`askJobId`), `askRun` does the exchange (tool
+  rounds inside) and `askFinish`/`askFail` replace the marker; a
+  dropped connection on a jobs-capable server leaves the marker and
+  schedules `askResume`, which runs on sheet open (a pending question
+  renders with a "still working" bubble), on `visibilitychange`, and
+  every 3 s while waiting; a job that ended in a tool call is run here
+  and continued as a new job with the same history; without jobs (LM
+  Studio) a dropped reply becomes "⚠ no reply came back — ask again".
+  `askBuildMessages` skips the pending copy. vm-tested (store flow);
+  browser-verified: send, reload mid-reply, reopen → the answer landed.
 - **iPad route (P4) — done 2026-09-25.** Josh's iPad asks the Mac's LM
   Studio over Tailscale, verified end to end (Test listed the models,
   ✦ Ask answered). Exact recipe on the Mac: `lms server start --cors`

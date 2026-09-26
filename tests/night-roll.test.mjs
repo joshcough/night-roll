@@ -1392,7 +1392,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
     "Tempo from this take", "Split at cursor", "Remove piece", "Map the bars to this take", "downbeat ▶",
-    "✦ Ask", "✦ Fill", ".ask.md", "Commit song", "Commit all", "data locations (advanced)", "saves itself", "Compare with repo", "chord annotation on 21.1",
+    "✦ Ask", "✦ Fill", ".ask.md", "Commit song", "Commit all", "data locations (advanced)", "saves itself", "Compare with repo", "chord annotation on 21.1", "leave the app while a slow reply cooks",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -2749,6 +2749,25 @@ test("Ask tools: SSE tool_calls accumulate per index; add_annotation writes thro
   assert.equal(val(`askSongPath("Ambush")`), "albums/x/ambush.mid");
   assert.throws(() => val(`askSongPath("nothing-here")`), /list_songs/);
   run(`delete CATALOG["Probe Album"]; rollnotes = []; localStorage.removeItem("ff1roll-notes-albums/compositions/nightroll/tool-test.mid"); songKey = null;`);
+});
+
+test("Ask jobs: a pending question is stored at send time; finish/fail replace the marker; history skips it", () => {
+  installSong();
+  run(`songKey = "albums/compositions/nightroll/job-test.mid";
+       askSave([{role: "user", content: "earlier q"}, {role: "assistant", content: "earlier a"}, {role: "user", content: "in flight", t: 1, at: "bars 1–4 (view)", pending: "nr_abc"}]);`);
+  const built = JSON.parse(val(`JSON.stringify(askBuildMessages(askLoad(), "in flight", "CTX", {hist: 100000}))`));
+  assert.equal(built.length, 3, "history + the live question, the pending copy skipped");
+  assert.equal(built[0].content, "earlier q"); assert.match(built[2].content, /in flight$/);
+  run(`askFinish("nr_abc", "the answer");`);
+  let st = JSON.parse(app.store.get("ff1roll-ask-albums/compositions/nightroll/job-test.mid"));
+  assert.equal(st.msgs.length, 4); assert.equal(st.msgs[2].pending, undefined); assert.equal(st.msgs[3].role, "assistant"); assert.equal(st.msgs[3].content, "the answer");
+  run(`askFinish("nr_abc", "again");`); // idempotent: no marker, nothing added
+  st = JSON.parse(app.store.get("ff1roll-ask-albums/compositions/nightroll/job-test.mid")); assert.equal(st.msgs.length, 4);
+  run(`const m = askLoad(); m.push({role: "user", content: "second", pending: "nr_def"}); askSave(m); askFail("nr_def", "stopped");`);
+  st = JSON.parse(app.store.get("ff1roll-ask-albums/compositions/nightroll/job-test.mid"));
+  assert.equal(st.msgs.length, 6); assert.equal(st.msgs[5].content, "⚠ stopped"); assert.equal(st.msgs[4].pending, undefined);
+  assert.equal(val(`askUnsavedCount()`), 6);
+  run(`localStorage.removeItem("ff1roll-ask-albums/compositions/nightroll/job-test.mid"); songKey = null;`);
 });
 
 test("Ask: host consent — localhost never prompts, other hosts once", () => {

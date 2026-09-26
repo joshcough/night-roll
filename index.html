@@ -1258,7 +1258,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
-      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply. The conversation is kept per song, whole, and it is part of the song's save: File → Save appends everything since the last save to <code>&lt;song&gt;.ask.md</code> beside the song (your session log — hand it to a code session later), the ● after the song title lights while chat is unsaved, and the Save &amp; Commit sheet lists it. <b>Clear chat</b> starts a fresh session on this device (it asks first if anything is unsaved; the .ask.md keeps what was saved). The model runs wherever you point it: File → Settings… → <b>AI model</b> is either <b>in this browser</b> — pick a small model (0.4–4 GB), the first Ask downloads it once and it runs on this device's GPU, nothing leaves the device; Test checks WebGPU and whether it's downloaded — or <b>on a server</b>: the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional API key; <b>Test</b> lists the server's models, picks one (your last pick if the server still has it), saves, and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server, no answer in 8 s). Every Settings field saves itself the moment you leave it — there is no Save button and closing never loses anything. The first time you point it at a machine other than this one, it asks once before sending your notes there. On request it acts: "put an F#m chord annotation on 21.1", "mark bars 6–12 as section A", "set a tempo of 192 at bar 6" — it writes exactly that annotation (unsynced, with a ✕ in Save &amp; Commit like your own), and "compare this to ambush" makes it read that song's notes and annotations from the repo. What it never does: reveal a key you haven't set, annotate on its own initiative, or answer a question you didn't ask.</dd>
+      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply. Your question is saved the moment you send it, so you can close the sheet or leave the app while a slow reply cooks: on the Claude Code bridge the answer keeps coming and lands when you come back (on other servers a dropped connection is reported so you can ask again). The conversation is kept per song, whole, and it is part of the song's save: File → Save appends everything since the last save to <code>&lt;song&gt;.ask.md</code> beside the song (your session log — hand it to a code session later), the ● after the song title lights while chat is unsaved, and the Save &amp; Commit sheet lists it. <b>Clear chat</b> starts a fresh session on this device (it asks first if anything is unsaved; the .ask.md keeps what was saved). The model runs wherever you point it: File → Settings… → <b>AI model</b> is either <b>in this browser</b> — pick a small model (0.4–4 GB), the first Ask downloads it once and it runs on this device's GPU, nothing leaves the device; Test checks WebGPU and whether it's downloaded — or <b>on a server</b>: the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional API key; <b>Test</b> lists the server's models, picks one (your last pick if the server still has it), saves, and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server, no answer in 8 s). Every Settings field saves itself the moment you leave it — there is no Save button and closing never loses anything. The first time you point it at a machine other than this one, it asks once before sending your notes there. On request it acts: "put an F#m chord annotation on 21.1", "mark bars 6–12 as section A", "set a tempo of 192 at bar 6" — it writes exactly that annotation (unsynced, with a ✕ in Save &amp; Commit like your own), and "compare this to ambush" makes it read that song's notes and annotations from the repo. What it never does: reveal a key you haven't set, annotate on its own initiative, or answer a question you didn't ask.</dd>
       <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); a lasso'd note gets a white ring for exactly as long as it sounds — so your selection visibly fires as the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows — and SOUNDING notes get the same treatment during playback, so hitting ▶ lights the whole neck's worth of what's playing, not just the sounding octave. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
@@ -14722,8 +14722,13 @@ function aiRemote() { // the one adapter shape; a browser (WebLLM) backend slots
       const j = await r.json();
       return (j.data || []).map(m => m.id).filter(Boolean);
     },
-    async chat({system, messages, signal, onDelta, schema, onStatus, tools, onTool}) {
+    async chat({system, messages, signal, onDelta, schema, onStatus, tools, onTool, job}) {
       let model = cfg().aiModel;
+      const headers = aiHeaders();
+      if (job) { // the bridge keeps a job alive through a dropped connection; ■ Stop kills it explicitly
+        headers["x-nr-job"] = job;
+        if (signal) signal.addEventListener("abort", () => { fetch(url + "/v1/jobs/" + encodeURIComponent(job), {method: "DELETE", headers: aiHeaders()}).catch(() => {}); }, {once: true});
+      }
       if (!model) {
         if (!askModelCache || askModelCache.url !== url) askModelCache = {url, ids: await this.listModels()};
         model = askModelCache.ids[0];
@@ -14738,7 +14743,7 @@ function aiRemote() { // the one adapter shape; a browser (WebLLM) backend slots
         const body = {model, stream: true, messages: convo};
         if (schema) body.response_format = {type: "json_schema", json_schema: {name: "take", strict: true, schema}};
         if (tools && tools.length && onTool) body.tools = tools;
-        const r = await fetch(url + "/v1/chat/completions", {method: "POST", headers: aiHeaders(), body: JSON.stringify(body), signal});
+        const r = await fetch(url + "/v1/chat/completions", {method: "POST", headers, body: JSON.stringify(body), signal});
         if (!r.ok) {
           let msg = "HTTP " + r.status;
           try { const j = await r.json(); if (j.error) msg += " — " + (j.error.message || j.error); } catch (err) { /* no body */ }
@@ -15197,6 +15202,7 @@ function askBuildMessages(msgs, text, ctx, budget) { // stripped history newest-
   const out = [];
   let left = budget.hist * ASK_CPT;
   for (let i = msgs.length - 1; i >= 0; i--) {
+    if (msgs[i].pending) continue; // the question in flight is sent as the live one, not as history
     const c = askStripContext(msgs[i].content);
     if (c.length > left) break;
     left -= c.length;
@@ -15225,8 +15231,10 @@ function askRender() {
   const st = askStore();
   const msgs = st.msgs;
   if (st.trimmed) askRenderEarlier();
+  let pendingSeen = false;
   if (!msgs.length && !st.trimmed) askBubble("ai", "Ask me about what you're looking at — I can see the song, your cursor, your notes, and the bars in view. I'll point you toward things before I name them; say you give up and I'll just tell you.");
-  for (const m of msgs) askBubble(m.role === "user" ? "user" : "ai", askStripContext(m.content));
+  for (const m of msgs) { askBubble(m.role === "user" ? "user" : "ai", askStripContext(m.content)); if (m.pending) { askBubble("ai", "… (still working — the reply lands here)"); pendingSeen = true; } }
+  if (pendingSeen) askResumeSoon(200);
 }
 async function askRenderEarlier() { // what this device let go of after it reached the repo file
   const div = askBubble("ai", "loading the earlier messages from the repo file…");
@@ -15259,6 +15267,73 @@ function askShowThinking(live, raw) { // Qwen-style <think> blocks stay out of t
   if (vis) askstatus.textContent = "";
   asklog.scrollTop = asklog.scrollHeight;
 }
+// Jobs (2026-09-26): on the iPad, Safari suspends a backgrounded tab and the
+// connection dies mid-reply — the question vanished from the sheet and the
+// answer never existed. Now the question is SAVED the instant it is sent
+// (marked pending with a job id), the bridge runs the job to the end whether
+// or not anyone is listening, and askResume — on reopen, on coming back to
+// the tab, or every few seconds while waiting — fetches the finished reply.
+// Servers without jobs (LM Studio) keep the old one-connection behaviour; a
+// dropped reply there is reported, not lost silently.
+let askJobsCache = null; // {url, ok}
+async function askJobsSupported() {
+  const url = aiUrl();
+  if (cfg().aiBackend === "browser") return false;
+  if (askJobsCache && askJobsCache.url === url) return askJobsCache.ok;
+  let ok = false;
+  try { const r = await fetch(url + "/v1/jobs", {headers: aiHeaders()}); ok = r.ok && !!(await r.json()).ok; } catch (err) { ok = false; }
+  askJobsCache = {url, ok};
+  return ok;
+}
+function askJobId() { return "nr_" + (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "").slice(0, 20) : Date.now().toString(36) + Math.random().toString(36).slice(2, 8)); }
+function askPendingIndex(msgs, jobId) { return msgs.findIndex(m => m.pending === jobId); }
+function askFinish(jobId, text) { // the reply for a pending question landed: store it, drop the marker
+  const msgs = askLoad();
+  const i = askPendingIndex(msgs, jobId);
+  if (i < 0) return;
+  delete msgs[i].pending;
+  msgs.splice(i + 1, 0, {role: "assistant", content: text, m: askModelName()});
+  askSave(msgs);
+}
+function askFail(jobId, note) { // no reply will come: keep the question, say why
+  const msgs = askLoad();
+  const i = askPendingIndex(msgs, jobId);
+  if (i < 0) return;
+  delete msgs[i].pending;
+  msgs.splice(i + 1, 0, {role: "assistant", content: "⚠ " + note, m: askModelName()});
+  askSave(msgs);
+}
+async function askRun({msgs, text, sp, messages, jobId, live}) { // one exchange (tool rounds inside); the pending marker outlives a dropped connection
+  const budget = askBudget();
+  const est = askEstimate(ASK_SYS, messages);
+  askstatus.textContent = "thinking… (~" + (est >= 1000 ? (est / 1000).toFixed(1) + "k" : est) + " of " + Math.round(budget.win / 1000) + "k" + (budget.small ? ", small window — raise it in Settings if the server allows" : "") + ")";
+  const ctl = typeof AbortController === "function" ? new AbortController() : {abort() {}, signal: undefined};
+  askBusy = ctl;
+  document.getElementById("askstop").style.display = "";
+  document.getElementById("asksend").disabled = true;
+  const jobs = await askJobsSupported();
+  try {
+    let out = await aiProvider().chat({system: ASK_SYS, messages, signal: ctl.signal, onDelta: raw => askShowThinking(live, raw), onStatus: t => { askstatus.textContent = t; }, tools: ASK_TOOLS, onTool: askRunTool, job: jobs ? jobId : undefined});
+    out = out.replace(/<think>[\s\S]*?<\/think>\s*/g, "").trim();
+    if (!out) out = "(no reply — try rephrasing)";
+    live.textContent = out;
+    askFinish(jobId, out);
+    askstatus.textContent = "";
+  } catch (err) {
+    const aborted = err && err.name === "AbortError";
+    const partial = live.textContent && live.textContent !== "…" ? live.textContent : "";
+    if (aborted) { if (partial) askFinish(jobId, partial); else askFail(jobId, "stopped"); askstatus.textContent = "stopped"; if (!partial) { live.classList.add("err"); live.textContent = "⚠ stopped"; } }
+    else if (jobs && !(err && /^HTTP /.test(err.message))) { // the connection died, not the job: the answer is still cooking on the server
+      askstatus.textContent = "connection dropped — the answer keeps cooking; it appears when you come back";
+      live.textContent = "… (still working — reopen or come back to see it)";
+      askResumeSoon(3000);
+    } else { live.classList.add("err"); live.textContent = "⚠ " + err.message + " — check File → Settings… → AI model, and Test"; askFail(jobId, err.message); askstatus.textContent = ""; }
+  } finally {
+    askBusy = null;
+    document.getElementById("askstop").style.display = "none";
+    document.getElementById("asksend").disabled = false;
+  }
+}
 async function askSend() {
   const text = askinput.value.trim();
   if (!text || askBusy || !song) return;
@@ -15270,37 +15345,49 @@ async function askSend() {
   const msgs = askLoad();
   const ctx = askContext(sp, budget);
   const messages = askBuildMessages(msgs, text, ctx, budget);
-  const est = askEstimate(ASK_SYS, messages);
+  const jobId = askJobId();
+  msgs.push({role: "user", content: text, t: Date.now(), at: askSpanLabel(sp), pending: jobId}); // saved NOW: closing the sheet or leaving the app cannot lose it
+  askSave(msgs);
   askMicOff(); // a live 🎤 would write its transcript back into the box after we clear it
   askinput.value = "";
   askGrow();
   askBubble("user", text);
   const live = askBubble("ai", "…");
-  askstatus.textContent = "thinking… (~" + (est >= 1000 ? (est / 1000).toFixed(1) + "k" : est) + " of " + Math.round(budget.win / 1000) + "k" + (budget.small ? ", small window — raise it in Settings if the server allows" : "") + ")";
-  const ctl = typeof AbortController === "function" ? new AbortController() : {abort() {}, signal: undefined};
-  askBusy = ctl;
-  document.getElementById("askstop").style.display = "";
-  document.getElementById("asksend").disabled = true;
-  let out = "";
-  try {
-    out = await aiProvider().chat({system: ASK_SYS, messages, signal: ctl.signal, onDelta: raw => askShowThinking(live, raw), onStatus: t => { askstatus.textContent = t; }, tools: ASK_TOOLS, onTool: askRunTool});
-    out = out.replace(/<think>[\s\S]*?<\/think>\s*/g, "").trim();
-    if (!out) out = "(no reply — try rephrasing)";
-    live.textContent = out;
-    msgs.push({role: "user", content: text, t: Date.now(), at: askSpanLabel(sp)}, {role: "assistant", content: out, m: askModelName()});
-    askSave(msgs);
-    askstatus.textContent = "";
-  } catch (err) {
-    const aborted = err && err.name === "AbortError";
-    const partial = live.textContent && live.textContent !== "…" ? live.textContent : "";
-    if (aborted && partial) { msgs.push({role: "user", content: text, t: Date.now(), at: askSpanLabel(sp)}, {role: "assistant", content: partial, m: askModelName()}); askSave(msgs); askstatus.textContent = "stopped"; }
-    else { live.classList.add("err"); live.textContent = "⚠ " + (aborted ? "stopped" : err.message) + (aborted ? "" : " — check File → Settings… → AI model, and Test"); askstatus.textContent = ""; }
-  } finally {
-    askBusy = null;
-    document.getElementById("askstop").style.display = "none";
-    document.getElementById("asksend").disabled = false;
-  }
+  await askRun({msgs, text, sp, messages, jobId, live});
 }
+let askResumeTimer = null;
+function askResumeSoon(ms) { clearTimeout(askResumeTimer); askResumeTimer = setTimeout(() => { askResumeTimer = null; askResume(); }, ms); }
+async function askResume() { // a pending question: fetch its job; finished → store; tool call → run it and continue; running → look again soon
+  if (askBusy || !song || !asksheet.classList.contains("on") || (typeof document.hidden === "boolean" && document.hidden)) return;
+  const msgs = askLoad();
+  const i = msgs.findIndex(m => m.pending);
+  if (i < 0) return;
+  const pend = msgs[i], jobId = pend.pending;
+  const live = [...asklog.querySelectorAll(".askmsg.ai")].pop();
+  if (!(await askJobsSupported())) { askFail(jobId, "no reply came back (the connection dropped) — ask again"); askRender(); return; }
+  let j;
+  try { const r = await fetch(aiUrl() + "/v1/jobs/" + encodeURIComponent(jobId), {headers: aiHeaders()}); if (r.status === 404) { askFail(jobId, "the server no longer has this job — ask again"); askRender(); return; } j = await r.json(); }
+  catch (err) { askResumeSoon(5000); return; }
+  if (j.status === "running") { if (live) { live.textContent = j.text ? j.text : "… (" + ((j.notes || []).slice(-1)[0] || "working") + ")"; } askResumeSoon(3000); return; }
+  if (j.status === "error") { askFail(jobId, j.error || "the job failed"); askRender(); return; }
+  const calls = j.result && j.result.tool_calls;
+  if (!calls || !calls.length) { askFinish(jobId, (j.text || "").trim() || "(no reply)"); askRender(); return; }
+  // the job ended in a tool call: run it here, then continue the exchange as a new job
+  const sp = askSpanFrozen || askSpan();
+  const budget = askBudget();
+  const history = msgs.slice(0, i);
+  const messages = askBuildMessages(history, pend.content, askContext(sp, budget), budget);
+  messages.push({role: "assistant", content: "", tool_calls: calls});
+  for (const c of calls) {
+    let args = {}; try { args = JSON.parse(c.function.arguments || "{}"); } catch (err) { args = {}; }
+    let result; try { result = await askRunTool(c.function.name, args); } catch (err) { result = {error: String(err.message || err)}; }
+    messages.push({role: "tool", tool_call_id: c.id, content: typeof result === "string" ? result : JSON.stringify(result)});
+  }
+  const nextId = askJobId();
+  pend.pending = nextId; askSave(msgs);
+  await askRun({msgs, text: pend.content, sp, messages, jobId: nextId, live: live || askBubble("ai", "…")});
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) askResumeSoon(300); });
 function openAsk() {
   if (!song) return;
   askRender();
