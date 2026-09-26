@@ -4,6 +4,43 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## RESTART CONTEXT 2026-09-25 late — iPad → MacBook AI route (P4), mid-setup
+
+Where we are: ✦ Ask / ✦ Fill / in-browser backend are SHIPPED and live
+(commits 8067f9c, fcd0697, e93541d; CI + Pages green; deploy email sent).
+Josh is wiring the iPad to LM Studio on the MacBook via Tailscale. Steps
+done: LM Studio server started (`lms server start --cors` — dies on
+reboot, restart it), Tailscale installed on the Mac, VPN config granted,
+system extension approved (`systemextensionsctl list` shows
+io.tailscale.ipn.macsys.network-extension activated enabled) but its
+process never started, so the app spun on "Add Account…" and the sign-in
+buttons did nothing; the CLI said "The Tailscale CLI failed to start".
+He is rebooting for that. Claude's local-only state was cleaned (dev
+server stopped, dev-origin drafts/cache removed).
+
+Next, in order (Claude runs what it can; CLI is
+`/Applications/Tailscale.app/Contents/MacOS/Tailscale`; never call it
+without a timeout — it hung the shell while the extension was down):
+1. After reboot: Josh opens Tailscale → Sign in to your network (browser
+   should open now) → sign in with Google. If it still spins: System
+   Settings → General → Login Items & Extensions → Network Extensions,
+   toggle Tailscale off/on.
+2. Josh installs Tailscale on the iPad, same account.
+3. login.tailscale.com → DNS → enable MagicDNS + HTTPS Certificates
+   (Josh; Claude can't).
+4. Claude: `lms server start --cors`; `Tailscale status`;
+   `Tailscale serve --help` to confirm flags; then
+   `Tailscale serve --bg 1234` (proxies https://<mac>.<tailnet>.ts.net →
+   localhost:1234; if `--https=<port>` is needed it is restricted to
+   443/8443/10000). Then `curl https://<mac>.<tailnet>.ts.net/v1/models`
+   from the Mac (Claude) to confirm TLS + proxy.
+5. Josh on the iPad: Night Roll → File → Settings… → AI model → "on a
+   server", URL = that https address, Test (five failure classes name
+   what's left), Save, ✦ Ask.
+6. Record the outcome in NIGHT-ROLL.md "✦ Ask / ✦ Fill" (P4 done, exact
+   flags), close this item, and note whether Safari-on-Mac https→localhost
+   works if he tries it.
+
 ## Pages builds are Jekyll: a bad byte in ANY .md kills the whole deploy (found 2026-09-23)
 
 Three deploys failed today on `handoffs/handoff-2026-09-22-night-black.md`
