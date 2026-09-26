@@ -296,13 +296,31 @@ into ost-songs/ost-analysis is designed and deferred until a second
 analyst exists — see the plan in open-items; the mirror-tree layout
 (rollnotes at identical relative paths) makes it a pure git move.
 
-**Sync:** serializes the full current rollnotes state and commits it to
-this repo via the GitHub Contents API (fine-grained token, stored in
-browser localStorage, never in the repo). "Commit all changed" syncs every
-song with unsynced local notes (one PUT per file; per-song ✓/✗ status;
-meter for foreign songs comes from a localStorage stash written on load).
-The Sync button shows the dirty-song count. Copy/Download fallbacks. Local
-unsynced additions persist in localStorage keyed by song path.
+**Sync / Save & Commit sheet:** serializes the full current rollnotes
+state and commits it to this repo via the GitHub Contents API
+(fine-grained token, stored in browser localStorage, never in the repo).
+Rebuilt 2026-09-25 (Josh: "there should be song sections"):
+`pendingSongs()` is the union of `dirtySongs()` (unsynced annotation
+stashes), drafts whose `dirty` is set (`draftDirtyState`: "edited" since
+a save, "never" saved), and `ff1roll-ask-*` logs with unsaved messages —
+same `local/` and import exclusions as `dirtySongs`, open song first.
+`renderSyncPending` draws one `.psong` block per song (accent bar on the
+open one): a ♪ music line, a ✎ count then one row per annotation with
+its ✕ (`discardPending`: drops that never-synced note from this device),
+a ✦ chat count. 12px in `--text`; the whole sheet scrolls (the old 38vh
+inner scroller is gone). The primary reads "⇪ Commit song" ("⇪ Save
+song" in folder mode) in both modes; the line under the buttons names
+the files and the destination (`<base>.mid + .rollnotes.json +
+.notes.txt + .ask.md → owner/repo`; annotations + chat for analyzed
+songs) and the token how-to appears only with no token. "Commit all (N)"
+shows only when N > 1 and still ships ANNOTATIONS only (one PUT per
+file; per-song ✓/✗ status; meter for foreign songs comes from a
+localStorage stash written on load) — music and chat commit from the
+open song, and the sweep now passes `{keepDraft: true}` to
+`markCurrentSongSynced` so an edited composition's ● stays lit when only
+its notes went up (it used to go dark with the .mid unpushed). The Sync
+button counts `pendingSongs()`. Copy/Download fallbacks. Local unsynced
+additions persist in localStorage keyed by song path.
 
 **Import** (2026-08-15, File → Import…, replaces Load MIDI): one file
 picker, byte-sniffed — MIDI in any wrapper (.mid/.midi/.smf/.kar,

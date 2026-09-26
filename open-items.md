@@ -22,13 +22,20 @@ What happened, mapped to code (index.html):
   model field cut off, key/context/Test on a third line.
 Advisor review requested; proposal → Josh rules → build. Not started.
 
-## SYNC SHEET — beef-up queued (Josh, 2026-09-25)
+## SAVE & COMMIT SHEET — rebuilt 2026-09-25 (NIGHT-ROLL.md "Sync / Save & Commit sheet")
 
-His rulings: the button says "⇪ Commit song" (done); the pending list
-must show, per song, unsaved annotations (already), unsaved ✦ Ask chat
-(done, one line), AND which songs' MUSIC is edited (not shown today —
-`renderSyncPending` reads only `ff1roll-notes-*`, never the draft's
-`dirty`). Advisor review requested; proposal → Josh rules → build.
+Josh's rulings, applied: song sections, open song first; a line when
+music is edited, one row per unsynced annotation (with its ✕), one line
+per song for unsaved chat (his correction: NOT one per message); the
+token how-to gone unless there is no token; the button says "⇪ Commit
+song"; whole sheet scrolls. Fixed on the way: "Commit all" marked an
+edited composition clean without pushing its .mid (advisor's find).
+
+Deferred (his call when wanted): "Commit all" shipping other songs'
+MUSIC and CHAT too (~70 LOC: build a song from the draft doc, put the
+.mid, per-key ask log). Until then the include-line says music and chat
+commit from the open song, and a non-open song's ♪ line says "open it
+to commit".
 
 ## ✦ ASK LOG — SHIPPED 2026-09-25 (NIGHT-ROLL.md "✦ Ask / ✦ Fill" → History / The log file)
 

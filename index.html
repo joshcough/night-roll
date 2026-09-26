@@ -527,6 +527,17 @@
   .sheet .lbl { font-family: var(--mono); font-size: 11px; color: var(--dim); }
   #filesheet .lbl { font-family: var(--mono); font-size: 13px; color: var(--text); } /* match the .fitem rows */
   .sheet .status { font-family: var(--mono); font-size: 11px; color: var(--dim); min-height: 14px; }
+  /* Save & Commit: one block per song with anything pending; the open song
+     first with a bar. 12px in --text — this list IS the sheet (Josh, 2026-09-25) */
+  #syncpending { font-family: var(--mono); font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 8px; }
+  #syncpending .psong { padding: 4px 0 4px 10px; border-left: 2px solid transparent; }
+  #syncpending .psong.open { border-left-color: var(--accent); }
+  #syncpending .ptitle { color: var(--dim); font-weight: 600; letter-spacing: 0.04em; min-height: 24px; display: flex; align-items: center; }
+  #syncpending .psong.open .ptitle { color: var(--text); }
+  #syncpending .pline { display: flex; align-items: center; gap: 6px; min-height: 30px; }
+  #syncpending .pline.note { padding-left: 14px; }
+  #syncpending .pline button { min-width: 36px; min-height: 30px; padding: 2px 6px; flex: none; }
+  #syncpending .pempty { color: var(--dim); }
   .sheet.help { max-height: 82dvh; overflow-y: auto; -webkit-user-select: text; user-select: text; }
   .sheet.help h3 {
     font-family: var(--mono);
@@ -1292,7 +1303,7 @@
       <dt>∿ Audio tracks (recordings)</dt><dd>A recording — a guitar take, a vocal, a phone memo, a DAW bounce — as a track next to your MIDI voices. Tap the <b>＋∿</b> chip in the track bar (compositions and local drafts; File → Import… also recognizes audio files) and pick wav, aiff, mp3, or m4a. The clip lands at the cursor's bar as a new track named after the file, with the usual chip: M, S, color, fader, rename, ✕ Delete track. Leading silence is trimmed on arrival, so the take's FIRST SOUND sits on that bar (the status line says how much it trimmed). It plays in time with the song, loops with it (a clip longer than the notes extends the song's end), and is in the exported audio. <b>Slow it down and the pitch stays put</b>: at any speed but 100% the take is re-rendered (time-stretched, the way a slow-downer app does it) in the background — the lane says "⏳ preparing 50% (pitch kept)…" for a moment, then it plays in tune with your notes; a device toggle in the recording sheet turns that off for tape-style, slower = lower, like chip audio. Fine for guitar and voice down to about 40%; grainier below. <b>Tracks view</b> shows the waveform; <b>tap the clip</b> to select it (the status line says file, length, where its bytes are, and where it starts), <b>tap again to play from its start</b>, and in <b>Select</b> mode <b>hold and drag</b> to slide it in time (16th snap, one ⟲ undoes; with no tool armed a drag pans, as with notes). Every other view shows a thin ∿ strip under the ruler marking where the recording plays. <b>Pieces:</b> a recording can be cut into pieces that move on their own. <b>✂ Split at cursor</b> (the edit row's ✂, Edit ▾, or the recording sheet) cuts the selected piece where the play cursor is; <b>trim</b> by dragging a selected piece's left or right edge in Select (left trim keeps the sound where it is); <b>Erase</b> tap on a piece removes just that piece (the track stays); each piece drags separately. One ⟲ undoes any of it. Tap the selected chip for the <b>recording sheet</b> (‹ prev / next › step between pieces): nudge <b>starts</b> by a bar, a beat, or a 16th, <b>offset</b> by 10 ms or 100 ms (how far into the file the piece starts — the last hair of alignment), <b>⇤ Align first sound</b> (re-trims leading silence to the current anchor), <b>♩ Tempo from this take</b> (reads the beat spacing of the piece — its waveform's onsets, autocorrelated over 40–240 BPM — and offers the tempo it hears plus half and double, with how strong the read is; tap one and it becomes the song's tempo at bar 1, one ⟲ undoes; your notes keep their bar positions, so the grid moves to meet the take, which is the point; needs about four seconds of steady playing, and your own songs only — captures keep their measured tempo), <b>♩♩ Map the bars to this take</b> (the other direction: the GRID bends to the recording — it finds the beats through the whole piece, groups them into bars by the meter, and shows what it found: how many bars, the tempo range, and where the first downbeat sits; <b>Apply</b> writes one tempo change per bar from the piece's bar onward so every bar line lands on a downbeat it heard, wobble and all; <b>◀ downbeat / downbeat ▶</b> shift which beat counts as bar 1 when it guessed wrong — the correction Logic's Smart Tempo asks for too; the piece must start on a bar line, and a first downbeat that isn't at the piece's start means a pickup: shift, or trim the piece to the downbeat first; one ⟲ removes the whole map), <b>✂ Split at cursor</b>, <b>🗑 Remove piece</b>, <b>Replace file…</b>, and <b>☐ someone else's recording</b>: tick it for a band's track you play along with and it is never uploaded — GitHub removes such files on a rights holder's notice, and a public site is distribution. Storage: until you Save, the bytes live on this device only (the sheet says so; Safari can evict browser storage after a week away, so Save soon); Save writes them beside the song as <code>&lt;song&gt;.audio/&lt;file&gt;</code> — into your folder in folder mode, into the songs repo otherwise. Files over 20 MB get one question: <b>store as 16-bit mono WAV</b> (lossless for a mono source, half a stereo bounce) or import as-is. m4a/mp3 note: Safari and Chrome trim the encoder's lead-in differently, so millisecond alignment is honest only for WAV/AIFF. Not yet: recording from the mic, trimming or splitting a clip, looping a clip by itself, keeping pitch when slowing down, iPad/Safari playback of webm.</dd>
       <dt>⚠ Messages</dt><dd>Errors outlive the moment: anything warning-shaped (failed commits, unreachable NSFs, token-scope problems, even uncaught crashes) is kept in a log, and a ⚠ button appears in the footer only when the log is non-empty — tap it to read timestamped entries, Clear to dismiss. The bottom info strip still shows the latest message; this panel is where the ones you missed went.</dd>
       <dt>Song links</dt><dd>The address bar always holds a link to the open song — copy it and anyone who opens it lands directly on that song (?song=…). Local drafts are excluded (they exist only on your device).</dd>
-      <dt>Sync</dt><dd>Commit your annotations, sections, and keys to GitHub (needs your token, one-time), or Copy/Download the file. "Commit all changed" pushes every song you touched this session, not just the open one — the Sync button shows how many are waiting. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies a bootstrap instruction — paste it into a fresh Claude Web chat and it clones the repo, reads WEB-SESSION.md from disk, and has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format). It copies the clone command rather than a URL on purpose: a session that starts by fetching keeps fetching, one file at a time, and can't grep across your notes.</dd>
+      <dt>Sync</dt><dd>The Save &amp; Commit sheet (File → Save opens the same door). It lists every song with anything pending on this device, the open song first: a line when its <b>music</b> is edited since the last save, each unsynced <b>annotation</b> on its own line with a ✕ that discards that never-synced note from this device, and a line when <b>chat</b> messages are unsaved. <b>⇪ Commit song</b> ships the open song — the line under the buttons names exactly which files and where (.mid, .rollnotes.json, .notes.txt, .ask.md for your own songs; annotations + chat for analyzed ones). <b>Commit all (N)</b> appears when more than one song is pending and pushes every song's annotations; music and chat commit from the open song. Needs your token once; Copy/Download the file otherwise. "Unsynced" = still only on this device. Repo ↗ opens the GitHub repository in a new tab. ⎘ Web session copies a bootstrap instruction — paste it into a fresh Claude Web chat and it clones the repo, reads WEB-SESSION.md from disk, and has everything it needs to run an analysis session (process rules, file locations, session shape, handoff format). It copies the clone command rather than a URL on purpose: a session that starts by fetching keeps fetching, one file at a time, and can't grep across your notes.</dd>
     </dl>
     </div>
 
@@ -1665,10 +1676,10 @@
 
 <div class="overlay" id="syncsheet">
   <div class="sheet">
-    <h2>SYNC .ROLLNOTES</h2>
+    <h2>SAVE &amp; COMMIT</h2>
     <div class="row">
-      <button class="primary" id="ghsave">Commit this song</button>
-      <button id="ghsaveall">Commit all changed</button>
+      <button class="primary" id="ghsave">⇪ Commit song</button>
+      <button id="ghsaveall">Commit all</button>
       <button id="copyfile">Copy file</button>
       <button id="dlfile">Download</button>
       <a id="repolink" href="https://github.com/joshcough/night-roll" target="_blank" rel="noopener"
@@ -1676,7 +1687,7 @@
       <button id="websess">⎘ Web session</button>
       <button id="synccancel">Close</button>
     </div>
-    <div class="status" id="syncpending" style="max-height:38vh;overflow-y:auto;white-space:pre-wrap"></div>
+    <div id="syncpending"></div>
     <div class="status" id="syncstatus">Token and data locations live under File → Settings…</div>
   </div>
 </div>
@@ -2666,7 +2677,7 @@ function dirtySongs() { // songs with unsynced local notes on this device
                    localStorage.getItem("ff1roll-draft-" + k) !== null));
 }
 function updateSyncBtn() {
-  const n = dirtySongs().length;
+  const n = pendingSongs().length;
   document.getElementById("syncbtn").textContent = n > 1 ? "Sync (" + n + ")" : "Sync";
 }
 function serializeNotesList(list, beatsPerBar, base, stamp) {
@@ -15489,47 +15500,78 @@ function apiError(which, r, what) {
 let syncReturnToList = false; // sync opened from the notes list → return there after commit
 // review pane: every unsynced note on this device, grouped by song, so a
 // commit is never a blind dialog — you see exactly what's outstanding
+function draftDirtyState(key) { // "never" (no save yet) | "edited" (since the last save) | null
+  try {
+    const d = JSON.parse(localStorage.getItem(draftStoreKey(key)) || "null");
+    if (!d || !d.dirty) return null;
+    return d.savedStamp ? "edited" : "never";
+  } catch (err) { return null; }
+}
+function syncable(key) { // same exclusions as dirtySongs: local/ has no repo path; import captures ride Commit import
+  return !key.startsWith("local/") &&
+         !(key.startsWith("albums/imports/") && localStorage.getItem("ff1roll-draft-" + key) !== null);
+}
+function pendingSongs() { // every song with anything to ship, the open one first
+  const set = new Set(dirtySongs());
+  for (const k of draftKeys()) if (syncable(k) && draftDirtyState(k)) set.add(k);
+  for (const k of Object.keys(localStorage)) {
+    if (!k.startsWith("ff1roll-ask-")) continue;
+    const key = k.slice("ff1roll-ask-".length);
+    if (key !== "local" && syncable(key) && askUnsavedCount(k) > 0) set.add(key);
+  }
+  return [...set].sort((a, b) => (a === songKey ? -1 : b === songKey ? 1 : 0) || a.localeCompare(b));
+}
 function renderSyncPending() {
   const box = document.getElementById("syncpending");
   box.textContent = "";
-  let any = false;
-  for (const key of dirtySongs()) {
+  const line = (parent, text, cls) => {
+    const row = document.createElement("div");
+    row.className = "pline" + (cls ? " " + cls : "");
+    const span = document.createElement("span");
+    span.textContent = text;
+    row.appendChild(span);
+    parent.appendChild(row);
+    return row;
+  };
+  for (const key of pendingSongs()) {
+    const block = document.createElement("div");
+    block.className = "psong" + (key === songKey ? " open" : "");
+    const title = document.createElement("div");
+    title.className = "ptitle";
+    title.textContent = songTitleOf(key) + (key === songKey ? " · open" : "");
+    block.appendChild(title);
+    const music = draftDirtyState(key);
+    if (music) line(block, "♪ music " + (music === "never" ? "never saved" : "edited since last save") + (key === songKey ? "" : " — open it to commit"));
     let notes = [];
-    try { notes = JSON.parse(localStorage.getItem("ff1roll-notes-" + key) || "[]"); }
-    catch (err) { continue; }
-    if (!notes.length) continue;
-    any = true;
-    const h = document.createElement("div");
-    h.textContent = songTitleOf(key) + " — " + notes.length + " unsynced:";
-    box.appendChild(h);
-    notes.forEach((n, i) => {
-      const row = document.createElement("div");
-      row.style.cssText = "display:flex;align-items:center;gap:6px;margin:2px 0 2px 10px";
-      const x = document.createElement("button");
-      x.textContent = "✕";
-      x.title = "Discard this note (this device only — it was never synced)";
-      x.style.cssText = "min-width:26px;padding:2px 6px;flex:none";
-      x.addEventListener("click", () => discardPending(key, i));
-      const at = "[" + n.b1 + "." + n.q1 + (n.b2 ? " - " + n.b2 + "." + (n.q2 || "") : "") + "]";
-      const text = n.text.length > 60 ? n.text.slice(0, 57) + "…" : n.text;
-      const span = document.createElement("span");
-      // loop:/key: texts already carry their prefix; only label the others
-      span.textContent = at + " " + (n.section ? "section: " : "") + text;
-      row.appendChild(x); row.appendChild(span);
-      box.appendChild(row);
-    });
-  }
-  try { // ✦ Ask chat that no Save has appended to <song>.ask.md yet
-    for (const k of Object.keys(localStorage).filter(k => k.startsWith("ff1roll-ask-") && k !== "ff1roll-ask-local")) {
-      const n = askUnsavedCount(k);
-      if (!n) continue;
-      any = true;
-      const h = document.createElement("div");
-      h.textContent = songTitleOf(k.slice("ff1roll-ask-".length)) + " — " + n + " chat message" + (n === 1 ? "" : "s") + " not in the repo yet (Save appends them to the song's .ask.md)";
-      box.appendChild(h);
+    try { notes = JSON.parse(localStorage.getItem("ff1roll-notes-" + key) || "[]"); } catch (err) { notes = []; }
+    if (notes.length) {
+      line(block, "✎ " + notes.length + " annotation" + (notes.length === 1 ? "" : "s") + " unsynced");
+      notes.forEach((n, i) => {
+        const at = "[" + n.b1 + "." + n.q1 + (n.b2 ? " - " + n.b2 + "." + (n.q2 || "") : "") + "]";
+        const text = n.text.length > 60 ? n.text.slice(0, 57) + "…" : n.text;
+        // loop:/key: texts already carry their prefix; only label the others
+        const row = line(block, at + " " + (n.section ? "section: " : "") + text, "note");
+        const x = document.createElement("button");
+        x.textContent = "✕";
+        x.title = "Discard this note (this device only — it was never synced)";
+        x.addEventListener("click", () => discardPending(key, i));
+        row.prepend(x);
+      });
     }
-  } catch (err) { /* enumeration failed: annotations still listed */ }
-  if (!any) box.textContent = "Nothing unsynced on this device.";
+    const chat = askUnsavedCount("ff1roll-ask-" + key);
+    if (chat) line(block, "✦ " + chat + " chat message" + (chat === 1 ? "" : "s") + " unsaved");
+    box.appendChild(block);
+  }
+  if (!box.childElementCount) {
+    const e = document.createElement("div");
+    e.className = "pempty";
+    e.textContent = "Nothing pending on this device.";
+    box.appendChild(e);
+  }
+  const all = document.getElementById("ghsaveall");
+  const n = pendingSongs().length;
+  all.textContent = "Commit all (" + n + ")";
+  all.style.display = n > 1 ? "" : "none";
 }
 function discardPending(key, idx) { // drop one never-synced note from the stash
   let notes = [];
@@ -15550,15 +15592,22 @@ function openSyncSheet() { // callable even with no song loaded (bad-config reco
   syncReturnToList = false; // notelistSync sets it true right after this runs
   if (song) renderSyncPending();
   const comp = !!song && isComposition();
-  document.querySelector("#syncsheet h2").textContent =
-    comp ? (songDirtyFlag() ? "SAVE & COMMIT — unsaved changes" : "SAVE & COMMIT — saved") : "SYNC .ROLLNOTES";
-  document.getElementById("ghsave").textContent = comp ? "⇪ Commit song" : "Commit this song"; // one word: it ships music, annotations, chat (Josh, 2026-09-25)
+  const verb = folderActive() ? "Save" : "Commit";
+  document.getElementById("ghsave").textContent = "⇪ " + verb + " song"; // one word for what it ships; the line below says what (Josh, 2026-09-25)
   document.getElementById("repolink").href = "https://github.com/" + cfg().songsRepo;
+  // the line under the buttons says what the button ships and where; the token
+  // how-to only when there is no token (Josh: the token line was "annoying")
+  const base = songKey ? songKey.split("/").pop().replace(/\.midi?$/i, "") : "";
+  const chat = askUnsavedCount() ? " + .ask.md" : "";
+  const files = comp ? base + ".mid + .rollnotes.json + .notes.txt" + chat : base + ".rollnotes.json" + chat;
+  const dest = folderActive() ? fsRoot.name : cfg()[comp ? "songsRepo" : "analysisRepo"];
   document.getElementById("syncstatus").textContent = !song
     ? "No song loaded — if the catalog failed, check File → Settings, then reload."
-    : songKey
-    ? "Token: Settings → Developer settings → Fine-grained tokens → grant the repos configured above, Contents read/write."
-    : "Local file — Copy/Download only (no repo path to commit to).";
+    : !songKey
+    ? "Local file — Copy/Download only (no repo path to commit to)."
+    : !writeToken()
+    ? "No GitHub token yet: File → Settings… (GitHub → Developer settings → Fine-grained tokens, Contents read/write on the repos there)."
+    : verb + " song → " + files + " → " + dest + (pendingSongs().length > 1 ? ". Commit all ships every song's annotations; music and chat commit from the open song." : "");
   syncsheet.classList.add("on");
 }
 document.getElementById("syncbtn").addEventListener("click", openSyncSheet);
@@ -15821,7 +15870,7 @@ async function putRollnotes(path, content, headers) { // PUT with one stale-sha 
   if (r.status === 409) r = await putOnce();
   return r;
 }
-function markCurrentSongSynced(content, stamp) {
+function markCurrentSongSynced(content, stamp, opts) { // opts.keepDraft: annotations went up without the .mid
   clearTombstones(); // the pushed file IS the post-deletion state
   rollnotes.forEach(n => n.added = false); // now canonical in the repo
   saveLocalNotes();
@@ -15831,7 +15880,7 @@ function markCurrentSongSynced(content, stamp) {
   recordLastSync(songKey, content || serializeRollnotes());
   if (stamp) {
     song.savedStamp = stamp; // cross-device freshness beacon
-    if (isComposition()) saveDraft(true); // draft now clean, based on this save
+    if (isComposition() && !(opts && opts.keepDraft)) saveDraft(true); // draft now clean, based on this save
   }
   lastSubtitle = undefined;
   updateSubtitle();
@@ -15889,7 +15938,7 @@ document.getElementById("ghsaveall").addEventListener("click", async e => {
   const token = takeToken(status);
   if (!token) return;
   const dirty = dirtySongs();
-  if (!dirty.length) { status.textContent = "Nothing unsynced on this device."; return; }
+  if (!dirty.length) { status.textContent = "No unsynced annotations on this device (music and chat commit from the open song)."; return; }
   btn.disabled = true;
   const results = [];
   for (const key of dirty) {
@@ -15899,7 +15948,7 @@ document.getElementById("ghsaveall").addEventListener("click", async e => {
       const {path, content, stamp} = await buildRollnotesFor(key);
       const r = await putRollnotes(path, content, ghHeaders(token));
       if (!r.ok) throw new Error("HTTP " + r.status);
-      if (key === songKey) markCurrentSongSynced(content, stamp);
+      if (key === songKey) markCurrentSongSynced(content, stamp, {keepDraft: true}); // the .mid did not go up: the ● must stay
       else { localStorage.removeItem("ff1roll-notes-" + key); recordLastSync(key, content); }
       results.push(short + " ✓");
     } catch (err) {
@@ -15907,6 +15956,7 @@ document.getElementById("ghsaveall").addEventListener("click", async e => {
     }
   }
   updateSyncBtn();
+  renderSyncPending();
   status.textContent = results.join("  ");
   btn.disabled = false;
 });

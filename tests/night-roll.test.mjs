@@ -1392,7 +1392,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
     "Tempo from this take", "Split at cursor", "Remove piece", "Map the bars to this take", "downbeat ▶",
-    "✦ Ask", "✦ Fill", ".ask.md",
+    "✦ Ask", "✦ Fill", ".ask.md", "Commit song", "Commit all",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -2641,6 +2641,26 @@ test("Ask: history is whole until saved; only repo-held messages are shed; never
   assert.equal(built[0].content, "b".repeat(100));
   assert.match(built[1].content, /^<context>\nCTX\n<\/context>\n\nnow$/);
   run(`for (const k of ["${KEY}", "ff1roll-ask-a/clean.mid", "ff1roll-ask-a/dirty.mid"]) localStorage.removeItem(k); songKey = null;`);
+});
+
+test("Save & Commit: pendingSongs unions music edits, unsynced annotations and unsaved chat, open song first", () => {
+  installSong();
+  run(`songKey = "albums/compositions/nightroll/p-open.mid";
+       localStorage.setItem("ff1roll-draft-albums/compositions/nightroll/p-music.mid", JSON.stringify({savedStamp: 5, dirty: true, notes: []}));
+       localStorage.setItem("ff1roll-draft-albums/compositions/nightroll/p-clean.mid", JSON.stringify({savedStamp: 5, dirty: false, notes: []}));
+       localStorage.setItem("ff1roll-notes-albums/final-fantasy-i/songs/p-notes.mid", JSON.stringify([{b1: 1, q1: 1, text: "x", added: true}]));
+       localStorage.setItem("ff1roll-ask-albums/compositions/nightroll/p-open.mid", JSON.stringify({saved: 0, msgs: [{role: "user", content: "q"}, {role: "assistant", content: "a"}]}));
+       localStorage.setItem("ff1roll-ask-albums/compositions/nightroll/p-saved.mid", JSON.stringify({saved: 2, msgs: [{role: "user", content: "q"}, {role: "assistant", content: "a"}]}));
+       localStorage.setItem("ff1roll-ask-local/p.mid", JSON.stringify({saved: 0, msgs: [{role: "user", content: "q"}]}));`);
+  const all = JSON.parse(val(`JSON.stringify(pendingSongs())`)); // earlier tests leave their own dirty drafts behind: look only at ours
+  assert.equal(all[0], "albums/compositions/nightroll/p-open.mid", "the open song comes first");
+  const got = all.filter(k => /\/p-[a-z]+\.mid$/.test(k));
+  assert.deepEqual(got, ["albums/compositions/nightroll/p-open.mid", "albums/compositions/nightroll/p-music.mid", "albums/final-fantasy-i/songs/p-notes.mid"]);
+  assert.equal(val(`draftDirtyState("albums/compositions/nightroll/p-music.mid")`), "edited");
+  assert.equal(val(`draftDirtyState("albums/compositions/nightroll/p-clean.mid")`), null);
+  run(`for (const k of ["ff1roll-draft-albums/compositions/nightroll/p-music.mid", "ff1roll-draft-albums/compositions/nightroll/p-clean.mid",
+       "ff1roll-notes-albums/final-fantasy-i/songs/p-notes.mid", "ff1roll-ask-albums/compositions/nightroll/p-open.mid",
+       "ff1roll-ask-albums/compositions/nightroll/p-saved.mid", "ff1roll-ask-local/p.mid"]) localStorage.removeItem(k); songKey = null;`);
 });
 
 test("Ask: host consent — localhost never prompts, other hosts once", () => {
