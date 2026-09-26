@@ -1048,10 +1048,24 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   top-level `enable_thinking`, `think:false`, `/no_think` (2026-09-25, LM
   Studio + Qwen 3.6 35B-A3B: reasoning came back every time). Thinking is
   a model setting in LM Studio, and the status line says so.
-- **Not yet:** the iPad route (P4 — Tailscale on both devices, then the
-  Settings Test button reports the outcome; the in-browser path also
-  needs its Test on the iPad: WebGPU limits are the unknown), the P0
-  Safari-on-Mac probe. Tests: SSE
+- **iPad route (P4) — done 2026-09-25.** Josh's iPad asks the Mac's LM
+  Studio over Tailscale, verified end to end (Test listed the models,
+  ✦ Ask answered). Exact recipe on the Mac: `lms server start --cors`
+  (not persistent across reboots); Tailscale on both devices, same
+  account; admin console → DNS → MagicDNS + HTTPS Certificates on, and
+  Serve approved once from the link `tailscale serve` prints;
+  `tailscale serve --bg 1234` (persists; undo with
+  `tailscale serve --https=443 off`). That proxies
+  `https://<mac>.<tailnet>.ts.net` → `localhost:1234` with a real cert;
+  LM Studio's CORS headers pass through the proxy unchanged (preflight
+  from the Pages origin returns `access-control-allow-origin: *`).
+  Settings on the iPad: URL = that https address, model = the id LM
+  Studio loaded (blank picks the server's FIRST listed model, which was
+  the wrong one — a Settings redesign is queued in open-items.md).
+  Never run the Tailscale CLI without a timeout — it hung the shell
+  while the system extension was down.
+- **Not yet:** the in-browser path's Test on the iPad (WebGPU limits are
+  the unknown), the P0 Safari-on-Mac probe. Tests: SSE
   parser, 6/8 frame + speller + key line, storage caps + quota, host
   classing, `parsePitch`, validator fixtures (one per rule, 6/8 + chop),
   `applyTake` undo/mirror, target default rule, Bassist golden fixture,
