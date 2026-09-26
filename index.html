@@ -14863,6 +14863,7 @@ async function askSend() {
   const ctx = askContext(sp, budget);
   const messages = askBuildMessages(msgs, text, ctx, budget);
   const est = askEstimate(ASK_SYS, messages);
+  askMicOff(); // a live 🎤 would write its transcript back into the box after we clear it
   askinput.value = "";
   askBubble("user", text);
   const live = askBubble("ai", "…");
@@ -14906,6 +14907,7 @@ document.getElementById("askgear").addEventListener("click", () => { asksheet.cl
 document.getElementById("askclear").addEventListener("click", () => { localStorage.removeItem(askStoreKey()); askRender(); });
 document.getElementById("asksend").addEventListener("click", askSend);
 document.getElementById("askstop").addEventListener("click", () => { if (askBusy) askBusy.abort(); });
+function askMicOff() { if (micBtn === document.getElementById("askmic")) micStop(); }
 document.getElementById("askmic").addEventListener("click", () => {
   if (!SPEECH) { askstatus.textContent = "no speech recognition in this browser — the keyboard mic still works"; return; }
   micToggle(document.getElementById("askmic"), askinput, s2 => { askstatus.textContent = s2; });
@@ -15048,6 +15050,7 @@ async function askFill() {
   const tgtLabel = tgt === "new" ? "new track" : (song.tracks[parseInt(tgt, 10)].name || "track " + (parseInt(tgt, 10) + 1));
   const existing = tgt === "new" ? "empty" : askTargetStatus(sp, tgt);
   const text = askinput.value.trim() || "Fill these bars with something that fits.";
+  askMicOff();
   askinput.value = "";
   askBubble("user", "✦ " + text + "  [" + askSpanLabel(sp) + " → " + tgtLabel + "]");
   const live = askBubble("ai", "…");
