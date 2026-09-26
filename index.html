@@ -511,6 +511,10 @@
     color: var(--dim); font-family: var(--mono); font-size: 14px;
   }
   .sheet h2 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; color: var(--dim); font-weight: 600; }
+  /* the pinned ✕ is prepended above the title; pull the title up onto its row
+     (✕ = 40px tall with a -16px bottom margin, + the 10px gap) — Josh, 2026-09-25:
+     "a lot of room at the top" */
+  .sheet .sheetx + h2 { margin-top: -34px; margin-bottom: 0; min-height: 40px; display: flex; align-items: center; padding-right: 48px; }
   .sheet .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .sheet input[type=number], .sheet input[type=password], .sheet input[type=text], .sheet textarea {
     font-family: var(--mono);
@@ -544,7 +548,8 @@
   #syncpending { font-family: var(--mono); font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 8px; }
   #syncpending .psong { padding: 4px 0 4px 10px; border-left: 2px solid transparent; }
   #syncpending .psong.open { border-left-color: var(--accent); }
-  #syncpending .ptitle { color: var(--dim); font-weight: 600; letter-spacing: 0.04em; min-height: 24px; display: flex; align-items: center; }
+  #syncpending .ptitle { color: var(--dim); font-weight: 600; letter-spacing: 0.04em; min-height: 24px; display: flex; align-items: center; gap: 8px; }
+  #syncpending .ptitle button { min-height: 32px; padding: 2px 12px; flex: none; }
   #syncpending .psong.open .ptitle { color: var(--text); }
   #syncpending .pline { display: flex; align-items: center; gap: 6px; min-height: 30px; }
   #syncpending .pline.note { padding-left: 14px; }
@@ -854,7 +859,6 @@
   <div class="sheet help">
     <h2 id="songsheettitle">SONGS</h2>
     <div id="songrows" style="display:flex;flex-direction:column;gap:7px"></div>
-    <div class="row"><button id="songsheetclose">Close</button></div>
   </div>
 </div>
 
@@ -957,7 +961,6 @@
     <div class="row">
       <button class="primary" id="notelistAdd">+ Add note</button>
       <button id="notelistSync" style="margin-left:auto">Sync</button>
-      <button id="notelistClose">Close</button>
     </div>
   </div>
 </div>
@@ -981,7 +984,6 @@
       <a href="https://github.com/joshcough/night-roll" target="_blank" rel="noopener"
          style="color:var(--gold)">github.com/joshcough/night-roll</a>
     </p>
-    <div class="row"><button class="primary" id="aboutclose">Close</button></div>
   </div>
 </div>
 
@@ -1002,7 +1004,6 @@
     <p class="meta" style="margin:8px 0 0;white-space:normal">One bar of pattern, repeated across the bar range on the drums track (created if the song has none). Tap cells to toggle.</p>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="dpfill">Fill</button>
-      <button id="dpclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1014,7 +1015,6 @@
     semitones. <b>In key</b> moves each note to the next scale degree of the declared key — a "whole
     step up that stays in the key," so some notes move 1 and some move 2. One ⟲ per tap.</p>
     <div class="chiprow" id="trchips"></div>
-    <div class="row" style="margin-top:10px"><button id="trclose" style="margin-left:auto">Close</button></div>
   </div>
 </div>
 
@@ -1071,7 +1071,6 @@
     total length unchanged. 3 on a half note = quarter-note triplets; 3 on a quarter = eighth triplets;
     6 on two beats = a run of six. One ⟲ undoes it.</p>
     <div class="chiprow" id="divchips"></div>
-    <div class="row" style="margin-top:10px"><button id="divclose" style="margin-left:auto">Close</button></div>
   </div>
 </div>
 
@@ -1105,7 +1104,6 @@
     <p class="meta" style="margin:8px 0 0;white-space:normal">Each take replaces the range's kit notes — one ⟲ brings yours back. (Full guide: Help → 🎲 Drummer.)</p>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="drgen">🎲 Generate</button>
-      <button id="drclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1121,7 +1119,6 @@
     <div id="mvtracks" class="row" style="flex-wrap:wrap;gap:6px"></div>
     <div class="row" style="margin-top:12px">
       <button id="mvdedupe">🧹 Remove duplicate notes (whole song)</button>
-      <button id="mvclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1140,7 +1137,6 @@
     </div>
     <div class="row" style="margin-top:12px">
       <button class="primary" id="ptgo">📋 Paste</button>
-      <button id="ptclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1177,9 +1173,6 @@
     </div>
     </div>
     <div id="chprogslot"><div id="progpanel" style="display:none"></div></div>
-    <div class="row" style="margin-top:10px">
-      <button id="chclose" style="margin-left:auto">Close</button>
-    </div>
   </div>
 </div>
 
@@ -1322,7 +1315,6 @@
     <div class="row" style="justify-content:space-between">
       <a href="https://github.com/joshcough/night-roll/blob/main/HELP.md" target="_blank" rel="noopener"
          style="color:var(--gold);font-size:15px;align-self:center">Full manual&nbsp;↗</a>
-      <button class="primary" id="helpclose">Close</button>
     </div>
   </div>
 </div>
@@ -1492,7 +1484,6 @@
     <div class="status" id="errlist" style="max-height:55vh;overflow-y:auto;white-space:pre-wrap;user-select:text;-webkit-user-select:text;cursor:text"></div>
     <div class="row" style="margin-top:10px">
       <button id="errclear">Clear</button>
-      <button id="errclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1526,7 +1517,6 @@
     <p class="meta" style="margin:8px 0 0;white-space:normal">Pitches come from your declared chords (or, with only a melody, an internal sketch of its harmony — different seeds read it differently). Each take replaces the range on the target track — one ⟲ brings yours back.</p>
     <div class="row" style="margin-top:10px">
       <button class="primary" id="bsgen">🎸 Generate</button>
-      <button id="bsclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1538,7 +1528,6 @@
     <div class="row" style="margin-top:10px">
       <button id="claudealertclear">Clear</button>
       <button class="primary" id="claudealertreply">💬 Reply</button>
-      <button id="claudealertclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1553,7 +1542,6 @@
       <button id="claudemic">🎤 Speak</button>
       <button id="claudehist">🕘 History</button>
       <div class="status" id="claudestatus" style="flex:1"></div>
-      <button id="claudeclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1583,7 +1571,6 @@
       <span class="status" id="askstatus" style="flex:1"></span>
       <button id="askstop" style="display:none">■ Stop</button>
       <button id="askclear">Clear chat</button>
-      <button id="askclose">Close</button>
     </div>
   </div>
 </div>
@@ -1642,7 +1629,6 @@
     <div class="row" id="devchrow" style="display:none"><span class="lbl" style="width:70px">dev ch.</span>
       <input type="password" id="cfgclaudecmd" placeholder="request topic (ntfy — stays on this device)" autocomplete="off" style="flex:1;min-height:36px">
       <input type="password" id="cfgclaudenotify" placeholder="reply topic" autocomplete="off" style="width:200px;min-height:36px"></div>
-    <div class="row" style="justify-content:flex-end"><button id="settingsclose">Close</button></div>
   </div>
 </div>
 
@@ -1679,7 +1665,6 @@
       <button id="cofccw">⟲</button>
       <button id="cofcw">⟳</button>
       <button id="cofprogbtn">Progressions</button>
-      <button id="cofclose" style="margin-left:auto">Close</button>
     </div>
   </div>
 </div>
@@ -1690,7 +1675,6 @@
     <div id="chbody"></div>
     <div class="row" style="margin-top:12px">
       <button id="chcopy">Copy</button>
-      <button id="chclose">Close</button>
     </div>
   </div>
 </div>
@@ -1706,7 +1690,6 @@
       <a id="repolink" href="https://github.com/joshcough/night-roll" target="_blank" rel="noopener"
          style="text-decoration:none"><button>Repo ↗</button></a>
       <button id="websess">⎘ Web session</button>
-      <button id="synccancel">Close</button>
     </div>
     <div id="syncpending"></div>
     <div class="status" id="syncstatus">Token and data locations live under File → Settings…</div>
@@ -4765,8 +4748,6 @@ document.getElementById("errbtn").addEventListener("click", () => {
     : "No messages.";
   document.getElementById("errsheet").classList.add("on");
 });
-document.getElementById("errclose").addEventListener("click", () =>
-  document.getElementById("errsheet").classList.remove("on"));
 document.getElementById("errclear").addEventListener("click", () => {
   appErrors.length = 0;
   document.getElementById("errbtn").style.display = "none";
@@ -8652,7 +8633,6 @@ function openSongPicker() {
   else renderSongGroups();
   songsheet.classList.add("on");
 }
-document.getElementById("songsheetclose").addEventListener("click", () => songsheet.classList.remove("on"));
 document.getElementById("playbtn").addEventListener("click", () => {
   if (!song) return; // first song still fetching
   playing ? stop() : play(playCursor > 0 ? tickToSec(song, playCursor) : 0); // in an album run this is pause/resume — the run stays
@@ -9315,8 +9295,6 @@ function insertChordAt(tick, rootPc, qual, oct, durQ) {
     setInfo(k ? "inserted " + chordLabel() + " (" + k + " notes) — cursor moved to the next slot"
               : "couldn't insert — check the octave fits the C1..C7 range");
   });
-  document.getElementById("chclose").addEventListener("click", () =>
-    document.getElementById("chordsheet").classList.remove("on"));
 }
 // Numeral → chord: major-scale-relative degrees, case = quality, suffix refines
 const NUM_DEG = {I: 0, II: 1, III: 2, IV: 3, V: 4, VI: 5, VII: 6};
@@ -9578,8 +9556,6 @@ document.getElementById("cofbtn").addEventListener("click", () => {
   document.getElementById("cofsheet").classList.add("on");
   drawCof();
 });
-document.getElementById("cofclose").addEventListener("click", () =>
-  document.getElementById("cofsheet").classList.remove("on"));
 // ⟲ ⟳ spin the WHEEL a fifth at a time; the degree window moves by tapping wedges
 document.getElementById("cofcw").addEventListener("click", () => { cofRot = wrapSf(cofRot - 1); drawCof(); });
 document.getElementById("cofccw").addEventListener("click", () => { cofRot = wrapSf(cofRot + 1); drawCof(); });
@@ -9763,7 +9739,6 @@ document.getElementById("listbtn").addEventListener("click", () => {
   renderNoteList();
   notelistSheet.classList.add("on");
 });
-document.getElementById("notelistClose").addEventListener("click", () => notelistSheet.classList.remove("on"));
 document.getElementById("notelistSync").addEventListener("click", () => {
   notelistSheet.classList.remove("on");
   document.getElementById("syncbtn").click();
@@ -9790,8 +9765,6 @@ document.getElementById("filehelp").addEventListener("click", () => {
   showHelpTab(localStorage.getItem("ff1roll-helptab") || "views");
   document.getElementById("helpsheet").classList.add("on");
 });
-document.getElementById("helpclose").addEventListener("click", () =>
-  document.getElementById("helpsheet").classList.remove("on"));
 document.getElementById("fileabout").addEventListener("click", () => {
   closeFileMenus();
   const n = Object.values(CATALOG).reduce((k, s) => k + s.length, 0);
@@ -9799,8 +9772,6 @@ document.getElementById("fileabout").addEventListener("click", () => {
     Object.keys(CATALOG).length + " albums · " + n + " songs · " + draftKeys().length + " local drafts";
   document.getElementById("aboutsheet").classList.add("on");
 });
-document.getElementById("aboutclose").addEventListener("click", () =>
-  document.getElementById("aboutsheet").classList.remove("on"));
 
 // ---------------------------------------------------------------- pitch-class finder
 // The sweep's most repeated operation (Josh, 2026-08-07): pick a pitch class,
@@ -9941,8 +9912,6 @@ function openChallenge(sec) {
   challengeCopy = copyLines.join("\n");
   document.getElementById("challengesheet").classList.add("on");
 }
-document.getElementById("chclose").addEventListener("click", () =>
-  document.getElementById("challengesheet").classList.remove("on"));
 document.getElementById("chcopy").addEventListener("click", async e => {
   try { await navigator.clipboard.writeText(challengeCopy); e.target.textContent = "✓ copied"; }
   catch { e.target.textContent = "✗ copy failed"; }
@@ -13090,8 +13059,6 @@ document.getElementById("dpfill").addEventListener("click", () => {
   setInfo(added.length ? "filled " + added.length + " drum hits from bar " + (Math.floor(startTick / barTicks()) + 1) + " (one ⟲ undoes the fill)"
                        : "nothing to fill — pattern is empty or those hits already exist");
 });
-document.getElementById("dpclose").addEventListener("click", () =>
-  document.getElementById("drumsheet").classList.remove("on"));
 
 // ---- Drummer: context-aware kit generation (advisor-reviewed design, 2026-08-20) ----
 // Constrained randomness: a fixed skeleton (kick on 1, meter-table backbeat) that
@@ -13958,8 +13925,6 @@ document.getElementById("bsgen").addEventListener("click", () => {
 });
 for (const id of ["bsfrom", "bsto"]) document.getElementById(id).addEventListener("input", bsRefresh);
 for (const id of ["bsfromq", "bsfroms", "bstoq", "bstos", "bstarget", "bsfollow"]) document.getElementById(id).addEventListener("change", bsRefresh);
-document.getElementById("bsclose").addEventListener("click", () =>
-  document.getElementById("bassistsheet").classList.remove("on"));
 function drRange() { // ticks + whole-bar span from the bar/beat/sub selects
   const t0 = dpTick("drfrom", "drfromq", "drfroms");
   let t1 = dpTick("drto", "drtoq", "drtos");
@@ -14161,8 +14126,6 @@ document.getElementById("drgen").addEventListener("click", () => {
 });
 for (const id of ["drfrom", "drto"]) document.getElementById(id).addEventListener("input", drRefresh);
 for (const id of ["drfromq", "drfroms", "drtoq", "drtos", "drfollow"]) document.getElementById(id).addEventListener("change", drRefresh);
-document.getElementById("drclose").addEventListener("click", () =>
-  document.getElementById("drummersheet").classList.remove("on"));
 document.getElementById("drummerbtn").addEventListener("click", openDrummer);
 document.getElementById("movebtn").addEventListener("click", () => {
   if (!editableSong()) { setInfo("editing works on your own songs — captures are locked"); return; }
@@ -14206,8 +14169,6 @@ document.getElementById("mvdedupe").addEventListener("click", () => {
   setInfo(k ? "removed " + k + " duplicate note" + (k === 1 ? "" : "s") + " — SAVE to make it stick (⟲ restores them)"
             : "no duplicates found anywhere");
 });
-document.getElementById("mvclose").addEventListener("click", () =>
-  document.getElementById("movesheet").classList.remove("on"));
 // Paste to… — the same clipboard, onto a chosen track, shifted (Josh, 2026-09-13)
 let ptTarget = 0;
 function openPasteTo() {
@@ -14236,8 +14197,6 @@ document.getElementById("ptgo").addEventListener("click", () => {
   const shift = (oct ? (oct > 0 ? "+" : "") + oct + " oct" : "") + (semi ? (oct ? " " : "") + (semi > 0 ? "+" : "") + semi + " st" : "");
   setInfo("pasted " + k + " note" + (k === 1 ? "" : "s") + " onto " + (song.tracks[ptTarget].name || "track") + (shift ? " (" + shift + ")" : "") + " — selected, cursor at their end");
 });
-document.getElementById("ptclose").addEventListener("click", () =>
-  document.getElementById("pastesheet").classList.remove("on"));
 document.getElementById("pastebtn").addEventListener("click", () => {
   if (!editableSong()) { setInfo("paste works on your own songs — captures are locked"); return; }
   const k = pasteClipboard(playCursor); // pastes the last ⧉/⌘C copy — surviving any scrolling
@@ -14309,8 +14268,6 @@ document.getElementById("trbtn").addEventListener("click", () => {
   }
   document.getElementById("trsheet").classList.add("on");
 });
-document.getElementById("trclose").addEventListener("click", () =>
-  document.getElementById("trsheet").classList.remove("on"));
 document.getElementById("divbtn").addEventListener("click", () => {
   if (!selEditItems().length) { setInfo("select notes first — then ➗ divides each into equal parts"); return; }
   const row = document.getElementById("divchips");
@@ -14330,8 +14287,6 @@ document.getElementById("divbtn").addEventListener("click", () => {
   }
   document.getElementById("divsheet").classList.add("on");
 });
-document.getElementById("divclose").addEventListener("click", () =>
-  document.getElementById("divsheet").classList.remove("on"));
 document.getElementById("cutbtn").addEventListener("click", () => {
   const k = cutSelection();
   if (!k) { setInfo("nothing selected — lasso or tap notes first"); return; }
@@ -15054,7 +15009,6 @@ function openAsk() {
   askinput.focus();
 }
 document.getElementById("askbtn").addEventListener("click", openAsk);
-document.getElementById("askclose").addEventListener("click", () => asksheet.classList.remove("on"));
 document.getElementById("askgear").addEventListener("click", () => { asksheet.classList.remove("on"); openSettingsSheet(); });
 document.getElementById("askclear").addEventListener("click", async () => { // Clear = new session; unsaved messages are the one thing it can destroy
   const n = askUnsavedCount();
@@ -15592,10 +15546,20 @@ function renderSyncPending() {
     block.className = "psong" + (key === songKey ? " open" : "");
     const title = document.createElement("div");
     title.className = "ptitle";
-    title.textContent = songTitleOf(key) + (key === songKey ? " · open" : "");
+    const tspan = document.createElement("span");
+    tspan.textContent = songTitleOf(key) + (key === songKey ? " · open" : "");
+    tspan.style.flex = "1";
+    title.appendChild(tspan);
+    if (key !== songKey && localStorage.getItem(draftStoreKey(key)) !== null) { // music and chat commit from the open song: one tap opens it here
+      const o = document.createElement("button");
+      o.textContent = "Open";
+      o.title = "Open this song (its music and chat commit from here)";
+      o.addEventListener("click", () => { openDraft(key); openSyncSheet(); });
+      title.appendChild(o);
+    }
     block.appendChild(title);
     const music = draftDirtyState(key);
-    if (music) line(block, "♪ music " + (music === "never" ? "never saved" : "edited since last save") + (key === songKey ? "" : " — open it to commit"));
+    if (music) line(block, "♪ music " + (music === "never" ? "never saved" : "edited since last save"));
     let notes = [];
     try { notes = JSON.parse(localStorage.getItem("ff1roll-notes-" + key) || "[]"); } catch (err) { notes = []; }
     if (notes.length) {
@@ -15718,8 +15682,6 @@ document.getElementById("filesettings").addEventListener("click", () => {
   closeFileMenus();
   openSettingsSheet();
 });
-document.getElementById("settingsclose").addEventListener("click", () =>
-  document.getElementById("settingssheet").classList.remove("on"));
 // ---- Message Claude (Josh, 2026-08-22, requested FROM the channel itself):
 // posts to his private ntfy command topic; replies/deploys stream back in-app.
 // Topics live ONLY in this device's localStorage — never in the repo. ----
@@ -15734,10 +15696,6 @@ document.getElementById("fileclaude").addEventListener("click", () => {
   document.getElementById("claudestatus").textContent = "";
   document.getElementById("claudesheet").classList.add("on");
   document.getElementById("claudetext").focus();
-});
-document.getElementById("claudeclose").addEventListener("click", () => {
-  micStop();
-  document.getElementById("claudesheet").classList.remove("on");
 });
 document.getElementById("claudehist").addEventListener("click", () => {
   document.getElementById("claudesheet").classList.remove("on");
@@ -15807,8 +15765,6 @@ document.getElementById("claudebtn").addEventListener("click", () => {
   claudeBadge();
   document.getElementById("claudealerts").classList.add("on");
 });
-document.getElementById("claudealertclose").addEventListener("click", () =>
-  document.getElementById("claudealerts").classList.remove("on"));
 document.getElementById("claudealertclear").addEventListener("click", () => {
   claudeMsgs = [];
   claudeLogSave();
@@ -15847,7 +15803,6 @@ document.getElementById("folderonly").addEventListener("change", e => {
   folderAfterChange(e.target.checked ? "the song list is now your folder only" : "the song list shows the site's albums again");
 });
 document.getElementById("filefolder").addEventListener("click", () => { closeFileMenus(); chooseFolder(); });
-document.getElementById("synccancel").addEventListener("click", () => syncsheet.classList.remove("on"));
 // Every sheet closes three ways (Josh, 2026-08-25: "I have a lot of problems
 // with our modals" — opening the notes list by mistake meant scrolling to the
 // bottom to find Close). Tap the backdrop, press Esc, or hit a ✕ that stays
@@ -15864,7 +15819,10 @@ if (typeof document.querySelectorAll === "function") { // vm harness stubs docum
 // opens or closes.
 const SHEET_TOP = new MutationObserver(ms => {
   for (const m of ms) {
-    if (!m.target.classList.contains("on")) continue;
+    if (!m.target.classList.contains("on")) { // closing: a live 🎤 inside must not keep transcribing
+      if (micBtn && m.target.contains(micBtn)) micStop();
+      continue;
+    }
     const sh = m.target.querySelector(".sheet");
     if (sh) sh.scrollTop = 0;
   }

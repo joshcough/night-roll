@@ -18,6 +18,11 @@ LM Studio (✓ line, dropdown of 4, saved) and against a black-hole IP
 
 ## SAVE & COMMIT SHEET — rebuilt 2026-09-25 (NIGHT-ROLL.md "Sync / Save & Commit sheet")
 
+Follow-ups the same day, all applied: titles sit on the ✕ row (all
+sheets); "open it to commit" became an Open button on each non-open
+song; the redundant Close buttons are gone from every sheet (his ruling:
+every dialog closes with the ✕ top right). Not yet seen on his iPad.
+
 Josh's rulings, applied: song sections, open song first; a line when
 music is edited, one row per unsynced annotation (with its ✕), one line
 per song for unsaved chat (his correction: NOT one per message); the

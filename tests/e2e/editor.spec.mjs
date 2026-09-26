@@ -101,7 +101,7 @@ test("help sheet: tabs switch sections and remember the last one", async ({ page
   await expect(page.locator('.hsec[data-hsec="playback"]')).toBeVisible();
   await expect(page.locator('.hsec[data-hsec="editor"]')).toBeHidden();
   expect(await page.evaluate(() => localStorage.getItem("ff1roll-helptab"))).toBe("playback");
-  await page.click("#helpclose");
+  await page.click("#helpsheet .sheetx");
 });
 
 test("insert dialog stamps a chord and walks the cursor", async ({ page }) => {
@@ -113,7 +113,7 @@ test("insert dialog stamps a chord and walks the cursor", async ({ page }) => {
   const added = (await notes(page)).slice(3);
   expect(added).toHaveLength(4); // maj7 = four notes
   expect(await page.evaluate(() => playCursor)).toBeGreaterThan(1920);
-  await page.click("#chclose");
+  await page.click("#chordsheet .sheetx");
 });
 
 test("drum fill creates the kit and fills a backbeat; lane renders", async ({ page }) => {
@@ -374,7 +374,7 @@ test("Drummer: generate, reroll, take chips replay, one undo restores @smoke", a
     document.querySelector("#drtakes button").click();
   });
   expect(await kit()).toEqual(take1);
-  await page.click("#drclose");
+  await page.click("#drummersheet .sheetx");
   await page.click("#undobtn"); // one step back to take 2's state
   expect(await kit()).toEqual(take2);
 });

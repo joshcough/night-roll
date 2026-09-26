@@ -305,9 +305,11 @@ stashes), drafts whose `dirty` is set (`draftDirtyState`: "edited" since
 a save, "never" saved), and `ff1roll-ask-*` logs with unsaved messages —
 same `local/` and import exclusions as `dirtySongs`, open song first.
 `renderSyncPending` draws one `.psong` block per song (accent bar on the
-open one): a ♪ music line, a ✎ count then one row per annotation with
-its ✕ (`discardPending`: drops that never-synced note from this device),
-a ✦ chat count. 12px in `--text`; the whole sheet scrolls (the old 38vh
+open one; every other song's title row carries an **Open** button —
+`openDraft(key)` then `openSyncSheet()` — since music and chat commit
+from the open song): a ♪ music line, a ✎ count then one row per
+annotation with its ✕ (`discardPending`: drops that never-synced note
+from this device), a ✦ chat count. 12px in `--text`; the whole sheet scrolls (the old 38vh
 inner scroller is gone). The primary reads "⇪ Commit song" ("⇪ Save
 song" in folder mode) in both modes; the status line under the buttons
 is EMPTY until it has progress, a result, or a missing prerequisite to
@@ -322,6 +324,18 @@ open song, and the sweep now passes `{keepDraft: true}` to
 its notes went up (it used to go dark with the .mid unpushed). The Sync
 button counts `pendingSongs()`. Copy/Download fallbacks. Local unsynced
 additions persist in localStorage keyed by song path.
+
+**Sheets close one way, visibly (Josh, 2026-09-25: "all of our dialogs
+should have an X button, on the top right").** Every `.overlay` sheet
+gets the pinned `.sheetx` ✕ prepended at runtime; `.sheet .sheetx + h2`
+pulls the title up onto the ✕'s row (the ✕ is 40px tall with a −16px
+bottom margin plus the 10px gap, hence `margin-top: -34px`). The
+per-sheet "Close" buttons that predated the ✕ are gone (17 of them,
+including a duplicate `#chclose` id that had left the Challenge sheet's
+Close without a listener). Cancel/Done buttons that pair with an action
+stay. The `SHEET_TOP` observer now also calls `micStop()` when a closing
+sheet contains the live 🎤 — the Message-Claude Close used to do that and
+✕/Esc/backdrop never did.
 
 **Import** (2026-08-15, File → Import…, replaces Load MIDI): one file
 picker, byte-sniffed — MIDI in any wrapper (.mid/.midi/.smf/.kar,

@@ -1375,7 +1375,7 @@ test("NSF import: in-app capture runs the real pipeline and round-trips through 
 
 test("help sheet covers every shipped feature (drift guard — extend this list when you ship)", () => {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  const help = html.match(/id="helpsheet"[\s\S]*?helpclose/)[0];
+  const help = html.match(/id="helpsheet"[\s\S]*?id="viewsheet"/)[0]; // the sheet ends where the View menu begins (its Close button is gone; the pinned ✕ closes it)
   // one recognizable keyword per shipped feature; a missing one means the
   // help sheet silently drifted from the app (it happened to the key dial)
   const FEATURES = [
