@@ -2556,10 +2556,13 @@ test("Ask: SSE parser takes string chunks split anywhere, skips [DONE] and junk"
     const st = {buf: ""};
     const a = aiSSE(st, 'data: {"choices":[{"delta":{"content":"Hel"}}]}\\n\\ndata: {"choices":[{"del');
     const b = aiSSE(st, 'ta":{"content":"lo"}}]}\\n\\n: keepalive\\ndata: {"choices":[{"delta":{"role":"assistant"}}]}\\ndata: [DONE]\\n');
-    return {a, b, done: !!st.done};
+    const c = aiSSE(st, 'data: {"choices":[{"delta":{"reasoning_content":"let me think about this"}}]}\\n');
+    return {a, b, c, done: !!st.done, think: st.think};
   })()`);
   assert.deepEqual(out.a, ["Hel"]);
   assert.deepEqual(out.b, ["lo"]);
+  assert.deepEqual(out.c, []); // reasoning is never text
+  assert.equal(out.think, "let me think about this".length);
   assert.equal(out.done, true);
 });
 
@@ -2718,4 +2721,15 @@ test("Fill: validator — one failing fixture per rule; 6/8 beats and a chop map
   run(`song.tracks[1].notes.push({t: ${sp.t0}, d: 100, p: 60, v: 80});`);
   assert.equal(val(`askDefaultTarget(${JSON.stringify(sp)})`), "new");
   run(`songKey = null; rollnotes = []; declaredTs = null; chopS = 0; song.rawNotes = null;`);
+});
+
+test("Ask: backend selection from cfg; browser backend forces the 4k budget tier", () => {
+  run(`saveCfg({aiBackend: "remote", aiWindow: 8192})`);
+  assert.equal(val(`aiProvider().id`), "remote");
+  assert.deepEqual(val(`(({anno, span, hist}) => [anno, span, hist])(askBudget())`), [1000, 2000, 1000]);
+  run(`saveCfg({aiBackend: "browser", aiWindow: 32768})`);
+  assert.equal(val(`aiProvider().id`), "browser");
+  assert.deepEqual(val(`(({win, anno, span, hist}) => [win, anno, span, hist])(askBudget())`), [4096, 500, 1200, 300]);
+  assert.ok(val(`AI_BROWSER_MODELS.every(m => /-MLC$/.test(m[0]) && / GB/.test(m[1]))`));
+  run(`saveCfg({aiBackend: "remote", aiWindow: 8192})`);
 });

@@ -924,7 +924,7 @@ needed. The folder's layout mirrors the repo exactly
 autosave-on-edit in folder mode (explicit Save kept for parity and so
 Revert still means something), copying the FF1 corpus into a folder.
 
-## ✦ Ask / ✦ Fill — in-app AI (P1a + P2a shipped 2026-09-25; design: local-llm-design.md)
+## ✦ Ask / ✦ Fill — in-app AI (P1a + P2a + P3 shipped 2026-09-25; design: local-llm-design.md)
 
 The tutor half of the AI plan. `✦ Ask` in the top bar (hidden in listener
 mode) opens `#asksheet`: a per-song conversation with any
@@ -1020,8 +1020,38 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   button (Josh's ruling). History records a one-line summary, never the
   JSON. Measured: a 4-bar ask on an empty scratch song → 4 notes in ~65 s
   (all thinking; the JSON itself is ~100 tokens).
-- **Not yet:** in-browser WebLLM (P3), the iPad route (P4; needs
-  Tailscale), the P0 probes on Safari/iPad, a no-think switch. Tests: SSE
+- **In-browser backend (P3) — WebLLM.** Settings → AI model → "in this
+  browser": `aiBackend = "browser"`, `aiBrowserModel` from
+  `AI_BROWSER_MODELS` (curated from WebLLM 0.2.85's prebuilt list, 0.4–3.9
+  GB, all 4096-token windows → `askBudget` forces the 4k tier: anno 500 /
+  span 1200 / history 300). `aiBrowser()` lazily `import()`s
+  `AI_WEBLLM_URL` (jsdelivr, pinned 0.2.85, self-contained ES module —
+  the first third-party-hosted runtime dependency, his §10.8 call; weights
+  come from HuggingFace and cache in the browser's Cache API), creates one
+  `MLCEngine` per model (`aiEngineFor`, progress into the status line),
+  streams `chat.completions.create`, maps `schema` to WebLLM's
+  `response_format: {type: "json_object", schema}`, sends `extra_body:
+  {enable_thinking: false}` (Qwen3 there), aborts via
+  `interruptGenerate()`. `aiProvider()` dispatches by backend; the
+  browser path skips host consent (nothing leaves the device).
+  **`aiBrowserTest` IS the device probe** (no separate probe page): WebGPU
+  present → adapter limits (maxBufferSize, storage binding, shader-f16) →
+  runtime loads → `hasModelInCache`. Verified on the Mac in Chrome with
+  SmolLM2-360M: download + load + reply ≈ 25 s; the tiny model's answer
+  was nonsense (it is labeled "for testing"). New web APIs are referenced
+  only inside functions (the vm harness has no `navigator.gpu`).
+- **Thinking models:** LM Studio streams Qwen 3.6's reasoning as
+  `delta.reasoning_content`, apart from `content`; `aiSSE` counts it
+  (`state.think`) and the adapter reports "thinking… (N words)" through
+  `onStatus` so a 30 s wait is visible. No request-level switch turns it
+  off — tried `chat_template_kwargs.enable_thinking`, `reasoning.effort`,
+  top-level `enable_thinking`, `think:false`, `/no_think` (2026-09-25, LM
+  Studio + Qwen 3.6 35B-A3B: reasoning came back every time). Thinking is
+  a model setting in LM Studio, and the status line says so.
+- **Not yet:** the iPad route (P4 — Tailscale on both devices, then the
+  Settings Test button reports the outcome; the in-browser path also
+  needs its Test on the iPad: WebGPU limits are the unknown), the P0
+  Safari-on-Mac probe. Tests: SSE
   parser, 6/8 frame + speller + key line, storage caps + quota, host
   classing, `parsePitch`, validator fixtures (one per rule, 6/8 + chop),
   `applyTake` undo/mirror, target default rule, Bassist golden fixture,

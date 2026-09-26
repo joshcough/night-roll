@@ -1227,7 +1227,7 @@
       <dt>Chord?</dt><dd>After a lasso: reveals what chord those notes make. Hidden by default so you can name it first.</dd>
       <dt>Challenge?</dt><dd>Tap one of your chord bands in the ruler, then tap Challenge? — opens the evidence dialog: each label tone with its role and whether it sounds (and where), extra pitches present, the per-channel note lists, and what the namer would call the whole stack. Only when you ask; extra tones are evidence, not verdicts (a pedal point shows as "extra" — correctly).</dd>
       <dt>💬</dt><dd>Show/hide the text-note strip (the fixed slot that shows your notes as the playhead crosses them). Off frees the vertical space; setting sticks.</dd>
-      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply, and the conversation is kept per song on this device (Clear chat wipes it). The model runs wherever you point it: File → Settings… → <b>AI model</b> takes the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional model id and API key; <b>Test</b> lists the server's models and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server). The first time you point it at a machine other than this one, it asks once before sending your notes there. What it never does: reveal a key you haven't set, write an annotation, or answer a question you didn't ask.</dd>
+      <dt>✦ Ask</dt><dd>Talk to an AI tutor about what you're looking at — and, on your own songs, have it write notes (see <b>✦ Fill</b> under Editor). Tap <b>✦ Ask</b> in the top bar: every message you send carries the song, your cursor, the lasso, your own annotations, and the notes of the bars in view (or the ruler-selected range), so "what's happening in bar 9?" means YOUR bar 9 — bars and beats are the ones on your ruler, in your declared meter. It follows the house rules: hints and direction first, it confirms or refines a guess you've made, and it tells you outright only when you insist or say you give up. General theory questions it answers directly. Tap <b>🎤 Speak</b> to dictate, <b>■ Stop</b> to cut a slow reply, and the conversation is kept per song on this device (Clear chat wipes it). The model runs wherever you point it: File → Settings… → <b>AI model</b> is either <b>in this browser</b> — pick a small model (0.4–4 GB), the first Ask downloads it once and it runs on this device's GPU, nothing leaves the device; Test checks WebGPU and whether it's downloaded — or <b>on a server</b>: the URL of an OpenAI-compatible server — LM Studio or Ollama on this computer (<code>http://localhost:1234</code>) or on another machine on your network — plus an optional model id and API key; <b>Test</b> lists the server's models and names exactly what's wrong when it can't (server off, CORS not enabled, https page talking to an http server). The first time you point it at a machine other than this one, it asks once before sending your notes there. What it never does: reveal a key you haven't set, write an annotation, or answer a question you didn't ask.</dd>
       <dt>🎹 Instrument panel</dt><dd>Opens a piano / guitar fretboard strip above the footer. Lasso'd and sounding notes both light in their track's color (earliest track wins a shared pitch); a lasso'd note gets a white ring for exactly as long as it sounds — so your selection visibly fires as the playhead crosses it. Tap any key or fret to hear it and see its name — plus its scale degree once a key is declared (the readout fades after a few seconds). Guitar is standard tuning, 24 frets: your lasso'd octave lights solid gold, and every OTHER octave of the same note gets a hollow gold ring — select one F♯ and every F♯ on the neck shows — and SOUNDING notes get the same treatment during playback, so hitting ▶ lights the whole neck's worth of what's playing, not just the sounding octave. A pitch that doesn't fit the neck shows octave-folded with a dashed ring and a tiny ▴/▾ pointing at its true octave.</dd>
       <dt>▼ Fall</dt><dd>Synthesia-style view: the whole timeline turns into a vertical drop and the notes fall down into the piano keys, landing the moment they sound. Bar numbers and chord symbols ride along their lines. Lasso works here too — box the falling notes and they light up on the keys. Piano-only; tap ▼ Fall again (or the Guitar tab) to return to the roll/score.</dd>
     </dl>
@@ -1583,6 +1583,11 @@
         <input type="text" id="cfgnsfbase" placeholder="read base URL" style="flex:1;min-height:36px">
         <input type="text" id="cfgnsfrepo" placeholder="owner/repo (writes)" style="width:200px;min-height:36px"></div>
       <div class="row"><span class="lbl" style="width:70px">AI model</span>
+        <select id="cfgaibackend" aria-label="Where the AI model runs" style="min-height:36px">
+          <option value="remote">on a server (LM Studio / Ollama)</option>
+          <option value="browser">in this browser (downloads a model)</option>
+        </select>
+        <select id="cfgaibrowsermodel" aria-label="In-browser model" style="display:none;flex:1;min-height:36px"></select>
         <input type="text" id="cfgaiurl" placeholder="server URL — LM Studio: http://localhost:1234" style="flex:1;min-height:36px" aria-label="AI server URL">
         <input type="text" id="cfgaimodel" list="cfgaimodels" placeholder="model (blank = server's first)" style="width:200px;min-height:36px" aria-label="AI model id">
         <datalist id="cfgaimodels"></datalist></div>
@@ -1590,7 +1595,7 @@
         <input type="password" id="cfgaikey" placeholder="API key — only if the server needs one (stays on this device)" autocomplete="off" style="flex:1;min-height:36px" aria-label="AI API key">
         <input type="number" id="cfgaiwindow" placeholder="context (tokens)" min="1024" step="1024" style="width:120px;min-height:36px" aria-label="Context window in tokens — match what the server loaded the model with">
         <button id="cfgaitest" style="min-height:36px">Test</button></div>
-      <div class="status" id="cfgaistatus">AI: any OpenAI-compatible server — LM Studio (turn on <b>Enable CORS</b> and <b>Serve on local network</b> in its server settings) or Ollama. Test lists its models. Context = the token window the server loaded the model with (LM Studio shows it on the model; 8192 is its usual default) — Ask trims what it sends to fit. On an iPad the server must be reachable over https (Tailscale Serve) — see Help → Explore → ✦ Ask.</div>
+      <div class="status" id="cfgaistatus">AI: <b>in this browser</b> downloads a small model once (0.4–4 GB, kept on the device; needs WebGPU — Test checks) and runs it here, nothing leaves the device. <b>On a server</b>: any OpenAI-compatible server — LM Studio (turn on <b>Enable CORS</b> and <b>Serve on local network</b> in its server settings) or Ollama. Test lists its models. Context = the token window the server loaded the model with (LM Studio shows it on the model; 8192 is its usual default) — Ask trims what it sends to fit. On an iPad the server must be reachable over https (Tailscale Serve) — see Help → Explore → ✦ Ask.</div>
       <div class="row"><span class="lbl">one Save (above) stores the token, all locations, and the AI settings together</span></div>
     </div>
     <!-- local folder: Chrome/Edge desktop only; hidden text explains elsewhere -->
@@ -14514,6 +14519,8 @@ function aiSSE(state, chunk) { // OpenAI-style SSE → text deltas; state = {buf
     const c = j.choices && j.choices[0];
     const txt = c && c.delta && c.delta.content;
     if (typeof txt === "string" && txt) out.push(txt);
+    const think = c && c.delta && (c.delta.reasoning_content || c.delta.reasoning); // LM Studio streams Qwen's thinking apart; count it so the wait is visible
+    if (typeof think === "string") state.think = (state.think || 0) + think.length;
     if (j.error && j.error.message) state.error = j.error.message;
   }
   return out;
@@ -14546,7 +14553,7 @@ function aiRemote() { // the one adapter shape; a browser (WebLLM) backend slots
       const j = await r.json();
       return (j.data || []).map(m => m.id).filter(Boolean);
     },
-    async chat({system, messages, signal, onDelta, schema}) {
+    async chat({system, messages, signal, onDelta, schema, onStatus}) {
       let model = cfg().aiModel;
       if (!model) {
         if (!askModelCache || askModelCache.url !== url) askModelCache = {url, ids: await this.listModels()};
@@ -14561,12 +14568,13 @@ function aiRemote() { // the one adapter shape; a browser (WebLLM) backend slots
         try { const j = await r.json(); if (j.error) msg += " — " + (j.error.message || j.error); } catch (err) { /* no body */ }
         throw new Error(msg);
       }
-      const reader = r.body.getReader(), dec = new TextDecoder(), st = {buf: ""};
-      let out = "";
+      const reader = r.body.getReader(), dec = new TextDecoder(), st = {buf: "", think: 0};
+      let out = "", shown = 0;
       for (;;) {
         const {done, value} = await reader.read();
         if (done) break;
         for (const t of aiSSE(st, dec.decode(value, {stream: true}))) { out += t; onDelta(out); }
+        if (!out && st.think - shown > 400 && onStatus) { shown = st.think; onStatus("thinking… (" + Math.round(st.think / 5) + " words so far — thinking is a model setting in LM Studio, not here)"); }
         if (st.error) throw new Error(st.error);
       }
       return out;
@@ -14602,8 +14610,90 @@ async function aiTest(url, statusEl, listEl) {
   }
 }
 document.getElementById("cfgaitest").addEventListener("click", () => {
-  aiTest(document.getElementById("cfgaiurl").value.trim(), document.getElementById("cfgaistatus"), document.getElementById("cfgaimodels"));
+  if (document.getElementById("cfgaibackend").value === "browser") aiBrowserTest(document.getElementById("cfgaibrowsermodel").value, document.getElementById("cfgaistatus"));
+  else aiTest(document.getElementById("cfgaiurl").value.trim(), document.getElementById("cfgaistatus"), document.getElementById("cfgaimodels"));
 });
+document.getElementById("cfgaibackend").addEventListener("change", aiBackendRows);
+function aiBackendRows() { // the AI row shows the fields the chosen backend uses
+  const browser = document.getElementById("cfgaibackend").value === "browser";
+  document.getElementById("cfgaibrowsermodel").style.display = browser ? "" : "none";
+  for (const id of ["cfgaiurl", "cfgaimodel", "cfgaikey", "cfgaiwindow"]) document.getElementById(id).style.display = browser ? "none" : "";
+}
+// ---- in-browser backend: WebLLM (MLC), loaded only when chosen. First
+// third-party-hosted runtime dependency (code from jsdelivr, weights from
+// HuggingFace) — Josh's call, CDN over vendoring (local-llm-design.md §10.8).
+// Weights cache in the browser after the first download. Needs WebGPU.
+const AI_WEBLLM_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js";
+const AI_BROWSER_MODELS = [ // curated from the prebuilt list, smallest first; sizes = VRAM at load
+  ["SmolLM2-360M-Instruct-q4f16_1-MLC", "SmolLM2 360M · 0.4 GB (tiny — for testing)"],
+  ["Llama-3.2-1B-Instruct-q4f16_1-MLC", "Llama 3.2 1B · 0.9 GB"],
+  ["Qwen3.5-0.8B-q4f16_1-MLC", "Qwen 3.5 0.8B · 1.6 GB"],
+  ["SmolLM2-1.7B-Instruct-q4f16_1-MLC", "SmolLM2 1.7B · 1.8 GB"],
+  ["Qwen3-1.7B-q4f16_1-MLC", "Qwen 3 1.7B · 2.0 GB"],
+  ["Qwen3.5-2B-q4f16_1-MLC", "Qwen 3.5 2B · 2.2 GB"],
+  ["Llama-3.2-3B-Instruct-q4f16_1-MLC", "Llama 3.2 3B · 2.3 GB"],
+  ["Qwen3-4B-q4f16_1-MLC", "Qwen 3 4B · 3.4 GB"],
+  ["Phi-4-mini-instruct-q4f16_1-MLC", "Phi-4 mini · 3.4 GB"],
+  ["Qwen3.5-4B-q4f16_1-MLC", "Qwen 3.5 4B · 3.9 GB"],
+];
+let aiWebllm = null, aiEngine = null, aiEngineModel = null;
+function aiBrowserMenu(current) {
+  const sel = document.getElementById("cfgaibrowsermodel");
+  sel.innerHTML = "";
+  for (const [id, label] of AI_BROWSER_MODELS) { const o = document.createElement("option"); o.value = id; o.textContent = label; sel.appendChild(o); }
+  sel.value = AI_BROWSER_MODELS.some(m => m[0] === current) ? current : AI_BROWSER_MODELS[1][0];
+}
+async function aiWebllmLoad(statusFn) {
+  if (!aiWebllm) { statusFn("loading the in-browser runtime…"); aiWebllm = await import(AI_WEBLLM_URL); }
+  return aiWebllm;
+}
+async function aiEngineFor(modelId, statusFn) {
+  if (aiEngine && aiEngineModel === modelId) return aiEngine;
+  const w = await aiWebllmLoad(statusFn);
+  if (aiEngine) { try { await aiEngine.unload(); } catch (err) { /* already gone */ } aiEngine = null; }
+  aiEngine = await w.CreateMLCEngine(modelId, {initProgressCallback: p => statusFn((p && p.text) || "loading…")});
+  aiEngineModel = modelId;
+  return aiEngine;
+}
+async function aiBrowserTest(modelId, statusEl) { // also THE capability probe for a new device (iPad): WebGPU + cache state
+  const say = t => { statusEl.textContent = t; };
+  if (!navigator.gpu) { say("⚠ no WebGPU in this browser — in-browser models need it (Chrome, Edge, Safari 26+); use a server instead"); return; }
+  let ad = null;
+  try { ad = await navigator.gpu.requestAdapter(); } catch (err) { ad = null; }
+  if (!ad) { say("⚠ WebGPU is here but no GPU adapter answered — try another browser, or use a server"); return; }
+  const lim = ad.limits || {};
+  const mb = x => Math.round((x || 0) / 1048576);
+  try {
+    const w = await aiWebllmLoad(say);
+    const cached = await w.hasModelInCache(modelId);
+    say("✓ WebGPU ok (max buffer " + mb(lim.maxBufferSize) + " MB, storage binding " + mb(lim.maxStorageBufferBindingSize) + " MB" + (ad.features && ad.features.has && ad.features.has("shader-f16") ? ", f16" : "") + ") · " +
+        modelId + (cached ? " is downloaded" : " not downloaded yet — Save, then the first Ask downloads it"));
+  } catch (err) { say("⚠ the in-browser runtime failed to load: " + err.message + " (offline?)"); }
+}
+function aiBrowser() {
+  const modelId = cfg().aiBrowserModel;
+  return {
+    id: "browser",
+    async listModels() { return AI_BROWSER_MODELS.map(m => m[0]); },
+    async chat({system, messages, signal, onDelta, schema, onStatus}) {
+      if (!navigator.gpu) throw new Error("no WebGPU in this browser — pick a server in Settings");
+      const eng = await aiEngineFor(modelId, onStatus || (() => {}));
+      if (signal) signal.addEventListener("abort", () => { try { eng.interruptGenerate(); } catch (err) { /* idle */ } });
+      const req = {messages: [{role: "system", content: system}, ...messages], stream: true, extra_body: {enable_thinking: false}};
+      if (schema && Object.keys(schema).length) req.response_format = {type: "json_object", schema: JSON.stringify(schema)};
+      else if (schema) req.response_format = {type: "json_object"};
+      let out = "";
+      const chunks = await eng.chat.completions.create(req);
+      for await (const c of chunks) {
+        const t = c.choices && c.choices[0] && c.choices[0].delta && c.choices[0].delta.content;
+        if (t) { out += t; onDelta(out); }
+      }
+      if (signal && signal.aborted) { const e = new Error("stopped"); e.name = "AbortError"; throw e; }
+      return out;
+    },
+  };
+}
+function aiProvider() { return cfg().aiBackend === "browser" ? aiBrowser() : Object.assign(aiRemote(), {id: "remote"}); }
 
 // ---- the span: the ruler selection if armed, else the bars in view. ONE
 // frame everywhere — display bars/beats (chop-relative, the declared meter's
@@ -14678,9 +14768,10 @@ function askContext(sp, budget) { // the ONE block per request; never stored
   L.push("notes in bars " + sp.from + "–" + sp.to + ":\n" + askSpanNotes(sp.t0, sp.t1, budget.span * ASK_CPT));
   return L.join("\n");
 }
-function askBudget() { // two profiles keyed to the window (tokens); LM Studio loads models at 4–8k by default
-  const win = +cfg().aiWindow || 8192;
-  return win <= 8192 ? {win, small: true, anno: 1000, span: 2000, hist: 1000}
+function askBudget() { // profiles keyed to the window (tokens); LM Studio loads at 4–8k by default, WebLLM's prebuilts are 4096
+  const win = cfg().aiBackend === "browser" ? 4096 : (+cfg().aiWindow || 8192);
+  return win <= 4096 ? {win, small: true, anno: 500, span: 1200, hist: 300}
+       : win <= 8192 ? {win, small: true, anno: 1000, span: 2000, hist: 1000}
                      : {win, small: false, anno: 6000, span: 8000, hist: 3000};
 }
 function askStripContext(text) { return text.replace(/^<context>[\s\S]*?<\/context>\s*/, ""); }
@@ -14750,18 +14841,20 @@ function askRefresh() { // span label + model line; called on open and after Set
   document.getElementById("askspan").textContent = askSpanLabel(sp);
   const c = cfg();
   let host = c.aiUrl; try { host = new URL(c.aiUrl).host; } catch (err) { /* shown raw */ }
-  document.getElementById("askmodel").textContent = (c.aiModel || (askModelCache && askModelCache.ids[0]) || "model") + " · " + host;
+  document.getElementById("askmodel").textContent = c.aiBackend === "browser"
+    ? (AI_BROWSER_MODELS.find(m => m[0] === c.aiBrowserModel) || [0, c.aiBrowserModel])[1].split(" · ")[0] + " · this browser"
+    : (c.aiModel || (askModelCache && askModelCache.ids[0]) || "model") + " · " + host;
 }
 function askShowThinking(live, raw) { // Qwen-style <think> blocks stay out of the bubble
   const vis = raw.replace(/<think>[\s\S]*?(<\/think>|$)/g, "").replace(/^\s+/, "");
   live.textContent = vis || "…";
-  askstatus.textContent = vis ? "" : "thinking…";
+  if (vis) askstatus.textContent = "";
   asklog.scrollTop = asklog.scrollHeight;
 }
 async function askSend() {
   const text = askinput.value.trim();
   if (!text || askBusy || !song) return;
-  if (!(await aiHostOk(aiUrl()))) { askstatus.textContent = "not sent"; return; }
+  if (cfg().aiBackend !== "browser" && !(await aiHostOk(aiUrl()))) { askstatus.textContent = "not sent"; return; }
   const sp = askSpan();
   askSpanFrozen = sp;
   document.getElementById("askspan").textContent = askSpanLabel(sp);
@@ -14780,7 +14873,7 @@ async function askSend() {
   document.getElementById("asksend").disabled = true;
   let out = "";
   try {
-    out = await aiRemote().chat({system: ASK_SYS, messages, signal: ctl.signal, onDelta: raw => askShowThinking(live, raw)});
+    out = await aiProvider().chat({system: ASK_SYS, messages, signal: ctl.signal, onDelta: raw => askShowThinking(live, raw), onStatus: t => { askstatus.textContent = t; }});
     out = out.replace(/<think>[\s\S]*?<\/think>\s*/g, "").trim();
     if (!out) out = "(no reply — try rephrasing)";
     live.textContent = out;
@@ -14946,7 +15039,7 @@ async function askFill() {
   const gate = askFillable();
   if (gate) { askstatus.textContent = gate; return; }
   if (askBusy) return;
-  if (!(await aiHostOk(aiUrl()))) { askstatus.textContent = "not sent"; return; }
+  if (cfg().aiBackend !== "browser" && !(await aiHostOk(aiUrl()))) { askstatus.textContent = "not sent"; return; }
   const sp = askSpan();
   if (rollnotes.some(n => n.tsdir && n.start > sp.t0 && n.start < sp.t1)) { askstatus.textContent = "the range crosses a meter change — fill each meter's bars separately"; return; }
   askSpanFrozen = sp;
@@ -14975,8 +15068,9 @@ async function askFill() {
       const mode = askSchemaMode[url] || "json_schema";
       let raw;
       try {
-        raw = await aiRemote().chat({system, messages: turns, signal: ctl.signal, onDelta: r => askShowThinking(live, r.length > 400 ? r.slice(0, 400) + "…" : r),
-                                     schema: mode === "json_schema" ? ASK_TAKE_SCHEMA : mode === "json_object" ? {} : null});
+        raw = await aiProvider().chat({system, messages: turns, signal: ctl.signal, onDelta: r => askShowThinking(live, r.length > 400 ? r.slice(0, 400) + "…" : r),
+                                       onStatus: t => { askstatus.textContent = t; },
+                                       schema: mode === "json_schema" ? ASK_TAKE_SCHEMA : mode === "json_object" ? {} : null});
       } catch (err) {
         if (err && err.name === "AbortError") throw err;
         if (/HTTP 4\d\d/.test(err.message) && mode !== "none") { // the server rejects structured output: degrade and retry the same attempt
@@ -15069,6 +15163,8 @@ function cfg() {
       analysisRepo: c.analysisRepo || "joshcough/night-roll",
       nsfRepo: c.nsfRepo || "joshcough/nsf-archive",
       // ✦ Ask: flat fields (saveCfg is a shallow merge); the key lives apart, like the token
+      aiBackend: c.aiBackend === "browser" ? "browser" : "remote",
+      aiBrowserModel: c.aiBrowserModel || "Llama-3.2-1B-Instruct-q4f16_1-MLC",
       aiUrl: c.aiUrl || "http://localhost:1234",
       aiModel: c.aiModel || "",
       aiWindow: +c.aiWindow || 8192,
@@ -15371,6 +15467,9 @@ function openSettingsSheet() {
   document.getElementById("cfganalysisrepo").value = c.analysisRepo;
   document.getElementById("cfgnsfbase").value = c.nsfBase;
   document.getElementById("cfgnsfrepo").value = c.nsfRepo;
+  document.getElementById("cfgaibackend").value = c.aiBackend;
+  aiBrowserMenu(c.aiBrowserModel);
+  aiBackendRows();
   document.getElementById("cfgaiurl").value = c.aiUrl;
   document.getElementById("cfgaimodel").value = c.aiModel;
   document.getElementById("cfgaikey").value = localStorage.getItem("ff1roll-aikey") || "";
@@ -15515,6 +15614,8 @@ document.getElementById("settingssave").addEventListener("click", () => {
     analysisRepo: document.getElementById("cfganalysisrepo").value.trim() || "joshcough/night-roll",
     nsfBase: document.getElementById("cfgnsfbase").value.trim(),
     nsfRepo: document.getElementById("cfgnsfrepo").value.trim() || "joshcough/nsf-archive",
+    aiBackend: document.getElementById("cfgaibackend").value === "browser" ? "browser" : "remote",
+    aiBrowserModel: document.getElementById("cfgaibrowsermodel").value || "Llama-3.2-1B-Instruct-q4f16_1-MLC",
     aiUrl: document.getElementById("cfgaiurl").value.trim() || "http://localhost:1234",
     aiModel: document.getElementById("cfgaimodel").value.trim(),
     aiWindow: parseInt(document.getElementById("cfgaiwindow").value, 10) || 8192,
