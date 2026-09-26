@@ -1184,6 +1184,12 @@ queued: a what-changed list in Save & Commit; an undoable Revert).
 - **Bar** `#cmpbar` above the roll: what you hear, +yours-only (gold),
   −saved-only (red), ~changed, the swap button, ✕. Help: Views → "⇄
   Compare with repo". FEATURES keyword "Compare with repo".
+- `let cmp` lives with the early editor state (next to `multiSel`), not
+  in the compare chapter: `setSong`, `editableSong` and `renderViewMenu`
+  read it, and the phone-folded boot renders the View menu before the
+  script's tail has run — b590306 bricked that boot (TDZ), the e2e
+  "phone-size boot … (no TDZ bricks)" caught it, 060a491 fixed it. Any
+  new `let` that boot-path code reads goes up there too.
 - Not done: playing a track that exists only in the saved copy (no
   track object to play it through); compare under a chop.
 
