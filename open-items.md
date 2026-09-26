@@ -4,23 +4,17 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
-## SETTINGS DIALOG — redesign queued (Josh, 2026-09-25: "this settings dialog is starting to suck")
+## SETTINGS SHEET — rebuilt 2026-09-25 (NIGHT-ROLL.md "✦ Ask / ✦ Fill" → Settings sheet)
 
-Setting up the iPad AI route cost him ten minutes of fighting one sheet.
-What happened, mapped to code (index.html):
-- Test's result writes into `#cfgaistatus` — the SAME element as the
-  six-line 11px gray help paragraph, so a click replaces the help with
-  one dim line and the layout jumps ~80px. "✓ 4 models" looks like more
-  help text. He hit Test repeatedly, unsure it ran.
-- Test's fetch has no timeout: "testing …" can sit forever (reproduced
-  from Mac Chrome).
-- Save is one button at the TOP beside the GitHub token; Close, the
-  backdrop and Esc all discard silently. He lost the URL once.
-- Test lists models but does not put one in the field; blank = server's
-  first listed = the wrong model tonight (35B-A3B is the tuned one).
-- The AI row wraps at the 560px sheet: URL orphaned from its label,
-  model field cut off, key/context/Test on a third line.
-Advisor review requested; proposal → Josh rules → build. Not started.
+Josh's "go" on all four: no Save button (every field saves on change;
+Close/✕/backdrop/Esc always safe); Test has its own gold/red result
+line, disables its button while running, aborts at 8 s with its own
+diagnosis; Test picks + saves a model (his last pick if the server still
+has it, else the first non-embedding id) and the model field is a
+dropdown; AI section first, data locations folded into a `<details>`,
+text inputs styled like the rest. Browser-verified on the Mac against
+LM Studio (✓ line, dropdown of 4, saved) and against a black-hole IP
+(⚠ no answer in 8 s). Not yet seen: the sheet on his iPad.
 
 ## SAVE & COMMIT SHEET — rebuilt 2026-09-25 (NIGHT-ROLL.md "Sync / Save & Commit sheet")
 

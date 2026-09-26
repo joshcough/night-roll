@@ -1089,6 +1089,24 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   top-level `enable_thinking`, `think:false`, `/no_think` (2026-09-25, LM
   Studio + Qwen 3.6 35B-A3B: reasoning came back every time). Thinking is
   a model setting in LM Studio, and the status line says so.
+- **Settings sheet (rebuilt 2026-09-25 — Josh: "this settings dialog is
+  starting to suck").** No Save button: a delegated `change` listener on
+  `#settingssheet` calls `settingsPersist(id)` per field (token/key/dev
+  topics to their localStorage keys, everything else through `saveCfg`),
+  so Close/✕/backdrop/Esc never lose anything. AI section first (`runs` /
+  `server` + Test / result line / `model` / `key` + context), then GitHub
+  token, folder, and the three data-location rows inside a native
+  `<details>`. Test writes to its own line `#cfgaitestout` via `aiSay`
+  (✓ → `.ok` gold bold, ⚠ → `.err` red bold), disables the button while
+  running, and aborts after `AI_TEST_MS` = 8 s with its own diagnosis (the
+  sixth failure class). On ✓ it fills the `#cfgaimodel` `<select>`
+  (`aiModelMenu`), picks `aiPickModel(ids, saved)` — the saved id if the
+  server still lists it, else the first id without "embed" — and saves
+  URL + model at once ("· saved" in the line). The saved model stays in
+  the menu when unlisted ("(not on this server)"). Enter in the URL field
+  runs Test. The adapter's blank-model fallback survives as a safety net
+  but the UI never advertises it. Tests: none reference the sheet's ids
+  (2026-09-25); browser-verified on the Mac.
 - **iPad route (P4) — done 2026-09-25.** Josh's iPad asks the Mac's LM
   Studio over Tailscale, verified end to end (Test listed the models,
   ✦ Ask answered). Exact recipe on the Mac: `lms server start --cors`
