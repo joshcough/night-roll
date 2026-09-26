@@ -1509,8 +1509,21 @@ his downloads: `review-handoff-2026-08-07.md` (code/tool review) and
   are numbers until listened to; expansion chips (VRC6/FDS) don't
   capture. First cold-NSF field test planned: Mega Man 2 on the iPad.
 
+- **In-app AI (local models) — PLANNED 2026-09-25, RULED, not built:
+  `local-llm-design.md`** (advisor-reviewed to convergence, 4 rounds).
+  Josh's brief: tutor + generator ("fill in a few chords here"),
+  anyone can run a model on their own, iPad points at his MacBook.
+  Backends: another computer (LM Studio/Ollama URL), this browser
+  (WebLLM, if the iPad probe passes), cloud later. Generation follows
+  the Bassist's contract exactly (apply immediately, one ⟲, take
+  chips), editable songs only. His rulings in §10: hints-first rules
+  everywhere (web-session rules; tells him when he says he gives up),
+  "why" behind a tap, any host with a one-time warning, Tailscale for
+  the iPad, model asks when stacked-vs-mono is unclear. Next: "run
+  P0" (probes). The item below is superseded — the branch's transport
+  is replaced, its sheet/prompt reused.
 - **In-app Claude chat — built but parked on the `claude-chat` branch,
-  decision pending** (2026-08-01): a complete chat feature (💬 button,
+  superseded by the plan above** (2026-08-01): a complete chat feature (💬 button,
   per-song conversations, streaming, context injection of
   cursor/rollnotes/lasso, tutor system prompt that won't spoil
   undiscovered keys/chords) is committed on branch `claude-chat` (pushed).
