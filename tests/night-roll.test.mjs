@@ -1392,7 +1392,7 @@ test("help sheet covers every shipped feature (drift guard — extend this list 
     "Tap a note", "nothing to double", "Folder on this computer", "Reconnect folder",
     "Audio tracks", "＋∿", "Align first sound", "someone else's recording", "tap again to play from its start",
     "Tempo from this take", "Split at cursor", "Remove piece", "Map the bars to this take", "downbeat ▶",
-    "✦ Ask", "✦ Fill", ".ask.md", "Commit song", "Commit all", "data locations (advanced)", "saves itself",
+    "✦ Ask", "✦ Fill", ".ask.md", "Commit song", "Commit all", "data locations (advanced)", "saves itself", "Compare with repo",
   ];
   const missing = FEATURES.filter(k => !help.includes(k));
   assert.deepEqual(missing, [], "features with no help entry: " + missing.join(", "));
@@ -2661,6 +2661,29 @@ test("Save & Commit: pendingSongs unions music edits, unsynced annotations and u
   run(`for (const k of ["ff1roll-draft-albums/compositions/nightroll/p-music.mid", "ff1roll-draft-albums/compositions/nightroll/p-clean.mid",
        "ff1roll-notes-albums/final-fantasy-i/songs/p-notes.mid", "ff1roll-ask-albums/compositions/nightroll/p-open.mid",
        "ff1roll-ask-albums/compositions/nightroll/p-saved.mid", "ff1roll-ask-local/p.mid"]) localStorage.removeItem(k); songKey = null;`);
+});
+
+test("Compare with repo: cmpDiff — by track name, tick+pitch identity, tombstones ignored, unnamed tracks by position", () => {
+  const repo = [{name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 100}, {t: 480, d: 480, p: 64, v: 100}, {t: 960, d: 480, p: 67, v: 100}]},
+                {name: "", notes: [{t: 0, d: 240, p: 36, v: 90}]}];
+  const cur = [{name: "", notes: [{t: 0, d: 240, p: 36, v: 90}]}, // unnamed, now first: matched by position "#1" vs "#0" — a rename, so it diffs
+               {name: "pulse1", notes: [{t: 0, d: 480, p: 60, v: 100}, {t: 480, d: 960, p: 64, v: 100}, {t: 960, d: 480, p: 67, v: 100, gone: true}, {t: 1440, d: 480, p: 72, v: 80}]}];
+  const d = JSON.parse(val(`JSON.stringify(cmpDiff(${JSON.stringify(repo)}, ${JSON.stringify(cur)}))`));
+  const p1 = d.tracks.find(t => t.name === "pulse1");
+  assert.equal(p1.ti, 1, "current track index, for drawing");
+  assert.deepEqual(p1.added.map(n => n.p), [72]);
+  assert.deepEqual(p1.removed.map(n => n.p), [67], "a tombstoned note counts as removed");
+  assert.equal(p1.changed.length, 1); assert.equal(p1.changed[0].was.d, 480); assert.equal(p1.changed[0].now.d, 960);
+  assert.equal(d.added, 1 + 1); assert.equal(d.removed, 1 + 1); assert.equal(d.changed, 1);
+  // identical → nothing
+  assert.equal(val(`cmpDiff(${JSON.stringify(repo)}, ${JSON.stringify(repo)}).tracks.length`), 0);
+  // hearing the saved copy makes the song read-only; the draft writer refuses
+  installSong();
+  run(`songKey = "albums/compositions/nightroll/cmp-test.mid"; cmp = {showing: "repo", diff: {tracks: [], added: 0, removed: 0, changed: 0}};`);
+  assert.equal(val(`editableSong()`), false);
+  run(`localStorage.removeItem("ff1roll-draft-albums/compositions/nightroll/cmp-test.mid"); saveDraft(false);`);
+  assert.equal(app.store.get("ff1roll-draft-albums/compositions/nightroll/cmp-test.mid"), undefined, "no draft written while the saved copy is swapped in");
+  run(`cmp = null; songKey = null;`);
 });
 
 test("Ask: host consent — localhost never prompts, other hosts once", () => {

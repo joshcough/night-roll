@@ -1144,6 +1144,49 @@ OpenAI-compatible server. Code lives under `// ---- ✦ Ask (in-app AI)`.
   `applyTake` undo/mirror, target default rule, Bassist golden fixture,
   FEATURES keywords `✦ Ask` / `✦ Fill`.
 
+## Compare with repo (2026-09-25)
+
+Josh: "I have seven songs where it says the notes are changed, but I
+don't know what things have changed." Option 3 of three (the others,
+queued: a what-changed list in Save & Commit; an undoable Revert).
+
+- **Entry:** View → "⇄ Compare with repo" ("saved copy" in folder mode;
+  dimmed unless the open song is a composition with a key), or the
+  **Compare** button on the open song's "♪ music edited" line in Save &
+  Commit. `cmpEnter` reads the saved .mid through `readData("songs", key,
+  bust)` (folder first, then the site — the same door every load uses),
+  `parseMidi`s it, rescales ticks if the ppq differs, and stores `cmp =
+  {repo, diff, showing: "mine", mine: null}`. Refuses with a chop applied
+  (`chopS > 0 || chopE !== null`; `appliedChop` is a string key, truthy always) and on a song with no save behind it (404 → "no saved
+  copy … yet"). `setSong` clears it: compare belongs to one song.
+- **Diff** (`cmpDiff`, pure, vm-tested): tracks matched by name, unnamed
+  ones by position (`cmpTrackKey`); a note's identity is tick+pitch
+  (tools/song-diff.mjs's rule); `gone` notes count as removed; a changed
+  note = same tick+pitch, different `d` or `v`. Result: per-track
+  `{name, ti (current index or -1), added, removed, changed:[{was, now}]}`
+  plus totals.
+- **Roll:** `drawCompare` runs inside `drawFull` after the note loop (so
+  the scene cache holds it): red outline = the saved copy's note, gold =
+  yours, both on a changed note; **dashed = absent from the version you
+  are hearing**. Tracks with no current counterpart are counted in the
+  bar, not drawn (nowhere to put them).
+- **Swap** (`cmpShow`): "hear the saved copy" stops the transport,
+  remembers `song.tracks[i].notes` in `cmp.mine`, swaps copies of the
+  saved notes into the SAME track objects (voices, gains, mute/solo,
+  lanes keep working), clears selection and the lane/32nd caches,
+  recomputes the song end, and resumes from the same second with no
+  count-in. Swapping back restores the original arrays (undo entries
+  keep their indices). While `cmp.showing === "repo"`: `editableSong()`
+  is false (every edit path and the edit keymap go quiet), `saveDraft`
+  returns without writing (the one way this could have destroyed his
+  edits), and `commitCompositionNow` refuses with a message. Leaving
+  compare always swaps back first.
+- **Bar** `#cmpbar` above the roll: what you hear, +yours-only (gold),
+  −saved-only (red), ~changed, the swap button, ✕. Help: Views → "⇄
+  Compare with repo". FEATURES keyword "Compare with repo".
+- Not done: playing a track that exists only in the saved copy (no
+  track object to play it through); compare under a chop.
+
 ## Audio tracks — recordings as tracks (branch `audio-tracks`, 2026-09-15)
 
 Josh's son: "I wouldn't use it unless it supported waves." Design and

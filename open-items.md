@@ -4,6 +4,17 @@ Standing list of things agreed but not done, and questions asked but not
 answered. Prune as items close; add as they appear. (Claude: check this at
 session start alongside the quiz.)
 
+## COMPARE WITH REPO — SHIPPED 2026-09-25 (NIGHT-ROLL.md "Compare with repo")
+
+Josh picked the roll overlay ("by far the best one") over a what-changed
+list and an undoable Revert; those two stay available if he wants them:
+- What-changed list on the ♪ line in Save & Commit (~80 LOC, reuse
+  `cmpDiff`, rows in the annotation-row style).
+- Undoable Revert: stash the draft, "Restore local copy" in File until
+  the next edit/save (~25 LOC). Revert today is NOT undoable.
+Open: he has not seen compare on the iPad; the swap button's wording;
+whether the dashed/solid convention reads at a glance.
+
 ## SETTINGS SHEET — rebuilt 2026-09-25 (NIGHT-ROLL.md "✦ Ask / ✦ Fill" → Settings sheet)
 
 Josh's "go" on all four: no Save button (every field saves on change;

@@ -6,6 +6,9 @@ Everything here is also in the app: File → Help.
 
 ## Views
 
+**⇄ Compare with repo**
+View → **Compare with repo** (or the **Compare** button on a song's "music edited" line in Save & Commit) fetches the song's last save and outlines every difference on the roll: **gold** = a note only in your version, **red** = a note only in the saved copy, both on a note whose length or velocity changed; **dashed** outlines mark notes that are not in the version you are hearing. The bar above the roll counts them and its button swaps which version plays — **hear the saved copy** swaps its notes in (the song is read-only until you swap back; nothing is written, your draft stays yours), **hear your version** swaps them back. ✕ on the bar leaves compare. Works on your own songs with a save behind them; turn a chop off first.
+
 **▾ Hide controls**
 The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Phones start folded automatically; your explicit choice is remembered per device.
 

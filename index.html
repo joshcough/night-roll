@@ -218,6 +218,10 @@
   .chip .solo.on { color: var(--gold); border-color: var(--gold); }
 
   #rollwrap { flex: 1; position: relative; min-height: 0; }
+  #cmpbar { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-family: var(--mono); font-size: 12px;
+            color: var(--text); background: var(--panel); border-bottom: 1px solid var(--grid); flex-wrap: wrap; }
+  #cmpbar button { min-height: 32px; padding: 4px 10px; }
+  #cmpbar .gold { color: var(--gold); } #cmpbar .red { color: #e66767; }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
 
   #editrow {
@@ -755,6 +759,13 @@
   <button id="albumnext" aria-label="Next song in the album">⏭ Next</button>
   <button id="albumleave" aria-label="Leave album — keep playing this song">✕</button>
 </div>
+<!-- Compare with repo (Josh, 2026-09-25): the open composition against its last
+     save. The bar names what you hear; the roll outlines what differs. -->
+<div id="cmpbar" style="display:none">
+  <span id="cmptext" style="flex:1;min-width:0"></span>
+  <button id="cmpswap">hear the saved copy</button>
+  <button id="cmpdone" aria-label="Leave compare">✕</button>
+</div>
 <div id="rollwrap"><canvas id="roll"></canvas></div>
 <div id="editrow">
 
@@ -1191,6 +1202,7 @@
 
     <div class="hsec" data-hsec="views">
     <dl>
+      <dt>⇄ Compare with repo</dt><dd>View → <b>Compare with repo</b> (or the <b>Compare</b> button on a song's "music edited" line in Save &amp; Commit) fetches the song's last save and outlines every difference on the roll: <b>gold</b> = a note only in your version, <b>red</b> = a note only in the saved copy, both on a note whose length or velocity changed; <b>dashed</b> outlines mark notes that are not in the version you are hearing. The bar above the roll counts them and its button swaps which version plays — <b>hear the saved copy</b> swaps its notes in (the song is read-only until you swap back; nothing is written, your draft stays yours), <b>hear your version</b> swaps them back. ✕ on the bar leaves compare. Works on your own songs with a save behind them; turn a chop off first.</dd>
       <dt>▾ Hide controls</dt><dd>The ▾ at the footer's left folds the bottom controls (edit row + footer) away so small screens show music instead of buttons — a floating ▴ brings them back. Phones start folded automatically; your explicit choice is remembered per device.</dd>
       <dt>Closing a sheet</dt><dd>Every sheet closes three ways: tap the dimmed area outside it, tap the <b>✕ pinned to its top-right</b> (it stays put while a long sheet scrolls, so the notes list never makes you scroll to the bottom to get out), or press <b>Esc</b>. Esc closes the topmost one, so stacked sheets unstack one at a time. Saving or sending closes the sheet for you. The only exception is a confirm box — it asked a question, so it waits for an answer.</dd>
       <dt>𝄞 Score / ▦ Roll</dt><dd>Switch between piano roll and engraved sheet music. Same timeline, same everything else. Your choice is remembered.</dd>
@@ -1323,6 +1335,7 @@
   <button class="fitem" id="vwScore">𝄞  Score view</button>
   <button class="fitem" id="vwListener">📻  Listener mode</button>
   <button class="fitem" id="vwTracksView">▤  Tracks view</button>
+  <button class="fitem" id="vwCompare">⇄  Compare with repo</button>
   <div class="fdiv"></div>
   <button class="fitem" id="vwTracks">◂  Tracks</button>
   <button class="fitem" id="vwEdit">🛠  Edit toolbar</button>
@@ -3013,6 +3026,7 @@ async function loadSongInner(path) {
 }
 function setSong(parsed, key) {
   loadGen++; // covers the local-file path: invalidate any in-flight catalog load
+  cmp = null; if (typeof cmpBar === "function") cmpBar(); // compare belongs to one song
   song = parsed;
   song.baseTempos = song.tempos.map(t => ({...t})); // tempo: directives rebuild from this
   songKey = key;
@@ -3388,6 +3402,7 @@ function drawFull(skipCursor) {
     }
   });
   ctx.globalAlpha = 1;
+  if (cmp) drawCompare(ppt, rowH, W, H);
 
   function cursorHandle(x) { // Logic-sized triangle under the ruler, made for fingers
     ctx.beginPath();
@@ -4161,7 +4176,7 @@ function posToTickPitch(pos) { // pitch is a DISPLAY ROW (kit lane rows sit abov
 // requests, 2026-08-17: move lasso'd notes in pitch/time, resize many at
 // once, copy chords). Works on editable songs; drag on the roll or arrow
 // keys — keyboard covers everything, easier on the hands than dragging.
-function editableSong() { return !!song && (isComposition() || isLocalDraft() || songKey === null); }
+function editableSong() { return !!song && (isComposition() || isLocalDraft() || songKey === null) && !(cmp && cmp.showing === "repo"); } // hearing the saved copy = read-only
 function selEditItems() { // the notes an edit applies to: lasso selection, else the tapped note
   const out = [];
   if (multiSel.length) for (const {ti, ni} of multiSel) {
@@ -11525,6 +11540,7 @@ function draftStoreKey(key) { return "ff1roll-draft-" + key; }
 function isLocalDraft() { return !!songKey && songKey.startsWith("local/"); }
 function saveDraft(clean) { // clean=true right after a successful Save
   if (!isComposition() && !isLocalDraft()) return;
+  if (cmp && cmp.showing === "repo") return; // the saved copy is swapped in: writing it over the draft would destroy his edits
   localStorage.setItem(draftStoreKey(songKey), JSON.stringify({
     savedStamp: song.savedStamp || 0, dirty: !clean,
     ppq: song.ppq, timesig: song.timesig || effTs(), tempos: song.baseTempos || song.tempos,
@@ -11658,10 +11674,12 @@ function renderViewMenu() { // ✓ = visible; labels never shift (fixed 2-char s
     b.style.opacity = dim ? 0.55 : 1;
   };
   const base = {vwScore: "𝄞  Score view", vwListener: "📻  Listener mode", vwTracksView: "▤  Tracks view", vwTracks: "◂  Tracks", vwEdit: "🛠  Edit toolbar",
-                vwFooter: "▦  Bottom bar", vwInst: "🎹  Instrument panel", vwSub: "💬  Notes strip"};
+                vwFooter: "▦  Bottom bar", vwInst: "🎹  Instrument panel", vwSub: "💬  Notes strip",
+                vwCompare: "⇄  Compare with " + (folderActive() ? "saved copy" : "repo")};
   for (const [id, label] of Object.entries(base)) document.getElementById(id).textContent = label;
   set("vwScore", viewMode === "score");
   set("vwTracksView", viewMode === "tracks");
+  set("vwCompare", !!cmp, !(song && songKey && isComposition())); // dimmed where there is nothing to compare against
   set("vwListener", listenerMode);
   set("vwTracks", !document.getElementById("trackslide").classList.contains("off"));
   set("vwEdit", !editrowHidden, !editOn); // dimmed (not disabled) in read-only: the pref still flips
@@ -11744,6 +11762,7 @@ document.getElementById("viewsheetbtn").addEventListener("click", e => {
     applyListener();
   });
   on("vwTracksView", () => setViewMode(viewMode === "tracks" ? "roll" : "tracks"));
+  on("vwCompare", () => { document.getElementById("viewsheet").classList.remove("on"); if (cmp) cmpExit(); else cmpEnter(); });
   on("vwTracks", () => document.getElementById("tracktoggle").click());
   on("vwEdit", () => { editrowHidden = !editrowHidden; applyChrome(); });
   on("vwFooter", () => { footerHidden = !footerHidden; applyChrome(); });
@@ -12782,6 +12801,7 @@ async function uploadAudioClips(h, status) {
   }
 }
 async function commitCompositionNow(status) { // .mid + annotations + notes.txt, one flow
+  if (cmp && cmp.showing === "repo") { status.textContent = "You are hearing the saved copy — switch back to your version first (the compare bar)."; return; }
   sweepStrandedClones(); // never commit invisible stacks
   const token = writeToken();
   if (!token) { status.textContent = "No GitHub token stored yet — add one in File → Settings."; return; }
@@ -14467,6 +14487,121 @@ document.addEventListener("keydown", e => {
   }
 }
 
+// ---------------------------------------------------------------- Compare with repo
+// Josh (2026-09-25): "I have seven songs where it says the notes are changed,
+// but I don't know what things have changed." The open composition's notes
+// against its last save: the roll outlines every difference and one tap swaps
+// which version plays. Nothing is written — the draft stays the draft — and
+// hearing the saved copy makes the song read-only until you swap back.
+let cmp = null; // {repo: [{name, notes}], diff, showing: "mine" | "repo", mine: [notes arrays while the saved copy is swapped in]}
+function cmpTrackKey(t, i) { return t.name || "#" + i; } // match tracks by name, unnamed ones by position
+function cmpDiff(repoTracks, curTracks) { // tick+pitch is a note's identity (tools/song-diff.mjs's rule); tombstones don't count
+  const key = n => n.t + ":" + n.p;
+  const out = {tracks: [], added: 0, removed: 0, changed: 0};
+  const cur = new Map(curTracks.map((t, i) => [cmpTrackKey(t, i), {t, i}]));
+  const rep = new Map(repoTracks.map((t, i) => [cmpTrackKey(t, i), t]));
+  for (const k of new Set([...cur.keys(), ...rep.keys()])) {
+    const c = cur.get(k), r = rep.get(k);
+    const ma = new Map((r ? r.notes : []).filter(n => !n.gone).map(n => [key(n), n]));
+    const mb = new Map((c ? c.t.notes : []).filter(n => !n.gone).map(n => [key(n), n]));
+    const added = [...mb.values()].filter(n => !ma.has(key(n)));
+    const removed = [...ma.values()].filter(n => !mb.has(key(n)));
+    const changed = [...mb.values()].filter(n => { const o = ma.get(key(n)); return o && (o.d !== n.d || o.v !== n.v); })
+      .map(n => ({now: n, was: ma.get(key(n))}));
+    if (added.length || removed.length || changed.length) out.tracks.push({name: k, ti: c ? c.i : -1, added, removed, changed});
+    out.added += added.length; out.removed += removed.length; out.changed += changed.length;
+  }
+  return out;
+}
+async function cmpEnter() {
+  if (!song || !songKey || !isComposition()) { setInfo("compare works on your own saved songs"); return; }
+  if (chopS > 0 || chopE !== null) { setInfo("turn the chop off first — compare looks at the whole song"); return; }
+  const key = songKey;
+  setInfo("fetching the saved copy…");
+  let res = null;
+  try { res = await readData("songs", key, true); } catch (err) { res = null; }
+  if (!res || !res.ok) { setInfo("no saved copy of this song " + (folderActive() ? "in the folder" : "in the repo") + " yet"); return; }
+  const parsed = parseMidi(await res.arrayBuffer());
+  if (!song || songKey !== key) return; // he moved on while it loaded
+  const scale = song.ppq / parsed.ppq; // same lineage, but be safe
+  const repo = parsed.tracks.map(t => ({name: t.name, notes: t.notes.map(n => scale === 1 ? {...n} : {...n, t: Math.round(n.t * scale), d: Math.round(n.d * scale)})}));
+  cmp = {repo, showing: "mine", mine: null, diff: cmpDiff(repo, song.tracks)};
+  cmpBar();
+  draw();
+  const d = cmp.diff;
+  setInfo(d.tracks.length ? "compare: gold = only in yours, red = only in the saved copy, dashed = not in what you hear" : "compare: your version matches the saved copy note for note");
+}
+function cmpExit() {
+  if (!cmp) return;
+  if (cmp.showing === "repo") cmpShow("mine");
+  cmp = null;
+  cmpBar();
+  draw();
+}
+function cmpShow(which) { // swap which version the roll and the transport hold; the other waits in cmp.mine
+  if (!cmp || cmp.showing === which) return;
+  const at = playing ? playSec() : null;
+  if (playing) stop();
+  if (which === "repo") {
+    cmp.mine = song.tracks.map(tr => tr.notes);
+    song.tracks.forEach((tr, i) => {
+      const r = cmp.repo.find((t, j) => cmpTrackKey(t, j) === cmpTrackKey(tr, i));
+      tr.notes = r ? r.notes.map(n => ({...n})) : [];
+    });
+  } else {
+    song.tracks.forEach((tr, i) => { tr.notes = cmp.mine[i]; });
+    cmp.mine = null;
+  }
+  cmp.showing = which;
+  selNote = null; multiSel.length = 0; multiSelKey.clear();
+  _laneTop = null; _kitSlots = null; _has32 = null;
+  computeSongEnd();
+  cmpBar();
+  draw();
+  if (at !== null) play(at, {noCountIn: true});
+}
+function cmpBar() {
+  const bar = document.getElementById("cmpbar");
+  if (!bar) return;
+  if (!cmp) { bar.style.display = "none"; return; }
+  const d = cmp.diff, mine = cmp.showing === "mine";
+  const txt = document.getElementById("cmptext");
+  txt.innerHTML = "";
+  const add = (t, cls) => { const sp = document.createElement("span"); if (cls) sp.className = cls; sp.textContent = t; txt.appendChild(sp); };
+  add("⇄ compare · hearing " + (mine ? "YOUR version" : "the SAVED copy") + " · ");
+  add("+" + d.added + " yours only", "gold"); add(" · ");
+  add("−" + d.removed + " saved only", "red"); add(" · ");
+  add("~" + d.changed + " changed" + (d.tracks.some(t => t.ti < 0) ? " · a deleted track is counted, not drawn" : ""));
+  document.getElementById("cmpswap").textContent = mine ? "hear the saved copy" : "hear your version";
+  bar.style.display = "";
+}
+function drawCompare(ppt, rowH, W, H) { // outlines only: red = the saved copy's note, gold = yours; dashed = absent from what you hear
+  const rect = (n, ti) => {
+    const x = RULER_W + n.t * ppt - view.x, w = Math.max(3, n.d * ppt - 1);
+    if (x + w < RULER_W || x > W) return null;
+    const y = RULER_H + (topRow() - noteRow(ti, n.p)) * rowH - view.y;
+    if (y < RULER_H - rowH || y > H) return null;
+    return [x, y + 1.5, w, rowH - 3];
+  };
+  const stroke = (n, ti) => { const r = rect(n, ti); if (!r) return; ctx.beginPath(); ctx.roundRect(r[0], r[1], r[2], r[3], 2.5); ctx.stroke(); };
+  const mine = cmp.showing === "mine";
+  ctx.globalAlpha = 1; ctx.lineWidth = 2;
+  for (const t of cmp.diff.tracks) {
+    if (t.ti < 0 || !trackAudible(t.ti)) continue;
+    ctx.strokeStyle = "#e66767"; ctx.setLineDash(mine ? [4, 3] : []);
+    for (const n of t.removed) stroke(n, t.ti);
+    for (const c of t.changed) stroke(c.was, t.ti);
+    ctx.strokeStyle = css("--gold"); ctx.setLineDash(mine ? [] : [4, 3]);
+    for (const n of t.added) stroke(n, t.ti);
+    for (const c of t.changed) stroke(c.now, t.ti);
+  }
+  ctx.setLineDash([]); ctx.lineWidth = 1;
+}
+if (document.getElementById("cmpswap")) {
+  document.getElementById("cmpswap").addEventListener("click", () => cmpShow(cmp && cmp.showing === "mine" ? "repo" : "mine"));
+  document.getElementById("cmpdone").addEventListener("click", cmpExit);
+}
+
 // ---------------------------------------------------------------- ✦ Ask (in-app AI)
 // Design: local-llm-design.md (advisor-converged, Josh's rulings 2026-09-25).
 // A tutor and, later, a generator, over ONE adapter: any OpenAI-compatible
@@ -15559,7 +15694,17 @@ function renderSyncPending() {
     }
     block.appendChild(title);
     const music = draftDirtyState(key);
-    if (music) line(block, "♪ music " + (music === "never" ? "never saved" : "edited since last save"));
+    if (music) {
+      const row = line(block, "♪ music " + (music === "never" ? "never saved" : "edited since last save"));
+      if (key === songKey && music === "edited") { // what changed? the roll shows it (View → Compare with repo)
+        const b = document.createElement("button");
+        b.textContent = "Compare";
+        b.title = "Outline every note that differs from the saved copy on the roll";
+        b.style.marginLeft = "auto";
+        b.addEventListener("click", () => { syncsheet.classList.remove("on"); cmpEnter(); });
+        row.appendChild(b);
+      }
+    }
     let notes = [];
     try { notes = JSON.parse(localStorage.getItem("ff1roll-notes-" + key) || "[]"); } catch (err) { notes = []; }
     if (notes.length) {
